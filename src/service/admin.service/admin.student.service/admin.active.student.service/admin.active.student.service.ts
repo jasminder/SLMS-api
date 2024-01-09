@@ -320,7 +320,7 @@ export async function findActiveStudentById(id: string) {
             }
         }
     });
-    console.log({activeStudent});
+    console.log({ activeStudent });
     return activeStudent;
 }
 export async function findStudentFeeDetails(studentId: number, termId: number) {
@@ -490,7 +490,6 @@ export async function findActiveStudentEnrolledSubjects(studentId: string, termI
 }
 
 // find current term for assign classes to active students
-
 export const findCurrentTermToAssignClass = async () => {
     const currentTerm = await db.term.findFirst({
         where: {
@@ -567,7 +566,7 @@ export async function assignClassToStudent(studentId: string, termId: string, su
         }
     });
     if (!section) {
-        throw customError(`Level not found for ${subjectName} in ${levelName}`, 'fail', 404, true);
+        throw customError(`section not found for ${subjectName} in ${levelName}`, 'fail', 404, true);
     }
     // console.log(section);
     // Find SubjectEnrollment and Enrollment ID

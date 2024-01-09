@@ -306,10 +306,6 @@ export async function findPublishedTermToEnroll() {
         }
     });
 
-    // if (!publishTerm) {
-    //     throw customError(`Pubslished Term could not found. Please try again later`, 'fail', 404, true);
-    // }
-
     return publishTerm;
 }
 /* find current term to enroll*/

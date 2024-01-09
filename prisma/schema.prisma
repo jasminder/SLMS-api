@@ -156,7 +156,7 @@ model Section {
   name                     String                     @unique
   termSubjectLevel         TermSubjectLevel[]
   StudentClassHistory      StudentClassHistory[]
-  TeacherSubjectAssignment TeacherSubjectAssignment[]
+  TeacherClassAssignment TeacherClassAssignment[]
 }
 
 model TermSubjectGroup {
@@ -201,7 +201,7 @@ model TermSubjectLevel {
   level                    Level                      @relation(fields: [levelId], references: [id])
   enrollments              Enrollment[]
   StudentClassHistory      StudentClassHistory[]
-  TeacherSubjectAssignment TeacherSubjectAssignment[]
+  TeacherClassAssignment TeacherClassAssignment[]
 
   @@unique([termId, subjectId, levelId])
 }
@@ -332,7 +332,7 @@ model Teacher {
   teacherBankDetails               TeacherBankDetails?
   teacherOtherInformation          TeacherOtherInformation?
   teacherSubject                   TeacherSubject[]
-  teacherSubjectAssignment         TeacherSubjectAssignment[]
+  teacherSubjectAssignment         TeacherClassAssignment[]
   createdAt                        DateTime                          @default(now())
   updatedAt                        DateTime                          @updatedAt
 }
@@ -420,15 +420,15 @@ model TeacherSubject {
   @@unique([teacherId, subjectId])
 }
 
-model TeacherSubjectAssignment {
+model TeacherClassAssignment {
   id                 Int              @id @default(autoincrement())
   teacherId          Int
   termSubjectLevelId Int
   sectionId          Int
-  timeSlot           String
+  timeSlot           String?
   teacher            Teacher          @relation(fields: [teacherId], references: [id])
   termSubjectLevel   TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
   section            Section          @relation(fields: [sectionId], references: [id])
 
-  @@unique([teacherId, termSubjectLevelId, sectionId, timeSlot])
+  @@unique([teacherId, termSubjectLevelId, sectionId])
 }

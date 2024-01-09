@@ -37,55 +37,17 @@ are assigned to which class in previous terms."
 TermSubjectLevel, and a one-to-one relationship from TermSubjectLevel to SubjectEnrollment.
 
 
-model TermSubjectLevel {
-  id          Int         @id @default(autoincrement())
-  termId      Int
-  subjectId   Int
-  levelId     Int
-  sections    Section[]
-
-  term        Term        @relation(fields: [termId], references: [id])
-  subject     Subject     @relation(fields: [subjectId], references: [id])
-  level       Level       @relation(fields: [levelId], references: [id])
-
-  @@unique([termId, subjectId, levelId])
-}
-
-model Section {
-  id                  Int               @id @default(autoincrement())
-  name                String            // Name of the section like S1, S2, etc.
-  termSubjectLevelId  Int
-  termSubjectLevel    TermSubjectLevel  @relation(fields: [termSubjectLevelId], references: [id])
-
-  @@unique([name, termSubjectLevelId])
-}
-model StudentClassHistory {
-  id                 Int               @id @default(autoincrement())
-  enrollmentId       Int               // Link to the Enrollment
-  studentId          Int               // Link to the Student
-  termSubjectLevelId Int               // Link to the TermSubjectLevel
-  isCurrentlyAssigned Boolean          @default(true)
-  updatedDate        DateTime          @default(now())
-  note               String?           // Optional field for notes
-
-  enrollment         Enrollment        @relation(fields: [enrollmentId], references: [id])
-  student            Student           @relation(fields: [studentId], references: [id])
-  termSubjectLevel   TermSubjectLevel  @relation(fields: [termSubjectLevelId], references: [id])
-
-
-  @@unique([studentId, termSubjectLevelId])
-}
-model TeacherSubjectAssignment {
-  id                 Int      @id @default(autoincrement())
+ok , now that the admin has approved a teacher application with subjects and now is a teacher . Now The admin must assign classes to the teacher and create a record in model TeacherClassAssignment {
+  id                 Int              @id @default(autoincrement())
   teacherId          Int
   termSubjectLevelId Int
   sectionId          Int
-  timeSlot           String
-  startDate          DateTime
-  endDate            DateTime?
+  timeSlot           String?
   teacher            Teacher          @relation(fields: [teacherId], references: [id])
   termSubjectLevel   TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
   section            Section          @relation(fields: [sectionId], references: [id])
 
-  @@unique([teacherId, termSubjectLevelId, sectionId, timeSlot])
+  @@unique([teacherId, termSubjectLevelId, sectionId])
 }
+
+So while creating a class, which is termSubjectLevel,  it. must be made sure that the

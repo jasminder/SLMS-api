@@ -179,7 +179,7 @@ export async function searchTeachers(search: string) {
         }
     });
 
-    return { approvedTeachers };
+    return approvedTeachers;
 }
 /*find teacher by ID*/
 export async function findTeacherById(id: string) {
@@ -320,4 +320,210 @@ export async function findSubjectsAssignedToApprovedTeacher(id: string) {
         name: assignment.subject.name,
         isActive: assignment.subject.isActive
     }));
+}
+
+//assign class to teachers
+export async function assignClassToTeacher(teacherId: string, termId: string, subjectName: string, levelName: string, sectionName: string) {
+    // Validate Teacher
+    const teacher = await db.teacher.findUnique({ where: { id: parseInt(teacherId) } });
+    if (!teacher || !teacher.isActive) {
+        throw customError('Teacher not found or is not active', 'fail', 400, true);
+        //         throw customError(`Subject '${subjectName}' not found.`, 'fail', 400, true);
+    }
+
+    // Find Subject ID
+    const subject = await db.subject.findUnique({ where: { name: subjectName } });
+    if (!subject) {
+        throw customError('Subject not found', 'fail', 400, true);
+    }
+
+    // Fetch TermSubjectLevel Details
+    const termSubjectLevel = await db.termSubjectLevel.findFirst({
+        where: {
+            termId: parseInt(termId),
+            subjectId: subject.id,
+            level: { name: levelName }
+        },
+        include: { sections: true }
+    });
+    if (!termSubjectLevel) {
+        throw customError('TermSubjectLevel not found', 'fail', 400, true);
+    }
+
+    // Validate Section
+    const section = termSubjectLevel.sections.find((s) => s.name === sectionName);
+    if (!section) {
+        throw customError('Invalid section name for the given TermSubjectLevel', 'fail', 400, true);
+    }
+
+    // Validate Subject Assignment
+    const subjectAssigned = await db.teacherSubject.findFirst({
+        where: { teacherId: parseInt(teacherId), subjectId: subject.id }
+    });
+    if (!subjectAssigned) {
+        throw customError('Subject not assigned to teacher', 'fail', 400, true);
+    }
+
+    // Check Existing Assignments
+    const existingAssignment = await db.teacherClassAssignment.findFirst({
+        where: {
+            teacherId: parseInt(teacherId),
+            termSubjectLevelId: termSubjectLevel.id,
+            sectionId: section.id
+        }
+    });
+    if (existingAssignment) {
+        throw customError('This class is already assigned to the teacher', 'fail', 400, true);
+    }
+
+    // Create TeacherClassAssignment Record
+    return await db.teacherClassAssignment.create({
+        data: {
+            teacherId: parseInt(teacherId),
+            termSubjectLevelId: termSubjectLevel.id,
+            sectionId: section.id
+        }
+    });
+}
+// find current term for assign classes to teachers
+export const findCurrentTermToAssignClass = async () => {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        },
+        select: {
+            id: true,
+            name: true,
+            isPublish: true,
+            currentTerm: true,
+            startDate: true,
+            endDate: true,
+            createdAt: true,
+            updatedAt: true,
+            termSubject: {
+                select: {
+                    id: true,
+                    subject: true,
+                    level: true,
+                    termSubjectGroup: true
+                }
+            },
+            termSubjectLevel: {
+                include: {
+                    sections: {
+                        select: { name: true }
+                    },
+                    level: { select: { name: true } },
+                    subject: { select: { name: true } }
+                }
+            }
+        }
+    });
+
+    if (!currentTerm) {
+        throw customError(`Current Term could not found. Please try again later`, 'fail', 404, true);
+    }
+
+    return currentTerm;
+};
+/*get all classes for teachers*/
+export const findAllAssignedClassesForTeachers = async (teacherId: string) => {
+    const assignedClasses = await db.teacherClassAssignment.findMany({
+        where: {
+            teacherId: parseInt(teacherId)
+        },
+        include: {
+            termSubjectLevel: {
+                include: {
+                    subject: true,
+                    level: true,
+                    term: true
+                }
+            },
+            section: true
+        }
+    });
+    return assignedClasses;
+};
+export const deleteTeacherSubject = async (teacherId: string, subjectName: string) => {
+    // First, find the subject ID based on the subject name
+    const subject = await db.subject.findFirst({
+        where: { name: subjectName },
+        select: { id: true }
+    });
+
+    if (!subject) {
+        throw customError(`Subject '${subjectName}' not found.`, 'fail', 404, true);
+    }
+
+    // Check if there are any class assignments for the given teacher and subject ID
+    const existingAssignments = await db.teacherClassAssignment.findMany({
+        where: {
+            teacherId: +teacherId,
+            termSubjectLevel: {
+                subjectId: subject.id
+            }
+        }
+    });
+
+    // If there are existing assignments, throw an error
+    if (existingAssignments.length > 0) {
+        throw customError(`Subject '${subjectName}' cannot be deleted since there is a class associated with it.`, 'fail', 404, true);
+    }
+
+    // If no class assignments, delete the subject for the teacher
+    await db.teacherSubject.deleteMany({
+        where: {
+            teacherId: +teacherId,
+            subjectId: subject.id
+        }
+    });
+
+    return 'Subject deleted successfully';
+};
+export async function deleteClassForTeacher(teacherId: string, termId: string, subjectName: string, levelName: string, sectionName: string) {
+    // Validate and find the subject
+    const subject = await db.subject.findUnique({ where: { name: subjectName } });
+    if (!subject) {
+        throw customError('Subject not found', 'fail', 404, true);
+    }
+
+    // Fetch TermSubjectLevel Details
+    const termSubjectLevel = await db.termSubjectLevel.findFirst({
+        where: {
+            termId: parseInt(termId),
+            subjectId: subject.id,
+            level: { name: levelName }
+        },
+        include: { sections: true }
+    });
+    if (!termSubjectLevel) {
+        throw customError('TermSubjectLevel not found', 'fail', 404, true);
+    }
+
+    // Validate Section
+    const section = termSubjectLevel.sections.find((s) => s.name === sectionName);
+    if (!section) {
+        throw customError('Invalid section name for the given TermSubjectLevel', 'fail', 404, true);
+    }
+
+    // Find the assignment to delete
+    const assignment = await db.teacherClassAssignment.findFirst({
+        where: {
+            teacherId: parseInt(teacherId),
+            termSubjectLevelId: termSubjectLevel.id,
+            sectionId: section.id
+        }
+    });
+
+    if (!assignment) {
+        throw customError('No class assignment found for deletion', 'fail', 404, true);
+    }
+
+    // Proceed with deletion
+    await db.teacherClassAssignment.delete({
+        where: { id: assignment.id }
+    });
+
+    return 'Class assignment successfully deleted';
 }
