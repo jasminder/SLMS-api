@@ -53,6 +53,7 @@ export const assignSubjectToTeacherHandler = async (req: Request<AssignSubjectTo
     const { subjectName } = req.body;
     const allSubjects = await assignSubjectToTeacher(teacherId, subjectName);
     res.status(200).json(allSubjects);
+
 };
 /*find subject assigned applicant*/
 export const findSubjectsAssignedToTeacherHandler = async (req: Request<FindUniqueTeacherApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {

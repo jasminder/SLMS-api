@@ -27,11 +27,11 @@ adminTeacherApproveRoute.route('/search-applicants').get(validate(searchTeacherA
 /* find unique applicant by id*/
 adminTeacherApproveRoute.route('/applicant-detail/:id').get(validate(findUniqueTeacherApplicantSchema), asyncErrorHandler(findTeacherApplicantByIdHandler));
 
-/* find published subjects to assign */
+/* find  subjects to assign */
 adminTeacherApproveRoute.route('/find-subjects-to-assign').get(asyncErrorHandler(findAllSubjectsToAssignApplicantHandler));
 /*Assign a subject to assign applicant*/
 adminTeacherApproveRoute.route('/assign-subject-to-applicant/:teacherId').post(validate(assignSubjectToApplicantSchema), asyncErrorHandler(assignSubjectToTeacherHandler));
-/*find subject assigned applicant*/
+// /*find subject assigned applicant*/ assign-subject-to-applicant
 adminTeacherApproveRoute.route('/find-assigned-subjects-to-applicant/:id').get(validate(findUniqueTeacherApplicantSchema), asyncErrorHandler(findSubjectsAssignedToTeacherHandler));
 /*Approve teacherapplication*/
 adminTeacherApproveRoute.route('/approve-application/:id').post(validate(findUniqueTeacherApplicantSchema), asyncErrorHandler(approveTeacherApplicationHandler));

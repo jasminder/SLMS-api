@@ -108,6 +108,7 @@ export async function searchTeacherApplicants(search: string, page: number) {
         take,
         where: {
             role: 'APPLICANT',
+            isActive:false,
             OR: [
                 {
                     teacherPersonalDetails: {
@@ -199,6 +200,7 @@ export async function searchTeacherApplicants(search: string, page: number) {
     const count = await db.teacher.count({
         where: {
             role: 'APPLICANT',
+            isActive:false,
             OR: [
                 {
                     teacherPersonalDetails: {
@@ -222,7 +224,8 @@ export async function findTeacherApplicantById(id: string) {
     const applicant = await db.teacher.findUnique({
         where: {
             id: +id,
-            role: 'APPLICANT'
+            role: 'APPLICANT',
+            isActive:false
         },
         select: {
             id: true,
