@@ -21,6 +21,8 @@ import adminLateEnrolledStudentRoute from './src/route/admin.route/admin.student
 import newteacherApplicantRoute from './src/route/new.applicant.route/teacher.applicant.router';
 import adminTeacherApproveRoute from './src/route/admin.route/admin.teacher.approve.route/admin.teacher.approve.route';
 import adminTeacherRoute from './src/route/admin.route/admin.teacher.route/admin.teacher.route';
+import authRoute from './src/route/auth.route/auth.route';
+import teacherRoute from './src/route/teacher.route/teacher.route';
 
 const app = express();
 app.use(cookieParser());
@@ -68,6 +70,10 @@ app.use('/api/v1/admin/student/enrolled', adminEnrolledStudentRoute);
 app.use('/api/v1/admin/student/late-enrolled', adminLateEnrolledStudentRoute);
 app.use('/api/v1/admin/student/active', adminActiveStudentRoute);
 app.use('/api/v1/admin/applicant', adminEnrollmentRoute);
+
+app.use('/api/v1/teacher', teacherRoute);
+
+app.use('/api/v1/auth', authRoute);
 
 // Server frontend static assets and handle catch-all route
 if (process.env.NODE_ENV === 'production') {

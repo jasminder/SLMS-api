@@ -785,7 +785,7 @@ export async function enrollToCurrenTerm(id: string) {
     }
     await db.student.update({
         where: { id: parseInt(id) },
-        data: { role: 'STUDENT', isActive: true }
+        data: { role: 'STUDENT', isActive: true, isAllowedLogin: true }
     });
     return { message: `The applicant enrolled to Student successfully` };
 }

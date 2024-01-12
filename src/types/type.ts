@@ -15,7 +15,7 @@ export interface Err extends Error {
 }
 export interface DecodeToken {
     email: string;
-    name: string;
+    role: string;
     id: string;
     iat: string;
     exp: string;

@@ -395,7 +395,7 @@ export async function enrollStudentEnrolledToSubjects(enrollData: EnrolledStuden
     }
 
     if (alreadyEnrolledSubjects.length > 0) {
-        throw  customError(`Already enrolled in subjects: ${alreadyEnrolledSubjects.join(', ')}`,'fail', 404, true);
+        throw customError(`Already enrolled in subjects: ${alreadyEnrolledSubjects.join(', ')}`, 'fail', 404, true);
     }
 
     let uniqueTermSubjectGroupIds = new Set<number>();
@@ -505,7 +505,7 @@ export async function deEnrollStudentEnrolledToSubjects(deEnrollData: EnrolledSt
     });
 
     if (totalEnrollments <= deEnrollData.enrollData.length) {
-        throw  customError('The student must be enrolled in at least one subject.','fail', 404, true);
+        throw customError('The student must be enrolled in at least one subject.', 'fail', 404, true);
     }
 
     let deEnrolledSubjects = [];
@@ -523,7 +523,7 @@ export async function deEnrollStudentEnrolledToSubjects(deEnrollData: EnrolledSt
         });
 
         if (!subjectEnrollment) {
-            throw  customError(`Not enrolled in subject: ${deEnrollItem.subject}`,'fail', 404, true);
+            throw customError(`Not enrolled in subject: ${deEnrollItem.subject}`, 'fail', 404, true);
         }
 
         // Delete the SubjectEnrollment record
@@ -602,7 +602,7 @@ export async function lateEnrolledActiveStudent(id: number, termId: string) {
     // Update the student's role to 'STUDENT'
     await db.student.update({
         where: { id },
-        data: { isActive: true }
+        data: { isActive: true, isAllowedLogin: true }
     });
 
     return { message: `The applicant enrolled to Student successfully` };

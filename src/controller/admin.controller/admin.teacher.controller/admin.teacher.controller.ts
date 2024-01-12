@@ -39,7 +39,8 @@ export const findTeacherByIdHandler = async (req: Request<FindUniqueTeacherSchem
     const { id } = req.params;
     const applicant = await findTeacherById(id);
     res.status(200).json(applicant);
-}; /*find all subject to assign teacher*/
+};
+/*find all subject to assign teacher*/
 export const findAllSubjectsToAssignTeacherHandler = async (req: Request, res: Response, next: NextFunction) => {
     const allSubjects = await findAllSubjectsToAssignTeacher();
     res.status(200).json(allSubjects);
