@@ -79,8 +79,8 @@ export const assignClassToTeacherHandler = async (req: Request<AssignClassToTeac
 /*get all classes for teachers*/
 export const findAllAssignedClassesForTeachersHandler = async (req: Request<FindUniqueTeacherSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const teacher = await findAllAssignedClassesForTeachers(id);
-    res.status(200).json(teacher);
+    const classes= await findAllAssignedClassesForTeachers(id);
+    res.status(200).json(classes);
 };
 /*delete subject for teachers*/
 export const deleteTeacherSubjectHandler = async (

@@ -28,13 +28,13 @@ const adminTeacherRoute = express.Router();
 //find all teachers
 adminTeacherRoute.route('/get-all-teachers').get(asyncErrorHandler(findAllTeachersHandler));
 adminTeacherRoute.route('/search-teachers').get(validate(searchTeachersSchema), asyncErrorHandler(searchTeachersHandler));
-/* find unique applicant by id*/
+/* find unique teacher by id*/
 adminTeacherRoute.route('/teacher-detail/:id').get(validate(findUniqueTeacherSchema), asyncErrorHandler(findTeacherByIdHandler));
 /* find  subjects to assign */
 adminTeacherRoute.route('/find-all-subjects-to-assign').get(asyncErrorHandler(findAllSubjectsToAssignTeacherHandler));
 /*Assign a subject to teacher*/
 adminTeacherRoute.route('/assign-subject-to-teacher/:teacherId').post(validate(assignSubjectToApprovedTeacherSchema), asyncErrorHandler(assignSubjectToApprovedTeacherHandler));
-/*find subject assigned applicant*/
+/*find subject assigned teacher*/
 adminTeacherRoute.route('/find-assigned-subjects-to-teacher/:id').get(validate(findUniqueTeacherSchema), asyncErrorHandler(findSubjectsAssignedToApprovedTeacherHandler));
 // find current term for assign classes to active teacher
 adminTeacherRoute.route('/find-current-term-to-assign-class-to-teacher').get(asyncErrorHandler(findCurrentTermToAssignClassHandler));

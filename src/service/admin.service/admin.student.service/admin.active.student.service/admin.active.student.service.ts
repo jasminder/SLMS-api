@@ -622,6 +622,14 @@ export async function assignClassToStudent(studentId: string, termId: string, su
             }
         });
     }
+    await db.enrollment.update({
+        where: {
+            id: subjectEnrollment.enrollment.id
+        },
+        data: {
+            termSubjectLevelId: termSubjectLevel.id
+        }
+    });
 
     return { message: 'Class assigned successfully' };
 }

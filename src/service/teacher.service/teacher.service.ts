@@ -82,3 +82,115 @@ export async function findTeacherByIdForTeacher(id: string) {
 
     return teacher;
 }
+// find current term for teachers
+export const findCurrentTermForTeacher = async () => {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        },
+        select: {
+            id: true,
+            name: true,
+            isPublish: true,
+            currentTerm: true,
+            startDate: true,
+            endDate: true,
+            createdAt: true,
+            updatedAt: true,
+            termSubject: {
+                select: {
+                    id: true,
+                    subject: true,
+                    level: true,
+                    termSubjectGroup: true
+                }
+            },
+            termSubjectLevel: {
+                include: {
+                    sections: {
+                        select: { name: true }
+                    },
+                    level: { select: { name: true } },
+                    subject: { select: { name: true } }
+                }
+            }
+        }
+    });
+
+    if (!currentTerm) {
+        throw customError(`Current Term could not found. Please try again later`, 'fail', 404, true);
+    }
+
+    return currentTerm;
+};
+
+// find subjects assigned to teachers
+export async function findSubjectsAssignedForTeacher(id: string) {
+    const assignedSubjects = await db.teacherSubject.findMany({
+        where: {
+            teacherId: +id
+        },
+        include: {
+            subject: true
+        }
+    });
+
+    // Mapping to get only necessary details, if needed
+    // return assignedSubjects;
+    return assignedSubjects.map((assignment) => ({
+        name: assignment.subject.name,
+        isActive: assignment.subject.isActive
+    }));
+}
+/*get all classes for teachers*/
+export const findAllClassesAssignedForTeacher = async (teacherId: string) => {
+    const assignedClasses = await db.teacherClassAssignment.findMany({
+        where: {
+            teacherId: parseInt(teacherId)
+        },
+        include: {
+            termSubjectLevel: {
+                include: {
+                    subject: true,
+                    level: true,
+                    term: true
+                }
+            },
+            section: true
+        }
+    });
+    return assignedClasses;
+};
+// find students in the same class
+export async function fetchStudentsInSameClass(termSubjectLevelId: string, sectionName: string) {
+    const enrollments = await db.enrollment.findMany({
+        where: {
+            termSubjectLevelId: +termSubjectLevelId,
+            termSubjectLevel: {
+                sections: {
+                    some: {
+                        name: sectionName
+                    }
+                }
+            },
+            studentClassHistory: {
+                some: {
+                    isCurrentlyAssigned: true,
+                    section: {
+                        name: sectionName
+                    }
+                }
+            },
+            student: {
+                isActive: true,
+                role: 'STUDENT'
+            }
+        },
+        include: {
+            student: true
+        }
+    });
+    console.log(enrollments);
+    // Extracting and returning only student details from the enrollments
+    return enrollments;
+}

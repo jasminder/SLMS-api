@@ -19,10 +19,10 @@ export const signUpUserHandler = async (req: Request<{}, {}, SignupUserSchema['b
     });
     res.status(201).json({
         status: 'Success',
-        id: newUser.user.id,
+        user: user,
         accessToken,
-        email: newUser.user.email,
-        roles: newUser.user.role,
+        email: user.email,
+        role: user.role,
         message: `user account for ${newUser.user.email} is created`
     });
 };
