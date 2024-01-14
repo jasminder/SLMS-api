@@ -20,9 +20,12 @@ import adminActiveStudentRoute from './src/route/admin.route/admin.student.route
 import adminLateEnrolledStudentRoute from './src/route/admin.route/admin.student.route/admin.late.enrollments.route/admin.late.enrollments.route';
 import newteacherApplicantRoute from './src/route/new.applicant.route/teacher.applicant.router';
 import adminTeacherApproveRoute from './src/route/admin.route/admin.teacher.approve.route/admin.teacher.approve.route';
-import adminTeacherRoute from './src/route/admin.route/admin.teacher.route/admin.teacher.route';
+import adminTeacherRoute from './src/route/admin.route/admin.teacher.route/admin.teacher.route/admin.teacher.route';
 import authRoute from './src/route/auth.route/auth.route';
-import teacherRoute from './src/route/teacher.route/teacher.route';
+import teacherRoute from './src/route/teacher.route/teacher.dashboard.route/teacher.dashboard.route';
+import adminCheckinRoute from './src/route/admin.route/admin.checkin.route/admin.checkin.route';
+import adminCheckoutRoute from './src/route/admin.route/admin.checkout.route/admin.checkout.route';
+import adminAttendanceRoute from './src/route/admin.route/admin.attendance.route/admin.attendance.route';
 
 const app = express();
 app.use(cookieParser());
@@ -70,6 +73,10 @@ app.use('/api/v1/admin/student/enrolled', adminEnrolledStudentRoute);
 app.use('/api/v1/admin/student/late-enrolled', adminLateEnrolledStudentRoute);
 app.use('/api/v1/admin/student/active', adminActiveStudentRoute);
 app.use('/api/v1/admin/applicant', adminEnrollmentRoute);
+/*Attendance and check in and checkout*/
+app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);
+app.use('/api/v1/admin/attendance/checkout', adminCheckoutRoute);
+app.use('/api/v1/admin/attendance/skip-reports', adminAttendanceRoute);
 
 app.use('/api/v1/teacher', teacherRoute);
 

@@ -589,8 +589,8 @@ export async function assignClassToStudent(studentId: string, termId: string, su
         throw customError(`Enrollment not found for student ${studentId} in subject ${subjectName}`, 'fail', 404, true);
     }
 
-    // Find or create StudentClassHistory Record
-    const existingRecord = await db.studentClassHistory.findFirst({
+    // Find or create StudentClassAsstudentClassAssignment Record
+    const existingRecord = await db.studentClassAssignment.findFirst({
         where: {
             enrollmentId: subjectEnrollment.enrollment.id,
             termSubjectLevelId: termSubjectLevel.id,
@@ -601,7 +601,7 @@ export async function assignClassToStudent(studentId: string, termId: string, su
     // console.log(existingRecord);
     if (existingRecord) {
         // Update if already assigned
-        await db.studentClassHistory.update({
+        await db.studentClassAssignment.update({
             where: {
                 id: existingRecord.id
             },
@@ -612,7 +612,7 @@ export async function assignClassToStudent(studentId: string, termId: string, su
         });
     } else {
         // Create new assignment
-        await db.studentClassHistory.create({
+        await db.studentClassAssignment.create({
             data: {
                 enrollmentId: subjectEnrollment.enrollment.id,
                 termSubjectLevelId: termSubjectLevel.id,
@@ -636,7 +636,7 @@ export async function assignClassToStudent(studentId: string, termId: string, su
 
 /*get all classes for students*/
 export async function findUniqueStudentClassDetails(studentId: string) {
-    const studentClassHistoryRecords = await db.studentClassHistory.findMany({
+    const studentClassAssignmentRecords = await db.studentClassAssignment.findMany({
         where: {
             studentId: +studentId
         },
@@ -658,16 +658,16 @@ export async function findUniqueStudentClassDetails(studentId: string) {
         }
     });
 
-    return studentClassHistoryRecords;
+    return studentClassAssignmentRecords;
 }
 /*Manage classes for students*/
 export async function manageClasses(id: string) {
-    const currentRecord = await db.studentClassHistory.findUnique({
+    const currentRecord = await db.studentClassAssignment.findUnique({
         where: { id: +id }
     });
-    const updatedStudentClassHistoryRecords = await db.studentClassHistory.update({
+    const updatedStudentClassAsstudentClassAssignmentRecords = await db.studentClassAssignment.update({
         where: { id: +id },
         data: { isCurrentlyAssigned: !currentRecord?.isCurrentlyAssigned }
     });
-    return updatedStudentClassHistoryRecords;
+    return updatedStudentClassAsstudentClassAssignmentRecords;
 }

@@ -1,0 +1,24 @@
+import { NextFunction, Request, Response } from 'express';
+import { createSkipReport, fetchCheckedInStudentsWithAttendance, markStudentAsPresent } from '../../../service/teacher.service/teacher.attendance.service/teacher.attendance.service';
+import { CreateSkipReportSchema, FetchCheckedInStudentsWithAttendanceSchema, MarkStudentAsPresentSchema } from '../../../schema/teacher.dto/teacher.attendance.dto/teacher.attendance.dto';
+
+/* fetching the check-in record for students who have checked in with default class-attendance */
+export const fetchCheckedInStudentsWithAttendanceHandler = async (req: Request<FetchCheckedInStudentsWithAttendanceSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { termSubjectLevelId, sectionName } = req.params;
+    const markSchoolCheckInAttendance = await fetchCheckedInStudentsWithAttendance(termSubjectLevelId, sectionName);
+    res.status(200).json(markSchoolCheckInAttendance);
+};
+
+/*mark presenttrue for a single studentid*/
+export const markStudentAsPresentHandler = async (req: Request<MarkStudentAsPresentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentClassAssignmentId, studentId } = req.params;
+    const markSchoolCheckInAttendance = await markStudentAsPresent(studentId, studentClassAssignmentId);
+    res.status(200).json(markSchoolCheckInAttendance);
+};
+/* create student skip report*/
+export const createSkipReportHandler = async (req: Request<CreateSkipReportSchema['params'], {}, CreateSkipReportSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { teacherId, studentId } = req.params;
+    const { reason } = req.body;
+    const SkipReport = await createSkipReport(studentId, teacherId, reason);
+    res.status(200).json(SkipReport);
+};

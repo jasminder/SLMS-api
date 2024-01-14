@@ -51,3 +51,110 @@ ok , now that the admin has approved a teacher application with subjects and now
 }
 
 So while creating a class, which is termSubjectLevel,  it. must be made sure that the
+/////////
+in my model SubjectEnrollment {
+  id            Int         @id @default(autoincrement())
+  enrollmentId  Int         @unique
+  termSubjectId Int
+  grade         String      @default("No Grades yet") // Optional, for storing grades
+  attendance    Boolean[] // Optional, for storing attendance
+  enrollment    Enrollment  @relation(fields: [enrollmentId], references: [id])
+  termSubject   TermSubject @relation(fields: [termSubjectId], references: [id])
+
+  @@unique([enrollmentId, termSubjectId])
+}
+/////////////////
+ i have attendance. Now my requirement for attendance has changed in the folllowing way.
+ ""Attendance is a two-step process. The admin will mark the 1st  attendance for ALL students, before going to the class after the admin makes the attendance, say at the entrance of the school, this is how the admin checks the students into the school. After this 1st attendance is marked or checked in,  the students are then sent to their respective classes, which is studentClassAssignment.
+Now once they are in their respective classes, which is in the studentClassAssignment, in the DB/schema the teacher then proceeds to mark the 2nd  attendance for the students.
+this is to ensure that all the students who marked 1st attendance or checked have gone to their classes and do not skip the class.
+
+
+model SchoolCheckInAttendance {
+  id           Int       @id @default(autoincrement())
+  studentId    Int
+  date         DateTime  // The date of check-in
+  checkInTime  DateTime  // The time of check-in
+  remarks      String?   // Optional field for notes
+
+  student      Student   @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, date]) // Ensuring uniqueness for check-in entry per student per day
+}
+model ClassAttendance {
+  id                      Int                   @id @default(autoincrement())
+  studentClassAssignmentId Int
+  date                    DateTime              // The date of the class
+  attendanceStatus        AttendanceStatus      // Enum for presence, absence, etc.
+  remarks                 String?               // Optional field for any notes
+
+  studentClassAssignment  StudentClassAssignment @relation(fields: [studentClassAssignmentId], references: [id])
+
+  @@unique([studentClassAssignmentId, date]) // Ensuring uniqueness for attendance entry per class per day
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+  LATE
+  TARDY
+  NO_CHECK_IN
+  // Add more statuses as needed
+}
+[
+  {
+    "id": 1,
+    "studentId": 123,
+    "date": "2024-01-15",
+    "checkInTime": "2024-01-15T08:30:00Z",
+    "checkedIn": true,
+    "remarks": "On time"
+  },
+  {
+    "id": 2,
+    "studentId": 123,
+    "date": "2024-01-16",
+    "checkInTime": "2024-01-16T08:45:00Z",
+    "checkedIn": true,
+    "remarks": "Slight delay"
+  },
+  {
+    "id": 3,
+    "studentId": 123,
+    "date": "2024-01-17",
+    "checkInTime": null,
+    "checkedIn": false,
+    "remarks": null
+  }
+]
+
+
+To show the check-in status (true or false) from the SchoolCheckInAttendance and the corresponding ClassAttendance records for each student, you can achieve this by retrieving the relevant data through Prisma queries. Here's how you can structure the query:
+
+Assuming you have a student's id and you want to fetch their check-in status from SchoolCheckInAttendance and their corresponding ClassAttendance records:
+const studentId = 1; // Replace with the actual student's ID
+
+const studentData = await prisma.student.findUnique({
+  where: {
+    id: studentId,
+  },
+  include: {
+    SchoolCheckInAttendance: {
+      where: {
+        date: { gte: new Date().toISOString().split("T")[0] }, // Get today's date in "YYYY-MM-DD" format
+      },
+    },
+    studentClassAssignment: {
+      include: {
+        ClassAttendance: {
+          where: {
+            date: { gte: new Date().toISOString().split("T")[0] }, // Get today's date in "YYYY-MM-DD" format
+          },
+        },
+      },
+    },
+  },
+});
+
+console.log(studentData);

@@ -16,6 +16,14 @@ enum Role {
   ALUMNI
 }
 
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+  LATE
+  // Any other statuses you might need
+}
+
 enum PaymentMethod {
   ONLINE
   SCHOOL
@@ -35,23 +43,25 @@ enum PaymentType {
 }
 
 model Student {
-  id                  Int                   @id @default(autoincrement())
-  role                Role                  @default(APPLICANT)
-  isActive            Boolean               @default(false)
-  isAllowedLogin      Boolean               @default(false)
-  enrollments         Enrollment[]
-  personalDetails     PersonalDetails?
-  parentsDetails      ParentsDetails?
-  emergencyContact    EmergencyContact?
-  healthInformation   HealthInformation?
-  otherInformation    OtherInformation?
-  studentTermFee      StudentTermFee[]
-  subjectsChosen      String[]
-  subjectRelated      String[]
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  StudentClassHistory StudentClassHistory[]
-  user                User?
+  id                      Int                       @id @default(autoincrement())
+  role                    Role                      @default(APPLICANT)
+  isActive                Boolean                   @default(false)
+  isAllowedLogin          Boolean                   @default(false)
+  enrollments             Enrollment[]
+  personalDetails         PersonalDetails?
+  parentsDetails          ParentsDetails?
+  emergencyContact        EmergencyContact?
+  healthInformation       HealthInformation?
+  otherInformation        OtherInformation?
+  studentTermFee          StudentTermFee[]
+  subjectsChosen          String[]
+  subjectRelated          String[]
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  studentClassAssignment  StudentClassAssignment[]
+  user                    User?
+  schoolCheckInAttendance SchoolCheckInAttendance[]
+  skipReport              SkipReport[]
 }
 
 model PersonalDetails {
@@ -156,7 +166,7 @@ model Section {
   id                     Int                      @id @default(autoincrement())
   name                   String                   @unique
   termSubjectLevel       TermSubjectLevel[]
-  StudentClassHistory    StudentClassHistory[]
+  StudentClassAssignment StudentClassAssignment[]
   TeacherClassAssignment TeacherClassAssignment[]
 }
 
@@ -201,25 +211,26 @@ model TermSubjectLevel {
   subject                Subject                  @relation(fields: [subjectId], references: [id])
   level                  Level                    @relation(fields: [levelId], references: [id])
   enrollments            Enrollment[]
-  StudentClassHistory    StudentClassHistory[]
-  TeacherClassAssignment TeacherClassAssignment[]
+  studentClassAssignment StudentClassAssignment[]
+  teacherClassAssignment TeacherClassAssignment[]
 
   @@unique([termId, subjectId, levelId])
 }
 
-model StudentClassHistory {
-  id                  Int              @id @default(autoincrement())
+model StudentClassAssignment {
+  id                  Int               @id @default(autoincrement())
   enrollmentId        Int
   studentId           Int
   termSubjectLevelId  Int
   sectionId           Int
-  isCurrentlyAssigned Boolean          @default(true)
-  changeDate          DateTime         @default(now())
+  isCurrentlyAssigned Boolean           @default(true)
+  changeDate          DateTime          @default(now())
   note                String? // Optional field for notes
-  enrollment          Enrollment       @relation(fields: [enrollmentId], references: [id])
-  student             Student          @relation(fields: [studentId], references: [id])
-  termSubjectLevel    TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
-  section             Section          @relation(fields: [sectionId], references: [id])
+  enrollment          Enrollment        @relation(fields: [enrollmentId], references: [id])
+  student             Student           @relation(fields: [studentId], references: [id])
+  termSubjectLevel    TermSubjectLevel  @relation(fields: [termSubjectLevelId], references: [id])
+  section             Section           @relation(fields: [sectionId], references: [id])
+  classAttendance     ClassAttendance[]
 
   @@unique([studentId, termSubjectLevelId, isCurrentlyAssigned, sectionId])
 }
@@ -237,7 +248,7 @@ model Enrollment {
   termSubjectGroupSubject TermSubjectGroupSubject[]
   subjectEnrollment       SubjectEnrollment?
   termSubjectLevel        TermSubjectLevel?         @relation(fields: [termSubjectLevelId], references: [id])
-  studentClassHistory     StudentClassHistory[]
+  studentClassAssignment  StudentClassAssignment[]
 
   @@unique([studentId, termSubjectGroupId, subjectEnrollmentId])
 }
@@ -247,7 +258,6 @@ model SubjectEnrollment {
   enrollmentId  Int         @unique
   termSubjectId Int
   grade         String      @default("No Grades yet") // Optional, for storing grades
-  attendance    Boolean[] // Optional, for storing attendance
   enrollment    Enrollment  @relation(fields: [enrollmentId], references: [id])
   termSubject   TermSubject @relation(fields: [termSubjectId], references: [id])
 
@@ -337,6 +347,7 @@ model Teacher {
   createdAt                        DateTime                          @default(now())
   updatedAt                        DateTime                          @updatedAt
   user                             User?
+  skipReport                       SkipReport[]
 }
 
 model TeacherPersonalDetails {
@@ -529,4 +540,48 @@ model User {
   updatedAt       DateTime @updatedAt
   isActive        Boolean  @default(true)
   isEmailVerified Boolean  @default(false)
+}
+
+model SchoolCheckInAttendance {
+  id           Int       @id @default(autoincrement())
+  studentId    Int
+  isMarked     Boolean   @default(false)
+  date         DateTime // The date of check-in
+  checkInTime  DateTime? // Nullable field for the time of check-in
+  checkedIn    Boolean   @default(false) // Default to false to indicate not checked in initially
+  isCheckedOut Boolean? // Optional field to track whether the student is checked out
+  checkOutTime DateTime?
+  remarks      String? // Optional field for notes
+
+  student         Student          @relation(fields: [studentId], references: [id])
+  classAttendance ClassAttendance?
+
+  @@unique([studentId, date]) // Ensuring uniqueness for check-in entry per student per day
+}
+
+model ClassAttendance {
+  id                       Int                      @id @default(autoincrement())
+  studentClassAssignmentId Int
+  date                     DateTime // The date of the class
+  attendanceStatus         AttendanceStatus         @default(ABSENT) // Enum for presence, absence, etc.
+  remarks                  String?                  @default("Absent-not checked in") // Optional field for any notes
+  studentClassAssignment   StudentClassAssignment   @relation(fields: [studentClassAssignmentId], references: [id])
+  schoolCheckInAttendance  SchoolCheckInAttendance? @relation(fields: [studentClassAssignmentId, date], references: [studentId, date])
+
+  @@unique([studentClassAssignmentId, date]) // Ensuring uniqueness for attendance entry per class per day
+}
+
+model SkipReport {
+  id                  Int      @id @default(autoincrement())
+  studentId           Int
+  teacherId           Int
+  date                DateTime
+  reason              String
+  isClosed            Boolean  @default(false)
+  adminClosingRemarks String?
+  // Other fields as needed
+
+  // Define relationships with Teacher and Student models
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
 }

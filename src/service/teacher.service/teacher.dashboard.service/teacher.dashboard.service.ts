@@ -1,5 +1,5 @@
-import { customError } from '../../utils/customError';
-import { db } from '../../utils/db.server';
+import { customError } from '../../../utils/customError';
+import { db } from '../../../utils/db.server';
 
 /*find teacher by ID*/
 export async function findTeacherByIdForTeacher(id: string) {
@@ -163,34 +163,28 @@ export const findAllClassesAssignedForTeacher = async (teacherId: string) => {
 };
 // find students in the same class
 export async function fetchStudentsInSameClass(termSubjectLevelId: string, sectionName: string) {
-    const enrollments = await db.enrollment.findMany({
+    const numericTermSubjectLevelId = parseInt(termSubjectLevelId);
+
+    const classAssignments = await db.studentClassAssignment.findMany({
         where: {
-            termSubjectLevelId: +termSubjectLevelId,
-            termSubjectLevel: {
-                sections: {
-                    some: {
-                        name: sectionName
-                    }
-                }
+            termSubjectLevelId: numericTermSubjectLevelId,
+            section: {
+                name: sectionName
             },
-            studentClassHistory: {
-                some: {
-                    isCurrentlyAssigned: true,
-                    section: {
-                        name: sectionName
-                    }
-                }
-            },
+            isCurrentlyAssigned: true,
             student: {
                 isActive: true,
                 role: 'STUDENT'
             }
         },
         include: {
-            student: true
+            student: true, // Include additional student details as needed
+            section: true
         }
     });
-    console.log(enrollments);
-    // Extracting and returning only student details from the enrollments
-    return enrollments;
+
+    console.log(classAssignments);
+
+    return classAssignments;
 }
+

@@ -1,7 +1,7 @@
 import express from 'express';
 
-import validate from '../../../middleware/validateResource';
-import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
+import validate from '../../../../middleware/validateResource';
+import { asyncErrorHandler } from '../../../../utils/asyncErrorHandler';
 import {
     assignClassToTeacherHandler,
     assignSubjectToApprovedTeacherHandler,
@@ -14,7 +14,7 @@ import {
     findSubjectsAssignedToApprovedTeacherHandler,
     findTeacherByIdHandler,
     searchTeachersHandler
-} from '../../../controller/admin.controller/admin.teacher.controller/admin.teacher.controller';
+} from '../../../../controller/admin.controller/admin.teacher.controller/admin.teacher.controller';
 import {
     assignClassToTeacherSchema,
     assignSubjectToApprovedTeacherSchema,
@@ -22,7 +22,7 @@ import {
     deleteSubjectToApprovedTeacherSchema,
     findUniqueTeacherSchema,
     searchTeachersSchema
-} from '../../../schema/admin.dto/admin.teacher.dto/admin.teacher.dto';
+} from '../../../../schema/admin.dto/admin.teacher.dto/admin.teacher.dto';
 
 const adminTeacherRoute = express.Router();
 //find all teachers

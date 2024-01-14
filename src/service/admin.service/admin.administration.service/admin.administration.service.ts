@@ -610,7 +610,6 @@ export const findAllStudentsInATerm = async (id: string, page: number) => {
                 include: {
                     subjectEnrollment: {
                         select: {
-                            attendance: true,
                             termSubject: {
                                 select: {
                                     subject: {

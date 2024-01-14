@@ -1,12 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
-import { FetchStudentsInSameClass, FindTeacherByIdSchema } from '../../schema/teacher.dto/teacher.dto';
+import { FetchStudentsInSameClass, FindTeacherByIdSchema } from '../../../schema/teacher.dto/teacher.dashboard.dto/teacher.dashboard.dto';
 import {
     fetchStudentsInSameClass,
     findAllClassesAssignedForTeacher,
     findCurrentTermForTeacher,
     findSubjectsAssignedForTeacher,
     findTeacherByIdForTeacher
-} from '../../service/teacher.service/teacher.service';
+} from '../../../service/teacher.service/teacher.dashboard.service/teacher.dashboard.service';
 
 // find unqiue teacherby ID for internal queries
 export const findTeacherByIdForTeacherHandler = async (req: Request<FindTeacherByIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
