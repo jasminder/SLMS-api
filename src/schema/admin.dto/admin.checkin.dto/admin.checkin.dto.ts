@@ -1,8 +1,5 @@
 import { z } from 'zod';
 
-
-
-
 export const createSchoolCheckInAttendanceForStudentSchema = z.object({
     body: z.object({
         date: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
@@ -10,13 +7,20 @@ export const createSchoolCheckInAttendanceForStudentSchema = z.object({
 });
 export type CreateSchoolCheckInAttendanceForStudentSchema = z.infer<typeof createSchoolCheckInAttendanceForStudentSchema>;
 
+/*fetch SchoolCheckInAttendanceForStudent*/
+export const fetchSchoolCheckInAttendanceSchema = z.object({
+    query: z.object({
+        page: z.number().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
+    })
+});
+export type FetchSchoolCheckInAttendanceSchema = z.infer<typeof fetchSchoolCheckInAttendanceSchema>;
+
 /*mark check in true for a single studentid*/
 export const markSchoolCheckInAttendanceForStudentSchema = z.object({
     body: z
         .object({
-            remarks: z.string()
-        })
-        .optional(),
+            remarks: z.string().optional(),
+        }),
     params: z.object({
         studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     })

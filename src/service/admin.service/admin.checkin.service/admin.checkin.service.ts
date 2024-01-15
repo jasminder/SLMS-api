@@ -4,9 +4,9 @@ import { customError } from '../../../utils/customError';
 export async function createSchoolCheckInAttendanceForStudent(date: string) {
     const providedDate = new Date(date);
 
-    if (providedDate.getDay() !== 0) {
-        throw customError('Attendance can only be created for Sundays.', 'fail', 400, true);
-    }
+    // if (providedDate.getDay() !== 0) {
+    //     throw customError('Attendance can only be created for Sundays.', 'fail', 400, true);
+    // }
 
     if (!date) {
         throw customError('You need to provide a date to create School CheckIn Attendance record.', 'fail', 404, true);
@@ -30,13 +30,31 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         termId: currentTerm?.id
                     }
                 }
+            },
+            include: {
+                studentClassAssignment: true,
+                personalDetails: true
             }
         });
+
+        const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
+
+        if (studentsWithoutAssignment.length > 0) {
+            console.log(
+                'Students without assignments:',
+                studentsWithoutAssignment.map((student) => student.id)
+            );
+            const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
+            throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
+        }
 
         // Check if attendance records already exist for the specified date
         const existingRecords = await db.schoolCheckInAttendance.findMany({
             where: {
-                date: new Date(date).toISOString().split('T')[0]
+                date: {
+                    gte: new Date(date),
+                    lte: new Date(date)
+                }
             }
         });
 
@@ -60,7 +78,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
         }
 
         // Create default ClassAttendance records using Prisma
-        const currentDate = new Date(date).toISOString().split('T')[0];
+        // const currentDate = new Date(date).toISOString().split('T')[0];
 
         const studentClassAssignments = await db.studentClassAssignment.findMany({
             where: {
@@ -72,10 +90,11 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
             await db.classAttendance.create({
                 data: {
                     studentClassAssignmentId: studentClassAssignment.id,
-                    date: currentDate,
+                    date: new Date(),
                     attendanceStatus: 'ABSENT'
                 }
             });
+            console.log(studentClassAssignment.id, date);
         }
 
         return attendanceRecords;
@@ -84,16 +103,58 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
     return transaction;
 }
 
+/*fetch all freshly created schoolCheckInAttendance */
+export async function fetchSchoolCheckInAttendance() {
+    // Calculate today's date as a string in ISO format (YYYY-MM-DD)
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    const records = await db.schoolCheckInAttendance.findMany({
+        where: {
+            isMarked: false,
+            checkedIn: false
+        },
+
+        orderBy: {
+            student: {
+                personalDetails: {
+                    firstName: 'asc' // 'asc' for ascending order
+                }
+            }
+        },
+        include: {
+            student: {
+                include: {
+                    studentClassAssignment: {
+                        include: {
+                            section: true,
+                            termSubjectLevel: true
+                        }
+                    },
+                    personalDetails: {
+                        select: {
+                            firstName: true,
+                            lastName: true,
+                            email: true
+                        }
+                    }
+                }
+            } // Include the student details
+        } // You can order by date or any other field
+    });
+
+    return records;
+}
+
 /*mark check in true for a single studentid*/
 export async function markSchoolCheckInAttendanceForStudent(studentId: string, remarks?: string) {
-    const currentDate = new Date().toISOString().split('T')[0]; // Get today's date in "YYYY-MM-DD" format
+    // const currentDate = new Date().toISOString().split('T')[0]; // Get today's date in "YYYY-MM-DD" format
 
     // Find the SchoolCheckInAttendance record for the specified student and date
     const attendanceRecord = await db.schoolCheckInAttendance.findFirst({
         where: {
             studentId: +studentId,
-            date: currentDate,
-            checkedIn: false
+            checkedIn: false,
+            isMarked: false
         }
     });
 
@@ -120,6 +181,68 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
     });
 
     return updatedAttendanceRecord;
+}
+
+// search student for the admin to check in
+export async function searchSchoolCheckInAttendance(search = '', page: number, subjectOption = '') {
+    const currentDate = new Date().toISOString().split('T')[0];
+    const take = 10;
+    const pageNum: number = page ?? 0;
+    const skip = pageNum * take;
+
+    // Use Prisma to fetch SchoolCheckInAttendance records with pagination and search criteria
+    const todaySchoolCheckInAttendance = await db.schoolCheckInAttendance.findMany({
+        skip,
+        take,
+        orderBy: {
+            date: 'desc'
+        },
+        where: {
+            date: currentDate,
+            isMarked: false,
+            checkedIn: false,
+            OR: [
+                {
+                    student: {
+                        OR: [
+                            {
+                                personalDetails: {
+                                    OR: [
+                                        { firstName: { contains: search, mode: 'insensitive' } },
+                                        { lastName: { contains: search, mode: 'insensitive' } },
+                                        { email: { contains: search, mode: 'insensitive' } },
+                                        { contact: { contains: search, mode: 'insensitive' } },
+                                        { postcode: { contains: search, mode: 'insensitive' } }
+                                    ]
+                                }
+                            },
+                            {
+                                parentsDetails: {
+                                    OR: [
+                                        { fatherName: { contains: search, mode: 'insensitive' } },
+                                        { motherName: { contains: search, mode: 'insensitive' } },
+                                        { parentEmail: { contains: search, mode: 'insensitive' } },
+                                        { parentContact: { contains: search, mode: 'insensitive' } }
+                                    ]
+                                }
+                            },
+                            {
+                                studentClassAssignment: {
+                                    some: {
+                                        OR: [
+                                            // Add your criteria for StudentClassAssignment search here
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    });
+
+    return { todaySchoolCheckInAttendance };
 }
 
 /* NOT TO BE USED*/
@@ -161,7 +284,7 @@ export async function markStudentAsNotCheckedIn(studentId: string) {
         where: {
             studentId: +studentId,
             checkedIn: false,
-            date: currentDate
+            isMarked: false
         }
     });
 
@@ -193,8 +316,8 @@ export async function markCheckInTrueForSelectedStudents(studentIds: string[]) {
             studentId: {
                 in: numericStudentIds
             },
-            date: currentDate,
-            checkedIn: false
+            checkedIn: false,
+            isMarked: false
         }
     });
 
@@ -226,7 +349,7 @@ export async function markCheckInFalseForSelectedStudents(studentIds: string[]) 
             studentId: {
                 in: numericStudentIds
             },
-            date: currentDate,
+            isMarked: false,
             checkedIn: false
         }
     });
@@ -240,7 +363,7 @@ export async function markCheckInFalseForSelectedStudents(studentIds: string[]) 
                 },
                 data: {
                     checkedIn: false,
-                    isMarked: false
+                    isMarked: true
                 }
             });
         })

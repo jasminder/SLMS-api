@@ -226,10 +226,10 @@ model StudentClassAssignment {
   isCurrentlyAssigned Boolean           @default(true)
   changeDate          DateTime          @default(now())
   note                String? // Optional field for notes
-  enrollment          Enrollment        @relation(fields: [enrollmentId], references: [id])
-  student             Student           @relation(fields: [studentId], references: [id])
-  termSubjectLevel    TermSubjectLevel  @relation(fields: [termSubjectLevelId], references: [id])
-  section             Section           @relation(fields: [sectionId], references: [id])
+  enrollment          Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  student             Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  termSubjectLevel    TermSubjectLevel  @relation(fields: [termSubjectLevelId], references: [id], onDelete: Cascade)
+  section             Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   classAttendance     ClassAttendance[]
 
   @@unique([studentId, termSubjectLevelId, isCurrentlyAssigned, sectionId])
@@ -533,9 +533,9 @@ model User {
   adminId         Int?     @unique
   teacherId       Int?     @unique
   studentId       Int?     @unique
-  admin           Admin?   @relation(fields: [adminId], references: [id])
-  teacher         Teacher? @relation(fields: [teacherId], references: [id])
-  student         Student? @relation(fields: [studentId], references: [id])
+  admin           Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  teacher         Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student         Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   isActive        Boolean  @default(true)
@@ -553,7 +553,7 @@ model SchoolCheckInAttendance {
   checkOutTime DateTime?
   remarks      String? // Optional field for notes
 
-  student         Student          @relation(fields: [studentId], references: [id])
+  student         Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
   classAttendance ClassAttendance?
 
   @@unique([studentId, date]) // Ensuring uniqueness for check-in entry per student per day
@@ -565,8 +565,9 @@ model ClassAttendance {
   date                     DateTime // The date of the class
   attendanceStatus         AttendanceStatus         @default(ABSENT) // Enum for presence, absence, etc.
   remarks                  String?                  @default("Absent-not checked in") // Optional field for any notes
-  studentClassAssignment   StudentClassAssignment   @relation(fields: [studentClassAssignmentId], references: [id])
-  schoolCheckInAttendance  SchoolCheckInAttendance? @relation(fields: [studentClassAssignmentId, date], references: [studentId, date])
+  schoolCheckInAttendance  SchoolCheckInAttendance? @relation(fields: [schoolCheckInAttendanceId], references: [id])
+  studentClassAssignment   StudentClassAssignment   @relation(fields: [studentClassAssignmentId], references: [id], onDelete: Cascade)
+  schoolCheckInAttendanceId Int? @unique
 
   @@unique([studentClassAssignmentId, date]) // Ensuring uniqueness for attendance entry per class per day
 }
@@ -582,6 +583,6 @@ model SkipReport {
   // Other fields as needed
 
   // Define relationships with Teacher and Student models
-  teacher Teacher @relation(fields: [teacherId], references: [id])
-  student Student @relation(fields: [studentId], references: [id])
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }

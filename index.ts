@@ -26,6 +26,7 @@ import teacherRoute from './src/route/teacher.route/teacher.dashboard.route/teac
 import adminCheckinRoute from './src/route/admin.route/admin.checkin.route/admin.checkin.route';
 import adminCheckoutRoute from './src/route/admin.route/admin.checkout.route/admin.checkout.route';
 import adminAttendanceRoute from './src/route/admin.route/admin.attendance.route/admin.attendance.route';
+import teacherAttendanceRoute from './src/route/teacher.route/teacher.attendance.route/teacher.attendance.route';
 
 const app = express();
 app.use(cookieParser());
@@ -77,6 +78,7 @@ app.use('/api/v1/admin/applicant', adminEnrollmentRoute);
 app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);
 app.use('/api/v1/admin/attendance/checkout', adminCheckoutRoute);
 app.use('/api/v1/admin/attendance/skip-reports', adminAttendanceRoute);
+app.use('/api/v1/teacher/attendance', teacherAttendanceRoute);
 
 app.use('/api/v1/teacher', teacherRoute);
 

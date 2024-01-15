@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import {
     createSchoolCheckInAttendanceForStudent,
+    fetchSchoolCheckInAttendance,
     markCheckInFalseForSelectedStudents,
     markCheckInTrueForSelectedStudents,
     markSchoolCheckInAttendanceForStudent,
@@ -8,19 +9,22 @@ import {
 } from '../../../service/admin.service/admin.checkin.service/admin.checkin.service';
 import {
     CreateSchoolCheckInAttendanceForStudentSchema,
-
+    FetchSchoolCheckInAttendanceSchema,
     MarkCheckInFalseForSelectedStudentsSchema,
-
     MarkCheckInTrueForSelectedStudentsSchema,
-
     MarkSchoolCheckInAttendanceForStudentSchema,
     MarkStudentAsNotCheckedInSchema
 } from '../../../schema/admin.dto/admin.checkin.dto/admin.checkin.dto';
 
 export const createSchoolCheckInAttendanceForStudentHandler = async (req: Request<{}, {}, CreateSchoolCheckInAttendanceForStudentSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { date } = req.body;
+
     const schoolCheckInAttendance = await createSchoolCheckInAttendanceForStudent(date);
     res.status(200).json(schoolCheckInAttendance);
+};
+export const fetchSchoolCheckInAttendanceHandler = async (req: Request<{}, {}, {}, {}>, res: Response, next: NextFunction) => {
+    const schoolCheckInAttendanceData = await fetchSchoolCheckInAttendance();
+    res.status(200).json(schoolCheckInAttendanceData);
 };
 /*mark check in true for a single studentid*/
 export const markSchoolCheckInAttendanceForStudentHandler = async (
@@ -32,6 +36,9 @@ export const markSchoolCheckInAttendanceForStudentHandler = async (
     const { studentId } = req.params;
     if (remarks) {
         const markSchoolCheckInAttendance = await markSchoolCheckInAttendanceForStudent(studentId, remarks);
+        res.status(200).json(markSchoolCheckInAttendance);
+    } else {
+        const markSchoolCheckInAttendance = await markSchoolCheckInAttendanceForStudent(studentId);
         res.status(200).json(markSchoolCheckInAttendance);
     }
 };

@@ -12,7 +12,7 @@ const teacherAttendanceRoute = express.Router();
 teacherAttendanceRoute.route('/fetch-checkedin-students-for-attendance/:termSubjectLevelId/:sectionName').post( validate(fetchCheckedInStudentsWithAttendanceSchema),asyncErrorHandler(fetchCheckedInStudentsWithAttendanceHandler));
 
 /*mark presenttrue for a single studentid*/
-teacherAttendanceRoute.route('/ mark-single-student-as-present/:studentId/:studentClassAssignmentId').patch(validate(markStudentAsPresentSchema), asyncErrorHandler(markStudentAsPresentHandler));
+teacherAttendanceRoute.route('/mark-single-student-as-present/:studentId/:studentClassAssignmentId').patch(validate(markStudentAsPresentSchema), asyncErrorHandler(markStudentAsPresentHandler));
 
 /* create student skip report*/
 teacherAttendanceRoute.route('/create-skip-report-for-student/:studentId/:teacherId').post(validate(createSkipReportSchema), asyncErrorHandler(createSkipReportHandler));
