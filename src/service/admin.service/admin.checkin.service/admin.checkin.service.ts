@@ -198,7 +198,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
 
                 // If a record exists, update it, otherwise create a new one
                 if (existingClassAttendance) {
-
                     await db.classAttendance.update({
                         where: {
                             id: existingClassAttendance.id
@@ -209,7 +208,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         }
                     });
                 } else {
-
                     const newClasses = await db.classAttendance.create({
                         data: {
                             studentClassAssignmentId: assignment.id,
@@ -219,7 +217,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                             // other fields if necessary
                         }
                     });
-
                 }
             }
         }
@@ -273,8 +270,8 @@ export async function fetchSchoolCheckInAttendance() {
                         }
                     }
                 }
-            } // Include the student details
-        } // You can order by date or any other field
+            }
+        }
     });
 
     return records;

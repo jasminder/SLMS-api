@@ -576,13 +576,13 @@ model SkipReport {
   id                  Int      @id @default(autoincrement())
   studentId           Int
   teacherId           Int
+  adminId             Int?
   date                DateTime
   reason              String
   isClosed            Boolean  @default(false)
-  adminClosingRemarks String?
-  // Other fields as needed
+  adminClosingRemarks String?  @default("Admin closed report")
+  className           String
 
-  // Define relationships with Teacher and Student models
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }

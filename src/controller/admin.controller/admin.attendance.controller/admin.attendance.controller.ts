@@ -13,8 +13,8 @@ export const findSkipReportsForTodayHandler = async (req: Request<{}, {}, {}, {}
 
 /*close skip report if the the student has skipped a class */
 export const closeSkipReportTodayHandler = async (req: Request<CloseSkipReportTodaySchema['params'], {}, CloseSkipReportTodaySchema['body'], {}>, res: Response, next: NextFunction) => {
-    const { skipReportId } = req.params;
-    const { closingRemark } = req.body;
-    const skipReport = await closeSkipReportToday(skipReportId,closingRemark);
+    const { skipReportId ,  adminId} = req.params;
+    const { adminClosingRemarks } = req.body;
+    const skipReport = await closeSkipReportToday(skipReportId, adminId,adminClosingRemarks);
     res.status(200).json(skipReport);
 };

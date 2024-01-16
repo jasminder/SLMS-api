@@ -24,7 +24,8 @@ export const createSkipReportSchema = z.object({
         teacherId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     }),
     body: z.object({
-        reason: z.string()
+        reason: z.string(),
+        className: z.string()
     })
 });
 export type CreateSkipReportSchema = z.infer<typeof createSkipReportSchema>;

@@ -4,17 +4,32 @@ import { customError } from '../../../utils/customError';
 // Fetch all students who are checked in for the current day for checkingout at the end of school day
 export async function fetchCheckedInStudentsForCheckout() {
     const currentDate = new Date().toISOString().split('T')[0]; // Get the date in "YYYY-MM-DD" format
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
 
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     const checkedInStudents = await db.schoolCheckInAttendance.findMany({
         where: {
-            date: currentDate,
+            date: {
+                gte: startDate,
+                lte: endDate
+            },
             checkedIn: true,
             isMarked: true
+        },
+        orderBy: {
+            student: {
+                personalDetails: {
+                    firstName: 'asc' // 'asc' for ascending order
+                }
+            }
         },
         include: {
             student: true // Include the student details
         }
     });
+    console.log(checkedInStudents)
 
     return checkedInStudents;
 }
@@ -56,13 +71,21 @@ export async function fetchCheckedInStudentsForCheckout() {
 
 // Function to mark a student as checked out in SchoolCheckInAttendance records
 export async function markStudentAsCheckedOut(studentId: string) {
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     const currentDate = new Date().toISOString().split('T')[0]; // Get today's date in "YYYY-MM-DD" format
 
     // Find the SchoolCheckInAttendance record for the student and current date
     const attendanceRecord = await db.schoolCheckInAttendance.findFirst({
         where: {
             studentId: +studentId,
-            date: currentDate,
+            date: {
+                gte: startDate,
+                lte: endDate
+            },
             isMarked: true,
             checkedIn: true // Ensure that the student is checked in
         }
@@ -94,14 +117,21 @@ export async function markStudentAsCheckedOut(studentId: string) {
 export async function markSelectedStudentsAsCheckedOut(studentIds: string[]) {
     const currentDate = new Date().toISOString().split('T')[0]; // Get today's date in "YYYY-MM-DD" format
     const numericStudentIds = studentIds.map(Number);
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
 
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     // Find the SchoolCheckInAttendance records for the specified student IDs and current date
     const attendanceRecords = await db.schoolCheckInAttendance.findMany({
         where: {
             studentId: {
                 in: numericStudentIds
             },
-            date: currentDate,
+            date: {
+                gte: startDate,
+                lte: endDate
+            },
             checkedIn: true, // Ensure that the students are checked in
             isMarked: true
         }

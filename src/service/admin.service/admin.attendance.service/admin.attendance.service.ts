@@ -18,8 +18,16 @@ export async function findSkipReportsForToday() {
             isClosed: false
         },
         include: {
-            student: true, // Include student details
-            teacher: true
+            student: {
+                include: {
+                    personalDetails: true
+                }
+            }, // Include student details
+            teacher: {
+                include: {
+                    teacherPersonalDetails: true
+                }
+            }
             // Include teacher details
         }
     });
@@ -27,8 +35,8 @@ export async function findSkipReportsForToday() {
 }
 
 /*close skip report if the the student has skipped a class */
-export async function closeSkipReportToday(skipReportId: string, closingRemark: string) {
-    if (!closingRemark) {
+export async function closeSkipReportToday(skipReportId: string, adminId: string, adminClosingRemarks: string) {
+    if (!adminClosingRemarks) {
         throw customError('Closing remark is required to close report.', 'fail', 404, true);
     }
     const updatedSkipReport = await db.skipReport.update({
@@ -37,7 +45,8 @@ export async function closeSkipReportToday(skipReportId: string, closingRemark: 
         },
         data: {
             isClosed: true, // Set the 'isClosed' field to true
-            adminClosingRemarks: closingRemark // Set the closing remark
+            adminClosingRemarks: adminClosingRemarks,
+            adminId: +adminId // Set the closing remark
         }
     });
 

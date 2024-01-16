@@ -8,7 +8,7 @@ import { markSelectedStudentsAsCheckedOutSchema, markStudentAsCheckedOutchema } 
 const adminCheckoutRoute = express.Router();
 
 // Fetch all students who are checked in for the current day for checkingout at the end of school day
-adminCheckoutRoute.route('/fetch-checkedin-students-for-checkout').post( asyncErrorHandler(fetchCheckedInStudentsForCheckoutHandler));
+adminCheckoutRoute.route('/fetch-checkedin-students-for-checkout').get( asyncErrorHandler(fetchCheckedInStudentsForCheckoutHandler));
 
 // Function to mark a student as checked out in SchoolCheckInAttendance records
 adminCheckoutRoute.route('/mark-selected-students-as-checkedout/:studentId').patch(validate(markStudentAsCheckedOutchema), asyncErrorHandler(markStudentAsCheckedOutHandler));

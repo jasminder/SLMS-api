@@ -11,7 +11,6 @@ const adminAttendanceRoute = express.Router();
 adminAttendanceRoute.route('/find-skip-reports-for-today').get(asyncErrorHandler(findSkipReportsForTodayHandler));
 
 // Function to mark a student as checked out in SchoolCheckInAttendance records
-adminAttendanceRoute.route('/close-skip-report-today/:skipReportId').patch(validate(closeSkipReportTodaySchema), asyncErrorHandler(closeSkipReportTodayHandler));
-
+adminAttendanceRoute.route('/close-skip-report-today/:skipReportId/:adminId').patch(validate(closeSkipReportTodaySchema), asyncErrorHandler(closeSkipReportTodayHandler));
 
 export default adminAttendanceRoute;

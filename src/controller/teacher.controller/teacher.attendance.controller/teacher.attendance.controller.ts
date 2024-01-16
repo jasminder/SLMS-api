@@ -18,7 +18,8 @@ export const markStudentAsPresentHandler = async (req: Request<MarkStudentAsPres
 /* create student skip report*/
 export const createSkipReportHandler = async (req: Request<CreateSkipReportSchema['params'], {}, CreateSkipReportSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { teacherId, studentId } = req.params;
-    const { reason } = req.body;
-    const SkipReport = await createSkipReport(studentId, teacherId, reason);
+    const { reason, className } = req.body;
+
+    const SkipReport = await createSkipReport(studentId, teacherId, reason, className);
     res.status(200).json(SkipReport);
 };
