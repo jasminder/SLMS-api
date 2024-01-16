@@ -1,16 +1,122 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 
+// export async function createSchoolCheckInAttendanceForStudent1(date: string) {
+//     const startDate = new Date(date);
+
+//     // if (startDate.getDay() !== 0) {
+//     //     throw customError('Attendance can only be created for Sundays.', 'fail', 400, true);
+//     // }
+
+//     if (!date) {
+//         throw customError('You need to provide a date to create School CheckIn Attendance record.', 'fail', 404, true);
+//     }
+
+//     // Create a Prisma transaction
+//     const transaction = await db.$transaction(async (db) => {
+//         const currentTerm = await db.term.findFirst({
+//             where: {
+//                 currentTerm: true
+//             }
+//         });
+
+//         // Find all active students in the current term
+//         const activeStudents = await db.student.findMany({
+//             where: {
+//                 role: 'STUDENT',
+//                 isActive: true,
+//                 studentTermFee: {
+//                     some: {
+//                         termId: currentTerm?.id
+//                     }
+//                 }
+//             },
+//             include: {
+//                 studentClassAssignment: true,
+//                 personalDetails: true
+//             }
+//         });
+
+//         const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
+
+//         if (studentsWithoutAssignment.length > 0) {
+//             console.log(
+//                 'Students without assignments:',
+//                 studentsWithoutAssignment.map((student) => student.id)
+//             );
+//             const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
+//             throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
+//         }
+//         const startDate = new Date(date);
+//         startDate.setHours(0, 0, 0, 0); // Set time to start of the day
+
+//         const endDate = new Date(date);
+//         endDate.setHours(23, 59, 59, 999);
+
+//         // Check if attendance records already exist for the specified date
+//         const existingRecords = await db.schoolCheckInAttendance.findMany({
+//             where: {
+//                 date: {
+//                     gte: startDate,
+//                     lte: endDate
+//                 }
+//             }
+//         });
+
+//         if (existingRecords.length > 0) {
+//             throw customError('Attendance already created for today.', 'fail', 400, true);
+//         }
+
+//         // Create SchoolCheckInAttendance records for all active students
+//         const attendanceRecords = [];
+
+//         for (const student of activeStudents) {
+//             const newAttendanceRecord = await db.schoolCheckInAttendance.create({
+//                 data: {
+//                     studentId: student.id,
+//                     date: new Date(date),
+//                     checkInTime: new Date()
+//                 }
+//             });
+
+//             attendanceRecords.push(newAttendanceRecord);
+//         }
+
+//         // Create default ClassAttendance records using Prisma
+//         // const currentDate = new Date(date).toISOString().split('T')[0];
+
+//         const studentClassAssignments = await db.studentClassAssignment.findMany({
+//             where: {
+//                 isCurrentlyAssigned: true
+//             }
+//         });
+
+//         for (const studentClassAssignment of studentClassAssignments) {
+//             // await db.classAttendance.create({
+//             //     data: {
+//             //         studentClassAssignmentId: studentClassAssignment.id,
+//             //         date: new Date(),
+//             //         attendanceStatus: 'ABSENT'
+//             //     }
+//             // });
+//         }
+
+//         return attendanceRecords;
+//     });
+
+//     return transaction;
+// }
+
 export async function createSchoolCheckInAttendanceForStudent(date: string) {
-    const providedDate = new Date(date);
-
-    // if (providedDate.getDay() !== 0) {
-    //     throw customError('Attendance can only be created for Sundays.', 'fail', 400, true);
-    // }
-
     if (!date) {
         throw customError('You need to provide a date to create School CheckIn Attendance record.', 'fail', 404, true);
     }
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
 
     // Create a Prisma transaction
     const transaction = await db.$transaction(async (db) => {
@@ -40,20 +146,15 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
         const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
 
         if (studentsWithoutAssignment.length > 0) {
-            console.log(
-                'Students without assignments:',
-                studentsWithoutAssignment.map((student) => student.id)
-            );
             const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
             throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
         }
-
         // Check if attendance records already exist for the specified date
         const existingRecords = await db.schoolCheckInAttendance.findMany({
             where: {
                 date: {
-                    gte: new Date(date),
-                    lte: new Date(date)
+                    gte: startDate,
+                    lte: endDate
                 }
             }
         });
@@ -64,39 +165,64 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
 
         // Create SchoolCheckInAttendance records for all active students
         const attendanceRecords = [];
-
         for (const student of activeStudents) {
             const newAttendanceRecord = await db.schoolCheckInAttendance.create({
                 data: {
                     studentId: student.id,
                     date: new Date(date),
                     checkInTime: new Date()
+                    // other fields if necessary
                 }
             });
 
             attendanceRecords.push(newAttendanceRecord);
-        }
 
-        // Create default ClassAttendance records using Prisma
-        // const currentDate = new Date(date).toISOString().split('T')[0];
-
-        const studentClassAssignments = await db.studentClassAssignment.findMany({
-            where: {
-                isCurrentlyAssigned: true
-            }
-        });
-
-        for (const studentClassAssignment of studentClassAssignments) {
-            await db.classAttendance.create({
-                data: {
-                    studentClassAssignmentId: studentClassAssignment.id,
-                    date: new Date(),
-                    attendanceStatus: 'ABSENT'
+            // Find all current studentClassAssignments for the student
+            const studentClassAssignments = await db.studentClassAssignment.findMany({
+                where: {
+                    studentId: student.id,
+                    isCurrentlyAssigned: true
                 }
             });
-            console.log(studentClassAssignment.id, date);
-        }
 
+            for (const assignment of studentClassAssignments) {
+                // Check if a ClassAttendance record already exists for the assignment and date
+                const existingClassAttendance = await db.classAttendance.findUnique({
+                    where: {
+                        studentClassAssignmentId_date: {
+                            studentClassAssignmentId: assignment.id,
+                            date: startDate
+                        }
+                    }
+                });
+
+                // If a record exists, update it, otherwise create a new one
+                if (existingClassAttendance) {
+
+                    await db.classAttendance.update({
+                        where: {
+                            id: existingClassAttendance.id
+                        },
+                        data: {
+                            schoolCheckInAttendanceId: newAttendanceRecord.id
+                            // update other fields if necessary
+                        }
+                    });
+                } else {
+
+                    const newClasses = await db.classAttendance.create({
+                        data: {
+                            studentClassAssignmentId: assignment.id,
+                            date: startDate,
+                            schoolCheckInAttendanceId: newAttendanceRecord.id,
+                            attendanceStatus: 'ABSENT'
+                            // other fields if necessary
+                        }
+                    });
+
+                }
+            }
+        }
         return attendanceRecords;
     });
 
@@ -108,10 +234,19 @@ export async function fetchSchoolCheckInAttendance() {
     // Calculate today's date as a string in ISO format (YYYY-MM-DD)
     const currentDate = new Date().toISOString().split('T')[0];
 
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0); // Set time to start of the day
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     const records = await db.schoolCheckInAttendance.findMany({
         where: {
             isMarked: false,
-            checkedIn: false
+            checkedIn: false,
+            date: {
+                gte: startDate,
+                lte: endDate
+            }
         },
 
         orderBy: {
@@ -148,13 +283,21 @@ export async function fetchSchoolCheckInAttendance() {
 /*mark check in true for a single studentid*/
 export async function markSchoolCheckInAttendanceForStudent(studentId: string, remarks?: string) {
     // const currentDate = new Date().toISOString().split('T')[0]; // Get today's date in "YYYY-MM-DD" format
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0); // Set time to start of the day
 
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     // Find the SchoolCheckInAttendance record for the specified student and date
     const attendanceRecord = await db.schoolCheckInAttendance.findFirst({
         where: {
             studentId: +studentId,
             checkedIn: false,
-            isMarked: false
+            isMarked: false,
+            date: {
+                gte: startDate,
+                lte: endDate
+            }
         }
     });
 
@@ -185,11 +328,14 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
 
 // search student for the admin to check in
 export async function searchSchoolCheckInAttendance(search = '', page: number, subjectOption = '') {
-    const currentDate = new Date().toISOString().split('T')[0];
     const take = 10;
     const pageNum: number = page ?? 0;
     const skip = pageNum * take;
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0); // Set time to start of the day
 
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     // Use Prisma to fetch SchoolCheckInAttendance records with pagination and search criteria
     const todaySchoolCheckInAttendance = await db.schoolCheckInAttendance.findMany({
         skip,
@@ -198,7 +344,10 @@ export async function searchSchoolCheckInAttendance(search = '', page: number, s
             date: 'desc'
         },
         where: {
-            date: currentDate,
+            date: {
+                gte: startDate,
+                lte: endDate
+            },
             isMarked: false,
             checkedIn: false,
             OR: [

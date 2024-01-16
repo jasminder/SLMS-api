@@ -183,8 +183,5 @@ export async function fetchStudentsInSameClass(termSubjectLevelId: string, secti
         }
     });
 
-    console.log(classAssignments);
-
     return classAssignments;
 }
-

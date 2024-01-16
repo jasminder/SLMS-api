@@ -553,21 +553,21 @@ model SchoolCheckInAttendance {
   checkOutTime DateTime?
   remarks      String? // Optional field for notes
 
-  student         Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  classAttendance ClassAttendance?
+  student         Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classAttendance ClassAttendance[]
 
   @@unique([studentId, date]) // Ensuring uniqueness for check-in entry per student per day
 }
 
 model ClassAttendance {
-  id                       Int                      @id @default(autoincrement())
-  studentClassAssignmentId Int
-  date                     DateTime // The date of the class
-  attendanceStatus         AttendanceStatus         @default(ABSENT) // Enum for presence, absence, etc.
-  remarks                  String?                  @default("Absent-not checked in") // Optional field for any notes
-  schoolCheckInAttendance  SchoolCheckInAttendance? @relation(fields: [schoolCheckInAttendanceId], references: [id])
-  studentClassAssignment   StudentClassAssignment   @relation(fields: [studentClassAssignmentId], references: [id], onDelete: Cascade)
-  schoolCheckInAttendanceId Int? @unique
+  id                        Int                     @id @default(autoincrement())
+  studentClassAssignmentId  Int
+  schoolCheckInAttendanceId Int
+  date                      DateTime // The date of the class
+  attendanceStatus          AttendanceStatus        @default(ABSENT) // Enum for presence, absence, etc.
+  remarks                   String?                 @default("NA") // Optional field for any notes
+  schoolCheckInAttendance   SchoolCheckInAttendance @relation(fields: [schoolCheckInAttendanceId], references: [id])
+  studentClassAssignment    StudentClassAssignment  @relation(fields: [studentClassAssignmentId], references: [id], onDelete: Cascade)
 
   @@unique([studentClassAssignmentId, date]) // Ensuring uniqueness for attendance entry per class per day
 }

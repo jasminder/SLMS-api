@@ -43,7 +43,7 @@ export const loginUserHandler = async (req: Request<{}, {}, LoginUserUserSchema[
         secure: process.env.NODE_ENV != 'development', //https
         // signed:true,
         sameSite: 'strict', //cross-site cookie
-        maxAge: 1 * 24 * 60 * 60 * 1000 // this should match with the refresh token's expiry
+        maxAge: 72000 * 1000 // this should match with the refresh token's expiry
     });
     res.status(201).json({
         status: 'Success',

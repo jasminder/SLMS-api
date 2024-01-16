@@ -263,10 +263,10 @@ export async function loginUser(email: string, password: string) {
     });
 
     // Generate JWT tokens- access token
-    const accessToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.SECRET_STR!, { expiresIn: '10s' });
+    const accessToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.SECRET_STR!, { expiresIn: '600s' });
 
     // Generate JWT tokens- refresh token token
-    const refreshToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.REFRESH_SECRET_STR!, { expiresIn: '600s' });
+    const refreshToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.REFRESH_SECRET_STR!, { expiresIn: '72000s' });
 
     return { loggedInUser, accessToken, refreshToken };
 }

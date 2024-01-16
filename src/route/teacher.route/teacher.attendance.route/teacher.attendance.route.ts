@@ -9,7 +9,7 @@ const teacherAttendanceRoute = express.Router();
 
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
-teacherAttendanceRoute.route('/fetch-checkedin-students-for-attendance/:termSubjectLevelId/:sectionName').post( validate(fetchCheckedInStudentsWithAttendanceSchema),asyncErrorHandler(fetchCheckedInStudentsWithAttendanceHandler));
+teacherAttendanceRoute.route('/fetch-checkedin-students-for-attendance/:termSubjectLevelId/:sectionName').get( validate(fetchCheckedInStudentsWithAttendanceSchema),asyncErrorHandler(fetchCheckedInStudentsWithAttendanceHandler));
 
 /*mark presenttrue for a single studentid*/
 teacherAttendanceRoute.route('/mark-single-student-as-present/:studentId/:studentClassAssignmentId').patch(validate(markStudentAsPresentSchema), asyncErrorHandler(markStudentAsPresentHandler));

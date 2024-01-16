@@ -4,15 +4,23 @@ import { db } from '../../../utils/db.server';
 /*get skip report if the the student has skipped a class */
 export async function findSkipReportsForToday() {
     const currentDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     const skipReports = await db.skipReport.findMany({
         where: {
             date: {
-                equals: currentDate // Convert date to "YYYY-MM-DD" format and compare
-            }
+                gte: startDate,
+                lte: endDate
+            },
+            isClosed: false
         },
         include: {
             student: true, // Include student details
-            teacher: true // Include teacher details
+            teacher: true
+            // Include teacher details
         }
     });
     return skipReports;
