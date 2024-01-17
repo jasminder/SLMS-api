@@ -19,10 +19,16 @@ teacherRoute.route('/teacher-detail/:id').get(validate(findTeacherByIdSchema), p
 // find current term for assign classes to active teacher
 teacherRoute.route('/find-current-term-for-teacher').get(protectRoute, restrict('TEACHER'), asyncErrorHandler(findCurrentTermForTeacherHandler));
 /*find subject assigned teacher*/
-teacherRoute.route('/find-assigned-subjects-for-teacher/:id').get(validate(findTeacherByIdSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(findSubjectsAssignedForTeacherHandler));
+teacherRoute
+    .route('/find-assigned-subjects-for-teacher/:id')
+    .get(validate(findTeacherByIdSchema), protectRoute, restrict('TEACHER'), protectRoute, restrict('TEACHER'), asyncErrorHandler(findSubjectsAssignedForTeacherHandler));
 /*get all classes for teacher*/
-teacherRoute.route('/find-classes-assigned-for-teacher/:id').get(validate(findTeacherByIdSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(findAllClassesAssignedForTeacherHandler));
+teacherRoute
+    .route('/find-classes-assigned-for-teacher/:id')
+    .get(validate(findTeacherByIdSchema), protectRoute, restrict('TEACHER'), protectRoute, restrict('TEACHER'), asyncErrorHandler(findAllClassesAssignedForTeacherHandler));
 /*get all students in a classes for teacher*/
-teacherRoute.route('/find-students-in-class-for-teacher').get(validate(fetchStudentsInSameClassSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(fetchStudentsInSameClassHandler));
+teacherRoute
+    .route('/find-students-in-class-for-teacher')
+    .get(validate(fetchStudentsInSameClassSchema), protectRoute, restrict('TEACHER'), protectRoute, restrict('TEACHER'), asyncErrorHandler(fetchStudentsInSameClassHandler));
 
 export default teacherRoute;

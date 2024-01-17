@@ -25,23 +25,25 @@ import {
     updateStudentParentsDetailHandler,
     updateStudentPersonalDetailHandler
 } from '../../../../controller/admin.controller/admin.student.controller/admin.enrolled.student.controller/admin.enrolled.student.controller';
+import { protectRoute } from '../../../../middleware/protectRoutes';
+import { restrict } from '../../../../middleware/restrict';
 
 const adminEnrolledStudentRoute = express.Router();
 /*find all enrolled students*/
-adminEnrolledStudentRoute.route('/get-all-enrolled-students').get(validate(findAllEnrolledStudentsSchema), asyncErrorHandler(findAllEnrolledStudentsHandler));
+adminEnrolledStudentRoute.route('/get-all-enrolled-students').get(validate(findAllEnrolledStudentsSchema),protectRoute, restrict('ADMIN') ,asyncErrorHandler(findAllEnrolledStudentsHandler));
 
 /*search enrolled students*/
-adminEnrolledStudentRoute.route('/search-enrolled-students').get(validate(searchEnrolledStudentsSchema), asyncErrorHandler(searchEnrolledStudentsHandler));
+adminEnrolledStudentRoute.route('/search-enrolled-students').get(validate(searchEnrolledStudentsSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(searchEnrolledStudentsHandler));
 
-adminEnrolledStudentRoute.route('/enrolled-student-detail/:id').get(validate(findUniqueEnrolledStudentSchema), asyncErrorHandler(findEnrolledStudentByIdHandler));
-adminEnrolledStudentRoute.route('/update-personal-detail/:id').patch(validate(updateStudentPersonalDetailSchema), updateStudentPersonalDetailHandler);
-adminEnrolledStudentRoute.route('/update-parents-detail/:id').patch(validate(updateStudentParentsDetailSchema), updateStudentParentsDetailHandler);
-adminEnrolledStudentRoute.route('/update-health-detail/:id').patch(validate(updateStudentHealthDetailSchema), updateStudentHealthInformationHandler);
+adminEnrolledStudentRoute.route('/enrolled-student-detail/:id').get(validate(findUniqueEnrolledStudentSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(findEnrolledStudentByIdHandler));
+adminEnrolledStudentRoute.route('/update-personal-detail/:id').patch(validate(updateStudentPersonalDetailSchema),protectRoute, restrict('ADMIN'), updateStudentPersonalDetailHandler);
+adminEnrolledStudentRoute.route('/update-parents-detail/:id').patch(validate(updateStudentParentsDetailSchema),protectRoute, restrict('ADMIN'), updateStudentParentsDetailHandler);
+adminEnrolledStudentRoute.route('/update-health-detail/:id').patch(validate(updateStudentHealthDetailSchema),protectRoute, restrict('ADMIN'), updateStudentHealthInformationHandler);
 /*******************************************/
 /* find term to enroll */
-adminEnrolledStudentRoute.route('/term-to-enroll-student-enrolled').get(asyncErrorHandler(findTermToEnrollForStudentEnrolledHandler));
+adminEnrolledStudentRoute.route('/term-to-enroll-student-enrolled').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findTermToEnrollForStudentEnrolledHandler));
 /*find enrolled subject for applicants*/
-adminEnrolledStudentRoute.route('/find-enrolled-subjects-for-enrolled-student/:id').get(validate(findUniqueEnrolledStudentSchema), asyncErrorHandler(findEnrolledStudentEnrolledSubjectsHandler));
+adminEnrolledStudentRoute.route('/find-enrolled-subjects-for-enrolled-student/:id').get(protectRoute, restrict('ADMIN'),validate(findUniqueEnrolledStudentSchema), asyncErrorHandler(findEnrolledStudentEnrolledSubjectsHandler));
 
 /*******************************************/
 
