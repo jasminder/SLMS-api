@@ -27,6 +27,7 @@ import adminCheckinRoute from './src/route/admin.route/admin.checkin.route/admin
 import adminCheckoutRoute from './src/route/admin.route/admin.checkout.route/admin.checkout.route';
 import adminAttendanceRoute from './src/route/admin.route/admin.attendance.route/admin.attendance.route';
 import teacherAttendanceRoute from './src/route/teacher.route/teacher.attendance.route/teacher.attendance.route';
+import newadminApplicantRoute from './src/route/admin.route/admin.create.admin.route/admin.create.admin.route';
 
 const app = express();
 app.use(cookieParser());
@@ -64,6 +65,7 @@ app.get('/test', (req, res, next) => {
 app.get('/healthcheck', (req: Request, res: Response) => res.sendStatus(200));
 app.use('/api/v1/application', newApplicantRoute);
 app.use('/api/v1/application-teacher', newteacherApplicantRoute);
+app.use('/api/v1/application-admin', newadminApplicantRoute);
 app.use('/api/v1/admin/administration', adminAdministrationRoute);
 app.use('/api/v1/admin/administration/class', adminManageClassRoute);
 app.use('/api/v1/admin/administration/approve-teacher-application', adminTeacherApproveRoute);

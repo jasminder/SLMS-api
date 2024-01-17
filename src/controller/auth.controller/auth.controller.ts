@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { existingAuthUser, loginUser, signUpUser } from '../../service/auth.service/auth.service';
-import { LoginUserUserSchema, SignupUserSchema } from '../../schema/auth.dto/auth.dto';
+import { existingAuthUser, existingUserForgotPassword, existingUserForgotPasswordSendMailError, loginUser, signUpUser } from '../../service/auth.service/auth.service';
+import { ForgotPasswordSchema, LoginUserSchema, SignupUserSchema } from '../../schema/auth.dto/auth.dto';
 import { customError } from '../../utils/customError';
 import { DecodeToken } from '../../types/type';
+import { sendEmail } from '../../utils/email';
 
 export const signUpUserHandler = async (req: Request<{}, {}, SignupUserSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { confirmPassword, email, password } = req.body;
@@ -26,7 +28,7 @@ export const signUpUserHandler = async (req: Request<{}, {}, SignupUserSchema['b
         message: `user account for ${newUser.user.email} is created`
     });
 };
-export const loginUserHandler = async (req: Request<{}, {}, LoginUserUserSchema['body'], {}>, res: Response, next: NextFunction) => {
+export const loginUserHandler = async (req: Request<{}, {}, LoginUserSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
     const { accessToken, refreshToken, loggedInUser: user } = await loginUser(email, password);
     // res.cookie('refreshToken', refreshToken, {
@@ -106,4 +108,28 @@ export const refreshHandler = async (req: Request, res: Response, next: NextFunc
             message: `${existingUser.email} give access token since refresh token valid`
         });
     });
+};
+//************** Forgot Password **************
+export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordSchema['body'], {}>, res: Response, next: NextFunction) => {
+    // 1. Get the user's email from req.user.email
+    // 2. Create a random password reset token
+    const { email } = req.body;
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const existingUser = await existingUserForgotPassword(email, resetToken);
+
+    // 3. send email to user with the reset token and the reset URL or api? to reset password
+    const resetUrl = `${req.protocol}://${req.get('host')}/users/resetPassword/${resetToken}`;
+    const subject = `Reset your Password at Future APP`;
+    const text = ` We have received a request to reset password . Please visit ${resetUrl}  to complete your reset password`;
+    try {
+        await sendEmail({
+            email: existingUser.email,
+            subject,
+            text
+        });
+        res.status(201).json({ status: 'success', message: 'Reset Password link send' });
+    } catch (err) {
+        existingUserForgotPasswordSendMailError(email);
+        throw customError('Connot reset password. try again later.', 'fail', 404, true);
+    }
 };

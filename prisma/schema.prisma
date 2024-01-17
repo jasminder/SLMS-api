@@ -526,20 +526,22 @@ model AdminOtherInformation {
 }
 
 model User {
-  id              Int      @id @default(autoincrement())
-  email           String   @unique
-  password        String
-  role            Role
-  adminId         Int?     @unique
-  teacherId       Int?     @unique
-  studentId       Int?     @unique
-  admin           Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  teacher         Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  student         Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  isActive        Boolean  @default(true)
-  isEmailVerified Boolean  @default(false)
+  id                          Int      @id @default(autoincrement())
+  email                       String   @unique
+  password                    String
+  role                        Role
+  adminId                     Int?     @unique
+  teacherId                   Int?     @unique
+  studentId                   Int?     @unique
+  admin                       Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  teacher                     Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student                     Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  isActive                    Boolean  @default(true)
+  isEmailVerified             Boolean  @default(false)
+  resetPasswordToken          String?
+  resetPasswordTokenExpiresAt Int?
 }
 
 model SchoolCheckInAttendance {

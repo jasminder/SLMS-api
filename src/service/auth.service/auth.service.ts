@@ -1,6 +1,7 @@
 import { Role } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 import { db } from '../../utils/db.server';
 import { customError } from '../../utils/customError';
@@ -273,7 +274,6 @@ export async function loginUser(email: string, password: string) {
 
 /* get unique authenticated user id*/
 export const existingAuthUser = async (email: string, role: string) => {
-    console.log(email, role);
     const existingUser = await db.user.findUnique({
         where: { email: email.toLowerCase() },
         select: {
@@ -318,5 +318,67 @@ export const existingAuthUser = async (email: string, role: string) => {
     if (!existingUser) {
         throw customError('TokenExpiredError', 'fail', 404, true);
     }
+    return existingUser;
+};
+
+//************** Forgot Password **************
+
+export const existingUserForgotPassword = async (email: string, resetToken: string) => {
+    const existingUser = await db.user.findUnique({
+        where: { email: email.toLowerCase() },
+        select: {
+            id: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+            isActive: true,
+            isEmailVerified: true,
+            resetPasswordToken: true,
+            resetPasswordTokenExpiresAt: true
+            // Add other fields as needed but exclude 'password'
+        }
+    });
+    if (!existingUser) {
+        throw customError('There is no such user with this email', 'fail', 404, true);
+    }
+    const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const resetPasswordTokenExpiresAt = Date.now() + 10 * 60 * 1000;
+    await db.user.update({
+        where: { id: existingUser.id },
+        data: {
+            resetPasswordToken: resetPasswordToken,
+            resetPasswordTokenExpiresAt: resetPasswordTokenExpiresAt
+        }
+    });
+    return existingUser;
+};
+
+export const existingUserForgotPasswordSendMailError = async (email: string) => {
+    const existingUser = await db.user.findUnique({
+        where: { email: email.toLowerCase() },
+        select: {
+            id: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+            isActive: true,
+            isEmailVerified: true,
+            resetPasswordToken: true,
+            resetPasswordTokenExpiresAt: true
+            // Add other fields as needed but exclude 'password'
+        }
+    });
+    if (!existingUser) {
+        throw customError('There is no such user with this email', 'fail', 404, true);
+    }
+    await db.user.update({
+        where: { id: existingUser.id },
+        data: {
+            resetPasswordToken: null,
+            resetPasswordTokenExpiresAt: null
+        }
+    });
     return existingUser;
 };

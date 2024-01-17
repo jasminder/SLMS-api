@@ -1,6 +1,7 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import { CreateNewTermSetupSchema } from '../src/schema/admin.dto/admin.administration.dto/admin.administration.dto';
 import { TeacherApplicantSchema } from '../src/schema/teacher.applicant.dto/teacher.applicant.dto';
+import { AdminApplicantSchema } from '../src/schema/admin.dto/admin.create.admin.dto/admin.create.admin.dto';
 
 const prisma = new PrismaClient();
 
@@ -253,7 +254,7 @@ async function seedTeachers() {
             teacher;
 
         try {
-            const createdTeacher = await prisma.teacher.create({
+            const createdAdmin = await prisma.teacher.create({
                 data: {
                     teacherPersonalDetails: {
                         create: teacherPersonalDetails
@@ -281,7 +282,7 @@ async function seedTeachers() {
                     }
                 }
             });
-            console.log(`Created teacher with id: ${createdTeacher.id}`);
+            console.log(`Created teacher with id: ${createdAdmin.id}`);
         } catch (error) {
             console.error('Error creating teacher:', error);
         }
@@ -289,7 +290,94 @@ async function seedTeachers() {
 
     console.log('Seeding teachers finished.');
 }
-/*Teacher*/
+/*Admin*/
+
+const adminSeedData: AdminApplicantSchema['body'][] = [];
+
+for (let i = 1; i <= 2; i++) {
+    adminSeedData.push({
+        adminPersonalDetails: {
+            firstName: `TeacherFirst${i}`,
+            lastName: `Last${i}`,
+            DOB: new Date('1980-01-01').toISOString(),
+            gender: i % 2 === 0 ? 'male' : 'female',
+            email: `teacher${i}@domain.com`,
+            contact: `0456789${i}`,
+            address: `123 Main St ${i}`,
+            suburb: `Suburb${i}`,
+            state: 'SomeState',
+            country: 'SomeCountry',
+            postcode: `123${i}`,
+            image: 'path/to/image.jpg'
+        },
+        adminEmergencyContact: {
+            contactPerson: `EmergencyContact${i}`,
+            contactNumber: `0456789${i + 10}`,
+            relationship: 'Relative'
+        },
+        adminWWCHealthInformation: {
+            medicalCondition: 'None',
+            medicareNumber: `Medicare${i}`,
+            childrenCheckCardNumber: `WWC${i}`,
+            workingWithChildrenCheckExpiry: new Date('2030-01-01').toISOString(),
+            workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
+        },
+        adminWorkRights: {
+            immigrationStatus: i % 2 === 0 ? 'Citizen' : 'Visa Holder',
+            workRights: 'yes'
+        },
+        adminBankDetails: {
+            ABN: `ABN${i}`,
+            accountNumber: `Account${i}`,
+            bankAccountName: `BankName${i}`,
+            BSB: `BSB${i}`
+        },
+        adminOtherInformation: {
+            otherInfo: `Other Info ${i}`
+        }
+    });
+}
+
+async function seedAdmins() {
+    console.log('Start seeding Admin...');
+    for (const admin of adminSeedData) {
+        // Destructure your admin data here
+        const { adminPersonalDetails, adminEmergencyContact, adminWWCHealthInformation, adminWorkRights, adminBankDetails, adminOtherInformation } = admin;
+
+        try {
+            const createdAdmin = await prisma.admin.create({
+                data: {
+                    adminPersonalDetails: {
+                        create: adminPersonalDetails
+                    },
+                    adminEmergencyContact: {
+                        create: adminEmergencyContact
+                    },
+                    adminWWCHealthInformation: {
+                        create: adminWWCHealthInformation
+                    },
+                    adminWorkRights: {
+                        create: {
+                            immigrationStatus: adminWorkRights.immigrationStatus,
+                            workRights: true
+                        }
+                    },
+                    adminBankDetails: {
+                        create: adminBankDetails
+                    },
+                    adminOtherInformation: {
+                        create: adminOtherInformation
+                    }
+                }
+            });
+            console.log(`Created admin with id: ${createdAdmin.id}`);
+        } catch (error) {
+            console.error('Error creating admin:', error);
+        }
+    }
+
+    console.log('Seeding admins finished.');
+}
 
 /* Create terms*/
 
@@ -419,6 +507,7 @@ async function seedTeachers() {
 async function main() {
     await seedStudents();
     await seedTeachers();
+    await seedAdmins();
     // await seedTerms();
 }
 

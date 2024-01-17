@@ -17,10 +17,10 @@ const validate = (schema: AnyZodObject) => async (req: Request, res: Response, n
         if (process.env.NODE_ENV === 'development') {
             const error = customError(`Validation error : ${e}`, 'fail', 400, false);
             console.log(e);
-            next(error);
+            return next(error);
         } else {
             const error = customError(`Something went wrong:Validation`, 'fail', 500, false);
-            next(error);
+            return next(error);
         }
     }
 };
