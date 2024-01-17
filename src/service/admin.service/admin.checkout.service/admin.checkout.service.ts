@@ -26,48 +26,29 @@ export async function fetchCheckedInStudentsForCheckout() {
             }
         },
         include: {
-            student: true // Include the student details
+            student: {
+                include: {
+                    studentClassAssignment: {
+                        include: {
+                            section: true,
+                            termSubjectLevel: true
+                        }
+                    },
+                    personalDetails: {
+                        select: {
+                            firstName: true,
+                            lastName: true,
+                            email: true
+                        }
+                    }
+                }
+            }
         }
     });
-    console.log(checkedInStudents)
+    console.log(checkedInStudents);
 
     return checkedInStudents;
 }
-/*reposne of the above  funcyion is [
-  {
-    "student": {
-      "id": 1,
-      "name": "Alice",
-      "rollNumber": "A101",
-      "isActive": true,
-      "role": "STUDENT"
-    },
-    "id": 1,
-    "studentId": 1,
-    "isMarked": true,
-    "date": "2024-01-13T00:00:00.000Z",
-    "checkInTime": "2024-01-13T08:00:00.000Z",
-    "checkedIn": true,
-    "remarks": "Checked in at the entrance"
-  },
-  {
-    "student": {
-      "id": 2,
-      "name": "Bob",
-      "rollNumber": "B102",
-      "isActive": true,
-      "role": "STUDENT"
-    },
-    "id": 2,
-    "studentId": 2,
-    "isMarked": true,
-    "date": "2024-01-13T00:00:00.000Z",
-    "checkInTime": "2024-01-13T08:15:00.000Z",
-    "checkedIn": true,
-    "remarks": "Checked in at the entrance"
-  }
-]
-*/
 
 // Function to mark a student as checked out in SchoolCheckInAttendance records
 export async function markStudentAsCheckedOut(studentId: string) {
@@ -136,6 +117,10 @@ export async function markSelectedStudentsAsCheckedOut(studentIds: string[]) {
             isMarked: true
         }
     });
+    const alreadyCheckedOut = attendanceRecords.some((record) => record.isCheckedOut);
+    if (alreadyCheckedOut) {
+        throw new Error('One or more students are already checked out.');
+    }
 
     for (const attendanceRecord of attendanceRecords) {
         // Update each SchoolCheckInAttendance record to mark the student as checked out

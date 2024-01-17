@@ -14,6 +14,6 @@ adminCheckoutRoute.route('/fetch-checkedin-students-for-checkout').get( asyncErr
 adminCheckoutRoute.route('/mark-selected-students-as-checkedout/:studentId').patch(validate(markStudentAsCheckedOutchema), asyncErrorHandler(markStudentAsCheckedOutHandler));
 
 /*mark the check-in as false for single student ID*/
-adminCheckoutRoute.route('/checkin-false-single-student/:studentId').patch(validate(markSelectedStudentsAsCheckedOutSchema), asyncErrorHandler(markSelectedStudentsAsCheckedOutHandler));
+adminCheckoutRoute.route('/checked-out-selected-students').patch(validate(markSelectedStudentsAsCheckedOutSchema), asyncErrorHandler(markSelectedStudentsAsCheckedOutHandler));
 
 export default adminCheckoutRoute;
