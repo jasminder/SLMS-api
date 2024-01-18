@@ -2,8 +2,11 @@ import { TimeTableSchema, UpdateTimeTableSchema } from '../../../../schema/admin
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
 
-export async function createTimetable(timetableData: TimeTableSchema['body']) {
+export async function createTimetable(createTimetableData: TimeTableSchema['body']) {
     // Start a transaction
+    const totalRooms = createTimetableData.createTimetableData.totalRooms;
+    const roomNames = createTimetableData.createTimetableData.roomNames;
+    const data = createTimetableData.createTimetableData.data;
 
     const newTimetable = await db.$transaction(async (prisma) => {
         await prisma.timeTable.updateMany({
@@ -14,12 +17,15 @@ export async function createTimetable(timetableData: TimeTableSchema['body']) {
                 currentTerm: true
             }
         });
+
         const newTimeTable = await prisma.timeTable.create({
             data: {
-                data: timetableData.data,
+                data: data,
                 name: `${currentTerm?.name}`,
                 isActive: currentTerm?.currentTerm,
-                termId: currentTerm?.id
+                termId: currentTerm?.id,
+                roomNames,
+                totalRooms
             }
         });
 
@@ -33,13 +39,10 @@ export async function findActiveTimetable() {
         where: { isActive: true }
     });
 
-    // if (!timetable) {
-    //     throw customError(`There are no timetable found`, 'fail', 404, true);
-    // }
     return timetable;
 }
 
-export async function updateTimetable(id: UpdateTimeTableSchema['params']['id'], timetableData: UpdateTimeTableSchema['body']['data']) {
+export async function updateTimetable(id: UpdateTimeTableSchema['params']['id'], editTimetableData: UpdateTimeTableSchema['body']) {
     const existingTimeTable = await db.timeTable.findUnique({
         where: {
             id: +id
@@ -49,13 +52,17 @@ export async function updateTimetable(id: UpdateTimeTableSchema['params']['id'],
     if (!existingTimeTable) {
         throw customError(`Timetable with ID ${id} not found`, 'fail', 404, true);
     }
-
+    const totalRooms = editTimetableData.totalRooms;
+    const roomNames = editTimetableData.roomNames;
+    const data = editTimetableData.data;
     const updatedTimeTable = await db.timeTable.update({
         where: {
             id: +id
         },
         data: {
-            data: timetableData
+            data,
+            roomNames,
+            totalRooms
         }
     });
 

@@ -343,7 +343,8 @@ export const existingUserForgotPassword = async (email: string, resetToken: stri
         throw customError('There is no such user with this email', 'fail', 404, true);
     }
     const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    const resetPasswordTokenExpiresAt = Date.now() + 10 * 60 * 1000;
+    const resetPasswordTokenExpiresAt = Math.floor(Date.now() / 1000) + 10 * 60; // This will be in seconds
+
     await db.user.update({
         where: { id: existingUser.id },
         data: {

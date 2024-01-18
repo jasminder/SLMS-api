@@ -321,13 +321,15 @@ model TermSubjectGroupSubject {
 }
 
 model TimeTable {
-  id        Int      @id @default(autoincrement())
-  name      String?  @default("Timetable")
-  termId    Int?
-  isActive  Boolean  @default(true)
-  data      Json
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  name       String?  @default("Timetable")
+  termId     Int?
+  roomNames  String[] @default([])
+  isActive   Boolean  @default(true)
+  data       Json
+  totalRooms Int      @default(6)
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
 }
 
 model Teacher {

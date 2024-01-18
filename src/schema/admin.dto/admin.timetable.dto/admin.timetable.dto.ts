@@ -12,7 +12,13 @@ const timeSlotSchema = z.object({
 
 export const timeTableSchema = z.object({
     body: z.object({
-        data: z.array(timeSlotSchema)
+        createTimetableData: z.object({
+            totalRooms: z.number(),
+            data: z.object({
+                data: z.array(timeSlotSchema)
+            }),
+            roomNames: z.array(z.string())
+        })
     })
 });
 
@@ -20,7 +26,11 @@ export type TimeTableSchema = z.infer<typeof timeTableSchema>;
 
 export const updateTimeTableSchema = z.object({
     body: z.object({
-        data: z.array(timeSlotSchema)
+        totalRooms: z.number(),
+        data: z.object({
+            data: z.array(timeSlotSchema)
+        }),
+        roomNames: z.array(z.string())
     }),
     params: z.object({
         id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
