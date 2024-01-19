@@ -32,6 +32,7 @@
         "@types/mongoose": "^5.11.97",
         "@types/morgan": "^1.9.4",
         "@types/node": "^20.5.0",
+        "aws-sdk": "^2.1539.0",
         "bcrypt": "^5.1.1",
         "body-parser": "^1.20.2",
         "cookie-parser": "^1.4.6",

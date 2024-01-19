@@ -122,13 +122,14 @@ export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordS
     const subject = `Reset your Password at Future APP`;
     const text = ` We have received a request to reset password . Please visit ${resetUrl}  to complete your reset password`;
     try {
-        await sendEmail({
+        const resonse = await sendEmail({
             email: existingUser.email,
             subject,
             text
         });
         res.status(201).json({ status: 'success', message: 'Reset Password link send' });
     } catch (err) {
+        console.log(err);
         existingUserForgotPasswordSendMailError(email);
         throw customError('Connot reset password. try again later.', 'fail', 404, true);
     }

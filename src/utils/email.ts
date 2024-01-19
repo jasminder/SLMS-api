@@ -2,30 +2,35 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
-type optionType = {
+
+type OptionType = {
     email: string;
     subject: string;
     text: string;
 };
-export const sendEmail = async (option: optionType) => {
-    // create a transporter using mailtrap credentials
-    const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT!), //--> had error because process.env.EMAIL_PORT was returning a string by default instead of a number
-        // secure: false, // upgrade later with STARTTLS
-        auth: {
-            user: process.env.EMAIL_USERNAME,
-            pass: process.env.EMAIL_PASSWORD
-        }
-    });
-    // create email option
 
-    const emailOptions = {
-        from: 'from support@FutureApp.com',
-        to: option.email,
-        subject: option.subject,
-        text: option.text
-    };
+export const sendEmail = async (option: OptionType): Promise<boolean> => {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT || '0'),
+            auth: {
+                user: process.env.EMAIL_USERNAME,
+                pass: process.env.EMAIL_PASSWORD
+            }
+        });
 
-    await transporter.sendMail(emailOptions);
+        const emailOptions = {
+            from: 'nithin.mohanan@gmail.com',
+            to: option.email,
+            subject: option.subject,
+            text: option.text
+        };
+
+        await transporter.sendMail(emailOptions);
+        return true; // Email sent successfully
+    } catch (error) {
+        console.error('Email send error:', error);
+        return false; // Email send failed
+    }
 };

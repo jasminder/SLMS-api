@@ -128,6 +128,7 @@ model Subject {
   termSubjectGroup        TermSubjectGroup[]
   termSubjectLevel        TermSubjectLevel[]
   TeacherSubject          TeacherSubject[]
+  Homework                Homework[]
 }
 
 model SubjectGroup {
@@ -350,6 +351,7 @@ model Teacher {
   updatedAt                        DateTime                          @updatedAt
   user                             User?
   skipReport                       SkipReport[]
+  Homework                         Homework[]
 }
 
 model TeacherPersonalDetails {
@@ -462,6 +464,7 @@ model Admin {
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime                   @updatedAt
   user                      User?
+  Homework                  Homework[]
 }
 
 model AdminPersonalDetails {
@@ -589,4 +592,22 @@ model SkipReport {
 
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Homework {
+  id               Int      @id @default(autoincrement())
+  subjectId        Int
+  teacherId        Int? // Optional: ID of the teacher who uploaded the homework
+  adminId          Int? // Optional: ID of the admin who uploaded the homework
+  uploadedUserRole String // Role of the uploader ('teacher' or 'admin')
+  title            String
+  description      String
+  attachments      String[] // URLs of the attached documents
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  subject Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  admin   Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, title])
 }

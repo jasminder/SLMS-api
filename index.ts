@@ -28,6 +28,7 @@ import adminCheckoutRoute from './src/route/admin.route/admin.checkout.route/adm
 import adminAttendanceRoute from './src/route/admin.route/admin.attendance.route/admin.attendance.route';
 import teacherAttendanceRoute from './src/route/teacher.route/teacher.attendance.route/teacher.attendance.route';
 import newadminApplicantRoute from './src/route/admin.route/admin.create.admin.route/admin.create.admin.route';
+import homeworkRoute from './src/route/homework.route/homework.route';
 
 const app = express();
 app.use(cookieParser());
@@ -85,6 +86,8 @@ app.use('/api/v1/teacher/attendance', teacherAttendanceRoute);
 app.use('/api/v1/teacher', teacherRoute);
 
 app.use('/api/v1/auth', authRoute);
+
+app.use('/api/v1/home-work', homeworkRoute);
 
 // Server frontend static assets and handle catch-all route
 if (process.env.NODE_ENV === 'production') {
