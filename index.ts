@@ -29,6 +29,8 @@ import adminAttendanceRoute from './src/route/admin.route/admin.attendance.route
 import teacherAttendanceRoute from './src/route/teacher.route/teacher.attendance.route/teacher.attendance.route';
 import newadminApplicantRoute from './src/route/admin.route/admin.create.admin.route/admin.create.admin.route';
 import homeworkRoute from './src/route/homework.route/homework.route';
+import homeWorkUploadRoute from './src/route/aws.homework.fileUpload.route/aws.homework.fileUpload.route';
+import homeWorkDownloadRoute from './src/route/aws.homework.fileDownlod.route/aws.homework.fileDownlod.route';
 
 const app = express();
 app.use(cookieParser());
@@ -88,6 +90,9 @@ app.use('/api/v1/teacher', teacherRoute);
 app.use('/api/v1/auth', authRoute);
 
 app.use('/api/v1/home-work', homeworkRoute);
+
+app.use('/api/v1/upload-home-work', homeWorkUploadRoute);
+app.use('/api/v1/download-home-work', homeWorkDownloadRoute);
 
 // Server frontend static assets and handle catch-all route
 if (process.env.NODE_ENV === 'production') {

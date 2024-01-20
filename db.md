@@ -203,3 +203,62 @@ Now once they are in their respective classes, which is in the studentClassAssig
 this is to ensure that all the students who marked 1st attendance or checked have gone to their classes and do not skip the class."
 
 study the context clearly and be ready for my next questions. You are a senior data base postgress designer. DO not reply
+
+
+import { Request, Response, NextFunction } from 'express';
+import { getPresignedUrl } from '../../../../service/fileUploadService'; // Import the service
+
+export const generatePresignedUrlHandler = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { filename, fileType } = req.query;
+
+        if (!filename || !fileType) {
+            return res.status(400).send('Filename and fileType are required');
+        }
+
+        const presignedUrlData = await getPresignedUrl(filename, fileType);
+        res.status(200).json(presignedUrlData);
+    } catch (error) {
+        next(error); // Forward to error handling middleware
+    }
+};
+import S3 from 'aws-sdk/clients/s3';
+import { randomUUID } from 'crypto';
+
+const s3 = new S3({
+    apiVersion: "2006-03-01",
+    accessKeyId: process.env.ACCESS_KEY,
+    secretAccessKey: process.env.SECRET_KEY,
+    region: process.env.REGION,
+    signatureVersion: "v4",
+});
+
+export const getPresignedUrl = async (filename, fileType) => {
+    const extension = fileType.split('/')[1];
+    const Key = `${randomUUID()}.${extension}`;
+
+    const s3Params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key,
+        Expires: 60,
+        ContentType: fileType,
+    };
+
+    const uploadUrl = await s3.getSignedUrlPromise('putObject', s3Params);
+    return {
+        uploadUrl,
+        key: Key,
+    };
+};
+import express from 'express';
+import { protectRoute, restrict } from 'your-auth-middleware'; // Import your auth middleware
+import { generatePresignedUrlHandler } from 'path-to-your-controller';
+
+const router = express.Router();
+
+// Add the new route for generating a presigned URL
+router.get('/generate-presigned-url', protectRoute, restrict('ADMIN'), generatePresignedUrlHandler);
+
+// ... other routes
+
+export default router;
