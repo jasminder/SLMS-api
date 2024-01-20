@@ -122,12 +122,16 @@ export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordS
     const subject = `Reset your Password at Future APP`;
     const text = ` We have received a request to reset password . Please visit ${resetUrl}  to complete your reset password`;
     try {
-        const resonse = await sendEmail({
-            email: existingUser.email,
-            subject,
-            text
-        });
-        res.status(201).json({ status: 'success', message: 'Reset Password link send' });
+        if (existingUser) {
+            const resonse = await sendEmail({
+                email: existingUser?.email,
+                subject,
+                text
+            });
+            res.status(201).json({ status: 'success', message: 'Reset Password link send' });
+        } else {
+            res.json('no such user');
+        }
     } catch (err) {
         console.log(err);
         existingUserForgotPasswordSendMailError(email);

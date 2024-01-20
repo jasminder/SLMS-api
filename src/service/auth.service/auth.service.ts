@@ -339,8 +339,9 @@ export const existingUserForgotPassword = async (email: string, resetToken: stri
             // Add other fields as needed but exclude 'password'
         }
     });
+
     if (!existingUser) {
-        throw customError('There is no such user with this email', 'fail', 404, true);
+        return null;
     }
     const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     const resetPasswordTokenExpiresAt = Math.floor(Date.now() / 1000) + 10 * 60; // This will be in seconds

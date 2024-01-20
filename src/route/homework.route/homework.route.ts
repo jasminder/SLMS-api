@@ -7,12 +7,13 @@ import { asyncErrorHandler } from '../../utils/asyncErrorHandler';
 import { protectRoute } from '../../middleware/protectRoutes';
 import { restrict } from '../../middleware/restrict';
 
-
 const homeworkRoute = express.Router();
 /*sign up user*/
 homeworkRoute.route('/create/:subjectId/:uploaderId').post(validate(createHomeworkSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(createHomeworkHandler));
-homeworkRoute.route('/find-by-id/:homeworkId').get(validate(findHomeworkByIdSchema),protectRoute, restrict('ADMIN', 'TEACHER'),  asyncErrorHandler(findHomeworkByIdHandler));
-homeworkRoute.route('/find-by-subjectList/:subjectIds').get(validate(findAllHomeworksBySubjectsListSchema), asyncErrorHandler(findHomeworkBySubjectListHandler));
+homeworkRoute.route('/find-by-id/:homeworkId').get(validate(findHomeworkByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findHomeworkByIdHandler));
+homeworkRoute
+    .route('/find-by-subjectList/:subjectIds')
+    .get(validate(findAllHomeworksBySubjectsListSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findHomeworkBySubjectListHandler));
 /*login  user*/
 
 export default homeworkRoute;

@@ -20,12 +20,13 @@ export const getHomeWorkPresignedUrl = async (fileName: string, fileType: string
         throw customError('Invalid fileType format. Expected format: type/extension', 'fail', 400, true);
     }
     const extension = fileTypeParts[1];
+    console.log(extension, 'extension');
     const Key = `${fileName}-${randomUUID()}.${extension}`;
 
     const s3Params = {
         Bucket: process.env.BUCKET_NAME,
         Key,
-        Expires: 60,
+        Expires: 600,
         ContentType: fileType
     };
     console.log(Key);

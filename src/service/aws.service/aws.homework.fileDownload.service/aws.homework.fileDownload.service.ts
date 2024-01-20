@@ -14,14 +14,21 @@ export const getHomeWorkDownloadPresignedUrl = async (fileUrl: string): Promise<
     if (!fileUrl || typeof fileUrl !== 'string') {
         throw customError('Filename and fileType are required.', 'fail', 400, true);
     }
-    const Key = fileUrl;
+    const bucketUrl = `https://${process.env.BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/`;
+    const Key = fileUrl.replace(bucketUrl, '');
+
+    if (!Key) {
+        throw customError('Invalid file URL.', 'fail', 400, true);
+    }
+    console.log('*******', Key, '*****');
+
     const s3Params = {
         Bucket: process.env.BUCKET_NAME,
         Key,
         Expires: 600
     };
-    console.log(Key);
     const downloadUrl = await s3.getSignedUrlPromise('getObject', s3Params);
+    console.log('*********', downloadUrl, '******');
     return {
         downloadUrl,
         key: Key
