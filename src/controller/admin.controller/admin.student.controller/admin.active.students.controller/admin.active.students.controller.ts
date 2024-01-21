@@ -53,7 +53,6 @@ export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, Searc
 export const findActiveStudentByIdHandler = async (req: Request<FindUniqueActiveStudentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const student = await findActiveStudentById(id);
-    console.log(student)
     res.status(200).json(student);
 };
 export const findStudentFeeDetailsHandler = async (

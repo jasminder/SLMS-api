@@ -70,6 +70,7 @@ export const updateStudentHealthInformationHandler = asyncErrorHandler(
                 res.status(400).json({ message: error.message });
             } else {
                 const error = customError('Internal server error- something went wrong while updating student parent details', 'fail', 500, true);
+                console.log(err, 'ERROR******');
                 res.status(500).json({ message: 'Internal server error' });
             }
         }
