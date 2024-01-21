@@ -10,8 +10,8 @@ const s3 = new S3({
     signatureVersion: 'v4'
 });
 
-export const getHomeWorkPresignedUrl = async (fileName: string, fileType: string): Promise<{ uploadUrl: string; key: string }> => {
-    if (!fileName || typeof fileName !== 'string' || !fileType || typeof fileType !== 'string') {
+export const getImageUploadPresignedUrl = async (fileType: string): Promise<{ uploadUrl: string; key: string }> => {
+    if (!fileType || typeof fileType !== 'string') {
         throw customError('Filename and fileType are required.', 'fail', 400, true);
     }
     const decodedFileType = decodeURIComponent(fileType);
@@ -20,8 +20,8 @@ export const getHomeWorkPresignedUrl = async (fileName: string, fileType: string
         throw customError('Invalid fileType format. Expected format: type/extension', 'fail', 400, true);
     }
     const extension = fileTypeParts[1];
-
-    const Key = `${fileName}-${randomUUID()}.${extension}`;
+    console.log(extension, 'extension');
+    const Key = `${randomUUID()}.${extension}`;
 
     const s3Params = {
         Bucket: process.env.BUCKET_NAME,
@@ -29,7 +29,7 @@ export const getHomeWorkPresignedUrl = async (fileName: string, fileType: string
         Expires: 600,
         ContentType: fileType
     };
-
+    console.log(Key);
     const uploadUrl = await s3.getSignedUrlPromise('putObject', s3Params);
     return {
         uploadUrl,

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { getHomeWorkPresignedUrl } from '../../service/aws.service/aws.homework.fileUpload.service/aws.homework.fileUpload.service';
-import { FileUploadHomeWorkSchema } from '../../schema/aws.homework.fileUpload.dto/aws.homework.fileUpload.dto';
+import { getHomeWorkPresignedUrl } from '../../../service/aws.service/aws.homework.fileUpload.service/aws.homework.fileUpload.service';
+import { FileUploadHomeWorkSchema } from '../../../schema/aws.dto/aws.homework.fileUpload.dto/aws.homework.fileUpload.dto';
 
 export const getHomeWorkPresignedUrlHandler = async (req: Request<{}, {}, {}, FileUploadHomeWorkSchema['query']>, res: Response, next: NextFunction) => {
     const { fileName, fileType } = req.query;
