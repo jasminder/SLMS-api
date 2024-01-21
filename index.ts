@@ -33,6 +33,7 @@ import homeWorkUploadRoute from './src/route/aws.homework.fileUpload.route/aws.h
 import homeWorkDownloadRoute from './src/route/aws.homework.fileDownlod.route/aws.homework.fileDownlod.route';
 import sendMailHomeWorkRouter from './src/route/homework.route/homework.sendmail.route/homework.sendmail.route';
 import ImageUploadRoute from './src/route/aws.image.fileUpload.route/aws.image.fileUpload.route';
+import adminStudentUpdateRoute from './src/route/admin.route/admin.student.route/admin.student.update.route/admin.student.update.route';
 
 const app = express();
 app.use(cookieParser());
@@ -80,6 +81,7 @@ app.use('/api/v1/admin/timetable', adminTimetableRoute);
 app.use('/api/v1/admin/student/enrolled', adminEnrolledStudentRoute);
 app.use('/api/v1/admin/student/late-enrolled', adminLateEnrolledStudentRoute);
 app.use('/api/v1/admin/student/active', adminActiveStudentRoute);
+app.use('/api/v1/admin/student/update', adminStudentUpdateRoute);
 app.use('/api/v1/admin/applicant', adminEnrollmentRoute);
 /*Attendance and check in and checkout*/
 app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);

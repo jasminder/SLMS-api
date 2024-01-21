@@ -11,19 +11,15 @@ import {
     findEnrolledStudentEnrolledSubjects,
     findTermToEnrollForStudentEnrolled,
     searchEnrolledStudents,
-    updateStudentHealthInformation,
-    updateStudentParentsDetail,
-    updateStudentPersonalDetail
+
 } from '../../../../service/admin.service/admin.student.service/admin.enrolled.student.service/admin.enrolled.student.service';
-import { asyncErrorHandler } from '../../../../utils/asyncErrorHandler';
+
 import {
     EnrolledStudentEnrollDataSchema,
     FindAllEnrolledStudentsSchema,
     FindUniqueEnrolledStudentSchema,
     SearchEnrolledStudentsSchema,
-    UpdateStudentHealthDetailSchema,
-    UpdateStudentParentsDetailSchema,
-    UpdateStudentPersonalDetailSchema
+   
 } from '../../../../schema/admin.dto/admin.student.dto/admin.enrolledstudent/admin.enrolled.student.dto';
 
 // find unqiue student by ID for internal queries
@@ -79,65 +75,6 @@ export const deEnrollStudentEnrolledToSubjectsHandler = async (req: Request<{}, 
     const message = await deEnrollStudentEnrolledToSubjects(enrollData);
     res.status(200).json(message);
 };
-// update student personal details service
-export const updateStudentPersonalDetailHandler = asyncErrorHandler(
-    async (req: Request<FindUniqueEnrolledStudentSchema['params'], {}, UpdateStudentPersonalDetailSchema['body'], {}>, res: Response, next: NextFunction) => {
-        try {
-            const { id } = req.params;
-            const data = req.body.personalDetails;
-            const updateStudent = await updateStudentPersonalDetail(id, data);
-            res.status(200).json(updateStudent);
-        } catch (err: any) {
-            if (err.message == 'email or contact already exists') {
-                const error = customError(`This email or contact you are trying to update already exists in student database`, 'fail', 404, true);
-                res.status(400).json({ message: error.message });
-            } else {
-                const error = customError('Internal server error- something went wrong while updating student personal details', 'fail', 500, true);
-                res.status(500).json({ message: 'Internal server error' });
-            }
-        }
-    }
-);
-
-// update student parents details service
-export const updateStudentParentsDetailHandler = asyncErrorHandler(
-    async (req: Request<FindUniqueEnrolledStudentSchema['params'], {}, UpdateStudentParentsDetailSchema['body'], {}>, res: Response, next: NextFunction) => {
-        try {
-            const { id } = req.params;
-            const data = req.body.parentsDetails;
-            const updateStudent = await updateStudentParentsDetail(id, data);
-            res.status(200).json(updateStudent);
-        } catch (err: any) {
-            if (err.message == 'student does not exist with given ID') {
-                const error = customError('The student you are trying to update is either deleted or does not exist', 'fail', 400, true);
-                res.status(400).json({ message: error.message });
-            } else {
-                const error = customError('Internal server error- something went wrong while updating student parent details', 'fail', 500, true);
-                res.status(500).json({ message: 'Internal server error' });
-            }
-        }
-    }
-);
-
-// Update Emergency and health Details
-export const updateStudentHealthInformationHandler = asyncErrorHandler(
-    async (req: Request<FindUniqueEnrolledStudentSchema['params'], {}, UpdateStudentHealthDetailSchema['body'], {}>, res: Response, next: NextFunction) => {
-        try {
-            const { id } = req.params;
-            const data = req.body;
-            const updateStudent = await updateStudentHealthInformation(id, data);
-            res.status(200).json(updateStudent);
-        } catch (err: any) {
-            if (err.message == 'student does not exist with given ID') {
-                const error = customError('The student you are trying to update is either deleted or does not exist', 'fail', 400, true);
-                res.status(400).json({ message: error.message });
-            } else {
-                const error = customError('Internal server error- something went wrong while updating student parent details', 'fail', 500, true);
-                res.status(500).json({ message: 'Internal server error' });
-            }
-        }
-    }
-);
 
 // enroll enrolled-student to active student for the current term
 export const enrollToCurrenTermHandler = async (req: Request<FindUniqueEnrolledStudentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {

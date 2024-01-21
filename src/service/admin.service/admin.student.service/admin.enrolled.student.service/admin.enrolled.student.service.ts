@@ -1,12 +1,7 @@
 // import { UpdateStudentDetailSchema } from '../schema/admin.dto/admin.dto';
 import { z } from 'zod';
 
-import {
-    EnrolledStudentEnrollDataSchema,
-    UpdateStudentHealthDetailSchema,
-    UpdateStudentParentsDetailSchema,
-    UpdateStudentPersonalDetailSchema
-} from '../../../../schema/admin.dto/admin.student.dto/admin.enrolledstudent/admin.enrolled.student.dto';
+import { EnrolledStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.enrolledstudent/admin.enrolled.student.dto';
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 
@@ -436,7 +431,7 @@ export async function enrollStudentEnrolledToSubjects(enrollData: EnrolledStuden
     }
 
     if (alreadyEnrolledSubjects.length > 0) {
-        throw new Error(`Already enrolled in subjects: ${alreadyEnrolledSubjects.join(', ')}`);
+        throw customError(`Already enrolled in subjects: ${alreadyEnrolledSubjects.join(', ')}`, 'fail', 400, true);
     }
 
     let uniqueTermSubjectGroupIds = new Set<number>();
@@ -546,7 +541,7 @@ export async function deEnrollStudentEnrolledToSubjects(deEnrollData: EnrolledSt
     });
 
     if (totalEnrollments <= deEnrollData.enrollData.length) {
-        throw new Error('The student must be enrolled in at least one subject.');
+        throw customError('The student must be enrolled in at least one subject.', 'fail', 400, true);
     }
 
     let deEnrolledSubjects = [];
@@ -564,7 +559,7 @@ export async function deEnrollStudentEnrolledToSubjects(deEnrollData: EnrolledSt
         });
 
         if (!subjectEnrollment) {
-            throw new Error(`Not enrolled in subject: ${deEnrollItem.subject}`);
+            throw customError(`Not enrolled in subject: ${deEnrollItem.subject}`, 'fail', 400, true);
         }
 
         // Delete the SubjectEnrollment record
@@ -649,117 +644,6 @@ export async function findSiblingsByParentEmail(email: string) {
     } catch (e) {
         console.log(e);
         return new Error(`cannot find sibling data @ksm ${e}`);
-    }
-}
-
-// update student personal details service
-export async function updateStudentPersonalDetail(id: string, data: UpdateStudentPersonalDetailSchema['body']['personalDetails']) {
-    const RoleEnum = z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'ALUMNI']);
-    type RoleEnum = z.infer<typeof RoleEnum>;
-    const roleResult = RoleEnum.safeParse(data.role);
-    if (!RoleEnum.safeParse(data.role).success) {
-        throw new Error('Invalid role value');
-    }
-
-    const { firstName, role, lastName, DOB, gender, email, contact, address, suburb, state, country, postcode, image } = data;
-    const existingStudent = await db.personalDetails.findFirst({
-        where: {
-            OR: [{ email }, { contact }]
-        }
-    });
-    console.log(existingStudent);
-
-    /***********************************************************/
-    /***********************************************************/
-    try {
-        const updateStudent = await db.student.update({
-            where: {
-                id: +id
-            },
-            data: {
-                personalDetails: {
-                    update: {
-                        firstName,
-                        lastName,
-                        DOB,
-                        gender,
-                        email,
-                        contact,
-                        address,
-                        suburb,
-                        state,
-                        country,
-                        postcode,
-                        image
-                    }
-                },
-                role: role as RoleEnum
-            }
-        });
-        return updateStudent;
-    } catch (e) {
-        throw new Error(`Failed to update student personal details @ksm${e}`);
-    }
-}
-
-// update student parents details service
-export async function updateStudentParentsDetail(id: string, data: UpdateStudentParentsDetailSchema['body']['parentsDetails']) {
-    const { parentContact, parentEmail } = data;
-    try {
-        const updateStudent = await db.student.update({
-            where: {
-                id: +id
-            },
-            data: {
-                parentsDetails: {
-                    update: {
-                        parentContact,
-                        parentEmail
-                    }
-                }
-            }
-        });
-        if (!updateStudent) throw new Error('student does not exist with given ID');
-        return updateStudent;
-    } catch (e) {
-        throw new Error(`Failed to update student parents details @ksm${e}`);
-    }
-}
-
-// Update Emergency and health Details
-export async function updateStudentHealthInformation(id: string, data: UpdateStudentHealthDetailSchema['body']) {
-    const { contactNumber, contactPerson, relationship } = data.emergencyContact;
-    const { allergy, medicalCondition, medicareNumber, ambulanceMembershipNumber } = data.healthInformation;
-    const existingStudent = await db.healthInformation.findFirst({
-        where: {
-            OR: [{ medicareNumber }]
-        }
-    });
-    if (existingStudent?.id != +id) {
-        throw new Error(`Medicare already exists already exists`);
-    }
-    try {
-        const updateStudent = await db.student.update({
-            where: {
-                id: +id
-            },
-            data: {
-                healthInformation: {
-                    update: { allergy, medicalCondition, medicareNumber, ambulanceMembershipNumber }
-                },
-                emergencyContact: {
-                    update: {
-                        contactNumber,
-                        contactPerson,
-                        relationship
-                    }
-                }
-            }
-        });
-        if (!updateStudent) throw new Error('student does not exist with given ID');
-        return updateStudent;
-    } catch (e) {
-        throw new Error(`Failed to update student health and emergency details @ksm${e}`);
     }
 }
 
