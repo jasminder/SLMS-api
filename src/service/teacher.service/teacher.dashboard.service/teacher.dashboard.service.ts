@@ -178,7 +178,11 @@ export async function fetchStudentsInSameClass(termSubjectLevelId: string, secti
             }
         },
         include: {
-            student: true, // Include additional student details as needed
+            student: {
+                include: {
+                    personalDetails: true
+                }
+            }, // Include additional student details as needed
             section: true
         }
     });

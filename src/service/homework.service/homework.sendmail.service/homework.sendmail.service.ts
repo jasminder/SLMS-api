@@ -39,7 +39,7 @@ export async function sendEmailWithAttachment(recipients: string[], subject: str
             }
         ]
     };
-
+    console.log(emailOptions, 'emailoptions');
     // Send email
     await transporter.sendMail(emailOptions);
 }
