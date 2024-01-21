@@ -262,3 +262,7 @@ router.get('/generate-presigned-url', protectRoute, restrict('ADMIN'), generateP
 // ... other routes
 
 export default router;
+
+
+ACCESS_KEY='AKIAQV7WLKJ3FG4WMV7B'
+SECRET_KEY='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'

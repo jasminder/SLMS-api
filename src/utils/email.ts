@@ -21,7 +21,7 @@ export const sendEmail = async (option: optionType) => {
     // create email option
 
     const emailOptions = {
-        from: 'from support@FutureApp.com',
+        from: 'nithin.mohanan@gmail.com',
         to: option.email,
         subject: option.subject,
         text: option.text
