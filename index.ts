@@ -34,6 +34,7 @@ import homeWorkDownloadRoute from './src/route/aws.homework.fileDownlod.route/aw
 import sendMailHomeWorkRouter from './src/route/homework.route/homework.sendmail.route/homework.sendmail.route';
 import ImageUploadRoute from './src/route/aws.image.fileUpload.route/aws.image.fileUpload.route';
 import adminStudentUpdateRoute from './src/route/admin.route/admin.student.route/admin.student.update.route/admin.student.update.route';
+import ImageDisplayRoute from './src/route/aws.image.fileDisplay.route/aws.image.fileDisplay.route';
 
 const app = express();
 app.use(cookieParser());
@@ -94,10 +95,12 @@ app.use('/api/v1/teacher', teacherRoute);
 app.use('/api/v1/auth', authRoute);
 
 app.use('/api/v1/home-work', homeworkRoute);
-
+//aws presigned route
 app.use('/api/v1/upload-image', ImageUploadRoute);
+app.use('/api/v1/display-image', ImageDisplayRoute);
 app.use('/api/v1/upload-home-work', homeWorkUploadRoute);
 app.use('/api/v1/download-home-work', homeWorkDownloadRoute);
+
 app.use('/api/v1/send-mail', sendMailHomeWorkRouter);
 
 // Server frontend static assets and handle catch-all route
