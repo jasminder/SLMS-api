@@ -39,6 +39,8 @@ import feedbackRoute from './src/route/teacher.route/teacher.feedback.route/teac
 import './src/cron/sendFeedBackEmails';
 import './src/cron/processMonthlyFees';
 import './src/cron/processTermFees';
+import commentRoute from './src/route/admin.route/admin.comment.route/admin.comment.route';
+import interactionRoute from './src/route/admin.route/admin.interactions.route/admin.interactions.route';
 const app = express();
 app.use(cookieParser());
 
@@ -87,6 +89,8 @@ app.use('/api/v1/admin/student/late-enrolled', adminLateEnrolledStudentRoute);
 app.use('/api/v1/admin/student/active', adminActiveStudentRoute);
 app.use('/api/v1/admin/student/update', adminStudentUpdateRoute);
 app.use('/api/v1/admin/applicant', adminEnrollmentRoute);
+app.use('/api/v1/admin/comment-on-student', commentRoute);
+app.use('/api/v1/admin/interactions', interactionRoute);
 /*Attendance and check in and checkout*/
 app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);
 app.use('/api/v1/admin/attendance/checkout', adminCheckoutRoute);

@@ -63,6 +63,8 @@ model Student {
   schoolCheckInAttendance SchoolCheckInAttendance[]
   skipReport              SkipReport[]
   feedback                Feedback[]
+  interaction             Interaction[]
+  comment                 Comment[]
 }
 
 model PersonalDetails {
@@ -469,6 +471,7 @@ model Admin {
   updatedAt                 DateTime                   @updatedAt
   user                      User?
   Homework                  Homework[]
+  comment                   Comment[]
 }
 
 model AdminPersonalDetails {
@@ -629,4 +632,42 @@ model Feedback {
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+enum InteractionType {
+  EMAIL
+  MEETING
+  PHONE_CALL
+  MESSAGE
+  CONFERENCE
+  OTHER
+  AUTOMATED_EMAIL
+}
+
+model Interaction {
+  id              Int             @id @default(autoincrement())
+  studentId       Int // Foreign key reference to Student model
+  interactionType InteractionType // Enum for interaction type
+  description     String?         @default("No comments") // Optional detailed description of the interaction
+  contactedDate   DateTime // Date and time of the interaction
+  createdBy       Int // ID of the staff member who recorded the interaction
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  // Optionally include a relation to the staff or teacher who created the interaction
+  // staff         Staff           @relation(fields: [createdBy], references: [id])
+}
+
+model Comment {
+  id              Int             @id @default(autoincrement())
+  studentId       Int // Foreign key reference to the Student model
+  content         String // The text content of the comment
+  interactionType InteractionType
+  createdBy       Int // ID of the admin who created the comment
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  admin   Admin   @relation(fields: [createdBy], references: [id])
 }
