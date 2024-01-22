@@ -26,3 +26,15 @@ export const forgotPasswordSchema = z.object({
 });
 
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+    body: z.object({
+        password: z.string(),
+        confirmPassword: z.string()
+    }),
+    params: z.object({
+        token: z.string()
+    })
+});
+
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;

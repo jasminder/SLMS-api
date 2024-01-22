@@ -345,6 +345,10 @@ export const existingUserForgotPassword = async (email: string, resetToken: stri
     }
     const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     const resetPasswordTokenExpiresAt = Math.floor(Date.now() / 1000) + 10 * 60; // This will be in seconds
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    console.log(resetPasswordToken, 'resetPasswordToken inside forgot service');
+    console.log(hashedToken, 'rehashed reset token inside forgot service');
+    console.log(resetToken, 'reset token inside forgot service');
 
     await db.user.update({
         where: { id: existingUser.id },
@@ -383,4 +387,44 @@ export const existingUserForgotPasswordSendMailError = async (email: string) => 
         }
     });
     return existingUser;
+};
+
+export const findUserByResetToken = async (token: string) => {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    console.log(token, 'token inside service');
+    console.log(hashedToken, 'hashed token inside service');
+    const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+    console.log(currentTimeInSeconds, hashedToken);
+    const user = await db.user.findFirst({
+        where: {
+            resetPasswordToken: hashedToken,
+            resetPasswordTokenExpiresAt: {
+                gt: currentTimeInSeconds
+            }
+        },
+        select: {
+            id: true,
+            email: true,
+            role: true,
+            resetPasswordToken: true
+
+            // Add other fields as needed but exclude 'password'
+        }
+    });
+
+    return user;
+};
+
+export const resetUserPassword = async (email: string, newPassword: string) => {
+    const hashedPassword = await bcrypt.hash(newPassword, 12); // Replace '12' with the desired salt rounds
+
+    await db.user.update({
+        where: { email },
+        data: {
+            password: hashedPassword,
+            resetPasswordToken: null,
+            resetPasswordTokenExpiresAt: null,
+            updatedAt: new Date() // Sets the updatedAt field to the current date and time
+        }
+    });
 };

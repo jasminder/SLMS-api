@@ -2,8 +2,8 @@ import express from 'express';
 
 import validate from '../../middleware/validateResource';
 import { asyncErrorHandler } from '../../utils/asyncErrorHandler';
-import { loginUserSchema, signupUserSchema } from '../../schema/auth.dto/auth.dto';
-import { forgotPasswordHandler, loginUserHandler, logout, refreshHandler, signUpUserHandler } from '../../controller/auth.controller/auth.controller';
+import { forgotPasswordSchema, loginUserSchema, resetPasswordSchema, signupUserSchema } from '../../schema/auth.dto/auth.dto';
+import { forgotPasswordHandler, loginUserHandler, logout, refreshHandler, resetPasswordHandler, signUpUserHandler } from '../../controller/auth.controller/auth.controller';
 
 const authRoute = express.Router();
 /*sign up user*/
@@ -15,6 +15,7 @@ authRoute.route('/logout-user').post(asyncErrorHandler(logout));
 /*refresh access token for authed user*/
 authRoute.route('/refresh').get(asyncErrorHandler(refreshHandler));
 
-authRoute.route('/forgot-password').post(forgotPasswordHandler);
+authRoute.route('/forgot-password').post(validate(forgotPasswordSchema), asyncErrorHandler(forgotPasswordHandler));
+authRoute.route('/reset-password/:token').post(validate(resetPasswordSchema), asyncErrorHandler(resetPasswordHandler));
 
 export default authRoute;

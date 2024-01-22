@@ -1,8 +1,16 @@
 import { NextFunction, Request, Response } from 'express';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { existingAuthUser, existingUserForgotPassword, existingUserForgotPasswordSendMailError, loginUser, signUpUser } from '../../service/auth.service/auth.service';
-import { ForgotPasswordSchema, LoginUserSchema, SignupUserSchema } from '../../schema/auth.dto/auth.dto';
+import {
+    existingAuthUser,
+    existingUserForgotPassword,
+    existingUserForgotPasswordSendMailError,
+    findUserByResetToken,
+    loginUser,
+    resetUserPassword,
+    signUpUser
+} from '../../service/auth.service/auth.service';
+import { ForgotPasswordSchema, LoginUserSchema, ResetPasswordSchema, SignupUserSchema } from '../../schema/auth.dto/auth.dto';
 import { customError } from '../../utils/customError';
 import { DecodeToken } from '../../types/type';
 import { sendEmail } from '../../utils/email';
@@ -118,9 +126,10 @@ export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordS
     const existingUser = await existingUserForgotPassword(email, resetToken);
 
     // 3. send email to user with the reset token and the reset URL or api? to reset password
-    const resetUrl = `${req.protocol}://${req.get('host')}/users/resetPassword/${resetToken}`;
-    const subject = `Reset your Password at Future APP`;
-    const text = ` We have received a request to reset password . Please visit ${resetUrl}  to complete your reset password`;
+    const resetUrl = `${process.env.CLIENT_URL}/forgot-password/${resetToken}`;
+
+    const subject = `Reset your Password at Akal Shaouni`;
+    const text = ` We have received a request to reset password . Please visit ${resetUrl}  to complete your reset password. Link is valid of 10 minutes`;
     try {
         if (existingUser) {
             const resonse = await sendEmail({
@@ -137,4 +146,26 @@ export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordS
         existingUserForgotPasswordSendMailError(email);
         throw customError('Connot reset password. try again later.', 'fail', 404, true);
     }
+};
+export const resetPasswordHandler = async (req: Request<ResetPasswordSchema['params'], {}, ResetPasswordSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const token = req.params.token;
+    console.log(token, 'token inside controller');
+    const existingUser = await findUserByResetToken(token);
+    console.log(existingUser);
+    if (!existingUser) {
+        throw customError('The reset token has expired. Please try again@ksm', 'fail', 404, true);
+    }
+
+    const { password, confirmPassword } = req.body;
+    if (!password || !confirmPassword) {
+        const error = customError('Password or confirm password not provided @ksm', 'fail', 400, true);
+        return next(error);
+    }
+    if (password != confirmPassword) {
+        const error = customError('Password and confirm password does not match Please try again', 'fail', 400, true);
+        return next(error);
+    }
+    await resetUserPassword(existingUser.email, password);
+
+    res.status(200).json({ existingUser });
 };
