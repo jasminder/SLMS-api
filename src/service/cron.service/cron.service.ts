@@ -15,8 +15,7 @@ export async function sendFeedbackEmails() {
                 include: {
                     personalDetails: true
                 }
-            } // Assuming you need student details for the email
-            // Include other necessary relations if required
+            }
         }
     });
     console.log('Sending feedback');
@@ -41,3 +40,198 @@ export async function sendFeedbackEmails() {
         }
     }
 }
+
+export async function processMonthlyFees() {
+    console.log('Start processing monthly fees');
+
+    try {
+        // Fetch active students enrolled in terms with monthly payment
+        const monthlyEnrollments = await db.enrollment.findMany({
+            where: {
+                student: {
+                    isActive: true
+                },
+                termSubjectGroup: {
+                    fee: {
+                        paymentType: 'MONTHLY'
+                    }
+                }
+            },
+            include: {
+                student: true,
+                termSubjectGroup: {
+                    include: {
+                        fee: true,
+                        term: true
+                    }
+                }
+            }
+        });
+
+        console.log('Monthly enrollments:', monthlyEnrollments.length);
+
+        // Process each enrollment
+        for (const enrollment of monthlyEnrollments) {
+            const feeAmount = enrollment.termSubjectGroup?.fee?.amount ?? 0;
+            const studentId = enrollment.studentId;
+            const termSubjectGroupId = enrollment.termSubjectGroupId;
+            const termId = enrollment.termSubjectGroup.termId;
+
+            // Fetch or create StudentTermFee record
+            const studentTermFee = await db.studentTermFee.upsert({
+                where: {
+                    studentId_termSubjectGroupId_termId: {
+                        studentId,
+                        termSubjectGroupId,
+                        termId
+                    }
+                },
+                update: {},
+                create: {
+                    studentId,
+                    termSubjectGroupId,
+                    termId
+                }
+            });
+
+            // Check if a fee payment for the current month already exists
+            const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+            const currentMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+
+            const existingFeePayment = await db.feePayment.findFirst({
+                where: {
+                    studentTermFeeId: studentTermFee.id,
+                    feeId: enrollment.termSubjectGroup.feeId ?? 0,
+                    dueDate: {
+                        gte: currentMonthStart,
+                        lte: currentMonthEnd
+                    }
+                }
+            });
+
+            if (!existingFeePayment) {
+                // Logic for credit amount and due amount calculations
+                let creditAmount = 0; // Logic to determine credit amount
+                let dueAmount = feeAmount - creditAmount;
+
+                // Create a new fee payment record for the current month
+                const newFeePayment = await db.feePayment.create({
+                    data: {
+                        studentTermFeeId: studentTermFee.id,
+                        feeId: enrollment.termSubjectGroup.feeId as number,
+                        dueDate: new Date(), // Your logic to set the due date
+                        amountPaid: 0,
+                        dueAmount,
+                        status: 'PENDING',
+                        method: 'NA',
+                        feeAmount,
+                        creditAmount
+                    }
+                });
+
+                console.log('New fee payment record created:', newFeePayment);
+            } else {
+                console.log('Fee payment for the current month already exists. No new record created.');
+            }
+        }
+    } catch (error) {
+        console.error('Error processing monthly fees:', error);
+    }
+
+    console.log('Finished processing monthly fees');
+}
+
+export async function processTermFees() {
+    console.log('Start processing term fees');
+
+    try {
+        const termEnrollments = await db.enrollment.findMany({
+            where: {
+                student: {
+                    isActive: true
+                },
+                termSubjectGroup: {
+                    fee: {
+                        paymentType: 'TERM'
+                    }
+                }
+            },
+            include: {
+                student: true,
+                termSubjectGroup: {
+                    include: {
+                        fee: true,
+                        term: true
+                    }
+                }
+            }
+        });
+
+        console.log('Term enrollments:', termEnrollments.length);
+
+        for (const enrollment of termEnrollments) {
+            const feeAmount = enrollment.termSubjectGroup?.fee?.amount ?? 0;
+            const studentId = enrollment.studentId;
+            const termSubjectGroupId = enrollment.termSubjectGroupId;
+            const termId = enrollment.termSubjectGroup.termId;
+
+            const studentTermFee = await db.studentTermFee.upsert({
+                where: {
+                    studentId_termSubjectGroupId_termId: {
+                        studentId,
+                        termSubjectGroupId,
+                        termId
+                    }
+                },
+                update: {},
+                create: {
+                    studentId,
+                    termSubjectGroupId,
+                    termId
+                }
+            });
+
+            // Determine the start of the previous month
+            const previousMonthStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
+            const currentMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+            const existingFeePayment = await db.feePayment.findFirst({
+                where: {
+                    studentTermFeeId: studentTermFee.id,
+                    feeId: enrollment.termSubjectGroup.feeId ?? 0,
+                    dueDate: {
+                        gte: previousMonthStart,
+                        lte: currentMonthEnd
+                    }
+                }
+            });
+
+            if (!existingFeePayment) {
+                let dueDate = new Date(); // Calculate the due date for the current term
+
+                const newFeePayment = await db.feePayment.create({
+                    data: {
+                        studentTermFeeId: studentTermFee.id,
+                        feeId: enrollment.termSubjectGroup.feeId as number,
+                        dueDate,
+                        amountPaid: 0,
+                        dueAmount: feeAmount,
+                        status: 'PENDING',
+                        method: 'NA',
+                        feeAmount,
+                        creditAmount: 0
+                    }
+                });
+
+                console.log('New term fee payment record created:', newFeePayment);
+            } else {
+                console.log('Term fee payment for the previous month already exists. No new record created.');
+            }
+        }
+    } catch (error) {
+        console.error('Error processing term fees:', error);
+    }
+
+    console.log('Finished processing term fees');
+}
+
+// Run the processTermFees function to test

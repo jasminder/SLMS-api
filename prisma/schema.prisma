@@ -285,6 +285,7 @@ model StudentTermFee {
   student            Student          @relation(fields: [studentId], references: [id])
   termSubjectGroup   TermSubjectGroup @relation(fields: [termSubjectGroupId], references: [id])
   term               Term             @relation(fields: [termId], references: [id])
+  createdAt          DateTime         @default(now())
 
   @@unique([studentId, termSubjectGroupId, termId])
 }
@@ -304,6 +305,7 @@ model FeePayment {
   method           PaymentMethod   @default(NA)
   fee              Fee             @relation(fields: [feeId], references: [id])
   studentTermFee   StudentTermFee? @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
+  createdAt        DateTime        @default(now())
 }
 
 model TermSubjectGroupSubject {
