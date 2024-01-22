@@ -62,6 +62,7 @@ model Student {
   user                    User?
   schoolCheckInAttendance SchoolCheckInAttendance[]
   skipReport              SkipReport[]
+  feedback                Feedback[]
 }
 
 model PersonalDetails {
@@ -352,6 +353,7 @@ model Teacher {
   user                             User?
   skipReport                       SkipReport[]
   Homework                         Homework[]
+  feedback                         Feedback[]
 }
 
 model TeacherPersonalDetails {
@@ -605,9 +607,24 @@ model Homework {
   attachments      String[] // URLs of the attached documents
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  subject Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  teacher Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  admin   Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  subject          Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher          Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  admin            Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   @@unique([subjectId, title])
+}
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  teacherId Int
+  title     String
+  content   String
+  isSent    Boolean  @default(false)
+  sendDate  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }

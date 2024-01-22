@@ -35,6 +35,7 @@ import sendMailHomeWorkRouter from './src/route/homework.route/homework.sendmail
 import ImageUploadRoute from './src/route/aws.image.fileUpload.route/aws.image.fileUpload.route';
 import adminStudentUpdateRoute from './src/route/admin.route/admin.student.route/admin.student.update.route/admin.student.update.route';
 import ImageDisplayRoute from './src/route/aws.image.fileDisplay.route/aws.image.fileDisplay.route';
+import feedbackRoute from './src/route/teacher.route/teacher.feedback.route/teacher.feedback.route';
 
 const app = express();
 app.use(cookieParser());
@@ -91,6 +92,7 @@ app.use('/api/v1/admin/attendance/skip-reports', adminAttendanceRoute);
 app.use('/api/v1/teacher/attendance', teacherAttendanceRoute);
 
 app.use('/api/v1/teacher', teacherRoute);
+app.use('/api/v1/teacher-feedback-for-student', feedbackRoute);
 
 app.use('/api/v1/auth', authRoute);
 
