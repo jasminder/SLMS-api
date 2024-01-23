@@ -166,9 +166,9 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
 
     /******RE CONSIDER THIS IF ADMIN SHOULD NOT REGISTER*******/
 
-    // if (userRole === Role.ADMIN) {
-    //     throw customError('Registration as ADMIN is not allowed. Please check with school', 'fail', 400, true);
-    // }
+    if (userRole === Role.STUDENT) {
+        throw customError('Registration as student is not allowed. Please check with school', 'fail', 400, true);
+    }
 
     /******RE CONSIDER THIS IF ADMIN SHOULD NOT REGISTER*******/
     if (!isAllowedLogin) {
