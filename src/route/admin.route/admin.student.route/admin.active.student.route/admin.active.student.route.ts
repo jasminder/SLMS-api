@@ -30,6 +30,8 @@ import {
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
 import { restrict } from '../../../../middleware/restrict';
 import { protectRoute } from '../../../../middleware/protectRoutes';
+import { findActiveStudentsWithoutPaginationHandler, searchActiveStudentsWithoutPaginationHandler } from '../../../../controller/admin.controller/admin.studentCard.controller/admin.studentCard.controller';
+import { findAllActiveStudentsWOPaginatonSchema, searchActiveStudentsWOPaginatonSchema } from '../../../../schema/admin.dto/admin.studentCard.dto/admin.studentCard.dto';
 
 const adminActiveStudentRoute = express.Router();
 
@@ -38,7 +40,16 @@ adminActiveStudentRoute.route('/get-all-active-students').get(validate(findAllAc
 
 /*search active students*/
 adminActiveStudentRoute.route('/search-active-students').get(validate(searchActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsHandler));
+// Without Pagination
 
+/*find all enrolled students*/
+adminActiveStudentRoute.route('/get-all-active-students-WO-pagination').get(validate(findAllActiveStudentsWOPaginatonSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentsWithoutPaginationHandler));
+
+/*search active students*/
+adminActiveStudentRoute.route('/search-active-students-WO-pagination').get(validate(searchActiveStudentsWOPaginatonSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsWithoutPaginationHandler));
+
+
+// Without Pagination
 /*find unqiue student*/
 adminActiveStudentRoute.route('/active-student-detail/:id').get(validate(findUniqueActiveStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentByIdHandler));
 /*find unqiue active student fee details*/
@@ -58,7 +69,7 @@ adminActiveStudentRoute
     .get(validate(findActiveStudentEnrolledSubjectsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentEnrolledSubjectsHandler));
 
 // find current term for assign classes to active students
-adminActiveStudentRoute.route('/find-current-term-to-assign-class').get(protectRoute, restrict('ADMIN','TEACHER'), asyncErrorHandler(findCurrentTermToAssignClassHandler));
+adminActiveStudentRoute.route('/find-current-term-to-assign-class').get(protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findCurrentTermToAssignClassHandler));
 
 /****** * assign class to student*****/
 adminActiveStudentRoute

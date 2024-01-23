@@ -1,6 +1,7 @@
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 
+
 // Find all active student for the admin
 export async function findActiveStudents(page: number, termId: number) {
     const take = 10;
