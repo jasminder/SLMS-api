@@ -11,8 +11,7 @@ export async function sendEmailWithAttachment(recipients: string[], subject: str
 
     // Nodemailer setup
 
-    console.log('username', process.env.EMAIL_USERNAME);
-    console.log('password', process.env.EMAIL_PASSWORD);
+
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT || '0'),

@@ -3,7 +3,7 @@ import { AnyZodObject } from 'zod';
 import { customError } from '../utils/customError';
 
 const validate = (schema: AnyZodObject) => async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body, 'url inside req.body');
+    // console.log(req.body, 'url inside req.body');
     // console.log(req.params, 'url inside req.params');
     // console.log(req.query, 'url inside req');
     try {

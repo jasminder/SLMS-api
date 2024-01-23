@@ -91,7 +91,7 @@ export async function createAdminApplicant(data: AdminApplicantSchema['body']) {
         });
         return admin;
     } catch (e) {
-        console.log(e);
+        // console.log(e);
         throw customError('Failed to create application', 'fail', 404, true); // Return an error message.
     }
 }

@@ -435,7 +435,7 @@ export async function updateAmountPaid(id: string, newAmountPaid: string, remark
     }
 
     // Update the fee payment record
-    console.log(remainingDueAmount, newCreditAmount);
+
     const updatedFeePayment = await db.feePayment.update({
         where: { id: +id },
         data: {

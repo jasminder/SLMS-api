@@ -93,7 +93,7 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
         });
         return student;
     } catch (e) {
-        console.log(e);
+        // console.log(e);
         throw customError('Failed to create application', 'fail', 404, true); // Return an error message.
     }
 }

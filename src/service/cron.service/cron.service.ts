@@ -18,7 +18,7 @@ export async function sendFeedbackEmails() {
             }
         }
     });
-    console.log('Sending feedback');
+
     for (const feedback of feedbackEntries) {
         // Prepare and send an email for each feedback entry
         if (feedback.student.personalDetails?.email) {
@@ -44,14 +44,14 @@ export async function sendFeedbackEmails() {
                     }
                 });
             } catch (error) {
-                console.error('Error sending feedback email:', error);
+                // console.error('Error sending feedback email:', error);
             }
         }
     }
 }
 
 export async function processMonthlyFees() {
-    console.log('Start processing monthly fees');
+    // console.log('Start processing monthly fees');
 
     try {
         // Fetch active students enrolled in terms with monthly payment
@@ -77,7 +77,7 @@ export async function processMonthlyFees() {
             }
         });
 
-        console.log('Monthly enrollments:', monthlyEnrollments.length);
+
 
         // Process each enrollment
         for (const enrollment of monthlyEnrollments) {
@@ -138,7 +138,7 @@ export async function processMonthlyFees() {
                     }
                 });
 
-                console.log('New fee payment record created:', newFeePayment);
+
             } else {
                 console.log('Fee payment for the current month already exists. No new record created.');
             }
@@ -176,7 +176,7 @@ export async function processTermFees() {
             }
         });
 
-        console.log('Term enrollments:', termEnrollments.length);
+
 
         for (const enrollment of termEnrollments) {
             const feeAmount = enrollment.termSubjectGroup?.fee?.amount ?? 0;

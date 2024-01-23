@@ -579,7 +579,7 @@ export async function deEnrollStudentEnrolledToSubjects(deEnrollData: EnrolledSt
                 termSubjectGroupId: deEnrollItem.termSubjectGroupId
             }
         });
-        console.log({ remainingEnrollments });
+
         // If no remaining enrollments, handle StudentTermFee and FeePayment records
         if (remainingEnrollments === 0) {
             const studentTermFee = await db.studentTermFee.findFirst({
@@ -634,15 +634,15 @@ export async function findSiblingsByParentEmail(email: string) {
             }
         });
 
-        console.log(siblings);
+
         let siblingsDetails: any = [];
         for (let sibling of siblings) {
             const data = await findEnrolledStudentById(sibling.id.toString());
             siblingsDetails = [...siblingsDetails, data];
         }
-        console.log('details:', siblingsDetails);
+
     } catch (e) {
-        console.log(e);
+        // console.log(e);
         return new Error(`cannot find sibling data @ksm ${e}`);
     }
 }

@@ -85,7 +85,7 @@ export const logout = async (req: Request, res: Response) => {
 export const refreshHandler = async (req: Request, res: Response, next: NextFunction) => {
     const cookie = req.cookies.refreshToken;
     if (process.env.NODE_ENV === 'development') {
-        console.log(cookie, '<<== cookie  in refrseh ep');
+
     }
     if (!cookie) {
         const error = customError(' No refresh Token available in cokkie. . @ksm', 'fail', 400, true);
@@ -149,9 +149,9 @@ export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordS
 };
 export const resetPasswordHandler = async (req: Request<ResetPasswordSchema['params'], {}, ResetPasswordSchema['body'], {}>, res: Response, next: NextFunction) => {
     const token = req.params.token;
-    console.log(token, 'token inside controller');
+
     const existingUser = await findUserByResetToken(token);
-    console.log(existingUser);
+
     if (!existingUser) {
         throw customError('The reset token has expired. Please try again@ksm', 'fail', 404, true);
     }

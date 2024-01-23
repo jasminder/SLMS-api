@@ -20,7 +20,7 @@ export const getImageUploadPresignedUrl = async (fileType: string): Promise<{ up
         throw customError('Invalid fileType format. Expected format: type/extension', 'fail', 400, true);
     }
     const extension = fileTypeParts[1];
-    console.log(extension, 'extension');
+
     const Key = `${randomUUID()}.${extension}`;
 
     const s3Params = {
@@ -29,7 +29,7 @@ export const getImageUploadPresignedUrl = async (fileType: string): Promise<{ up
         Expires: 600,
         ContentType: fileType
     };
-    console.log(Key);
+
     const uploadUrl = await s3.getSignedUrlPromise('putObject', s3Params);
     return {
         uploadUrl,

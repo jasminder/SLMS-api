@@ -45,7 +45,7 @@ export async function fetchCheckedInStudentsForCheckout() {
             }
         }
     });
-    console.log(checkedInStudents);
+
 
     return checkedInStudents;
 }

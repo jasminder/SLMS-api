@@ -98,7 +98,7 @@ export async function createTeacherApplicant(data: TeacherApplicantSchema['body'
         });
         return teacher;
     } catch (e) {
-        console.log(e);
+        // console.log(e);
         throw customError('Failed to create application', 'fail', 404, true); // Return an error message.
     }
 }

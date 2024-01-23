@@ -20,7 +20,7 @@ export const getImageDisplayPresignedUrl = async (fileUrl: string): Promise<{ do
     if (!Key) {
         throw customError('Invalid file URL.', 'fail', 400, true);
     }
-    console.log('*******', Key, '*****');
+
 
     const s3Params = {
         Bucket: process.env.BUCKET_NAME,
@@ -28,7 +28,7 @@ export const getImageDisplayPresignedUrl = async (fileUrl: string): Promise<{ do
         Expires: 72000 // 20 hours
     };
     const downloadUrl = await s3.getSignedUrlPromise('getObject', s3Params);
-    console.log('*********', downloadUrl, '******');
+
     return {
         downloadUrl,
         key: Key

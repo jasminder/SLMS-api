@@ -26,7 +26,7 @@ export async function getNextTermName() {
 
     // If the quarter number exceeds 4, reset to 1 and increment the year
 
-    console.log(`T${nextTermNumber}-${nextYearNumber}`);
+    // console.log(`T${nextTermNumber}-${nextYearNumber}`);
     // Return the next term name
     return `T${nextTermNumber}-${nextYearNumber}`;
 }
