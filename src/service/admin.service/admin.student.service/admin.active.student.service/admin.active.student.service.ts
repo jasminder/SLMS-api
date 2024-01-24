@@ -1,7 +1,6 @@
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 
-
 // Find all active student for the admin
 export async function findActiveStudents(page: number, termId: number) {
     const take = 10;
@@ -114,14 +113,11 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
         where: {
             role: 'STUDENT',
             isActive: true,
-            studentTermFee: {
+            enrollments: {
                 some: {
-                    termId: +termId,
-                    termSubjectGroup: {
-                        subject: {
-                            some: {
-                                name: subjectOption ? subjectOption : undefined
-                            }
+                    subjectEnrollment: {
+                        termSubject: {
+                            subject: { name: subjectOption }
                         }
                     }
                 }

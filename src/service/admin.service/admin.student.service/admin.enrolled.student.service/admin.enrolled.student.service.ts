@@ -267,11 +267,9 @@ export async function findEnrolledStudentEnrolledSubjects(id: string) {
     return enrolledSubjects;
 }
 // search enrolled student for the admin
-export async function searchEnrolledStudents(search: string, page: number, termId: number) {
+export async function searchEnrolledStudents(search = '', page: number, termId: number, subjectOption = '') {
     const take = 10;
-    if (search.length == 0) {
-        throw customError(`No Search query string available`, 'fail', 400, true);
-    }
+
     const pageNum: number = page ?? 0;
     const skip = pageNum * take;
     const enrolledStudents = await db.student.findMany({
@@ -283,11 +281,16 @@ export async function searchEnrolledStudents(search: string, page: number, termI
         where: {
             role: 'STUDENT',
             isActive: false,
-            studentTermFee: {
+            enrollments: {
                 some: {
-                    termId: +termId
+                    subjectEnrollment: {
+                        termSubject: {
+                            subject: { name: subjectOption }
+                        }
+                    }
                 }
             },
+
             OR: [
                 {
                     personalDetails: {
@@ -372,13 +375,21 @@ export async function searchEnrolledStudents(search: string, page: number, termI
             }
         }
     });
+    console.log(enrolledStudents);
     const count = await db.student.count({
         where: {
             role: 'STUDENT',
             isActive: false,
-            studentTermFee: {
+            enrollments: {
                 some: {
-                    termId: +termId
+                    termSubjectGroup: {
+                        termId: +termId,
+                        subject: {
+                            some: {
+                                name: subjectOption
+                            }
+                        }
+                    }
                 }
             },
             OR: [
@@ -634,13 +645,11 @@ export async function findSiblingsByParentEmail(email: string) {
             }
         });
 
-
         let siblingsDetails: any = [];
         for (let sibling of siblings) {
             const data = await findEnrolledStudentById(sibling.id.toString());
             siblingsDetails = [...siblingsDetails, data];
         }
-
     } catch (e) {
         // console.log(e);
         return new Error(`cannot find sibling data @ksm ${e}`);

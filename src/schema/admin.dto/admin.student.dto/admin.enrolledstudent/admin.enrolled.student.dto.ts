@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { EmergencyContactSchema, HealthInformationSchema, ParentsSchema } from '../../../new.applicant.dto/new.applicant.dto';
 
-
-
 // To find an enrolled student by ID
 export const findUniqueEnrolledStudentSchema = z.object({
     params: z.object({
@@ -11,12 +9,11 @@ export const findUniqueEnrolledStudentSchema = z.object({
 });
 export type FindUniqueEnrolledStudentSchema = z.infer<typeof findUniqueEnrolledStudentSchema>;
 
-
 //To find all enrolled students for Admin
 export const findAllEnrolledStudentsSchema = z.object({
     query: z.object({
         page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
-        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
     })
 });
 export type FindAllEnrolledStudentsSchema = z.infer<typeof findAllEnrolledStudentsSchema>;
@@ -24,13 +21,13 @@ export type FindAllEnrolledStudentsSchema = z.infer<typeof findAllEnrolledStuden
 // search enrolled students
 export const searchEnrolledStudentsSchema = z.object({
     query: z.object({
-        search: z.string(),
+        search: z.string().optional(),
+        subjectOption: z.string().optional(),
         page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
-        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
     })
 });
 export type SearchEnrolledStudentsSchema = z.infer<typeof searchEnrolledStudentsSchema>;
-
 
 /* enroll enrolledStudent to subjects */
 export const enrolledStudentEnrollDataSchema = z.object({
@@ -49,8 +46,6 @@ export const enrolledStudentEnrollDataSchema = z.object({
     })
 });
 export type EnrolledStudentEnrollDataSchema = z.infer<typeof enrolledStudentEnrollDataSchema>;
-
-
 
 // update STUDENT DETAILS at the admin level - Custom schemas
 export const AdminPersonalSchema = z.object({
@@ -103,4 +98,3 @@ export const FeedbackSchema = z
             .optional()
     )
     .optional();
-

@@ -44,9 +44,9 @@ export const findAllEnrolledStudentsHandler = async (req: Request<{}, {}, {}, Fi
 };
 
 export const searchEnrolledStudentsHandler = async (req: Request<{}, {}, {}, SearchEnrolledStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, page = 0, termId } = req.query;
+    const { search, subjectOption, page = 0, termId } = req.query;
     if (termId) {
-        const searchResult = await searchEnrolledStudents(search, +page, +termId);
+        const searchResult = await searchEnrolledStudents(search, +page, +termId, subjectOption);
         res.status(200).json(searchResult);
     }
 };
