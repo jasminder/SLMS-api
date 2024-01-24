@@ -292,51 +292,134 @@ async function seedTeachers() {
 }
 /*Admin*/
 
-const adminSeedData: AdminApplicantSchema['body'][] = [];
-
-for (let i = 1; i <= 2; i++) {
-    adminSeedData.push({
+const adminSeedData: AdminApplicantSchema['body'][] = [
+    {
         adminPersonalDetails: {
-            firstName: `TeacherFirst${i}`,
-            lastName: `Last${i}`,
-            DOB: new Date('1980-01-01').toISOString(),
-            gender: i % 2 === 0 ? 'male' : 'female',
-            email: `teacher${i}@domain.com`,
-            contact: `0456789${i}`,
-            address: `123 Main St ${i}`,
-            suburb: `Suburb${i}`,
+            firstName: 'Admin1',
+            lastName: 'Last1',
+            DOB: '1980-01-01T00:00:00.000Z',
+            gender: 'Male',
+            email: 'admin1@domain.com',
+            contact: '04567891',
+            address: '123 Main St 1',
+            suburb: 'Suburb1',
             state: 'SomeState',
             country: 'SomeCountry',
-            postcode: `123${i}`,
+            postcode: '1231',
             image: 'path/to/image.jpg'
         },
         adminEmergencyContact: {
-            contactPerson: `EmergencyContact${i}`,
-            contactNumber: `0456789${i + 10}`,
+            contactPerson: 'EmergencyContact1',
+            contactNumber: '045678911',
             relationship: 'Relative'
         },
         adminWWCHealthInformation: {
             medicalCondition: 'None',
-            medicareNumber: `Medicare${i}`,
-            childrenCheckCardNumber: `WWC${i}`,
-            workingWithChildrenCheckExpiry: new Date('2030-01-01').toISOString(),
+            medicareNumber: 'Medicare1',
+            childrenCheckCardNumber: 'WWC1',
+            workingWithChildrenCheckExpiry: '2030-01-01T00:00:00.000Z',
             workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
         },
         adminWorkRights: {
-            immigrationStatus: i % 2 === 0 ? 'Citizen' : 'Visa Holder',
+            immigrationStatus: 'Visa Holder',
             workRights: 'yes'
         },
         adminBankDetails: {
-            ABN: `ABN${i}`,
-            accountNumber: `Account${i}`,
-            bankAccountName: `BankName${i}`,
-            BSB: `BSB${i}`
+            ABN: 'ABN1',
+            accountNumber: 'Account1',
+            bankAccountName: 'BankName1',
+            BSB: 'BSB1'
         },
         adminOtherInformation: {
-            otherInfo: `Other Info ${i}`
+            otherInfo: 'Other Info 1'
         }
-    });
-}
+    },
+    {
+        adminPersonalDetails: {
+            firstName: 'admin2',
+            lastName: 'Last2',
+            DOB: '1980-01-01T00:00:00.000Z',
+            gender: 'male',
+            email: 'admin2@domain.com',
+            contact: '04567892',
+            address: '123 Main St 2',
+            suburb: 'Suburb2',
+            state: 'SomeState',
+            country: 'SomeCountry',
+            postcode: '1232',
+            image: 'path/to/image.jpg'
+        },
+        adminEmergencyContact: {
+            contactPerson: 'EmergencyContact2',
+            contactNumber: '045678912',
+            relationship: 'Relative'
+        },
+        adminWWCHealthInformation: {
+            medicalCondition: 'None',
+            medicareNumber: 'Medicare2',
+            childrenCheckCardNumber: 'WWC2',
+            workingWithChildrenCheckExpiry: '2030-01-01T00:00:00.000Z',
+            workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
+        },
+        adminWorkRights: {
+            immigrationStatus: 'Citizen',
+            workRights: 'yes'
+        },
+        adminBankDetails: {
+            ABN: 'ABN2',
+            accountNumber: 'Account2',
+            bankAccountName: 'BankName2',
+            BSB: 'BSB2'
+        },
+        adminOtherInformation: {
+            otherInfo: 'Other Info 2'
+        }
+    }
+];
+
+// for (let i = 1; i <= 2; i++) {
+//     adminSeedData.push({
+//         adminPersonalDetails: {
+//             firstName: `TeacherFirst${i}`,
+//             lastName: `Last${i}`,
+//             DOB: new Date('1980-01-01').toISOString(),
+//             gender: i % 2 === 0 ? 'male' : 'female',
+//             email: `teacher${i}@domain.com`,
+//             contact: `0456789${i}`,
+//             address: `123 Main St ${i}`,
+//             suburb: `Suburb${i}`,
+//             state: 'SomeState',
+//             country: 'SomeCountry',
+//             postcode: `123${i}`,
+//             image: 'path/to/image.jpg'
+//         },
+//         adminEmergencyContact: {
+//             contactPerson: `EmergencyContact${i}`,
+//             contactNumber: `0456789${i + 10}`,
+//             relationship: 'Relative'
+//         },
+//         adminWWCHealthInformation: {
+//             medicalCondition: 'None',
+//             medicareNumber: `Medicare${i}`,
+//             childrenCheckCardNumber: `WWC${i}`,
+//             workingWithChildrenCheckExpiry: new Date('2030-01-01').toISOString(),
+//             workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
+//         },
+//         adminWorkRights: {
+//             immigrationStatus: i % 2 === 0 ? 'Citizen' : 'Visa Holder',
+//             workRights: 'yes'
+//         },
+//         adminBankDetails: {
+//             ABN: `ABN${i}`,
+//             accountNumber: `Account${i}`,
+//             bankAccountName: `BankName${i}`,
+//             BSB: `BSB${i}`
+//         },
+//         adminOtherInformation: {
+//             otherInfo: `Other Info ${i}`
+//         }
+//     });
+// }
 
 async function seedAdmins() {
     console.log('Start seeding Admin...');
