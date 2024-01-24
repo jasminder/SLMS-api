@@ -32,6 +32,9 @@ export async function getCommentsByStudentId(studentId: string) {
         where: {
             studentId: +studentId
         },
+        orderBy: {
+            createdAt: 'desc' // Orders the comments by the 'createdAt' field in descending order
+        },
         // Include any additional data if needed, e.g., details about the admin who made the comment
         include: {
             admin: {
