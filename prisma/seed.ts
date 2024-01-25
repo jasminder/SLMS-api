@@ -381,7 +381,7 @@ const adminSeedData: AdminApplicantSchema['body'][] = [
             lastName: 'Shaouni',
             DOB: '1980-01-01T00:00:00.000Z',
             gender: 'male',
-            email: 'singhaus1986@gmail.com',
+            email: 'akaalshaouni@gmail.com',
             contact: '0433029910',
             address: '123 Main St 2',
             suburb: 'Suburb2',
@@ -398,7 +398,7 @@ const adminSeedData: AdminApplicantSchema['body'][] = [
         adminWWCHealthInformation: {
             medicalCondition: 'None',
             medicareNumber: 'Medicare2',
-            childrenCheckCardNumber: 'WWC2',
+            childrenCheckCardNumber: 'WWwwC2',
             workingWithChildrenCheckExpiry: '2030-01-01T00:00:00.000Z',
             workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
         },
