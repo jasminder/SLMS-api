@@ -82,10 +82,9 @@ export const logout = async (req: Request, res: Response) => {
 };
 
 /*get access token while refresh token is active*/
-export const refreshHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const refreshHandler1 = async (req: Request, res: Response, next: NextFunction) => {
     const cookie = req.cookies.refreshToken;
     if (process.env.NODE_ENV === 'development') {
-
     }
     if (!cookie) {
         const error = customError(' No refresh Token available in cokkie. . @ksm', 'fail', 400, true);
@@ -116,6 +115,49 @@ export const refreshHandler = async (req: Request, res: Response, next: NextFunc
             message: `${existingUser.email} give access token since refresh token valid`
         });
     });
+};
+
+export const refreshHandler = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const cookie = req.cookies.refreshToken;
+        if (!cookie) {
+            throw customError('No refresh Token available in cookie. @ksm', 'fail', 400, true);
+        }
+
+        const refreshToken = cookie;
+
+        jwt.verify(refreshToken, process.env.REFRESH_SECRET_STR!, (err:any, decoded:any) => {
+            try {
+                if (err) {
+                    throw customError('Invalid or expired refresh token @ksm', 'fail', 403, true);
+                }
+
+                const decodedRefreshToken = decoded;
+                existingAuthUser(decodedRefreshToken.email, decodedRefreshToken.role)
+                    .then((existingUser) => {
+                        const newAccessToken = jwt.sign({ email: existingUser.email, role: existingUser.role, id: existingUser.id }, process.env.SECRET_STR!, {
+                            expiresIn: '10s' // Adjust the expiration as needed
+                        });
+
+                        res.status(200).json({
+                            status: 'Success',
+                            user: existingUser,
+                            accessToken: newAccessToken,
+                            email: existingUser.email,
+                            role: existingUser.role,
+                            message: `${existingUser.email} given access token since refresh token is valid`
+                        });
+                    })
+                    .catch((userError) => {
+                        throw userError;
+                    });
+            } catch (callbackError) {
+                next(callbackError);
+            }
+        });
+    } catch (outerError) {
+        next(outerError);
+    }
 };
 //************** Forgot Password **************
 export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordSchema['body'], {}>, res: Response, next: NextFunction) => {

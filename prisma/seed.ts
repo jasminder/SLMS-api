@@ -629,7 +629,7 @@ async function seedAdmins() {
 //
 
 async function main() {
-    // await seedStudents();
+    await seedStudents();
     // await seedTeachers();
     await seedAdmins();
     // await seedTerms();

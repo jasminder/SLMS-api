@@ -21,14 +21,14 @@ export const getImageDisplayPresignedUrl = async (fileUrl: string): Promise<{ do
         throw customError('Invalid file URL.', 'fail', 400, true);
     }
 
-
     const s3Params = {
         Bucket: process.env.BUCKET_NAME,
         Key,
         Expires: 72000 // 20 hours
     };
     const downloadUrl = await s3.getSignedUrlPromise('getObject', s3Params);
-
+    console.log(process.env.BUCKET_NAME, Key, 'inside filedisplay');
+    console.log(downloadUrl, 'inside file display');
     return {
         downloadUrl,
         key: Key

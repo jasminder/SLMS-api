@@ -31,6 +31,8 @@ export const getImageUploadPresignedUrl = async (fileType: string): Promise<{ up
     };
 
     const uploadUrl = await s3.getSignedUrlPromise('putObject', s3Params);
+    console.log(process.env.BUCKET_NAME, Key, 'inside file upload');
+    console.log(uploadUrl, 'inside file upload');
     return {
         uploadUrl,
         key: Key

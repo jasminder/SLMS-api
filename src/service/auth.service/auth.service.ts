@@ -316,7 +316,7 @@ export const existingAuthUser = async (email: string, role: string) => {
         }
     });
     if (!existingUser) {
-        throw customError('TokenExpiredError', 'fail', 404, true);
+        throw customError('Session expired login again', 'fail', 404, true);
     }
     return existingUser;
 };
