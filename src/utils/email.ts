@@ -21,7 +21,7 @@ export const sendEmail = async (option: optionType) => {
     // create email option
 
     const emailOptions = {
-        from: 'nithin.mohanan@gmail.com',
+        from: process.env.EMAIL_FROM,
         to: option.email,
         subject: option.subject,
         text: option.text

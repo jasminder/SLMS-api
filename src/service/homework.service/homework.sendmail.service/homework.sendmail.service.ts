@@ -11,7 +11,6 @@ export async function sendEmailWithAttachment(recipients: string[], subject: str
 
     // Nodemailer setup
 
-
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT || '0'),
@@ -30,7 +29,7 @@ export async function sendEmailWithAttachment(recipients: string[], subject: str
 
     // Email options
     const emailOptions = {
-        from: 'nithin.mohanan@gmail.com',
+        from: process.env.EMAIL_FROM,
         to: recipients,
         subject,
         text,
