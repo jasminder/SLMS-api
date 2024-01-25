@@ -264,3 +264,190 @@ router.get('/generate-presigned-url', protectRoute, restrict('ADMIN'), generateP
 export default router;
 
 
+------------------
+export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId } = req.query;
+
+    if (termId) {
+        const searchResult = await searchActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption);
+        res.status(200).json(searchResult);
+    }
+};
+--------------------
+// search enrolled students
+export const searchActiveStudentsSchema = z.object({
+    query: z.object({
+        search: z.string().optional(),
+        subjectOption: z.string().optional(),
+        levelOption: z.string().optional(),
+        sectionOption: z.string().optional(),
+        page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
+    })
+});
+export type SearchActiveStudentsSchema = z.infer<typeof searchActiveStudentsSchema>;
+
+----------------------
+
+// search active student for the admin
+export async function searchActiveStudents(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '') {
+    const take = 10;
+
+    const pageNum: number = page ?? 0;
+    const skip = pageNum * take;
+    const activeStudents = await db.student.findMany({
+        skip,
+        take,
+        orderBy: {
+            createdAt: 'desc'
+        },
+        where: {
+            role: 'STUDENT',
+            isActive: true,
+            enrollments: {
+                some: {
+                    subjectEnrollment: {
+                        termSubject: {
+                            subject: { name: subjectOption }
+                        }
+                    },
+                    termSubjectLevel: {
+                        level: { name: levelOption ? levelOption : undefined },
+                        sections: {
+                            some: {
+                                name: sectionOption ? sectionOption : undefined
+                            }
+                        }
+                    }
+                }
+            },
+            OR: [
+                {
+                    personalDetails: {
+                        OR: [
+                            { firstName: { contains: search, mode: 'insensitive' } },
+                            { lastName: { contains: search, mode: 'insensitive' } },
+                            { email: { contains: search, mode: 'insensitive' } },
+                            { contact: { contains: search, mode: 'insensitive' } },
+                            { postcode: { contains: search, mode: 'insensitive' } }
+                        ]
+                    }
+                },
+                {
+                    parentsDetails: {
+                        OR: [
+                            { fatherName: { contains: search, mode: 'insensitive' } },
+                            { motherName: { contains: search, mode: 'insensitive' } },
+                            { parentEmail: { contains: search, mode: 'insensitive' } },
+                            { parentContact: { contains: search, mode: 'insensitive' } }
+                        ]
+                    }
+                }
+            ]
+        },
+        select: {
+            id: true,
+            role: true,
+            isActive: true,
+            updatedAt: true,
+            createdAt: true,
+            personalDetails: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    DOB: true,
+                    gender: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    state: true,
+                    country: true,
+                    postcode: true,
+                    image: true
+                }
+            },
+            parentsDetails: {
+                select: {
+                    id: true,
+                    fatherName: true,
+                    motherName: true,
+                    parentEmail: true,
+                    parentContact: true
+                }
+            },
+            emergencyContact: {
+                select: {
+                    id: true,
+                    contactPerson: true,
+                    contactNumber: true,
+                    relationship: true
+                }
+            },
+            healthInformation: {
+                select: {
+                    id: true,
+                    medicareNumber: true,
+                    ambulanceMembershipNumber: true,
+                    medicalCondition: true,
+                    allergy: true
+                }
+            },
+            subjectRelated: true,
+            subjectsChosen: true,
+            otherInformation: {
+                select: {
+                    id: true,
+                    otherInfo: true,
+                    declaration: true
+                }
+            }
+        }
+    });
+    const count = await db.student.count({
+        where: {
+            role: 'STUDENT',
+            isActive: true,
+            studentTermFee: {
+                some: {
+                    termId: +termId,
+                    termSubjectGroup: {
+                        subject: {
+                            some: {
+                                name: subjectOption
+                            }
+                        }
+                    }
+                }
+            },
+            OR: [
+                {
+                    personalDetails: {
+                        OR: [
+                            { firstName: { contains: search, mode: 'insensitive' } },
+                            { lastName: { contains: search, mode: 'insensitive' } },
+                            { email: { contains: search, mode: 'insensitive' } },
+                            { contact: { contains: search, mode: 'insensitive' } },
+                            { postcode: { contains: search, mode: 'insensitive' } }
+                        ]
+                    }
+                },
+                {
+                    parentsDetails: {
+                        OR: [
+                            { fatherName: { contains: search, mode: 'insensitive' } },
+                            { motherName: { contains: search, mode: 'insensitive' } },
+                            { parentEmail: { contains: search, mode: 'insensitive' } },
+                            { parentContact: { contains: search, mode: 'insensitive' } }
+                        ]
+                    }
+                }
+            ]
+        }
+    });
+
+    return { activeStudents, count };
+}
+
+----------------

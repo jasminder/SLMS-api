@@ -119,14 +119,6 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         termSubject: {
                             subject: { name: subjectOption }
                         }
-                    },
-                    termSubjectLevel: {
-                        level: { name: levelOption ? levelOption : undefined },
-                        sections: {
-                            some: {
-                                name: sectionOption ? sectionOption : undefined
-                            }
-                        }
                     }
                 }
             },
