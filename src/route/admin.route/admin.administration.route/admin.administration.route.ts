@@ -18,7 +18,8 @@ import {
     findAllStudentsInATermHandler,
     findCurrentTermHandler,
     findPublishTermAdministrationHandler,
-    unPublishTermTermHandler
+    unPublishTermTermHandler,
+    findCurrentTermForeFilterHandler
 } from '../../../controller/admin.controller/admin.administration.controller/admin.administration.controller';
 import { changeCurrentTermNameSchema, createNewTermSetupSchema, extendCurrentTermSchema, findUniqueTermSchema } from '../../../schema/admin.dto/admin.administration.dto/admin.administration.dto';
 import { protectRoute } from '../../../middleware/protectRoutes';
@@ -34,6 +35,7 @@ adminAdministrationRoute.route('/delete-term/:id').delete(validate(findUniqueTer
 adminAdministrationRoute.route('/update/term-name/:id').put(validate(changeCurrentTermNameSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(changeCurrentTermNameHandler));
 adminAdministrationRoute.route('/update/extend-term/:id').put(validate(extendCurrentTermSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(extendCurrentTermHandler));
 adminAdministrationRoute.route('/find-current-term').get(protectRoute, restrict('ADMIN', 'TEACHER'),asyncErrorHandler(findCurrentTermHandler));
+adminAdministrationRoute.route('/find-current-term-for-filter').get(protectRoute, restrict('ADMIN', 'TEACHER'),asyncErrorHandler(findCurrentTermForeFilterHandler));
 adminAdministrationRoute.route('/find-published-term-administration').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findPublishTermAdministrationHandler));
 
 // find students in a term

@@ -16,7 +16,8 @@ import {
     makeCurrentTerm,
     makePublishTerm,
     findPublishTermAdministration,
-    unPublishTerm
+    unPublishTerm,
+    findCurrentTermForeFilter
 } from '../../../service/admin.service/admin.administration.service/admin.administration.service';
 import {
     ChangeCurrentTermNameSchema,
@@ -111,6 +112,11 @@ export const findAllStudentsInATermHandler = async (req: Request<FindUniqueTermS
 export const findCurrentTermHandler = async (req: Request, res: Response, next: NextFunction) => {
     const activeTerm = await findCurrentTerm();
     res.status(200).json(activeTerm);
+};
+//find current term
+export const findCurrentTermForeFilterHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const activeTermForFilter = await findCurrentTermForeFilter();
+    res.status(200).json(activeTermForFilter);
 };
 
 //find pusblished term

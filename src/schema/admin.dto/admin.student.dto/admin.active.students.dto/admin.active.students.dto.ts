@@ -31,6 +31,8 @@ export const searchActiveStudentsSchema = z.object({
     query: z.object({
         search: z.string().optional(),
         subjectOption: z.string().optional(),
+        levelOption: z.string().optional(),
+        sectionOption: z.string().optional(),
         page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
         termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
     })

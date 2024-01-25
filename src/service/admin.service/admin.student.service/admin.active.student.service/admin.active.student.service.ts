@@ -99,7 +99,7 @@ export async function findActiveStudents(page: number, termId: number) {
 }
 
 // search active student for the admin
-export async function searchActiveStudents(search = '', page: number, termId: number, subjectOption = '') {
+export async function searchActiveStudents(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '') {
     const take = 10;
 
     const pageNum: number = page ?? 0;
@@ -118,6 +118,14 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                     subjectEnrollment: {
                         termSubject: {
                             subject: { name: subjectOption }
+                        }
+                    },
+                    termSubjectLevel: {
+                        level: { name: levelOption ? levelOption : undefined },
+                        sections: {
+                            some: {
+                                name: sectionOption ? sectionOption : undefined
+                            }
                         }
                     }
                 }

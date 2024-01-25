@@ -42,10 +42,10 @@ export const findActiveStudentsHandler = async (req: Request<{}, {}, {}, FindAll
 };
 
 export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, subjectOption, page = 0, termId } = req.query;
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId } = req.query;
 
     if (termId) {
-        const searchResult = await searchActiveStudents(search, +page, +termId, subjectOption);
+        const searchResult = await searchActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption);
         res.status(200).json(searchResult);
     }
 };

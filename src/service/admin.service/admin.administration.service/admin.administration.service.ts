@@ -725,6 +725,42 @@ export async function findCurrentTerm() {
 
     return activeTerm;
 }
+export async function findCurrentTermForeFilter() {
+    const activeTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        },
+        select: {
+            id: true,
+            name: true,
+            isPublish: true,
+            currentTerm: true,
+            startDate: true,
+            endDate: true,
+            createdAt: true,
+            updatedAt: true,
+            termSubject: {
+                select: {
+                    id: true,
+                    subject: true,
+                    level: true
+                }
+            },
+            termSubjectGroup: {
+                select: {
+                    id: true,
+                    fee: true,
+                    subjectGroup: true
+                }
+            },
+            termSubjectLevel: {
+                select: { level: true, sections: true, subject: true }
+            }
+        }
+    });
+
+    return activeTerm;
+}
 //find published term
 export async function findPublishTermAdministration() {
     const publishTerm = await db.term.findFirst({
