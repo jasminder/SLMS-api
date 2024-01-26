@@ -197,55 +197,55 @@ async function seedStudents() {
 /*Teacher*/
 // Define the teacher seed data
 const teacherSeedData: TeacherApplicantSchema['body'][] = [];
-for (let i = 1; i <= 15; i++) {
-    teacherSeedData.push({
-        teacherPersonalDetails: {
-            firstName: `TeacherFirst${i}`,
-            lastName: `Last${i}`,
-            DOB: new Date('1980-01-01').toISOString(),
-            gender: i % 2 === 0 ? 'male' : 'female',
-            email: `teacher${i}@domain.com`,
-            contact: `0456789${i}`,
-            address: `123 Main St ${i}`,
-            suburb: `Suburb${i}`,
-            state: 'SomeState',
-            country: 'SomeCountry',
-            postcode: `123${i}`,
-            image: 'path/to/image.jpg'
-        },
-        teacherEmergencyContact: {
-            contactPerson: `EmergencyContact${i}`,
-            contactNumber: `0456789${i + 10}`,
-            relationship: 'Relative'
-        },
-        teacherWWCHealthInformation: {
-            medicalCondition: 'None',
-            medicareNumber: `Medicare${i}`,
-            childrenCheckCardNumber: `WWC${i}`,
-            workingWithChildrenCheckExpiry: new Date('2030-01-01').toISOString(),
-            workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
-        },
-        teacherWorkRights: {
-            immigrationStatus: i % 2 === 0 ? 'Citizen' : 'Visa Holder',
-            workRights: 'yes'
-        },
-        teacherQualificationAvailability: {
-            experience: `${i} years`,
-            qualification: `Qualification${i}`,
-            subjectsChosen: ['Math', 'Science'],
-            timeSlotsChosen: ['Monday Morning', 'Wednesday Afternoon']
-        },
-        teacherBankDetails: {
-            ABN: `ABN${i}`,
-            accountNumber: `Account${i}`,
-            bankAccountName: `BankName${i}`,
-            BSB: `BSB${i}`
-        },
-        teacherOtherInformation: {
-            otherInfo: `Other Info ${i}`
-        }
-    });
-}
+// for (let i = 1; i <= 15; i++) {
+//     teacherSeedData.push({
+//         teacherPersonalDetails: {
+//             firstName: `TeacherFirst${i}`,
+//             lastName: `Last${i}`,
+//             DOB: new Date('1980-01-01').toISOString(),
+//             gender: i % 2 === 0 ? 'male' : 'female',
+//             email: `teacher${i}@domain.com`,
+//             contact: `0456789${i}`,
+//             address: `123 Main St ${i}`,
+//             suburb: `Suburb${i}`,
+//             state: 'SomeState',
+//             country: 'SomeCountry',
+//             postcode: `123${i}`,
+//             image: 'path/to/image.jpg'
+//         },
+//         teacherEmergencyContact: {
+//             contactPerson: `EmergencyContact${i}`,
+//             contactNumber: `0456789${i + 10}`,
+//             relationship: 'Relative'
+//         },
+//         teacherWWCHealthInformation: {
+//             medicalCondition: 'None',
+//             medicareNumber: `Medicare${i}`,
+//             childrenCheckCardNumber: `WWC${i}`,
+//             workingWithChildrenCheckExpiry: new Date('2030-01-01').toISOString(),
+//             workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
+//         },
+//         teacherWorkRights: {
+//             immigrationStatus: i % 2 === 0 ? 'Citizen' : 'Visa Holder',
+//             workRights: 'yes'
+//         },
+//         teacherQualificationAvailability: {
+//             experience: `${i} years`,
+//             qualification: `Qualification${i}`,
+//             subjectsChosen: ['Math', 'Science'],
+//             timeSlotsChosen: ['Monday Morning', 'Wednesday Afternoon']
+//         },
+//         teacherBankDetails: {
+//             ABN: `ABN${i}`,
+//             accountNumber: `Account${i}`,
+//             bankAccountName: `BankName${i}`,
+//             BSB: `BSB${i}`
+//         },
+//         teacherOtherInformation: {
+//             otherInfo: `Other Info ${i}`
+//         }
+//     });
+// }
 
 async function seedTeachers() {
     console.log('Start seeding teachers...');
