@@ -196,7 +196,8 @@ async function seedStudents() {
 
 /*Teacher*/
 // Define the teacher seed data
-const teacherSeedData: TeacherApplicantSchema['body'][] = [];
+const teacherData= require('../teacherSeedData/transformed_teachers_data.json')
+const teacherSeedData: TeacherApplicantSchema['body'][] = teacherData;
 // for (let i = 1; i <= 15; i++) {
 //     teacherSeedData.push({
 //         teacherPersonalDetails: {
