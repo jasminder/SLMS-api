@@ -48,7 +48,7 @@ app.use(cookieParser());
 const origin =
     process.env.NODE_ENV === 'development'
         ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', "ec2-13-236-121-116.ap-southeast-2.compute.amazonaws.com:8080"]
-        : ['https://SLMS.com', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', "ec2-13-236-121-116.ap-southeast-2.compute.amazonaws.com:8080"];
+        : ['https://SLMS.com', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', "http://ec2-13-236-121-116.ap-southeast-2.compute.amazonaws.com:8080"];
 app.use(
     cors({
         credentials: true,
