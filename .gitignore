@@ -8,7 +8,7 @@ node_modules
 dist
 dist-ssr
 *.local
-
+studentSeedData
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

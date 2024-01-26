@@ -54,8 +54,8 @@ model Student {
   healthInformation       HealthInformation?
   otherInformation        OtherInformation?
   studentTermFee          StudentTermFee[]
-  subjectsChosen          String[]
-  subjectRelated          String[]
+  subjectsChosen          String[]                  @default(["Subjects Opted Not available"])
+  subjectRelated          String[]                  @default(["Options Not available"])
   createdAt               DateTime                  @default(now())
   updatedAt               DateTime                  @updatedAt
   studentClassAssignment  StudentClassAssignment[]
@@ -79,7 +79,7 @@ model PersonalDetails {
   address   String
   suburb    String
   state     String
-  country   String
+  country   String   @default("Australia")
   postcode  String
   image     String?
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -97,7 +97,7 @@ model ParentsDetails {
 
 model EmergencyContact {
   id            Int     @id @default(autoincrement())
-  contactPerson String
+  contactPerson String  @default("Not given")
   contactNumber String
   relationship  String
   studentId     Int     @unique
@@ -117,7 +117,7 @@ model HealthInformation {
 model OtherInformation {
   id          Int      @id @default(autoincrement())
   otherInfo   String   @default("No information provided")
-  declaration String[]
+  declaration String[] @default([""])
   studentId   Int      @unique
   student     Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
