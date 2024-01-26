@@ -54,7 +54,7 @@ model Student {
   healthInformation       HealthInformation?
   otherInformation        OtherInformation?
   studentTermFee          StudentTermFee[]
-  subjectsChosen          String[]                  @default(["Subjects Opted Not available"])
+  subjectsChosen          String[]                  @default(["Subjects Chosen Not available"])
   subjectRelated          String[]                  @default(["Options Not available"])
   createdAt               DateTime                  @default(now())
   updatedAt               DateTime                  @updatedAt
