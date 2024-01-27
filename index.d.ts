@@ -1,5 +1,4 @@
-import { Express } from 'express-serve-static-core';
-import { User } from '@prisma/client';
+
 // Define types for the related entities if needed
 
 type Admin = {
@@ -34,4 +33,24 @@ declare module 'express-serve-static-core' {
     interface Request {
         user?: UserType;
     }
+}
+// Add your module declarations below
+
+declare module 'node-cron' {
+    // Replace with actual functions and types used from node-cron
+    export function schedule(cronExpression: string, callback: () => void): any;
+    // ...
+}
+
+declare module 'nodemailer' {
+    // Replace with actual functions and types used from nodemailer
+    export function createTransport(options: any): any;
+    // ...
+}
+
+declare module 'bcrypt' {
+    // Replace with actual functions and types used from bcrypt
+    export function hash(password: string, saltOrRounds: number | string): Promise<string>;
+    export function compare(data: string, encrypted: string): Promise<boolean>;
+    // ...
 }
