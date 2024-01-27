@@ -632,9 +632,9 @@ async function seedAdmins() {
 //
 
 async function main() {
-    // await seedStudents();
-    // await seedTeachers();
-    // await seedAdmins();
+    await seedStudents();
+    await seedTeachers();
+    await seedAdmins();
     // await seedTerms();
 }
 
