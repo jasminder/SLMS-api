@@ -16,8 +16,7 @@
     "devDependencies": {
         "chalk": "^5.3.0",
         "nodemon": "^3.0.1",
-        "prisma": "^5.8.1",
-        "ts-node": "^10.9.1"
+        "prisma": "^5.8.1"
     },
     "dependencies": {
         "@prisma/client": "^5.8.1",
@@ -50,6 +49,7 @@
         "pino": "^8.16.1",
         "pino-pretty": "^10.2.3",
         "rimraf": "^5.0.1",
+        "ts-node": "^10.9.2",
         "typescript": "^5.1.6",
         "zod": "^3.21.4"
     },
