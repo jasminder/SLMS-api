@@ -123,11 +123,11 @@ app.use('/api/v1/download-home-work', homeWorkDownloadRoute);
 app.use('/api/v1/send-mail', sendMailHomeWorkRouter);
 
 // Server frontend static assets and handle catch-all route
-if (process.env.NODE_ENV === 'production') {
-    const __dirname = path.resolve();
-    app.use(express.static(path.join(__dirname, '/client/dist/index.html')));
-    app.get('*', (req: Request, res: Response) => res.sendFile(path.resolve(__dirname, 'client', 'dist', 'index.html')));
-}
+// if (process.env.NODE_ENV === 'production') {
+//     const __dirname = path.resolve();
+//     app.use(express.static(path.join(__dirname, '/client/dist/index.html')));
+//     app.get('*', (req: Request, res: Response) => res.sendFile(path.resolve(__dirname, 'client', 'dist', 'index.html')));
+// }
 
 app.all('*', (req: Request, res: Response, next: NextFunction) => {
     // ************** -->> resubale / or use a class customerError
