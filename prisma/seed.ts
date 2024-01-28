@@ -79,7 +79,7 @@ export const newApplicantSchema = z.object({
     )
 });
 
-const studentData= require('../studentSeedData/updated_transformed_student_data.json')
+const studentData = require('../studentSeedData/updated_transformed_student_data.json');
 export type NewApplicantSchema = z.infer<typeof newApplicantSchema>;
 const studentSeedData: NewApplicantSchema['body'][] = studentData;
 // for (let i = 1; i <= 45; i++) {
@@ -196,7 +196,7 @@ async function seedStudents() {
 
 /*Teacher*/
 // Define the teacher seed data
-const teacherData= require('../teacherSeedData/transformed_teachers_data.json')
+const teacherData = require('../teacherSeedData/transformed_teachers_data.json');
 const teacherSeedData: TeacherApplicantSchema['body'][] = teacherData;
 // for (let i = 1; i <= 15; i++) {
 //     teacherSeedData.push({
@@ -632,10 +632,15 @@ async function seedAdmins() {
 //
 
 async function main() {
-    await seedStudents();
-    await seedTeachers();
-    await seedAdmins();
-    // await seedTerms();
+    if (process.env.NODE_ENV == 'development') {
+        await seedStudents();
+        await seedTeachers();
+        // await seedAdmins();
+
+        console.log('seed in development');
+    } else {
+        console.log('cannot seed in production');
+    }
 }
 
 main()

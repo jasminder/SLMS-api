@@ -54,22 +54,22 @@ const origin =
               'http://localhost:5174',
               'http://localhost:5175',
               'http://ec2-13-236-121-116.ap-southeast-2.compute.amazonaws.com:8080',
-              'https://slms-client-2aam.vercel.app'
+              'https://slms-client-2aam.vercel.app', 'https://akaalshaouni.org'
           ];
-// app.use(
-//     cors({
-//         credentials: true,
-//         origin: origin,
-//         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-//         optionsSuccessStatus: 200
-//     })
-// );
-app.use(cors({
-    origin: 'https://slms-client-2aam.vercel.app',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+app.use(
+    cors({
+        credentials: true,
+        origin: origin,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        optionsSuccessStatus: 200
+    })
+);
+// app.use(cors({
+//     origin: 'https://slms-client-2aam.vercel.app',
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+//     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+// }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
