@@ -83,49 +83,7 @@ export const newApplicantSchema = z.object({
 const studentData = require('../studentSeedData/updated_transformed_student_data.json');
 export type NewApplicantSchema = z.infer<typeof newApplicantSchema>;
 const studentSeedData: NewApplicantSchema['body'][] = studentData;
-// for (let i = 1; i <= 45; i++) {
-//     studentSeedData.push({
-//         personalDetails: {
-//             firstName: `Name${i}`,
-//             lastName: `Lopez${i}`,
-//             DOB: new Date('01/01/2010').toISOString(),
-//             gender: i % 2 === 0 ? 'male' : 'female',
-//             email: `emil${i}@domain.com`,
-//             contact: `03990345${63 + i}`,
-//             address: `789 Elm Avenue, Apt ${i}`,
-//             suburb: `Suburb${i}`,
-//             state: 'California',
-//             country: 'USA',
-//             postcode: `124${i}`,
-//             image: ''
-//         },
-//         parentsDetails: {
-//             fatherName: `Father${i}`,
-//             motherName: `Mother${i}`,
-//             parentEmail: `parent${i}@example.com`,
-//             parentContact: `01234${560 + i}`
-//         },
-//         emergencyContact: {
-//             contactPerson: `Contact${i}`,
-//             contactNumber: `00112233${50 + i}`,
-//             relationship: 'cousin'
-//         },
-//         healthInformation: {
-//             medicareNumber: `3680${320 + i}23`,
-//             ambulanceMembershipNumber: `${1111 + i}`,
-//             medicalCondition: 'None',
-//             allergy: 'None'
-//         },
-//         subjectInterest: {
-//             subjectsChosen: ['Math', 'English'],
-//             subjectRelated: ['option-1', 'option-2']
-//         },
-//         otherInformation: {
-//             otherInfo: `Info ${i}`,
-//             declaration: ["I pledge to follow the school's rules."]
-//         }
-//     });
-// }
+
 
 async function seedStudents() {
     console.log('Start seeding students...');
@@ -194,7 +152,7 @@ async function seedStudents() {
                 }
             }
         });
-        //   console.log(`Created student with id: ${student.id}`);
+
     }
     console.log('Seeding finished.');
 }
@@ -203,55 +161,7 @@ async function seedStudents() {
 // Define the teacher seed data
 const teacherData = require('../teacherSeedData/transformed_teachers_data.json');
 const teacherSeedData: TeacherApplicantSchema['body'][] = teacherData;
-// for (let i = 1; i <= 15; i++) {
-//     teacherSeedData.push({
-//         teacherPersonalDetails: {
-//             firstName: `TeacherFirst${i}`,
-//             lastName: `Last${i}`,
-//             DOB: new Date('1980-01-01').toISOString(),
-//             gender: i % 2 === 0 ? 'male' : 'female',
-//             email: `teacher${i}@domain.com`,
-//             contact: `0456789${i}`,
-//             address: `123 Main St ${i}`,
-//             suburb: `Suburb${i}`,
-//             state: 'SomeState',
-//             country: 'SomeCountry',
-//             postcode: `123${i}`,
-//             image: 'path/to/image.jpg'
-//         },
-//         teacherEmergencyContact: {
-//             contactPerson: `EmergencyContact${i}`,
-//             contactNumber: `0456789${i + 10}`,
-//             relationship: 'Relative'
-//         },
-//         teacherWWCHealthInformation: {
-//             medicalCondition: 'None',
-//             medicareNumber: `Medicare${i}`,
-//             childrenCheckCardNumber: `WWC${i}`,
-//             workingWithChildrenCheckExpiry: new Date('2030-01-01').toISOString(),
-//             workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
-//         },
-//         teacherWorkRights: {
-//             immigrationStatus: i % 2 === 0 ? 'Citizen' : 'Visa Holder',
-//             workRights: 'yes'
-//         },
-//         teacherQualificationAvailability: {
-//             experience: `${i} years`,
-//             qualification: `Qualification${i}`,
-//             subjectsChosen: ['Math', 'Science'],
-//             timeSlotsChosen: ['Monday Morning', 'Wednesday Afternoon']
-//         },
-//         teacherBankDetails: {
-//             ABN: `ABN${i}`,
-//             accountNumber: `Account${i}`,
-//             bankAccountName: `BankName${i}`,
-//             BSB: `BSB${i}`
-//         },
-//         teacherOtherInformation: {
-//             otherInfo: `Other Info ${i}`
-//         }
-//     });
-// }
+
 
 async function seedTeachers() {
     console.log('Start seeding teachers...');
@@ -426,49 +336,7 @@ const adminSeedData: AdminApplicantSchema['body'][] = [
     }
 ];
 
-// for (let i = 1; i <= 2; i++) {
-//     adminSeedData.push({
-//         adminPersonalDetails: {
-//             firstName: `TeacherFirst${i}`,
-//             lastName: `Last${i}`,
-//             DOB: new Date('1980-01-01').toISOString(),
-//             gender: i % 2 === 0 ? 'male' : 'female',
-//             email: `teacher${i}@domain.com`,
-//             contact: `0456789${i}`,
-//             address: `123 Main St ${i}`,
-//             suburb: `Suburb${i}`,
-//             state: 'SomeState',
-//             country: 'SomeCountry',
-//             postcode: `123${i}`,
-//             image: 'path/to/image.jpg'
-//         },
-//         adminEmergencyContact: {
-//             contactPerson: `EmergencyContact${i}`,
-//             contactNumber: `0456789${i + 10}`,
-//             relationship: 'Relative'
-//         },
-//         adminWWCHealthInformation: {
-//             medicalCondition: 'None',
-//             medicareNumber: `Medicare${i}`,
-//             childrenCheckCardNumber: `WWC${i}`,
-//             workingWithChildrenCheckExpiry: new Date('2030-01-01').toISOString(),
-//             workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
-//         },
-//         adminWorkRights: {
-//             immigrationStatus: i % 2 === 0 ? 'Citizen' : 'Visa Holder',
-//             workRights: 'yes'
-//         },
-//         adminBankDetails: {
-//             ABN: `ABN${i}`,
-//             accountNumber: `Account${i}`,
-//             bankAccountName: `BankName${i}`,
-//             BSB: `BSB${i}`
-//         },
-//         adminOtherInformation: {
-//             otherInfo: `Other Info ${i}`
-//         }
-//     });
-// }
+
 
 async function seedAdmins() {
     console.log('Start seeding Admin...');
@@ -520,7 +388,7 @@ async function resetStudents() {
 
 async function main() {
     if (process.env.NODE_ENV == 'development') {
-        // await resetStudents();
+        await resetStudents();
         await seedStudents();
         // await seedTeachers();
         // await seedAdmins();
