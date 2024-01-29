@@ -68,6 +68,7 @@ export const OtherInformationSchema = z.object({
 export const newApplicantSchema = z.object({
     body: z.object(
         {
+            id: z.number(),
             personalDetails: PersonalSchema,
             parentsDetails: ParentsSchema,
             emergencyContact: EmergencyContactSchema,
@@ -131,6 +132,7 @@ async function seedStudents() {
 
     for (const student of studentSeedData) {
         const {
+            id,
             emergencyContact: { contactNumber, contactPerson, relationship },
             healthInformation: { allergy, medicalCondition, medicareNumber, ambulanceMembershipNumber },
             otherInformation: { declaration, otherInfo },
@@ -138,8 +140,11 @@ async function seedStudents() {
             personalDetails: { email, address, contact, country, firstName, gender, lastName, postcode, state, suburb, DOB, image },
             subjectInterest: { subjectRelated, subjectsChosen }
         } = student;
+        console.log(id, 'student id');
+        // console.log(student, "student fir seeding")
         const studentsCreated = await prisma.student.create({
             data: {
+                id: id,
                 personalDetails: {
                     create: {
                         firstName,
@@ -506,135 +511,18 @@ async function seedAdmins() {
     console.log('Seeding admins finished.');
 }
 
-/* Create terms*/
-
-// async function seedTerms() {
-//     const termData: CreateNewTermSetupSchema['body'] = {
-//         termName: 'Term Summer 2024',
-//         startDate: new Date('2023-12-04T00:00:00Z').toISOString(),
-//         endDate: new Date('2024-12-12T23:59:59Z').toISOString(),
-//         groupSubjects: [
-//             {
-//                 groupName: 'Group Music',
-//                 fee: '200',
-//                 feeInterval: 'MONTHLY',
-//                 subjects: [
-//                     {
-//                         subjectName: 'music',
-//                         levels: ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8']
-//                     }
-//                 ]
-//             },
-//             {
-//                 groupName: 'Group Other',
-//                 fee: '300',
-//                 feeInterval: 'TERM',
-//                 subjects: [
-//                     {
-//                         subjectName: 'maths',
-//                         levels: ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8']
-//                     },
-//                     {
-//                         subjectName: 'english',
-//                         levels: ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8']
-//                     }
-//                 ]
-//             }
-//         ]
-//     };
-//     const { termName, startDate, endDate, groupSubjects } = termData;
-
-//     const existingTerm = await prisma.term.findFirst({
-//         where: { name: termName.toLowerCase() }
-//     });
-
-//     if (!existingTerm) {
-//         const createdTerm = await prisma.term.create({
-//             data: {
-//                 name: termName.toLowerCase(),
-//                 startDate,
-//                 endDate
-//             }
-//         });
-
-//         for (const group of groupSubjects) {
-//             let subjectGroup = await prisma.subjectGroup.findUnique({
-//                 where: { groupName: group.groupName.toLowerCase() }
-//             });
-
-//             if (!subjectGroup) {
-//                 subjectGroup = await prisma.subjectGroup.create({
-//                     data: { groupName: group.groupName.toLowerCase() }
-//                 });
-//             }
-
-//             let fee = await prisma.fee.findFirst({
-//                 where: {
-//                     amount: parseInt(group.fee),
-//                     paymentType: group.feeInterval === 'MONTHLY' ? 'MONTHLY' : 'TERM'
-//                 }
-//             });
-
-//             if (!fee) {
-//                 fee = await prisma.fee.create({
-//                     data: {
-//                         amount: parseInt(group.fee),
-//                         paymentType: group.feeInterval === 'MONTHLY' ? 'MONTHLY' : 'TERM'
-//                     }
-//                 });
-//             }
-
-//             const termSubjectGroup = await prisma.termSubjectGroup.create({
-//                 data: {
-//                     termId: createdTerm.id,
-//                     subjectGroupId: subjectGroup.id,
-//                     feeId: fee.id
-//                 }
-//             });
-
-//             for (const subjectData of group.subjects) {
-//                 let subject = await prisma.subject.findUnique({
-//                     where: { name: subjectData.subjectName.toLowerCase() }
-//                 });
-
-//                 if (!subject) {
-//                     subject = await prisma.subject.create({
-//                         data: { name: subjectData.subjectName.toLowerCase() }
-//                     });
-//                 }
-
-//                 const levelConnections = subjectData.levels.map(levelName => ({
-//                     where: { name: levelName },
-//                     create: { name: levelName }
-//                 }));
-
-//                 await prisma.termSubject.create({
-//                     data: {
-//                         termSubjectGroupId: termSubjectGroup.id,
-//                         subjectId: subject.id,
-//                         level: {
-//                             connectOrCreate: levelConnections
-//                         },
-//                         termId: createdTerm.id
-//                     }
-//                 });
-//             }
-//         }
-
-//         console.log(`Created term with id: ${createdTerm.id}`);
-//     } else {
-//         console.log(`Term with name '${termName}' already exists.`);
-//     }
-
-//     console.log('Finished seeding terms.');
-// }
-
-//
+async function resetStudents() {
+    await prisma.subjectEnrollment.deleteMany({});
+    await prisma.studentTermFee.deleteMany({});
+    await prisma.student.deleteMany({});
+    console.log('All student records deleted.');
+}
 
 async function main() {
     if (process.env.NODE_ENV == 'development') {
+        // await resetStudents();
         await seedStudents();
-        await seedTeachers();
+        // await seedTeachers();
         // await seedAdmins();
 
         console.log('seed in development');
@@ -652,3 +540,5 @@ main()
     .finally(async () => {
         await prisma.$disconnect();
     });
+
+//
