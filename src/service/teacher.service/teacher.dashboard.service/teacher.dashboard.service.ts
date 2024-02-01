@@ -146,7 +146,12 @@ export async function findSubjectsAssignedForTeacher(id: string) {
 export const findAllClassesAssignedForTeacher = async (teacherId: string) => {
     const assignedClasses = await db.teacherClassAssignment.findMany({
         where: {
-            teacherId: parseInt(teacherId)
+            teacherId: parseInt(teacherId),
+            termSubjectLevel: {
+                term: {
+                    currentTerm: true
+                }
+            }
         },
         include: {
             termSubjectLevel: {
