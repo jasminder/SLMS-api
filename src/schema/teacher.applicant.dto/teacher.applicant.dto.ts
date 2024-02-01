@@ -12,14 +12,7 @@ export const TeacherPersonalDetailsSchema = z.object({
     state: z.string({ required_error: 'State is required' }),
     country: z.string({ required_error: 'State is required' }),
     postcode: z.string({ required_error: 'Post code is required' }).min(4, { message: 'Post code is minimum 4 digits' }).max(4, { message: 'Post code is maximum 4 digits' }),
-    image: z
-        .any()
-        .refine((file) => !file || file.size <= 400000, {
-            message: 'Max image size is 4MB.'
-        })
-        .refine((file) => !file || ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type), {
-            message: 'Only .jpg, .jpeg and .png formats are supported.'
-        })
+    image: z.string()
 });
 
 export const TeacherEmergencyContactSchema = z.object({
@@ -32,14 +25,7 @@ export const TeacherWWCHealthInformationSchema = z.object({
     medicalCondition: z.string({ required_error: 'Please give a valid answer' }).min(3, { message: 'Mininum 3 characters' }),
     childrenCheckCardNumber: z.string().min(3, { message: 'Please enter valid value' }),
     workingWithChildrenCheckExpiry: z.string(),
-    workingwithChildrenCheckCardPhotoImage: z
-        .any()
-        .refine((file) => !file || file.size <= 400000, {
-            message: 'Max image size is 4MB.'
-        })
-        .refine((file) => !file || ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type), {
-            message: 'Only .jpg, .jpeg and .png formats are supported.'
-        })
+    workingwithChildrenCheckCardPhotoImage: z.string()
 });
 export const TeacherWorkRightsSchema = z.object({
     workRights: z.string().min(3, { message: 'must choose and option' }),
