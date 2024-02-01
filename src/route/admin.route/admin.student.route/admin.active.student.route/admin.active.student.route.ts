@@ -3,6 +3,7 @@ import express from 'express';
 import { asyncErrorHandler } from '../../../../utils/asyncErrorHandler';
 import validate from '../../../../middleware/validateResource';
 import {
+    activeStudentEnrollDataSchema,
     assignClassToStudentSchema,
     findActiveStudentEnrolledSubjectsSchema,
     findAllActiveStudentsSchema,
@@ -16,6 +17,8 @@ import {
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 import {
     assignClassToStudentHandler,
+    deEnrollActiveStudentHandler,
+    enrollActiveStudentHandler,
     findActiveStudentByIdHandler,
     findActiveStudentEnrolledSubjectsHandler,
     findActiveStudentsHandler,
@@ -23,6 +26,7 @@ import {
     findFeePaymentByIdHandler,
     findStudentFeeDetailsHandler,
     findTermSubjectGroupIdEnrolledSubjectsHandler,
+    findTermToEnrollActiveStudentHandler,
     findUniqueStudentClassDetailsHandler,
     manageClassesHandler,
     searchActiveStudentsHandler,
@@ -30,7 +34,10 @@ import {
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
 import { restrict } from '../../../../middleware/restrict';
 import { protectRoute } from '../../../../middleware/protectRoutes';
-import { findActiveStudentsWithoutPaginationHandler, searchActiveStudentsWithoutPaginationHandler } from '../../../../controller/admin.controller/admin.studentCard.controller/admin.studentCard.controller';
+import {
+    findActiveStudentsWithoutPaginationHandler,
+    searchActiveStudentsWithoutPaginationHandler
+} from '../../../../controller/admin.controller/admin.studentCard.controller/admin.studentCard.controller';
 import { findAllActiveStudentsWOPaginatonSchema, searchActiveStudentsWOPaginatonSchema } from '../../../../schema/admin.dto/admin.studentCard.dto/admin.studentCard.dto';
 
 const adminActiveStudentRoute = express.Router();
@@ -43,11 +50,14 @@ adminActiveStudentRoute.route('/search-active-students').get(validate(searchActi
 // Without Pagination
 
 /*find all enrolled students*/
-adminActiveStudentRoute.route('/get-all-active-students-WO-pagination').get(validate(findAllActiveStudentsWOPaginatonSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentsWithoutPaginationHandler));
+adminActiveStudentRoute
+    .route('/get-all-active-students-WO-pagination')
+    .get(validate(findAllActiveStudentsWOPaginatonSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentsWithoutPaginationHandler));
 
 /*search active students*/
-adminActiveStudentRoute.route('/search-active-students-WO-pagination').get(validate(searchActiveStudentsWOPaginatonSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsWithoutPaginationHandler));
-
+adminActiveStudentRoute
+    .route('/search-active-students-WO-pagination')
+    .get(validate(searchActiveStudentsWOPaginatonSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsWithoutPaginationHandler));
 
 // Without Pagination
 /*find unqiue student*/
@@ -80,4 +90,13 @@ adminActiveStudentRoute
     .route('/find-assigned-classes-for-active-student/:id')
     .get(validate(findUniqueActiveStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findUniqueStudentClassDetailsHandler));
 adminActiveStudentRoute.route('/manage-toggle-active-class/:id').patch(validate(manageClassSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(manageClassesHandler));
+
+// Enroll an active student to a subject
+adminActiveStudentRoute.route('/enroll-active-student').post(validate(activeStudentEnrollDataSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(enrollActiveStudentHandler));
+
+// De-enroll an active student from a subject
+adminActiveStudentRoute.route('/de-enroll-active-student').post(validate(activeStudentEnrollDataSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deEnrollActiveStudentHandler));
+
+/* find term to enroll */
+adminActiveStudentRoute.route('/term-to-enroll-active-student').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findTermToEnrollActiveStudentHandler));
 export default adminActiveStudentRoute;

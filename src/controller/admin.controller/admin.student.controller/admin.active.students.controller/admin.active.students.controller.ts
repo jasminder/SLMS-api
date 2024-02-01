@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from 'express';
 
 import {
     assignClassToStudent,
+    deEnrollActiveStudent,
+    enrollActiveStudent,
     findActiveStudentById,
     findActiveStudentEnrolledSubjects,
     findActiveStudents,
@@ -9,12 +11,14 @@ import {
     findFeePaymentById,
     findStudentFeeDetails,
     findTermSubjectGroupIdEnrolledSubjects,
+    findTermToEnrollActiveStudent,
     findUniqueStudentClassDetails,
     manageClasses,
     searchActiveStudents,
     updateAmountPaid
 } from '../../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
 import {
+    ActiveStudentEnrollDataSchema,
     AssignClassToStudentSchema,
     FindActiveStudentEnrolledSubjectsSchema,
     FindAllActiveStudentsSchema,
@@ -134,4 +138,22 @@ export const manageClassesHandler = async (req: Request<ManageClassSchema['param
     const { id } = req.params;
     const updatedStudentClassHistoryRecords = await manageClasses(id);
     res.status(200).json(updatedStudentClassHistoryRecords);
+};
+// Enroll Active Student Handler
+export const enrollActiveStudentHandler = async (req: Request<{}, {}, ActiveStudentEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const enrollmentData = req.body;
+    const enrollmentResult = await enrollActiveStudent(enrollmentData);
+    res.status(200).json(enrollmentResult);
+};
+
+// De-enroll Active Student Handler
+export const deEnrollActiveStudentHandler = async (req: Request<{}, {}, ActiveStudentEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const deEnrollmentData = req.body;
+    const deEnrollmentResult = await deEnrollActiveStudent(deEnrollmentData);
+    res.status(200).json(deEnrollmentResult);
+};
+// findTermToEnrollForActiveStudent
+export const findTermToEnrollActiveStudentHandler = async (req: Request<{}, {}, {}, {}>, res: Response, next: NextFunction) => {
+    const termToEnroll = await findTermToEnrollActiveStudent();
+    res.status(200).json(termToEnroll);
 };

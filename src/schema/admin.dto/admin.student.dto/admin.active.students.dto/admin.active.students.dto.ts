@@ -8,7 +8,7 @@ export const findUniqueActiveStudentSchema = z.object({
 });
 export type FindUniqueActiveStudentSchema = z.infer<typeof findUniqueActiveStudentSchema>;
 
-//To find all enrolled students for Admin
+//To find all active students for Admin
 export const findAllActiveStudentsSchema = z.object({
     query: z.object({
         page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
@@ -26,7 +26,7 @@ export const findStudentFeeDetailsSchema = z.object({
 });
 export type FindStudentFeeDetailsSchemaSchema = z.infer<typeof findStudentFeeDetailsSchema>;
 
-// search enrolled students
+// search active students
 export const searchActiveStudentsSchema = z.object({
     query: z.object({
         search: z.string().optional(),
@@ -39,10 +39,10 @@ export const searchActiveStudentsSchema = z.object({
 });
 export type SearchActiveStudentsSchema = z.infer<typeof searchActiveStudentsSchema>;
 
-/* enroll enrolledStudent to subjects */
-export const enrolledStudentEnrollDataSchema = z.object({
+/* enroll activeStudent to subjects */
+export const activeStudentEnrollDataSchema = z.object({
     body: z.object({
-        enrolledStudentId: z.number(),
+        activeStudentId: z.number(),
         enrollData: z.array(
             z.object({
                 subject: z.string(),
@@ -55,7 +55,7 @@ export const enrolledStudentEnrollDataSchema = z.object({
         )
     })
 });
-export type ActiveStudentEnrollDataSchema = z.infer<typeof enrolledStudentEnrollDataSchema>;
+export type ActiveStudentEnrollDataSchema = z.infer<typeof activeStudentEnrollDataSchema>;
 export const findTermSubjectGroupIdEnrolledSubjectsSchema = z.object({
     params: z.object({
         id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
@@ -88,7 +88,7 @@ export const updateAmountPaidSchema = z.object({
 });
 export type UpdateAmountPaidSchema = z.infer<typeof updateAmountPaidSchema>;
 
-/* find enrolled subjects for active students*/
+/* find active subjects for active students*/
 export const findActiveStudentEnrolledSubjectsSchema = z.object({
     params: z.object({
         studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
