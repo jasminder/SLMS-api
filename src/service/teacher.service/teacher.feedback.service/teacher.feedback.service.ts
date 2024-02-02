@@ -15,10 +15,11 @@ function getNextSundayAtFourThirty() {
     return nextSunday;
 }
 
-export async function createFeedback(studentId: string, teacherId: string, content: string, title: string) {
+export async function createFeedback(studentId: string, teacherId: string, termSubjectLevelId: string, sectionId: string, content: string, title: string, className: string, roomName: string) {
     const sendDate = getNextSundayAtFourThirty();
 
-    return await db.feedback.create({
+    // Create feedback
+    const feedback = await db.feedback.create({
         data: {
             student: {
                 connect: { id: +studentId }
@@ -26,10 +27,42 @@ export async function createFeedback(studentId: string, teacherId: string, conte
             teacher: {
                 connect: { id: +teacherId }
             },
+            termSubjectLevel: {
+                connect: { id: +termSubjectLevelId }
+            },
             content,
             title,
             sendDate,
             isSent: false
         }
     });
+
+    // Check for existing AutomatedMailForParents record
+    const existingAutomatedMail = await db.automatedMailForParents.findFirst({
+        where: {
+            studentId: +studentId,
+            teacherId: +teacherId,
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
+            sendDate
+        }
+    });
+
+    // Create AutomatedMailForParents record if it does not exist
+    if (!existingAutomatedMail) {
+        await db.automatedMailForParents.create({
+            data: {
+                studentId: +studentId,
+                teacherId: +teacherId,
+                termSubjectLevelId: +termSubjectLevelId,
+                sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
+                className,
+                roomName,
+                sendDate,
+                isSent: false
+            }
+        });
+    }
+
+    return feedback;
 }
