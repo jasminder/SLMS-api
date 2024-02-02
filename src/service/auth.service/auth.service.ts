@@ -19,7 +19,7 @@ export async function signUpUser(email: string, password: string, confirmPasswor
 
     // Check if user already has login credentials in the User model
     const existingUser = await db.user.findUnique({
-        where: { email: email.toLowerCase() }
+        where: { email: email}
     });
     if (existingUser) {
         throw customError('User already exists. Please log in.', 'fail', 400, true);

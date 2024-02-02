@@ -42,6 +42,8 @@ import './src/cron/processTermFees';
 import commentRoute from './src/route/admin.route/admin.comment.route/admin.comment.route';
 import interactionRoute from './src/route/admin.route/admin.interactions.route/admin.interactions.route';
 import adminInstitutionRoute from './src/route/admin.route/admin.institution.route/admin.institution.route';
+import groupHomeworkRoute from './src/route/teacher.route/teacher.homework.route/teacher.homework.route';
+
 const app = express();
 app.use(cookieParser());
 
@@ -54,7 +56,8 @@ const origin =
               'http://localhost:5174',
               'http://localhost:5175',
               'http://ec2-13-236-121-116.ap-southeast-2.compute.amazonaws.com:8080',
-              'https://slms-client-2aam.vercel.app', 'https://akaalshaouni.org'
+              'https://slms-client-2aam.vercel.app',
+              'https://akaalshaouni.org'
           ];
 app.use(
     cors({
@@ -116,6 +119,7 @@ app.use('/api/v1/teacher/attendance', teacherAttendanceRoute);
 
 app.use('/api/v1/teacher', teacherRoute);
 app.use('/api/v1/teacher-feedback-for-student', feedbackRoute);
+app.use('/api/v1/teacher-homework-for-student', groupHomeworkRoute);
 
 app.use('/api/v1/auth', authRoute);
 

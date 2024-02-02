@@ -65,6 +65,8 @@ model Student {
   feedback                Feedback[]
   interaction             Interaction[]
   comment                 Comment[]
+  GroupHomework           GroupHomework[]
+  AutomatedMailForParents AutomatedMailForParents[]
 }
 
 model PersonalDetails {
@@ -167,11 +169,12 @@ model Level {
 }
 
 model Section {
-  id                     Int                      @id @default(autoincrement())
-  name                   String                   @unique
-  termSubjectLevel       TermSubjectLevel[]
-  StudentClassAssignment StudentClassAssignment[]
-  TeacherClassAssignment TeacherClassAssignment[]
+  id                      Int                       @id @default(autoincrement())
+  name                    String                    @unique
+  termSubjectLevel        TermSubjectLevel[]
+  StudentClassAssignment  StudentClassAssignment[]
+  TeacherClassAssignment  TeacherClassAssignment[]
+  AutomatedMailForParents AutomatedMailForParents[]
 }
 
 model TermSubjectGroup {
@@ -206,17 +209,20 @@ model TermSubject {
 }
 
 model TermSubjectLevel {
-  id                     Int                      @id @default(autoincrement())
-  termId                 Int
-  subjectId              Int
-  levelId                Int
-  sections               Section[]
-  term                   Term                     @relation(fields: [termId], references: [id])
-  subject                Subject                  @relation(fields: [subjectId], references: [id])
-  level                  Level                    @relation(fields: [levelId], references: [id])
-  enrollments            Enrollment[]
-  studentClassAssignment StudentClassAssignment[]
-  teacherClassAssignment TeacherClassAssignment[]
+  id                      Int                       @id @default(autoincrement())
+  termId                  Int
+  subjectId               Int
+  levelId                 Int
+  sections                Section[]
+  term                    Term                      @relation(fields: [termId], references: [id])
+  subject                 Subject                   @relation(fields: [subjectId], references: [id])
+  level                   Level                     @relation(fields: [levelId], references: [id])
+  enrollments             Enrollment[]
+  studentClassAssignment  StudentClassAssignment[]
+  teacherClassAssignment  TeacherClassAssignment[]
+  Feedback                Feedback[]
+  GroupHomework           GroupHomework[]
+  AutomatedMailForParents AutomatedMailForParents[]
 
   @@unique([termId, subjectId, levelId])
 }
@@ -358,6 +364,8 @@ model Teacher {
   skipReport                       SkipReport[]
   Homework                         Homework[]
   feedback                         Feedback[]
+  GroupHomework                    GroupHomework[]
+  AutomatedMailForParents          AutomatedMailForParents[]
 }
 
 model TeacherPersonalDetails {
@@ -620,18 +628,63 @@ model Homework {
 }
 
 model Feedback {
-  id        Int      @id @default(autoincrement())
-  studentId Int
-  teacherId Int
-  title     String
-  content   String
-  isSent    Boolean  @default(false)
-  sendDate  DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 Int      @id @default(autoincrement())
+  studentId          Int
+  teacherId          Int
+  termSubjectLevelId Int
+  title              String
+  content            String
+  isSent             Boolean  @default(false)
+  sendDate           DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
+
+  // @@unique([studentId, teacherId, termSubjectLevelId, title]) // Ensuring uniqueness of the feedback
+}
+
+model GroupHomework {
+  id                 Int      @id @default(autoincrement())
+  studentId          Int
+  teacherId          Int
+  termSubjectLevelId Int
+  title              String
+  description        String
+  attachments        String[] // URLs of the attached documents
+  isSent             Boolean  @default(false)
+  sendDate           DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
+
+  // @@unique([studentId, teacherId, termSubjectLevelId, title]) // Ensuring uniqueness of the homework assignment
+}
+
+model AutomatedMailForParents {
+  id                 Int      @id @default(autoincrement())
+  studentId          Int
+  teacherId          Int
+  termSubjectLevelId Int
+  sectionId          Int
+  className          String
+  roomName           String
+  isSent             Boolean  @default(false)
+  sendDate           DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
+  section          Section          @relation(fields: [sectionId], references: [id])
+
+  @@unique([studentId, termSubjectLevelId, sectionId, sendDate])
 }
 
 enum InteractionType {
