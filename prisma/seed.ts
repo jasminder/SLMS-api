@@ -389,7 +389,7 @@ async function resetStudents() {
 async function main() {
     if (process.env.NODE_ENV == 'development') {
         // await resetStudents();
-        // await seedStudents();
+        await seedStudents();
         // await seedTeachers();
         // await seedAdmins();
 
