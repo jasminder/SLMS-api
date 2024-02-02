@@ -87,9 +87,13 @@ export async function findAllApplicants(page: number) {
 
 export async function searchApplicants(search: string, page: number) {
     const take = 10;
-    if (search.length == 0) {
-        throw customError(`No Search query string available`, 'fail', 400, true);
-    }
+    // if (search.length == 0) {
+    //     throw customError(`No Search query string available`, 'fail', 400, true);
+    // }
+    console.log(search);
+    const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+
+
     const pageNum: number = page ?? 0;
     const skip = pageNum * take;
     const applicants = await db.student.findMany({
@@ -118,7 +122,8 @@ export async function searchApplicants(search: string, page: number) {
                             { parentContact: { contains: search, mode: 'insensitive' } }
                         ]
                     }
-                }
+                },
+                { id: searchAsNumber !== undefined ? searchAsNumber : {} }
             ]
         },
         select: {
@@ -208,7 +213,8 @@ export async function searchApplicants(search: string, page: number) {
                             { parentContact: { contains: search, mode: 'insensitive' } }
                         ]
                     }
-                }
+                },
+                { id: searchAsNumber !== undefined ? searchAsNumber : {} }
             ]
         }
     });
