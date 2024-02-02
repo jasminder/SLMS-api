@@ -4,7 +4,7 @@ import { sendEmail } from '../../utils/email';
 
 // Schedule to run every Sunday at 4:30 PM
 
-export async function sendFeedbackEmails() {
+export async function sendAutomatedEmails() {
     // Fetch feedback entries where isSent is false
     const feedbackEntries = await db.feedback.findMany({
         where: {
@@ -77,8 +77,6 @@ export async function processMonthlyFees() {
             }
         });
 
-
-
         // Process each enrollment
         for (const enrollment of monthlyEnrollments) {
             const feeAmount = enrollment.termSubjectGroup?.fee?.amount ?? 0;
@@ -137,8 +135,6 @@ export async function processMonthlyFees() {
                         creditAmount
                     }
                 });
-
-
             } else {
                 console.log('Fee payment for the current month already exists. No new record created.');
             }
@@ -175,8 +171,6 @@ export async function processTermFees() {
                 }
             }
         });
-
-
 
         for (const enrollment of termEnrollments) {
             const feeAmount = enrollment.termSubjectGroup?.fee?.amount ?? 0;
