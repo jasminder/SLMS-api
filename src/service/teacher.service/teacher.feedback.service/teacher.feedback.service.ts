@@ -15,7 +15,7 @@ function getNextSundayAtFourThirty() {
     return nextSunday;
 }
 
-export async function createFeedback(studentId: string, teacherId: string, termSubjectLevelId: string, sectionId: string, content: string, title: string, className: string, roomName: string) {
+export async function createFeedback(studentId: string, teacherId: string, termSubjectLevelId: string, sectionId: string, content: string, title: string, className: string, roomName: string, classTime:string) {
     const sendDate = getNextSundayAtFourThirty();
 
     // Create feedback
@@ -59,7 +59,8 @@ export async function createFeedback(studentId: string, teacherId: string, termS
                 className,
                 roomName,
                 sendDate,
-                isSent: false
+                isSent: false,
+                classTime
             }
         });
     }

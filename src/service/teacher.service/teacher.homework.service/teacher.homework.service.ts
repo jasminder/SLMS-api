@@ -22,13 +22,13 @@ export async function createGroupHomework(
     termSubjectLevelId: string,
     sectionId: string,
     title: string,
-  description  : string,
+    description: string,
     attachments: string[],
     className: string,
-    roomName: string
+    roomName: string,
+    classTime: string
 ) {
     const sendDate = await getNextSundayAtFourThirty();
-
 
     const groupHomework = await db.groupHomework.create({
         data: {
@@ -43,7 +43,6 @@ export async function createGroupHomework(
         }
     });
 
-    // Check for existing AutomatedMailForParents record
     const existingAutomatedMail = await db.automatedMailForParents.findFirst({
         where: {
             studentId: +studentId,
@@ -54,18 +53,18 @@ export async function createGroupHomework(
         }
     });
 
-    // Create or update AutomatedMailForParents record
     if (!existingAutomatedMail) {
         await db.automatedMailForParents.create({
             data: {
-                studentId:+ studentId,
+                studentId: +studentId,
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 sectionId: +sectionId,
                 className: className,
                 roomName: roomName,
                 sendDate: sendDate,
-                isSent: false
+                isSent: false,
+                classTime
             }
         });
     }
