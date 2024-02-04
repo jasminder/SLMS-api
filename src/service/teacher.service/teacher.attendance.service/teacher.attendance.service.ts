@@ -106,9 +106,9 @@ export async function markStudentAsPresent(studentId: string, studentClassAssign
     });
 
     // If there are open skip reports, throw an error
-    if (!openSkipReports?.isClosed) {
-        throw customError(`Cannot mark student as PRESENT due to open skip report is not closed by ADMIN.`, 'fail', 400, true);
-    }
+    // if (!openSkipReports?.isClosed) {
+    //     throw customError(`Cannot mark student as PRESENT due to open skip report is not closed by ADMIN.`, 'fail', 400, true);
+    // }
     const updatedClassAttendanceRecord = await db.classAttendance.updateMany({
         where: {
             studentClassAssignmentId: +studentClassAssignmentId,
