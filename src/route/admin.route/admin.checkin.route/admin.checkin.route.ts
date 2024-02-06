@@ -26,6 +26,8 @@ const adminCheckinRoute = express.Router();
 adminCheckinRoute
     .route('/create-daily-new-school-attendance-record')
     .post(validate(createSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createSchoolCheckInAttendanceForStudentHandler));
+
+
 //fetch SchoolCheckInAttendance For Students for entire term
 adminCheckinRoute.route('/fetch-daily-new-school-attendance-record').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchSchoolCheckInAttendanceHandler));
 

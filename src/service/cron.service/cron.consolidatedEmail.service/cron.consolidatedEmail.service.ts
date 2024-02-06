@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 const db = new PrismaClient();
 
 export async function consolidateStudentDataForEmail() {
+    console.log('start consolidateStudentDataForEmail');
     const today = new Date();
     const formattedDate = format(today, 'yyyy-MM-dd');
     const startDate = new Date();
@@ -14,7 +15,17 @@ export async function consolidateStudentDataForEmail() {
     const endDate = new Date();
     endDate.setHours(23, 59, 59, 999);
     const studentsWithPendingMails = await db.student.findMany({
-        where: { AutomatedMailForParents: { some: { isSent: false } } },
+        where: {
+            AutomatedMailForParents: {
+                some: {
+                    isSent: false,
+                    createdAt: {
+                        gte: startDate,
+                        lte: endDate
+                    }
+                }
+            }
+        },
         include: {
             personalDetails: true,
             schoolCheckInAttendance: {
@@ -37,7 +48,7 @@ export async function consolidateStudentDataForEmail() {
             }
         }
     });
-
+    console.log('studentsWithPendingMails', studentsWithPendingMails);
     for (const student of studentsWithPendingMails) {
         const attendanceToday = student.schoolCheckInAttendance[0]; // Assuming only one record per day
         const attendanceStatus = attendanceToday?.checkedIn ? 'Present' : 'Absent';
@@ -62,7 +73,11 @@ export async function consolidateStudentDataForEmail() {
                     isSent: false,
                     studentId: mailEntry.studentId,
                     teacherId: mailEntry.teacherId,
-                    termSubjectLevelId: mailEntry.termSubjectLevelId
+                    termSubjectLevelId: mailEntry.termSubjectLevelId,
+                    createdAt: {
+                        gte: startDate,
+                        lte: endDate
+                    }
                 }
             });
 
@@ -71,10 +86,15 @@ export async function consolidateStudentDataForEmail() {
                     isSent: false,
                     studentId: mailEntry.studentId,
                     teacherId: mailEntry.teacherId,
-                    termSubjectLevelId: mailEntry.termSubjectLevelId
+                    termSubjectLevelId: mailEntry.termSubjectLevelId,
+                    createdAt: {
+                        gte: startDate,
+                        lte: endDate
+                    }
                 }
             });
-
+            console.log('feedbackEntries', feedbackEntries);
+            console.log('homeworkEntries', homeworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
 
             emailContent +=
@@ -97,7 +117,7 @@ export async function consolidateStudentDataForEmail() {
 
             attachments = [...attachments, ...homeworkAttachments];
         }
-
+        console.log('emailContent', emailContent);
         if (student.personalDetails?.email) {
             await sendConsolidatedEmail(student.personalDetails.email, 'Your Academic Update', emailContent, attachments);
 

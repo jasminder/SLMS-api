@@ -205,6 +205,188 @@ this is to ensure that all the students who marked 1st attendance or checked hav
 study the context clearly and be ready for my next questions. You are a senior data base postgress designer. DO not reply
 
 
+My idea is to send consolidated emails for feedback  and homework.
+So for that i have created model like model Feedback {
+  id                 Int      @id @default(autoincrement())
+  studentId          Int
+  teacherId          Int
+  termSubjectLevelId Int
+  title              String
+  content            String
+  isSent             Boolean  @default(false)
+  sendDate           DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
+
+  // @@unique([studentId, teacherId, termSubjectLevelId, title]) // Ensuring uniqueness of the feedback
+}
+
+model GroupHomework {
+  id                 Int      @id @default(autoincrement())
+  studentId          Int
+  teacherId          Int
+  termSubjectLevelId Int
+  title              String
+  description        String
+  attachments        String[] // URLs of the attached documents
+  isSent             Boolean  @default(false)
+  sendDate           DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
+
+  // @@unique([studentId, teacherId, termSubjectLevelId, title]) // Ensuring uniqueness of the homework assignment
+}
+
+model AutomatedMailForParents {
+  id                 Int      @id @default(autoincrement())
+  studentId          Int
+  teacherId          Int
+  termSubjectLevelId Int
+  sectionId          Int
+  className          String
+  roomName           String
+  classTime          String
+  isSent             Boolean  @default(false)
+  sendDate           DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
+  section          Section          @relation(fields: [sectionId], references: [id])
+
+  @@unique([studentId, termSubjectLevelId, sectionId, sendDate])
+}
+
+so the requirement is when a teacher creates a feedback , a record in AutomatedMailForParents table is created and simultaneously creates a record in feedback table like export async function createFeedback(studentId: string, teacherId: string, termSubjectLevelId: string, sectionId: string, content: string, title: string, className: string, roomName: string, classTime:string) {
+    const sendDate = getNextSundayAtFourThirty();
+
+    // Create feedback
+    const feedback = await db.feedback.create({
+        data: {
+            student: {
+                connect: { id: +studentId }
+            },
+            teacher: {
+                connect: { id: +teacherId }
+            },
+            termSubjectLevel: {
+                connect: { id: +termSubjectLevelId }
+            },
+            content,
+            title,
+            sendDate,
+            isSent: false
+        }
+    });
+
+    // Check for existing AutomatedMailForParents record
+    const existingAutomatedMail = await db.automatedMailForParents.findFirst({
+        where: {
+            studentId: +studentId,
+            teacherId: +teacherId,
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
+            sendDate
+        }
+    });
+
+    // Create AutomatedMailForParents record if it does not exist
+    if (!existingAutomatedMail) {
+        await db.automatedMailForParents.create({
+            data: {
+                studentId: +studentId,
+                teacherId: +teacherId,
+                termSubjectLevelId: +termSubjectLevelId,
+                sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
+                className,
+                roomName,
+                sendDate,
+                isSent: false,
+                classTime
+            }
+        });
+    }
+
+    return feedback;
+}
+
+so as you can see if an additional feedback is created for a student in a termSubjectLevelId and sectionID (where termSubjectLevelId + sectionID = class) , then we wont created additional automatedMailForParents record. It will only created a record in Feedback.
+
+now Similarily , as far as homework is concerned,  the requirement is when a teacher creates a homework , a record in AutomatedMailForParents table is created , if it is not there and simultaneously creates a record in homework table like export async function createGroupHomework(
+    studentId: string,
+    teacherId: string,
+    termSubjectLevelId: string,
+    sectionId: string,
+    title: string,
+    description: string,
+    attachments: string[],
+    className: string,
+    roomName: string,
+    classTime: string
+) {
+    const sendDate = await getNextSundayAtFourThirty();
+
+    const groupHomework = await db.groupHomework.create({
+        data: {
+            studentId: +studentId,
+            teacherId: +teacherId,
+            termSubjectLevelId: +termSubjectLevelId,
+            title: title,
+            description: description,
+            attachments: attachments,
+            isSent: false,
+            sendDate: sendDate
+        }
+    });
+
+    const existingAutomatedMail = await db.automatedMailForParents.findFirst({
+        where: {
+            studentId: +studentId,
+            teacherId: +teacherId,
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId,
+            sendDate: sendDate
+        }
+    });
+
+    if (!existingAutomatedMail) {
+        await db.automatedMailForParents.create({
+            data: {
+                studentId: +studentId,
+                teacherId: +teacherId,
+                termSubjectLevelId: +termSubjectLevelId,
+                sectionId: +sectionId,
+                className: className,
+                roomName: roomName,
+                sendDate: sendDate,
+                isSent: false,
+                classTime
+            }
+        });
+    }
+
+    return groupHomework;
+}
+so as you can see if an additional homework is created for a student in a termSubjectLevelId and sectionID (where termSubjectLevelId + sectionID = class) , then we wont created additional automatedMailForParents record. It will only created a record in Homwork.
+
+
+so what you need to undertstand is that , I am using AutomatedMailForParents to track feedback or homeworks to be send to parents.
+So Imagine if a teacher creates a feedback , a record for AutomatedMailForParents  is now created . now imagine the teacher creates a homework for the same termSubjectLevelId and sectionID (where termSubjectLevelId + sectionID = class) , then we wont created additional automatedMailForParents record. It will only created a record in Homwork.
+
+
+_______________________
+
+
 import { Request, Response, NextFunction } from 'express';
 import { getPresignedUrl } from '../../../../service/fileUploadService'; // Import the service
 
@@ -451,3 +633,92 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
 }
 
 ----------------
+import { PrismaClient, customError } from '@prisma/client';
+
+const db = new PrismaClient();
+
+export async function createSchoolCheckInAttendanceForStudent(date: string) {
+    if (!date) {
+        throw customError('You need to provide a date to create School CheckIn Attendance record.', 'fail', 404, true);
+    }
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const currentTerm = await db.term.findFirst({
+        where: { currentTerm: true }
+    });
+
+    if (!currentTerm) {
+        throw customError('No current term found.', 'fail', 404, true);
+    }
+
+    const activeStudents = await db.student.findMany({
+        where: {
+            role: 'STUDENT',
+            isActive: true,
+            studentTermFee: {
+                some: { termId: currentTerm.id }
+            }
+        },
+        include: {
+            studentClassAssignment: {
+                where: {
+                    isCurrentlyAssigned: true
+                }
+            },
+            personalDetails: true
+        }
+    });
+
+    const existingRecords = await db.schoolCheckInAttendance.findMany({
+        where: { date: { gte: startDate, lte: endDate } }
+    });
+
+    if (existingRecords.length > 0) {
+        throw customError('Attendance already created for today.', 'fail', 400, true);
+    }
+
+    await db.$transaction(async (prisma) => {
+        const createdAttendanceRecords = await prisma.schoolCheckInAttendance.createMany({
+            data: activeStudents.map((student) => ({
+                studentId: student.id,
+                date: startDate,
+                checkInTime: new Date()
+            })),
+            select: {
+                id: true
+            }
+        });
+
+        for (const student of activeStudents) {
+            for (const assignment of student.studentClassAssignment) {
+                const existingClassAttendance = await prisma.classAttendance.findUnique({
+                    where: {
+                        studentClassAssignmentId_date: {
+                            studentClassAssignmentId: assignment.id,
+                            date: startDate
+                        }
+                    }
+                });
+
+                if (!existingClassAttendance) {
+                    await prisma.classAttendance.create({
+                        data: {
+                            studentClassAssignmentId: assignment.id,
+                            date: startDate,
+                            attendanceStatus: 'ABSENT',
+                            // Here, match the schoolCheckInAttendanceId correctly
+                            schoolCheckInAttendanceId: /* Determine the correct ID */
+                        }
+                    });
+                }
+            }
+        }
+    });
+
+    return { message: 'Attendance records created successfully.' };
+}

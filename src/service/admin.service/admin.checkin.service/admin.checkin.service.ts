@@ -1,112 +1,6 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 
-// export async function createSchoolCheckInAttendanceForStudent1(date: string) {
-//     const startDate = new Date(date);
-
-//     // if (startDate.getDay() !== 0) {
-//     //     throw customError('Attendance can only be created for Sundays.', 'fail', 400, true);
-//     // }
-
-//     if (!date) {
-//         throw customError('You need to provide a date to create School CheckIn Attendance record.', 'fail', 404, true);
-//     }
-
-//     // Create a Prisma transaction
-//     const transaction = await db.$transaction(async (db) => {
-//         const currentTerm = await db.term.findFirst({
-//             where: {
-//                 currentTerm: true
-//             }
-//         });
-
-//         // Find all active students in the current term
-//         const activeStudents = await db.student.findMany({
-//             where: {
-//                 role: 'STUDENT',
-//                 isActive: true,
-//                 studentTermFee: {
-//                     some: {
-//                         termId: currentTerm?.id
-//                     }
-//                 }
-//             },
-//             include: {
-//                 studentClassAssignment: true,
-//                 personalDetails: true
-//             }
-//         });
-
-//         const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
-
-//         if (studentsWithoutAssignment.length > 0) {
-//             console.log(
-//                 'Students without assignments:',
-//                 studentsWithoutAssignment.map((student) => student.id)
-//             );
-//             const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
-//             throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
-//         }
-//         const startDate = new Date(date);
-//         startDate.setHours(0, 0, 0, 0); // Set time to start of the day
-
-//         const endDate = new Date(date);
-//         endDate.setHours(23, 59, 59, 999);
-
-//         // Check if attendance records already exist for the specified date
-//         const existingRecords = await db.schoolCheckInAttendance.findMany({
-//             where: {
-//                 date: {
-//                     gte: startDate,
-//                     lte: endDate
-//                 }
-//             }
-//         });
-
-//         if (existingRecords.length > 0) {
-//             throw customError('Attendance already created for today.', 'fail', 400, true);
-//         }
-
-//         // Create SchoolCheckInAttendance records for all active students
-//         const attendanceRecords = [];
-
-//         for (const student of activeStudents) {
-//             const newAttendanceRecord = await db.schoolCheckInAttendance.create({
-//                 data: {
-//                     studentId: student.id,
-//                     date: new Date(date),
-//                     checkInTime: new Date()
-//                 }
-//             });
-
-//             attendanceRecords.push(newAttendanceRecord);
-//         }
-
-//         // Create default ClassAttendance records using Prisma
-//         // const currentDate = new Date(date).toISOString().split('T')[0];
-
-//         const studentClassAssignments = await db.studentClassAssignment.findMany({
-//             where: {
-//                 isCurrentlyAssigned: true
-//             }
-//         });
-
-//         for (const studentClassAssignment of studentClassAssignments) {
-//             // await db.classAttendance.create({
-//             //     data: {
-//             //         studentClassAssignmentId: studentClassAssignment.id,
-//             //         date: new Date(),
-//             //         attendanceStatus: 'ABSENT'
-//             //     }
-//             // });
-//         }
-
-//         return attendanceRecords;
-//     });
-
-//     return transaction;
-// }
-
 export async function createSchoolCheckInAttendanceForStudent(date: string) {
     if (!date) {
         throw customError('You need to provide a date to create School CheckIn Attendance record.', 'fail', 404, true);
@@ -119,128 +13,131 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
     endDate.setHours(23, 59, 59, 999);
 
     // Create a Prisma transaction
-    const transaction = await db.$transaction(async (db) => {
-        const currentTerm = await db.term.findFirst({
-            where: {
-                currentTerm: true
-            }
-        });
+    const transaction = await db.$transaction(
+        async (db) => {
+            const currentTerm = await db.term.findFirst({
+                where: {
+                    currentTerm: true
+                }
+            });
 
-        // Find all active students in the current term
-        const activeStudents = await db.student.findMany({
-            where: {
-                role: 'STUDENT',
-                isActive: true,
-                studentTermFee: {
-                    some: {
-                        termId: currentTerm?.id
+            // Find all active students in the current term
+            const activeStudents = await db.student.findMany({
+                where: {
+                    role: 'STUDENT',
+                    isActive: true,
+                    studentTermFee: {
+                        some: {
+                            termId: currentTerm?.id
+                        }
+                    }
+                },
+                include: {
+                    studentClassAssignment: true,
+                    personalDetails: true
+                }
+            });
+
+            const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
+            console.log(studentsWithoutAssignment);
+
+            const allActiveStudents = await db.student.findMany({
+                where: {
+                    isActive: true // Filters to only include active students
+                },
+                include: {
+                    // Include any related data you might need, like personal details
+                    personalDetails: true,
+                    parentsDetails: true
+                    // Add any other relations you need here
+                }
+                // Optionally, you can also add ordering or pagination here
+                // orderBy: {
+                //     createdAt: 'desc'
+                // }
+            });
+            if (allActiveStudents.length == 0) {
+                throw customError(`There are no  active students. Please enroll students in a current term to do this action`, 'fail', 400, true);
+            }
+            if (studentsWithoutAssignment.length > 0) {
+                const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
+                throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
+            }
+            // Check if attendance records already exist for the specified date
+            const existingRecords = await db.schoolCheckInAttendance.findMany({
+                where: {
+                    date: {
+                        gte: startDate,
+                        lte: endDate
                     }
                 }
-            },
-            include: {
-                studentClassAssignment: true,
-                personalDetails: true
-            }
-        });
-
-        const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
-        console.log(studentsWithoutAssignment);
-
-        const allActiveStudents = await db.student.findMany({
-            where: {
-                isActive: true // Filters to only include active students
-            },
-            include: {
-                // Include any related data you might need, like personal details
-                personalDetails: true,
-                parentsDetails: true
-                // Add any other relations you need here
-            }
-            // Optionally, you can also add ordering or pagination here
-            // orderBy: {
-            //     createdAt: 'desc'
-            // }
-        });
-        if (allActiveStudents.length == 0) {
-            throw customError(`There are no  active students. Please enroll students in a current term to do this action`, 'fail', 400, true);
-        }
-        if (studentsWithoutAssignment.length > 0) {
-            const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
-            throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
-        }
-        // Check if attendance records already exist for the specified date
-        const existingRecords = await db.schoolCheckInAttendance.findMany({
-            where: {
-                date: {
-                    gte: startDate,
-                    lte: endDate
-                }
-            }
-        });
-
-        if (existingRecords.length > 0) {
-            throw customError('Attendance already created for today.', 'fail', 400, true);
-        }
-
-        // Create SchoolCheckInAttendance records for all active students
-        const attendanceRecords = [];
-        for (const student of activeStudents) {
-            const newAttendanceRecord = await db.schoolCheckInAttendance.create({
-                data: {
-                    studentId: student.id,
-                    date: new Date(date),
-                    checkInTime: new Date()
-                    // other fields if necessary
-                }
             });
 
-            attendanceRecords.push(newAttendanceRecord);
+            if (existingRecords.length > 0) {
+                throw customError('Attendance already created for today.', 'fail', 400, true);
+            }
 
-            // Find all current studentClassAssignments for the student
-            const studentClassAssignments = await db.studentClassAssignment.findMany({
-                where: {
-                    studentId: student.id,
-                    isCurrentlyAssigned: true
-                }
-            });
-
-            for (const assignment of studentClassAssignments) {
-                // Check if a ClassAttendance record already exists for the assignment and date
-                const existingClassAttendance = await db.classAttendance.findUnique({
-                    where: {
-                        studentClassAssignmentId_date: {
-                            studentClassAssignmentId: assignment.id,
-                            date: startDate
-                        }
+            // Create SchoolCheckInAttendance records for all active students
+            const attendanceRecords = [];
+            for (const student of activeStudents) {
+                const newAttendanceRecord = await db.schoolCheckInAttendance.create({
+                    data: {
+                        studentId: student.id,
+                        date: new Date(date),
+                        checkInTime: new Date()
+                        // other fields if necessary
                     }
                 });
 
-                // If a record exists, update it, otherwise create a new one
-                if (existingClassAttendance) {
-                    await db.classAttendance.update({
+                attendanceRecords.push(newAttendanceRecord);
+
+                // Find all current studentClassAssignments for the student
+                const studentClassAssignments = await db.studentClassAssignment.findMany({
+                    where: {
+                        studentId: student.id,
+                        isCurrentlyAssigned: true
+                    }
+                });
+
+                for (const assignment of studentClassAssignments) {
+                    // Check if a ClassAttendance record already exists for the assignment and date
+                    const existingClassAttendance = await db.classAttendance.findUnique({
                         where: {
-                            id: existingClassAttendance.id
-                        },
-                        data: {
-                            schoolCheckInAttendanceId: newAttendanceRecord.id
-                            // update other fields if necessary
+                            studentClassAssignmentId_date: {
+                                studentClassAssignmentId: assignment.id,
+                                date: startDate
+                            }
                         }
                     });
-                } else {
-                    const newClasses = await db.classAttendance.create({
-                        data: {
-                            studentClassAssignmentId: assignment.id,
-                            date: startDate,
-                            schoolCheckInAttendanceId: newAttendanceRecord.id,
-                            attendanceStatus: 'ABSENT'
-                            // other fields if necessary
-                        }
-                    });
+
+                    // If a record exists, update it, otherwise create a new one
+                    if (existingClassAttendance) {
+                        await db.classAttendance.update({
+                            where: {
+                                id: existingClassAttendance.id
+                            },
+                            data: {
+                                schoolCheckInAttendanceId: newAttendanceRecord.id
+                                // update other fields if necessary
+                            }
+                        });
+                    } else {
+                        const newClasses = await db.classAttendance.create({
+                            data: {
+                                studentClassAssignmentId: assignment.id,
+                                date: startDate,
+                                schoolCheckInAttendanceId: newAttendanceRecord.id,
+                                attendanceStatus: 'ABSENT'
+                                // other fields if necessary
+                            }
+                        });
+                    }
                 }
             }
-        }
-        return attendanceRecords;
-    });
+            return attendanceRecords;
+        },
+        { timeout: 20000 }
+    );
 
     return transaction;
 }

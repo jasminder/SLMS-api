@@ -615,7 +615,7 @@ model Homework {
   teacherId        Int? // Optional: ID of the teacher who uploaded the homework
   adminId          Int? // Optional: ID of the admin who uploaded the homework
   uploadedUserRole String // Role of the uploader ('teacher' or 'admin')
-  title            String
+  title            String?  @default("No title")
   description      String
   attachments      String[] // URLs of the attached documents
   createdAt        DateTime @default(now())
@@ -624,7 +624,7 @@ model Homework {
   teacher          Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   admin            Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
-  @@unique([subjectId, title])
+  // @@unique([subjectId, title])
 }
 
 model Feedback {
@@ -652,7 +652,7 @@ model GroupHomework {
   teacherId          Int
   termSubjectLevelId Int
   title              String
-  description        String
+  description        String[]
   attachments        String[] // URLs of the attached documents
   isSent             Boolean  @default(false)
   sendDate           DateTime @default(now())

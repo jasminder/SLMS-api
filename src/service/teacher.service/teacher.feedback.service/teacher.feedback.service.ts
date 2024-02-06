@@ -15,9 +15,23 @@ function getNextSundayAtFourThirty() {
     return nextSunday;
 }
 
-export async function createFeedback(studentId: string, teacherId: string, termSubjectLevelId: string, sectionId: string, content: string, title: string, className: string, roomName: string, classTime:string) {
+export async function createFeedback(
+    studentId: string,
+    teacherId: string,
+    termSubjectLevelId: string,
+    sectionId: string,
+    content: string,
+    title: string,
+    className: string,
+    roomName: string,
+    classTime: string
+) {
     const sendDate = getNextSundayAtFourThirty();
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
 
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     // Create feedback
     const feedback = await db.feedback.create({
         data: {
@@ -44,9 +58,14 @@ export async function createFeedback(studentId: string, teacherId: string, termS
             teacherId: +teacherId,
             termSubjectLevelId: +termSubjectLevelId,
             sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
-            sendDate
+            createdAt: {
+                gte: startDate,
+                lte: endDate
+            }
         }
     });
+
+    console.log(existingAutomatedMail);
 
     // Create AutomatedMailForParents record if it does not exist
     if (!existingAutomatedMail) {

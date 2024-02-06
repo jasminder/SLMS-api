@@ -15,59 +15,98 @@ async function getNextSundayAtFourThirty() {
 
     return nextSunday;
 }
+async function updateGroupHomeworkAttachments(grouphomeworkId: string, homeworkDetails: { attachments: string; description: string }[]) {
+    const existingGroupHomework = await db.groupHomework.findUnique({
+        where: { id: +grouphomeworkId },
+        select: { attachments: true, description: true }
+    });
+
+    if (existingGroupHomework) {
+        const updatedAttachments = [...existingGroupHomework.attachments, ...homeworkDetails.map((detail) => detail.attachments)];
+        const updatedDescriptions = [...existingGroupHomework.description, ...homeworkDetails.map((detail) => detail.description)];
+        await db.groupHomework.update({
+            where: { id: +grouphomeworkId },
+            data: { attachments: updatedAttachments, description: updatedDescriptions }
+        });
+    }
+}
 
 export async function createGroupHomework(
-    studentId: string,
+    studentIds: string[],
     teacherId: string,
     termSubjectLevelId: string,
     sectionId: string,
     title: string,
-    description: string,
-    attachments: string[],
+    homeworkDetails: { attachments: string; description: string }[],
     className: string,
     roomName: string,
     classTime: string
 ) {
     const sendDate = await getNextSundayAtFourThirty();
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
 
-    const groupHomework = await db.groupHomework.create({
-        data: {
-            studentId: +studentId,
-            teacherId: +teacherId,
-            termSubjectLevelId: +termSubjectLevelId,
-            title: title,
-            description: description,
-            attachments: attachments,
-            isSent: false,
-            sendDate: sendDate
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    const numericStudentIds = studentIds.map(Number);
+    let groupHomework;
+    for (const studentId of numericStudentIds) {
+        const existingGroupHomework = await db.groupHomework.findFirst({
+            where: {
+                studentId: studentId,
+                teacherId: +teacherId,
+                termSubjectLevelId: +termSubjectLevelId,
+                title: title
+            }
+        });
+
+        if (existingGroupHomework) {
+            // Update existing homework's attachments
+            await updateGroupHomeworkAttachments(existingGroupHomework.id.toString(), homeworkDetails);
+            groupHomework = existingGroupHomework;
+        } else {
+            groupHomework = await db.groupHomework.create({
+                data: {
+                    studentId: studentId,
+                    teacherId: +teacherId,
+                    termSubjectLevelId: +termSubjectLevelId,
+                    title: title,
+                    attachments: homeworkDetails.map((detail) => detail.attachments),
+                    description: homeworkDetails.map((detail) => detail.description), // Assuming 'descriptions' field exists
+                    isSent: false,
+                    sendDate: sendDate
+                }
+            });
         }
-    });
 
-    const existingAutomatedMail = await db.automatedMailForParents.findFirst({
-        where: {
-            studentId: +studentId,
-            teacherId: +teacherId,
-            termSubjectLevelId: +termSubjectLevelId,
-            sectionId: +sectionId,
-            sendDate: sendDate
-        }
-    });
-
-    if (!existingAutomatedMail) {
-        await db.automatedMailForParents.create({
-            data: {
-                studentId: +studentId,
+        const existingAutomatedMail = await db.automatedMailForParents.findFirst({
+            where: {
+                studentId: studentId,
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 sectionId: +sectionId,
-                className: className,
-                roomName: roomName,
-                sendDate: sendDate,
-                isSent: false,
-                classTime
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                }
             }
         });
+        console.log(existingAutomatedMail);
+        if (!existingAutomatedMail) {
+            await db.automatedMailForParents.create({
+                data: {
+                    studentId: +studentId,
+                    teacherId: +teacherId,
+                    termSubjectLevelId: +termSubjectLevelId,
+                    sectionId: +sectionId,
+                    className: className,
+                    roomName: roomName,
+                    sendDate: sendDate,
+                    isSent: false,
+                    classTime
+                }
+            });
+        }
     }
-
     return groupHomework;
 }

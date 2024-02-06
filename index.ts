@@ -43,6 +43,7 @@ import commentRoute from './src/route/admin.route/admin.comment.route/admin.comm
 import interactionRoute from './src/route/admin.route/admin.interactions.route/admin.interactions.route';
 import adminInstitutionRoute from './src/route/admin.route/admin.institution.route/admin.institution.route';
 import groupHomeworkRoute from './src/route/teacher.route/teacher.homework.route/teacher.homework.route';
+import sendConsolidatedEmailsRouter from './src/route/cron.consolidatedEmail.route/cron.consolidatedEmail.route';
 
 const app = express();
 app.use(cookieParser());
@@ -89,7 +90,7 @@ process.on('uncaughtException', (err: Err) => {
     process.exit(1);
 });
 app.get('/test', (req, res, next) => {
-    throw new Error('internal error');
+    res.status(200).json({ message: 'Consolidated emails sent successfully' });
 });
 app.get('/healthcheck', (req: Request, res: Response) => res.sendStatus(200));
 app.use('/api/v1/application', newApplicantRoute);
@@ -131,6 +132,7 @@ app.use('/api/v1/upload-home-work', homeWorkUploadRoute);
 app.use('/api/v1/download-home-work', homeWorkDownloadRoute);
 
 app.use('/api/v1/send-mail', sendMailHomeWorkRouter);
+app.use('/api/v1/automated-mail', sendConsolidatedEmailsRouter);
 
 // Server frontend static assets and handle catch-all route
 // if (process.env.NODE_ENV === 'production') {
