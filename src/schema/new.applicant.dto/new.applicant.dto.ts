@@ -35,8 +35,8 @@ export const HealthInformationSchema = z.object({
     id: z.number().optional(),
     medicareNumber: z.string().optional(),
     ambulanceMembershipNumber: z.string().optional(),
-    medicalCondition: z.string({ required_error: 'Please give a valid answer' }).min(3, { message: 'Mininum 3 characters' }),
-    allergy: z.string({ required_error: 'valid' }).min(3, { message: 'Mininum 3 characters' })
+    medicalCondition: z.string({ required_error: 'Please give a valid answer' }).min(2, { message: 'Mininum 2 characters' }),
+    allergy: z.string({ required_error: 'valid' }).min(2, { message: 'Mininum 2 characters' })
 });
 
 export const SubjectInterest = z.object({
