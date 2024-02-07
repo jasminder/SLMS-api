@@ -81,7 +81,7 @@ export async function consolidateStudentDataForEmail() {
                 }
             });
 
-            const homeworkEntries = await db.groupHomework.findMany({
+            homeworkEntries = await db.groupHomework.findMany({
                 where: {
                     isSent: false,
                     studentId: mailEntry.studentId,
@@ -93,8 +93,8 @@ export async function consolidateStudentDataForEmail() {
                     }
                 }
             });
-            console.log('feedbackEntries', feedbackEntries);
-            console.log('homeworkEntries', homeworkEntries);
+            // console.log('feedbackEntries', feedbackEntries);
+            // console.log('homeworkEntries', homeworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
 
             emailContent +=
@@ -109,7 +109,7 @@ export async function consolidateStudentDataForEmail() {
                 '\n\n';
 
             let homeworkAttachments = homeworkEntries.flatMap((h) =>
-                h.attachments.map((url) => ({
+                h.attachments.map((url: any) => ({
                     path: url,
                     filename: url.split('/').pop() ?? ''
                 }))
@@ -117,20 +117,24 @@ export async function consolidateStudentDataForEmail() {
 
             attachments = [...attachments, ...homeworkAttachments];
         }
-        console.log('emailContent', emailContent);
+        // console.log('emailContent', emailContent);
         if (student.personalDetails?.email) {
             await sendConsolidatedEmail(student.personalDetails.email, 'Your Academic Update', emailContent, attachments);
 
             // Update the isSent flag for Feedback, GroupHomework, and AutomatedMailForParents
 
             // Sequentially update the isSent flag for Feedback, GroupHomework, and AutomatedMailForParents
+            // console.log(feedbackEntries, 'feedbackentries');
             for (const id of feedbackEntries.map((f) => f.id)) {
+                // console.log(id, 'feedbackentry id');
                 await db.feedback.update({ where: { id }, data: { isSent: true } });
             }
             for (const id of homeworkEntries.map((h) => h.id)) {
+                // console.log(id, 'homeworkentries id');
                 await db.groupHomework.update({ where: { id }, data: { isSent: true } });
             }
             for (const mailEntry of student.AutomatedMailForParents) {
+                // console.log(mailEntry, 'Mail entry');
                 await db.automatedMailForParents.update({ where: { id: mailEntry.id }, data: { isSent: true } });
             }
 

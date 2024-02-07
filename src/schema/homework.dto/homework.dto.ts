@@ -4,11 +4,11 @@ export const createHomeworkSchema = z.object({
     body: z.object({
         attachments: z.array(z.string()),
         uploadedUserRole: z.string(),
-        title: z.string(),
+        title: z.string().default('No title'),
         description: z.string()
     }),
     params: z.object({
-        subjectId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
+        termSubjectLevelId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
         uploaderId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     })
 });
@@ -21,11 +21,10 @@ export const findHomeworkByIdSchema = z.object({
 });
 export type FindHomeworkByIdSchema = z.infer<typeof findHomeworkByIdSchema>;
 
-
-
 export const findAllHomeworksBySubjectsListSchema = z.object({
     params: z.object({
-        subjectIds: z.string().min(1, { message: 'At least one param string value required @ksm' })
+        termSubjectLevelIds: z.string().min(1, { message: 'At least one param string value required @ksm' }),
+        teacherId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     })
 });
 

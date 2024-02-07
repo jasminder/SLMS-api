@@ -17,7 +17,7 @@ export const createGroupHomeworkSchema = z.object({
         className: z.string().min(1, { message: 'homeworkcontent is required' }),
         roomName: z.string().min(1, { message: 'homeworkcontent is required' }),
         classTime: z.string().min(1, { message: 'homeworkcontent is required' })
-        // homeworkId: z.string().min(1, { message: 'homeworkcontent is required' })
+
     })
 });
 export type CreateGroupHomeworkSchema = z.infer<typeof createGroupHomeworkSchema>;

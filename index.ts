@@ -44,6 +44,7 @@ import interactionRoute from './src/route/admin.route/admin.interactions.route/a
 import adminInstitutionRoute from './src/route/admin.route/admin.institution.route/admin.institution.route';
 import groupHomeworkRoute from './src/route/teacher.route/teacher.homework.route/teacher.homework.route';
 import sendConsolidatedEmailsRouter from './src/route/cron.consolidatedEmail.route/cron.consolidatedEmail.route';
+import classworkRoute from './src/route/classwork.route/classwork.route';
 
 const app = express();
 app.use(cookieParser());
@@ -125,6 +126,7 @@ app.use('/api/v1/teacher-homework-for-student', groupHomeworkRoute);
 app.use('/api/v1/auth', authRoute);
 
 app.use('/api/v1/home-work', homeworkRoute);
+app.use('/api/v1/class-work', classworkRoute);
 //aws presigned route
 app.use('/api/v1/upload-image', ImageUploadRoute);
 app.use('/api/v1/display-image', ImageDisplayRoute);

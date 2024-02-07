@@ -4,8 +4,8 @@ import { CreateHomeworkSchema, FindAllHomeworksBySubjectsList, FindHomeworkByIdS
 
 export const createHomeworkHandler = async (req: Request<CreateHomeworkSchema['params'], {}, CreateHomeworkSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { attachments, description, title, uploadedUserRole } = req.body;
-    const { subjectId, uploaderId } = req.params;
-    const newHomework = await createHomework(subjectId, uploaderId, uploadedUserRole, title, description, attachments);
+    const { termSubjectLevelId, uploaderId } = req.params;
+    const newHomework = await createHomework(termSubjectLevelId, uploaderId, uploadedUserRole, title, description, attachments);
 
     res.status(200).json(newHomework);
 };
@@ -16,8 +16,8 @@ export const findHomeworkByIdHandler = async (req: Request<FindHomeworkByIdSchem
     res.status(200).json(homework);
 };
 export const findHomeworkBySubjectListHandler = async (req: Request<FindAllHomeworksBySubjectsList['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
-    const { subjectIds } = req.params;
-    const subjectIdsArray = subjectIds .split(',').map((id) => id);
-    const homework = await findAllHomeworksBySubjectsList(subjectIdsArray);
+    const { termSubjectLevelIds, teacherId } = req.params;
+    const termSubjectLevelIdsArray = termSubjectLevelIds .split(',').map((id) => id);
+    const homework = await findAllHomeworksBySubjectsList(termSubjectLevelIdsArray,teacherId);
     res.status(200).json(homework);
 };

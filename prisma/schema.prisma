@@ -67,6 +67,7 @@ model Student {
   comment                 Comment[]
   GroupHomework           GroupHomework[]
   AutomatedMailForParents AutomatedMailForParents[]
+  GroupClasswork          GroupClasswork[]
 }
 
 model PersonalDetails {
@@ -134,6 +135,7 @@ model Subject {
   termSubjectLevel        TermSubjectLevel[]
   TeacherSubject          TeacherSubject[]
   Homework                Homework[]
+  Classwork               Classwork[]
 }
 
 model SubjectGroup {
@@ -223,6 +225,9 @@ model TermSubjectLevel {
   Feedback                Feedback[]
   GroupHomework           GroupHomework[]
   AutomatedMailForParents AutomatedMailForParents[]
+  GroupClasswork          GroupClasswork[]
+  Classwork               Classwork[]
+  Homework                Homework[]
 
   @@unique([termId, subjectId, levelId])
 }
@@ -366,6 +371,8 @@ model Teacher {
   feedback                         Feedback[]
   GroupHomework                    GroupHomework[]
   AutomatedMailForParents          AutomatedMailForParents[]
+  Classwork                        Classwork[]
+  GroupClasswork                   GroupClasswork[]
 }
 
 model TeacherPersonalDetails {
@@ -376,7 +383,7 @@ model TeacherPersonalDetails {
   DOB       DateTime
   gender    String
   email     String   @unique
-  contact   String   @unique
+  contact   String
   address   String
   suburb    String
   state     String
@@ -480,6 +487,7 @@ model Admin {
   user                      User?
   Homework                  Homework[]
   comment                   Comment[]
+  Classwork                 Classwork[]
 }
 
 model AdminPersonalDetails {
@@ -610,19 +618,22 @@ model SkipReport {
 }
 
 model Homework {
-  id               Int      @id @default(autoincrement())
-  subjectId        Int
-  teacherId        Int? // Optional: ID of the teacher who uploaded the homework
-  adminId          Int? // Optional: ID of the admin who uploaded the homework
-  uploadedUserRole String // Role of the uploader ('teacher' or 'admin')
-  title            String?  @default("No title")
-  description      String
-  attachments      String[] // URLs of the attached documents
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  subject          Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  teacher          Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  admin            Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  id                 Int      @id @default(autoincrement())
+  subjectId          Int
+  teacherId          Int? // Optional: ID of the teacher who uploaded the homework
+  adminId            Int? // Optional: ID of the admin who uploaded the homework
+  termSubjectLevelId Int?
+  uploadedUserRole   String // Role of the uploader ('teacher' or 'admin')
+  title              String?  @default("No title")
+  description        String
+  attachments        String[] // URLs of the attached documents
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  subject            Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher            Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  admin              Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  termSubjectLevel TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id])
 
   // @@unique([subjectId, title])
 }
@@ -664,6 +675,45 @@ model GroupHomework {
   termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
 
   // @@unique([studentId, teacherId, termSubjectLevelId, title]) // Ensuring uniqueness of the homework assignment
+}
+
+model Classwork {
+  id                 Int               @id @default(autoincrement())
+  subjectId          Int
+  teacherId          Int? // ID of the teacher who created the classwork
+  adminId            Int?
+  termSubjectLevelId Int?
+  uploadedUserRole   String // Role of the uploader ('teacher' or 'admin')
+  title              String?           @default("No title")
+  description        String
+  attachments        String[]
+  dueDate            DateTime          @default(now())
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  termSubjectLevel   TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id])
+  subject            Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher            Teacher?          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  admin              Admin?            @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model GroupClasswork {
+  id                 Int      @id @default(autoincrement())
+  studentId          Int
+  teacherId          Int
+  termSubjectLevelId Int
+  title              String
+  description        String[]
+  attachments        String[] // URLs of the attached documents
+  isSent             Boolean  @default(false)
+  sendDate           DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
+
+  // @@unique([termSubjectLevelId, title])
 }
 
 model AutomatedMailForParents {

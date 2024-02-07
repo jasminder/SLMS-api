@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Classwork" ALTER COLUMN "dueDate" SET DEFAULT CURRENT_TIMESTAMP;

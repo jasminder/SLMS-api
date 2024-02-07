@@ -2,8 +2,8 @@ import { db } from '../../utils/db.server';
 import { customError } from '../../utils/customError';
 
 /* Create a new homework record */
-export async function createHomework(subjectId: string, uploaderId: string, uploadedUserRole: string, title: string, description: string, attachments: string[]) {
-    const subject = await db.subject.findUnique({ where: { id: +subjectId } });
+export async function createHomework(termSubjectLevelId: string, uploaderId: string, uploadedUserRole: string, title: string, description = 'No description', attachments: string[]) {
+    const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
     if (!subject) {
         throw customError('Subject not found', 'fail', 404, true);
     }
@@ -20,7 +20,7 @@ export async function createHomework(subjectId: string, uploaderId: string, uplo
     }
     if (uploadedUserRole === 'TEACHER') {
         const data = {
-            subjectId: +subjectId,
+            subjectId: 1,
             teacherId: +uploaderId,
             adminId: null,
             uploadedUserRole,
@@ -28,7 +28,8 @@ export async function createHomework(subjectId: string, uploaderId: string, uplo
             description,
             attachments,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            termSubjectLevelId: +termSubjectLevelId
         };
         const newHomework = await db.homework.create({ data });
         if (!newHomework) {
@@ -38,7 +39,7 @@ export async function createHomework(subjectId: string, uploaderId: string, uplo
         return newHomework;
     } else if (uploadedUserRole === 'ADMIN') {
         const data = {
-            subjectId: +subjectId,
+            subjectId: 1,
             teacherId: null,
             adminId: +uploaderId,
             uploadedUserRole,
@@ -46,7 +47,8 @@ export async function createHomework(subjectId: string, uploaderId: string, uplo
             description,
             attachments,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            termSubjectLevelId: +termSubjectLevelId
         };
         const newHomework = await db.homework.create({ data });
         if (!newHomework) {
@@ -57,19 +59,27 @@ export async function createHomework(subjectId: string, uploaderId: string, uplo
 }
 
 /* Find all homework records for a list of subjects */
-export async function findAllHomeworksBySubjectsList(subjectIdsArray: string[]) {
+export async function findAllHomeworksBySubjectsList(termSubjectLevelIdsArray: string[], teacherId: string) {
     // const subjectIds = subjectIdsArray;
-    const numericSubjectIds = subjectIdsArray.map(Number);
+    const numerictermSubjectLevelIds = termSubjectLevelIdsArray.map(Number);
 
     const homeworks = await db.homework.findMany({
         where: {
-            subjectId: {
-                in: numericSubjectIds
-            }
+            termSubjectLevelId: {
+                in: numerictermSubjectLevelIds
+            },
+            teacherId: +teacherId
         },
         include: {
             subject: true,
-            teacher: true
+            teacher: true,
+            termSubjectLevel: {
+                select: {
+                    level: {
+                        select: { name: true }
+                    }
+                }
+            }
         }
     });
 
@@ -123,31 +133,31 @@ export async function findHomeworkById(homeworkId: string) {
 }
 
 /* Update homework record by adding a new attachment */
-export async function addAttachmentToHomework(homeworkId: number, newAttachment: string) {
-    // Retrieve the current homework record
-    const currentHomework = await db.homework.findUnique({
-        where: { id: homeworkId },
-        select: { attachments: true }
-    });
+// export async function addAttachmentToHomework(homeworkId: number, newAttachment: string) {
+//     // Retrieve the current homework record
+//     const currentHomework = await db.homework.findUnique({
+//         where: { id: homeworkId },
+//         select: { attachments: true }
+//     });
 
-    if (!currentHomework) {
-        throw new Error('Homework not found');
-    }
+//     if (!currentHomework) {
+//         throw new Error('Homework not found');
+//     }
 
-    // Add the new attachment to the existing array
-    const updatedAttachments = [...currentHomework.attachments, newAttachment];
+//     // Add the new attachment to the existing array
+//     const updatedAttachments = [...currentHomework.attachments, newAttachment];
 
-    // Update the homework record with the new attachments array
-    const updatedHomework = await db.homework.update({
-        where: { id: homeworkId },
-        data: {
-            attachments: updatedAttachments,
-            updatedAt: new Date() // Update the timestamp
-        }
-    });
-    if (updatedHomework) {
-        throw customError('Failed to update homework attachment', 'fail', 400, true);
-    }
+//     // Update the homework record with the new attachments array
+//     const updatedHomework = await db.homework.update({
+//         where: { id: homeworkId },
+//         data: {
+//             attachments: updatedAttachments,
+//             updatedAt: new Date() // Update the timestamp
+//         }
+//     });
+//     if (updatedHomework) {
+//         throw customError('Failed to update homework attachment', 'fail', 400, true);
+//     }
 
-    return updatedHomework;
-}
+//     return updatedHomework;
+// }

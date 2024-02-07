@@ -7,6 +7,7 @@ export const findAllSubjectshandler = async (req: Request, res: Response, next: 
     res.status(200).json(allSubjects);
 };
 export const createTeacherApplicantHandler = async (req: Request<{}, {}, TeacherApplicantSchema['body'], {}>, res: Response, next: NextFunction) => {
+
     const data = req.body;
     const newTeacherApplicant = await createTeacherApplicant(data);
     res.status(200).json(newTeacherApplicant);

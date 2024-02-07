@@ -29,7 +29,7 @@ export async function createTeacherApplicant(data: TeacherApplicantSchema['body'
         }
     });
     if (existingTeacher?.email || existingTeacher?.contact) {
-        throw customError(`The Emaila nd contact number belongs to an existing account for teacher. please contact the school. `, 'fail', 404, true);
+        throw customError(`The Email and contact number belongs to an existing account for teacher. please contact the school. `, 'fail', 404, true);
     }
 
     try {
@@ -98,7 +98,7 @@ export async function createTeacherApplicant(data: TeacherApplicantSchema['body'
         });
         return teacher;
     } catch (e) {
-        // console.log(e);
-        throw customError('Failed to create application', 'fail', 404, true); // Return an error message.
+        console.log(e);
+        throw customError('Failed to create application with ', 'fail', 404, true); // Return an error message.
     }
 }

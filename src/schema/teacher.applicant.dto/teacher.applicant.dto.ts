@@ -22,7 +22,7 @@ export const TeacherEmergencyContactSchema = z.object({
 });
 export const TeacherWWCHealthInformationSchema = z.object({
     medicareNumber: z.string().optional(),
-    medicalCondition: z.string({ required_error: 'Please give a valid answer' }).min(3, { message: 'Mininum 3 characters' }),
+    medicalCondition: z.string({ required_error: 'Please give a valid answer' }).min(2, { message: 'Mininum 2 characters' }),
     childrenCheckCardNumber: z.string().min(3, { message: 'Please enter valid value' }),
     workingWithChildrenCheckExpiry: z.string(),
     workingwithChildrenCheckCardPhotoImage: z.string()
