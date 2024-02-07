@@ -3,9 +3,9 @@ import { db } from '../../utils/db.server';
 
 export async function createClasswork(termSubjectLevelId: string, uploaderId: string, uploadedUserRole: string, title: string, description = 'No description', attachments: string[] | undefined) {
     const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
-    if (!subject) {
-        throw customError('Subject not found', 'fail', 404, true);
-    }
+    // if (!subject) {
+    //     throw customError('Subject not found', 'fail', 404, true);
+    // }
 
     let uploader;
     if (uploadedUserRole === 'TEACHER') {
