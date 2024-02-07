@@ -51,13 +51,12 @@ app.use(cookieParser());
 
 const origin =
     process.env.NODE_ENV === 'development'
-        ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://ec2-13-236-121-116.ap-southeast-2.compute.amazonaws.com:8080', 'https://slms-client-2aam.vercel.app']
+        ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8080', 'https://slms-client-2aam.vercel.app']
         : [
               'https://SLMS.com',
               'http://localhost:5173',
               'http://localhost:5174',
               'http://localhost:5175',
-              'http://ec2-13-236-121-116.ap-southeast-2.compute.amazonaws.com:8080',
               'https://slms-client-2aam.vercel.app',
               'https://akaalshaouni.org'
           ];
