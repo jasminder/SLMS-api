@@ -106,7 +106,8 @@ export async function consolidateStudentDataForEmail() {
                 }
             });
             // console.log('feedbackEntries', feedbackEntries);
-            // console.log('homeworkEntries', homeworkEntries);
+            console.log('homeworkEntries', homeworkEntries);
+            console.log('classworkEntries', classworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
             const feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : 'No feedback';
 
@@ -115,6 +116,14 @@ export async function consolidateStudentDataForEmail() {
 
             // homeworkEntries.map((h) => h.description).join('\n') +
             // '\n\n';
+            let homeworkAttachments = homeworkEntries.flatMap((h) =>
+                h.attachments.map((url: any) => ({
+                    path: url,
+                    filename: url.split('/').pop() ?? ''
+                }))
+            );
+
+            attachments = [...attachments, ...homeworkAttachments];
             emailContent += '\n\nHomework:\n';
             if (homeworkEntries.length === 0) {
                 emailContent += 'No Homework\n';
@@ -125,7 +134,7 @@ export async function consolidateStudentDataForEmail() {
                     } else {
                         h.description.forEach((desc: string, descIndex: number) => {
                             if (desc === '') {
-                                emailContent += `${descIndex + 1}) Please find the attachment\n`;
+                                emailContent += `${descIndex + 1}) Please find the attachment-${extractOriginalFileNameFromS3Url(homeworkAttachments[descIndex].path)}\n`;
                             } else {
                                 emailContent += `${descIndex + 1}) ${desc}\n`;
                             }
@@ -134,14 +143,16 @@ export async function consolidateStudentDataForEmail() {
                     emailContent += '\n';
                 }
             }
-            let homeworkAttachments = homeworkEntries.flatMap((h) =>
-                h.attachments.map((url: any) => ({
+
+            // Append classwork attachments
+            let classworkAttachments = classworkEntries.flatMap((c) =>
+                c.attachments.map((url: any) => ({
                     path: url,
                     filename: url.split('/').pop() ?? ''
                 }))
             );
 
-            attachments = [...attachments, ...homeworkAttachments];
+            attachments = [...attachments, ...classworkAttachments];
 
             if (classworkEntries.length === 0) {
                 emailContent += '\nNo Classwork\n';
@@ -153,7 +164,7 @@ export async function consolidateStudentDataForEmail() {
                     } else {
                         c.description.forEach((desc: string, descIndex: number) => {
                             if (desc === '') {
-                                emailContent += `${descIndex + 1}) Please find the attachment\n`;
+                                emailContent += `${descIndex + 1}) Please find the attachment-${extractOriginalFileNameFromS3Url(classworkAttachments[descIndex].path)}\n`;
                             } else {
                                 emailContent += `${descIndex + 1}) ${desc}\n`;
                             }
@@ -162,17 +173,9 @@ export async function consolidateStudentDataForEmail() {
                     emailContent += '\n';
                 }
             }
-            // Append classwork attachments
-            let classworkAttachments = classworkEntries.flatMap((c) =>
-                c.attachments.map((url: any) => ({
-                    path: url,
-                    filename: url.split('/').pop() ?? ''
-                }))
-            );
-
-            attachments = [...attachments, ...classworkAttachments];
         }
-        // console.log('emailContent', emailContent);
+        console.log('emailContent', emailContent);
+
         if (student.personalDetails?.email) {
             await sendConsolidatedEmail(student.personalDetails.email, 'Your Academic Update', emailContent, attachments);
 
@@ -212,4 +215,12 @@ export async function consolidateStudentDataForEmail() {
             }
         }
     }
+}
+function extractOriginalFileNameFromS3Url(url: string) {
+    if (typeof url !== 'string') {
+        console.error('Invalid URL: ', url);
+        return '';
+    }
+    const fileNameMatch = url.match(/\/([^\/]+?)-[a-zA-Z0-9-]+\.(jpg|jpeg|png|pdf|doc|docx)/i);
+    return fileNameMatch ? decodeURIComponent(fileNameMatch[1]) : '';
 }
