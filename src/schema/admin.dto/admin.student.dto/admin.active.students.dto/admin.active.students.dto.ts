@@ -118,3 +118,11 @@ export const manageClassSchema = z.object({
     }),
 });
 export type ManageClassSchema = z.infer<typeof manageClassSchema>;
+
+/*Remove classes for students*/
+export const deleteClassAssignmentSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    }),
+});
+export type DeleteClassAssignmentSchema = z.infer<typeof deleteClassAssignmentSchema>;

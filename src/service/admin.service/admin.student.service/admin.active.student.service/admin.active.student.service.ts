@@ -790,6 +790,29 @@ export async function assignClassToStudent(studentId: string, termId: string, su
     return { message: 'Class assigned successfully' };
 }
 
+/****** * remove/ delete  class for  student*****/
+export async function deleteClassAssignment(id: string) {
+    // Check if the class assignment exists
+    const classAssignment = await db.studentClassAssignment.findUnique({
+        where: {
+            id: +id
+        }
+    });
+
+    if (!classAssignment) {
+        throw new Error('Class assignment not found with the given ID.');
+    }
+
+    // Delete the class assignment
+    await db.studentClassAssignment.delete({
+        where: {
+            id: +id
+        }
+    });
+
+    return { message: 'Class assignment deleted successfully' };
+}
+
 /*get all classes for students*/
 export async function findUniqueStudentClassDetails(studentId: string) {
     const studentClassAssignmentRecords = await db.studentClassAssignment.findMany({

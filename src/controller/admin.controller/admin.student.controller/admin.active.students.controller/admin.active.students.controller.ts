@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import {
     assignClassToStudent,
     deEnrollActiveStudent,
+    deleteClassAssignment,
     enrollActiveStudent,
     findActiveStudentById,
     findActiveStudentEnrolledSubjects,
@@ -20,6 +21,7 @@ import {
 import {
     ActiveStudentEnrollDataSchema,
     AssignClassToStudentSchema,
+    DeleteClassAssignmentSchema,
     FindActiveStudentEnrolledSubjectsSchema,
     FindAllActiveStudentsSchema,
     FindStudentFeeDetailsSchemaSchema,
@@ -27,6 +29,7 @@ import {
     FindUniqueActiveStudentSchema,
     FindUniqueFeePaymentSchema,
     ManageClassSchema,
+
     SearchActiveStudentsSchema,
     UpdateAmountPaidSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
@@ -127,6 +130,13 @@ export const assignClassToStudentHandler = async (req: Request<AssignClassToStud
         res.status(200).json(assignClass);
     }
 };
+/****** * remove/ delete  class for  student*****/
+export const deleteClassAssignmentHandler = async (req: Request<DeleteClassAssignmentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const result = await deleteClassAssignment(id);
+    res.status(200).json(result);
+};
+
 /*get all classes for students*/
 export const findUniqueStudentClassDetailsHandler = async (req: Request<FindUniqueActiveStudentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { id } = req.params;

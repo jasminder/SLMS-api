@@ -5,6 +5,7 @@ import validate from '../../../../middleware/validateResource';
 import {
     activeStudentEnrollDataSchema,
     assignClassToStudentSchema,
+    deleteClassAssignmentSchema,
     findActiveStudentEnrolledSubjectsSchema,
     findAllActiveStudentsSchema,
     findStudentFeeDetailsSchema,
@@ -18,6 +19,7 @@ import {
 import {
     assignClassToStudentHandler,
     deEnrollActiveStudentHandler,
+    deleteClassAssignmentHandler,
     enrollActiveStudentHandler,
     findActiveStudentByIdHandler,
     findActiveStudentEnrolledSubjectsHandler,
@@ -85,6 +87,10 @@ adminActiveStudentRoute.route('/find-current-term-to-assign-class').get(protectR
 adminActiveStudentRoute
     .route('/assign-class-active-student/:studentId/:termId')
     .post(validate(assignClassToStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(assignClassToStudentHandler));
+
+/****** * delete class to student*****/
+adminActiveStudentRoute.route('/delete-class-active-student/:id').delete(validate(deleteClassAssignmentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteClassAssignmentHandler));
+
 /*get all classes for students*/
 adminActiveStudentRoute
     .route('/find-assigned-classes-for-active-student/:id')
@@ -98,5 +104,5 @@ adminActiveStudentRoute.route('/enroll-active-student').post(validate(activeStud
 adminActiveStudentRoute.route('/de-enroll-active-student').post(validate(activeStudentEnrollDataSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deEnrollActiveStudentHandler));
 
 /* find term to enroll */
-adminActiveStudentRoute.route('/term-to-enroll-active-student').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findTermToEnrollActiveStudentHandler));
+adminActiveStudentRoute.route('/term-to-enroll-active-student').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(findTermToEnrollActiveStudentHandler));
 export default adminActiveStudentRoute;
