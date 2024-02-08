@@ -6,7 +6,7 @@ export const createGroupClassworkSchema = z.object({
         teacherId: z.string().min(1, { message: 'Teacher ID is required' }),
         title: z.string().min(1, { message: 'Classworkcontent is required' }).default('Classwork'),
 
-        ClassworkDetails: z.array(
+        classworkDetails: z.array(
             z.object({
                 attachments: z.string(),
                 description: z.string()

@@ -45,6 +45,7 @@ import adminInstitutionRoute from './src/route/admin.route/admin.institution.rou
 import groupHomeworkRoute from './src/route/teacher.route/teacher.homework.route/teacher.homework.route';
 import sendConsolidatedEmailsRouter from './src/route/cron.consolidatedEmail.route/cron.consolidatedEmail.route';
 import classworkRoute from './src/route/classwork.route/classwork.route';
+import groupClassworkRoute from './src/route/teacher.route/teacher.classwork.route/teacher.classwork.route';
 
 const app = express();
 app.use(cookieParser());
@@ -52,14 +53,7 @@ app.use(cookieParser());
 const origin =
     process.env.NODE_ENV === 'development'
         ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8080', 'https://slms-client-2aam.vercel.app']
-        : [
-              'https://SLMS.com',
-              'http://localhost:5173',
-              'http://localhost:5174',
-              'http://localhost:5175',
-              'https://slms-client-2aam.vercel.app',
-              'https://akaalshaouni.org'
-          ];
+        : ['https://SLMS.com', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://slms-client-2aam.vercel.app', 'https://akaalshaouni.org'];
 app.use(
     cors({
         credentials: true,
@@ -121,6 +115,8 @@ app.use('/api/v1/teacher/attendance', teacherAttendanceRoute);
 app.use('/api/v1/teacher', teacherRoute);
 app.use('/api/v1/teacher-feedback-for-student', feedbackRoute);
 app.use('/api/v1/teacher-homework-for-student', groupHomeworkRoute);
+
+app.use('/api/v1/teacher-classwork-for-student', groupClassworkRoute);
 
 app.use('/api/v1/auth', authRoute);
 

@@ -65,6 +65,7 @@ export async function consolidateStudentDataForEmail() {
         let attachments: { path: string; filename: string }[] = [];
         let feedbackEntries: any[] = [];
         let homeworkEntries: any[] = [];
+        let classworkEntries: any[] = [];
         for (const mailEntry of student.AutomatedMailForParents) {
             // Fetching feedback and homework based on the specific class details
             feedbackEntries = await db.feedback.findMany({
@@ -92,30 +93,46 @@ export async function consolidateStudentDataForEmail() {
                     }
                 }
             });
+            classworkEntries = await db.groupClasswork.findMany({
+                where: {
+                    isSent: false,
+                    studentId: mailEntry.studentId,
+                    teacherId: mailEntry.teacherId,
+                    termSubjectLevelId: mailEntry.termSubjectLevelId,
+                    createdAt: {
+                        gte: startDate,
+                        lte: endDate
+                    }
+                }
+            });
             // console.log('feedbackEntries', feedbackEntries);
             // console.log('homeworkEntries', homeworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
             const feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : 'No feedback';
 
             emailContent +=
-                `Class: ${mailEntry.className}\n` + `Room: ${mailEntry.roomName}\n` + `Class Time: ${mailEntry.classTime}\n` + `Teacher: ${teacherName}\n\n` + `Feedback:\n` + feedbackContent + '/n';
+                `Class: ${mailEntry.className}\n` + `Room: ${mailEntry.roomName}\n` + `Class Time: ${mailEntry.classTime}\n` + `Teacher: ${teacherName}\n\n` + `Feedback:\n${feedbackContent}\n`;
 
             // homeworkEntries.map((h) => h.description).join('\n') +
             // '\n\n';
             emailContent += '\n\nHomework:\n';
-            for (const [index, h] of homeworkEntries.entries()) {
-                if (h.description.length === 0 || (h.description.length === 1 && h.description[0] === '')) {
-                    emailContent += `${index + 1}) Homework attached\n`;
-                } else {
-                    h.description.forEach((desc: string, descIndex: number) => {
-                        if (desc === '') {
-                            emailContent += `${descIndex + 1}) Please find the attachment\n`;
-                        } else {
-                            emailContent += `${descIndex + 1}) ${desc}\n`;
-                        }
-                    });
+            if (homeworkEntries.length === 0) {
+                emailContent += 'No Homework\n';
+            } else {
+                for (const [index, h] of homeworkEntries.entries()) {
+                    if (h.description.length === 0 || (h.description.length === 1 && h.description[0] === '')) {
+                        emailContent += `${index + 1}) Homework attached\n`;
+                    } else {
+                        h.description.forEach((desc: string, descIndex: number) => {
+                            if (desc === '') {
+                                emailContent += `${descIndex + 1}) Please find the attachment\n`;
+                            } else {
+                                emailContent += `${descIndex + 1}) ${desc}\n`;
+                            }
+                        });
+                    }
+                    emailContent += '\n';
                 }
-                emailContent += '\n'; // Adds an extra line after each homework entry
             }
             let homeworkAttachments = homeworkEntries.flatMap((h) =>
                 h.attachments.map((url: any) => ({
@@ -125,6 +142,35 @@ export async function consolidateStudentDataForEmail() {
             );
 
             attachments = [...attachments, ...homeworkAttachments];
+
+            if (classworkEntries.length === 0) {
+                emailContent += '\nNo Classwork\n';
+            } else {
+                emailContent += '\nClasswork:\n';
+                for (const [index, c] of classworkEntries.entries()) {
+                    if (c.description.length === 0 || (c.description.length === 1 && c.description[0] === '')) {
+                        emailContent += `${index + 1}) Classwork attached\n`;
+                    } else {
+                        c.description.forEach((desc: string, descIndex: number) => {
+                            if (desc === '') {
+                                emailContent += `${descIndex + 1}) Please find the attachment\n`;
+                            } else {
+                                emailContent += `${descIndex + 1}) ${desc}\n`;
+                            }
+                        });
+                    }
+                    emailContent += '\n';
+                }
+            }
+            // Append classwork attachments
+            let classworkAttachments = classworkEntries.flatMap((c) =>
+                c.attachments.map((url: any) => ({
+                    path: url,
+                    filename: url.split('/').pop() ?? ''
+                }))
+            );
+
+            attachments = [...attachments, ...classworkAttachments];
         }
         // console.log('emailContent', emailContent);
         if (student.personalDetails?.email) {
@@ -142,6 +188,10 @@ export async function consolidateStudentDataForEmail() {
                 // console.log(id, 'homeworkentries id');
                 await db.groupHomework.update({ where: { id }, data: { isSent: true } });
             }
+            for (const id of classworkEntries.map((c) => c.id)) {
+                await db.groupClasswork.update({ where: { id }, data: { isSent: true } });
+            }
+
             for (const mailEntry of student.AutomatedMailForParents) {
                 // console.log(mailEntry, 'Mail entry');
                 await db.automatedMailForParents.update({ where: { id: mailEntry.id }, data: { isSent: true } });

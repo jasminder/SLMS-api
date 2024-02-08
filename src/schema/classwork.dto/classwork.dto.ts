@@ -5,7 +5,7 @@ export const createClassworkSchema = z.object({
         attachments: z.array(z.string()).optional(),
         uploadedUserRole: z.string(),
         title: z.string().default('No title'),
-        description: z.string().optional().default('No Description or content')
+        description: z.string().optional()
     }),
     params: z.object({
         termSubjectLevelId: z.string().min(1, { message: 'Subject ID required' }),
