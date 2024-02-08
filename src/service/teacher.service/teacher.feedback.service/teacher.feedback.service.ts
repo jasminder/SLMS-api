@@ -66,8 +66,8 @@ export async function createFeedback(
         }
     });
 
-    console.log(existingAutomatedMail);
-    console.log(studentId, teacherId, termSubjectLevelId, sectionId, sendDate);
+    // console.log(existingAutomatedMail);
+    // console.log(studentId, teacherId, termSubjectLevelId, sectionId, sendDate);
     // Create AutomatedMailForParents record if it does not exist
     if (!existingAutomatedMail) {
         await db.automatedMailForParents.create({

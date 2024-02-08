@@ -4,7 +4,7 @@ import { customError } from '../../utils/customError';
 /* Create a new homework record */
 export async function createHomework(termSubjectLevelId: string, uploaderId: string, uploadedUserRole: string, title: string, description = 'No description', attachments: string[]) {
     const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
-    console.log('description', description);
+
 
     let uploader;
     if (uploadedUserRole === 'TEACHER') {

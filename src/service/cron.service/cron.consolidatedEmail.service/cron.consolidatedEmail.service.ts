@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 const db = new PrismaClient();
 
 export async function consolidateStudentDataForEmail() {
-    console.log('start consolidateStudentDataForEmail');
     const today = new Date();
     const formattedDate = format(today, 'yyyy-MM-dd');
     const startDate = new Date();
@@ -48,12 +47,12 @@ export async function consolidateStudentDataForEmail() {
             }
         }
     });
-    console.log('studentsWithPendingMails', studentsWithPendingMails);
+
     for (const student of studentsWithPendingMails) {
         const attendanceToday = student.schoolCheckInAttendance[0]; // Assuming only one record per day
         const attendanceStatus = attendanceToday?.checkedIn ? 'Present' : 'Absent';
-        const checkInTime = attendanceToday?.checkInTime ? (attendanceToday.checkInTime, 'HH:mm') : 'Not Applicable';
-        const checkOutTime = attendanceToday?.checkOutTime ? format(attendanceToday.checkOutTime, 'HH:mm') : 'Not Applicable';
+        const checkInTime = attendanceToday?.checkInTime ? format(new Date(attendanceToday.checkInTime), 'dd-MM-yyyy hh:mm a') : 'Not Applicable';
+        const checkOutTime = attendanceToday?.checkOutTime ? format(new Date(attendanceToday.checkOutTime), 'dd-MM-yyyy hh:mm a') : 'Not Applicable';
 
         let emailContent =
             `Dear Parents,\n\n` +
@@ -94,7 +93,7 @@ export async function consolidateStudentDataForEmail() {
                 }
             });
             // console.log('feedbackEntries', feedbackEntries);
-            console.log('homeworkEntries', homeworkEntries);
+            // console.log('homeworkEntries', homeworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
 
             emailContent +=
@@ -114,9 +113,9 @@ export async function consolidateStudentDataForEmail() {
                 } else {
                     h.description.forEach((desc: string, descIndex: number) => {
                         if (desc === '') {
-                            emailContent += `${index + 1}.${descIndex + 1}) Please find the attachment\n`;
+                            emailContent += `${descIndex + 1}) Please find the attachment\n`;
                         } else {
-                            emailContent += `${index + 1}.${descIndex + 1}) ${desc}\n`;
+                            emailContent += `${descIndex + 1}) ${desc}\n`;
                         }
                     });
                 }
@@ -131,7 +130,7 @@ export async function consolidateStudentDataForEmail() {
 
             attachments = [...attachments, ...homeworkAttachments];
         }
-        console.log('emailContent', emailContent);
+        // console.log('emailContent', emailContent);
         if (student.personalDetails?.email) {
             await sendConsolidatedEmail(student.personalDetails.email, 'Your Academic Update', emailContent, attachments);
 
