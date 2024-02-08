@@ -735,7 +735,7 @@ model AutomatedMailForParents {
   termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
   section          Section          @relation(fields: [sectionId], references: [id])
 
-  @@unique([studentId, termSubjectLevelId, sectionId, sendDate])
+  @@unique([studentId, termSubjectLevelId, sectionId, sendDate, teacherId])
 }
 
 enum InteractionType {

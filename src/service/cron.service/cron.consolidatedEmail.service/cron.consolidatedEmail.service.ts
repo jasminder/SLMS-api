@@ -94,7 +94,7 @@ export async function consolidateStudentDataForEmail() {
                 }
             });
             // console.log('feedbackEntries', feedbackEntries);
-            // console.log('homeworkEntries', homeworkEntries);
+            console.log('homeworkEntries', homeworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
 
             emailContent +=
@@ -103,11 +103,25 @@ export async function consolidateStudentDataForEmail() {
                 `Class Time: ${mailEntry.classTime}\n` +
                 `Teacher: ${teacherName}\n\n` +
                 `Feedback:\n` +
-                feedbackEntries.map((f) => f.content).join('\n') +
-                '\nHomework:\n' +
-                homeworkEntries.map((h) => h.description).join('\n') +
-                '\n\n';
+                feedbackEntries.map((f) => f.content).join('\n');
 
+            // homeworkEntries.map((h) => h.description).join('\n') +
+            // '\n\n';
+            emailContent += '\n\nHomework:\n';
+            for (const [index, h] of homeworkEntries.entries()) {
+                if (h.description.length === 0 || (h.description.length === 1 && h.description[0] === '')) {
+                    emailContent += `${index + 1}) Homework attached\n`;
+                } else {
+                    h.description.forEach((desc: string, descIndex: number) => {
+                        if (desc === '') {
+                            emailContent += `${index + 1}.${descIndex + 1}) Please find the attachment\n`;
+                        } else {
+                            emailContent += `${index + 1}.${descIndex + 1}) ${desc}\n`;
+                        }
+                    });
+                }
+                emailContent += '\n'; // Adds an extra line after each homework entry
+            }
             let homeworkAttachments = homeworkEntries.flatMap((h) =>
                 h.attachments.map((url: any) => ({
                     path: url,
@@ -117,7 +131,7 @@ export async function consolidateStudentDataForEmail() {
 
             attachments = [...attachments, ...homeworkAttachments];
         }
-        // console.log('emailContent', emailContent);
+        console.log('emailContent', emailContent);
         if (student.personalDetails?.email) {
             await sendConsolidatedEmail(student.personalDetails.email, 'Your Academic Update', emailContent, attachments);
 

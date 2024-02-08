@@ -58,15 +58,16 @@ export async function createFeedback(
             teacherId: +teacherId,
             termSubjectLevelId: +termSubjectLevelId,
             sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
-            createdAt: {
-                gte: startDate,
-                lte: endDate
-            }
+            // createdAt: {
+            //     gte: startDate,
+            //     lte: endDate
+            // }
+            sendDate
         }
     });
 
     console.log(existingAutomatedMail);
-
+    console.log(studentId, teacherId, termSubjectLevelId, sectionId, sendDate);
     // Create AutomatedMailForParents record if it does not exist
     if (!existingAutomatedMail) {
         await db.automatedMailForParents.create({

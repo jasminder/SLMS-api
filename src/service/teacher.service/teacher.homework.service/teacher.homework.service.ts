@@ -85,10 +85,11 @@ export async function createGroupHomework(
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 sectionId: +sectionId,
-                createdAt: {
-                    gte: startDate,
-                    lte: endDate
-                }
+                // createdAt: {
+                //     gte: startDate,
+                //     lte: endDate
+                // }
+                sendDate
             }
         });
         console.log(existingAutomatedMail);
