@@ -207,7 +207,7 @@ export async function consolidateStudentDataForEmail() {
                     data: {
                         studentId: student.id,
                         interactionType: InteractionType.AUTOMATED_EMAIL,
-                        description: 'Consolidated email with feedback and homework entries sent',
+                        description: 'Consolidated email with feedback and homework & classwork sent',
                         contactedDate: new Date(),
                         createdBy: firstMailEntry.teacherId
                     }
