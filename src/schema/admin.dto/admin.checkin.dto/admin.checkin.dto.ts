@@ -27,6 +27,14 @@ export const markSchoolCheckInAttendanceForStudentSchema = z.object({
 });
 export type MarkSchoolCheckInAttendanceForStudentSchema = z.infer<typeof markSchoolCheckInAttendanceForStudentSchema>;
 
+/*undo checkin for a student*/
+export const undoCheckInSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Student ID is required' })
+    })
+});
+export type UndoCheckInSchema = z.infer<typeof undoCheckInSchema>;
+
 /*mark check in false for a single studentid*/
 export const markStudentAsNotCheckedInSchema = z.object({
     params: z.object({

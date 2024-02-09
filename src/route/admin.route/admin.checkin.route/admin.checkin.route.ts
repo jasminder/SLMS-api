@@ -8,7 +8,8 @@ import {
     markCheckInFalseForSelectedStudentsSchema,
     markCheckInTrueForSelectedStudentsSchema,
     markSchoolCheckInAttendanceForStudentSchema,
-    markStudentAsNotCheckedInSchema
+    markStudentAsNotCheckedInSchema,
+    undoCheckInSchema
 } from '../../../schema/admin.dto/admin.checkin.dto/admin.checkin.dto';
 import {
     createSchoolCheckInAttendanceForStudentHandler,
@@ -16,7 +17,8 @@ import {
     markCheckInFalseForSelectedStudentsHandler,
     markCheckInTrueForSelectedStudentsHandler,
     markSchoolCheckInAttendanceForStudentHandler,
-    markStudentAsNotCheckedInHandler
+    markStudentAsNotCheckedInHandler,
+    undoCheckInHandler
 } from '../../../controller/admin.controller/admin.checkin.controller/admin.checkin.controller';
 import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
@@ -35,6 +37,11 @@ adminCheckinRoute.route('/fetch-daily-new-school-attendance-record').get(protect
 adminCheckinRoute
     .route('/checkin-true-single-student/:studentId')
     .patch(validate(markSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markSchoolCheckInAttendanceForStudentHandler));
+
+/*undo checkin for a student*/
+adminCheckinRoute
+    .route('/undo-checkin/:studentId')
+    .patch(validate(undoCheckInSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(undoCheckInHandler));
 
 /*mark the check-in as false for single student ID*/
 adminCheckinRoute

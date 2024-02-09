@@ -83,8 +83,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                 const newAttendanceRecord = await db.schoolCheckInAttendance.create({
                     data: {
                         studentId: student.id,
-                        date: new Date(date),
-                        checkInTime: new Date()
+                        date: new Date(date)
                         // other fields if necessary
                     }
                 });
@@ -154,8 +153,8 @@ export async function fetchSchoolCheckInAttendance() {
     endDate.setHours(23, 59, 59, 999);
     const records = await db.schoolCheckInAttendance.findMany({
         where: {
-            isMarked: false,
-            checkedIn: false,
+            // isMarked: false,
+            // checkedIn: false,
             date: {
                 gte: startDate,
                 lte: endDate
@@ -237,6 +236,46 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
     });
 
     return updatedAttendanceRecord;
+}
+
+/*undo checkin for a student*/
+export async function undoCheckIn(studentId: string) {
+    // const currentDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0); // Set time to start of the day
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    const record = await db.schoolCheckInAttendance.findFirst({
+        where: {
+            studentId: +studentId,
+            checkedIn: true,
+            isMarked: true,
+            date: {
+                gte: startDate,
+                lte: endDate
+            }
+        }
+    });
+
+    if (!record) {
+        throw customError('No check-in record found for the student to undo.', 'fail', 404, true);
+    }
+
+    const updatedRecord = await db.schoolCheckInAttendance.update({
+        where: {
+            id: record.id
+        },
+        data: {
+            checkedIn: false,
+            checkInTime: null,
+            isMarked: false
+            // Reset the check-in time
+            // Update other fields if necessary
+        }
+    });
+
+    return updatedRecord;
 }
 
 // search student for the admin to check in
@@ -391,7 +430,7 @@ export async function markCheckInTrueForSelectedStudents(studentIds: string[]) {
                     id: record.id
                 },
                 data: {
-                    checkedIn: true,
+                    checkedIn: true,  checkInTime: new Date(),
                     isMarked: true
                 }
             });
