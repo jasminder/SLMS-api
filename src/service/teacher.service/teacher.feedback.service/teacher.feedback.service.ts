@@ -58,11 +58,11 @@ export async function createFeedback(
             teacherId: +teacherId,
             termSubjectLevelId: +termSubjectLevelId,
             sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
-            // createdAt: {
-            //     gte: startDate,
-            //     lte: endDate
-            // }
-            sendDate
+            createdAt: {
+                gte: startDate,
+                lte: endDate
+            },
+            isSent: false
         }
     });
 

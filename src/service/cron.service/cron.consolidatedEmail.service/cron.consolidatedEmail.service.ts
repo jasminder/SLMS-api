@@ -110,9 +110,35 @@ export async function consolidateStudentDataForEmail() {
             console.log('classworkEntries', classworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
             const feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : 'No feedback';
+            emailContent += `Class: ${mailEntry.className}\n` + `Room: ${mailEntry.roomName}\n` + `Class Time: ${mailEntry.classTime}\n` + `Teacher: ${teacherName}\n\n`;
+            // Append classwork attachments
+            let classworkAttachments = classworkEntries.flatMap((c) =>
+                c.attachments.map((url: any) => ({
+                    path: url,
+                    filename: url.split('/').pop() ?? ''
+                }))
+            );
+            if (classworkEntries.length === 0) {
+                emailContent += '\nNo Classwork\n';
+            } else {
+                emailContent += '\nClasswork:\n';
+                for (const [index, c] of classworkEntries.entries()) {
+                    if (c.description.length === 0 || (c.description.length === 1 && c.description[0] === '')) {
+                        emailContent += `${index + 1}) Classwork attached\n`;
+                    } else {
+                        c.description.forEach((desc: string, descIndex: number) => {
+                            if (desc === '') {
+                                emailContent += `${descIndex + 1}) Please find the attachment-${extractOriginalFileNameFromS3Url(classworkAttachments[descIndex].path)}\n`;
+                            } else {
+                                emailContent += `${descIndex + 1}) ${desc}\n`;
+                            }
+                        });
+                    }
+                    emailContent += '\n';
+                }
+            }
 
-            emailContent +=
-                `Class: ${mailEntry.className}\n` + `Room: ${mailEntry.roomName}\n` + `Class Time: ${mailEntry.classTime}\n` + `Teacher: ${teacherName}\n\n` + `Feedback:\n${feedbackContent}\n`;
+            // + `Feedback:\n${feedbackContent}\n`;
 
             // homeworkEntries.map((h) => h.description).join('\n') +
             // '\n\n';
@@ -144,35 +170,29 @@ export async function consolidateStudentDataForEmail() {
                 }
             }
 
-            // Append classwork attachments
-            let classworkAttachments = classworkEntries.flatMap((c) =>
-                c.attachments.map((url: any) => ({
-                    path: url,
-                    filename: url.split('/').pop() ?? ''
-                }))
-            );
-
             attachments = [...attachments, ...classworkAttachments];
 
-            if (classworkEntries.length === 0) {
-                emailContent += '\nNo Classwork\n';
-            } else {
-                emailContent += '\nClasswork:\n';
-                for (const [index, c] of classworkEntries.entries()) {
-                    if (c.description.length === 0 || (c.description.length === 1 && c.description[0] === '')) {
-                        emailContent += `${index + 1}) Classwork attached\n`;
-                    } else {
-                        c.description.forEach((desc: string, descIndex: number) => {
-                            if (desc === '') {
-                                emailContent += `${descIndex + 1}) Please find the attachment-${extractOriginalFileNameFromS3Url(classworkAttachments[descIndex].path)}\n`;
-                            } else {
-                                emailContent += `${descIndex + 1}) ${desc}\n`;
-                            }
-                        });
-                    }
-                    emailContent += '\n';
-                }
-            }
+            // if (classworkEntries.length === 0) {
+            //     emailContent += '\nNo Classwork\n';
+            // } else {
+            //     emailContent += '\nClasswork:\n';
+            //     for (const [index, c] of classworkEntries.entries()) {
+            //         if (c.description.length === 0 || (c.description.length === 1 && c.description[0] === '')) {
+            //             emailContent += `${index + 1}) Classwork attached\n`;
+            //         } else {
+            //             c.description.forEach((desc: string, descIndex: number) => {
+            //                 if (desc === '') {
+            //                     emailContent += `${descIndex + 1}) Please find the attachment-${extractOriginalFileNameFromS3Url(classworkAttachments[descIndex].path)}\n`;
+            //                 } else {
+            //                     emailContent += `${descIndex + 1}) ${desc}\n`;
+            //                 }
+            //             });
+            //         }
+            //         emailContent += '\n';
+            //     }
+            // }
+            emailContent += `Feedback:\n${feedbackContent}\n`;
+            emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
         }
         console.log('emailContent', emailContent);
 

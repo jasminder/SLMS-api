@@ -16,7 +16,7 @@ async function getNextScheduledDate() {
     return nextSunday;
 }
 
-async function updateGroupClassworkAttachments(groupClassworkId:string, classworkDetails: { attachments: string; description: string }[]) {
+async function updateGroupClassworkAttachments(groupClassworkId: string, classworkDetails: { attachments: string; description: string }[]) {
     const existingGroupClasswork = await db.groupClasswork.findUnique({
         where: { id: +groupClassworkId },
         select: { attachments: true, description: true }
@@ -32,7 +32,8 @@ async function updateGroupClassworkAttachments(groupClassworkId:string, classwor
     }
 }
 
-export async function createGroupClasswork(studentIds: string[],
+export async function createGroupClasswork(
+    studentIds: string[],
     teacherId: string,
     termSubjectLevelId: string,
     sectionId: string,
@@ -40,8 +41,14 @@ export async function createGroupClasswork(studentIds: string[],
     classworkDetails: { attachments: string; description: string }[],
     className: string,
     roomName: string,
-    classTime: string) {
+    classTime: string
+) {
     const sendDate = await getNextScheduledDate();
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     const numericStudentIds = studentIds.map(Number);
 
     let groupClasswork;
@@ -52,7 +59,10 @@ export async function createGroupClasswork(studentIds: string[],
                 teacherId: Number(teacherId),
                 termSubjectLevelId: Number(termSubjectLevelId),
                 title,
-                sendDate,
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                },
                 isSent: false
             }
         });
@@ -81,11 +91,11 @@ export async function createGroupClasswork(studentIds: string[],
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 sectionId: +sectionId,
-                // createdAt: {
-                //     gte: startDate,
-                //     lte: endDate
-                // }
-                sendDate
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                },
+                isSent: false
             }
         });
 

@@ -57,7 +57,10 @@ export async function createGroupHomework(
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 title: title,
-                sendDate,
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                },
                 isSent: false
             }
         });
@@ -87,14 +90,14 @@ export async function createGroupHomework(
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 sectionId: +sectionId,
-                // createdAt: {
-                //     gte: startDate,
-                //     lte: endDate
-                // }
-                sendDate
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                },
+                isSent: false
             }
         });
-
+        console.log(existingAutomatedMail);
         if (!existingAutomatedMail) {
             await db.automatedMailForParents.create({
                 data: {
