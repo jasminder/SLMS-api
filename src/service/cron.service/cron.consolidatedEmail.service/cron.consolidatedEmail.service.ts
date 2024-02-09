@@ -150,7 +150,8 @@ export async function consolidateStudentDataForEmail() {
             );
 
             attachments = [...attachments, ...homeworkAttachments];
-            emailContent += '\n\nHomework:\n';
+
+            emailContent += 'Homework:\n';
             if (homeworkEntries.length === 0) {
                 emailContent += 'No Homework\n';
             } else {
