@@ -2,6 +2,7 @@
 import { InteractionType, PrismaClient } from '@prisma/client';
 import { sendConsolidatedEmail } from '../../AutomatedEmailForParents.service/AutomatedEmailForParents.service';
 import { format } from 'date-fns';
+import { capitalizeFirstCharacter } from '../../../utils/capitalizeFirstCharacter';
 
 const db = new PrismaClient();
 
@@ -198,7 +199,12 @@ export async function consolidateStudentDataForEmail() {
         console.log('emailContent', emailContent);
 
         if (student.personalDetails?.email) {
-            await sendConsolidatedEmail(student.personalDetails.email, 'Your Academic Update', emailContent, attachments);
+            await sendConsolidatedEmail(
+                student.personalDetails.email,
+                `${capitalizeFirstCharacter(student.personalDetails.firstName)} ${' '}${capitalizeFirstCharacter(student.personalDetails.lastName)} - Your Academic Update`,
+                emailContent,
+                attachments
+            );
 
             // Update the isSent flag for Feedback, GroupHomework, and AutomatedMailForParents
 
