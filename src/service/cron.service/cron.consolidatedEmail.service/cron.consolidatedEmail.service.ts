@@ -8,7 +8,7 @@ const db = new PrismaClient();
 
 export async function consolidateStudentDataForEmail() {
     const today = new Date();
-    const formattedDate = format(today, 'yyyy-MM-dd');
+    const formattedDate = format(today, 'dd-MM-yyyy');
     const startDate = new Date();
     startDate.setHours(0, 0, 0, 0);
 
@@ -139,10 +139,6 @@ export async function consolidateStudentDataForEmail() {
                 }
             }
 
-            // + `Feedback:\n${feedbackContent}\n`;
-
-            // homeworkEntries.map((h) => h.description).join('\n') +
-            // '\n\n';
             let homeworkAttachments = homeworkEntries.flatMap((h) =>
                 h.attachments.map((url: any) => ({
                     path: url,
@@ -174,25 +170,6 @@ export async function consolidateStudentDataForEmail() {
 
             attachments = [...attachments, ...classworkAttachments];
 
-            // if (classworkEntries.length === 0) {
-            //     emailContent += '\nNo Classwork\n';
-            // } else {
-            //     emailContent += '\nClasswork:\n';
-            //     for (const [index, c] of classworkEntries.entries()) {
-            //         if (c.description.length === 0 || (c.description.length === 1 && c.description[0] === '')) {
-            //             emailContent += `${index + 1}) Classwork attached\n`;
-            //         } else {
-            //             c.description.forEach((desc: string, descIndex: number) => {
-            //                 if (desc === '') {
-            //                     emailContent += `${descIndex + 1}) Please find the attachment-${extractOriginalFileNameFromS3Url(classworkAttachments[descIndex].path)}\n`;
-            //                 } else {
-            //                     emailContent += `${descIndex + 1}) ${desc}\n`;
-            //                 }
-            //             });
-            //         }
-            //         emailContent += '\n';
-            //     }
-            // }
             emailContent += `Feedback:\n${feedbackContent}\n`;
             emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
         }
