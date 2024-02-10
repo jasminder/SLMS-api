@@ -6,7 +6,8 @@ import {
     markCheckInTrueForSelectedStudents,
     markSchoolCheckInAttendanceForStudent,
     markStudentAsNotCheckedIn,
-    undoCheckIn
+    undoCheckIn,
+    undoFalseCheckin
 } from '../../../service/admin.service/admin.checkin.service/admin.checkin.service';
 import {
     CreateSchoolCheckInAttendanceForStudentSchema,
@@ -15,7 +16,8 @@ import {
     MarkCheckInTrueForSelectedStudentsSchema,
     MarkSchoolCheckInAttendanceForStudentSchema,
     MarkStudentAsNotCheckedInSchema,
-    UndoCheckInSchema
+    UndoCheckInSchema,
+    UndoFalseCheckinSchema
 } from '../../../schema/admin.dto/admin.checkin.dto/admin.checkin.dto';
 
 export const createSchoolCheckInAttendanceForStudentHandler = async (req: Request<{}, {}, CreateSchoolCheckInAttendanceForStudentSchema['body'], {}>, res: Response, next: NextFunction) => {
@@ -72,4 +74,11 @@ export const markCheckInFalseForSelectedStudentsHandler = async (req: Request<{}
     const { studentIds } = req.body;
     const selectedStudentsCheckedIn = await markCheckInFalseForSelectedStudents(studentIds);
     res.status(200).json(selectedStudentsCheckedIn);
+};
+
+/*undo false check in*/
+export const undoFalseCheckinHandler = async (req: Request<UndoFalseCheckinSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const updatedRecord = await undoFalseCheckin(studentId);
+    res.status(200).json(updatedRecord);
 };

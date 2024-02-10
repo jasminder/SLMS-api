@@ -9,7 +9,8 @@ import {
     markCheckInTrueForSelectedStudentsSchema,
     markSchoolCheckInAttendanceForStudentSchema,
     markStudentAsNotCheckedInSchema,
-    undoCheckInSchema
+    undoCheckInSchema,
+    undoFalseCheckinSchema
 } from '../../../schema/admin.dto/admin.checkin.dto/admin.checkin.dto';
 import {
     createSchoolCheckInAttendanceForStudentHandler,
@@ -18,7 +19,8 @@ import {
     markCheckInTrueForSelectedStudentsHandler,
     markSchoolCheckInAttendanceForStudentHandler,
     markStudentAsNotCheckedInHandler,
-    undoCheckInHandler
+    undoCheckInHandler,
+    undoFalseCheckinHandler
 } from '../../../controller/admin.controller/admin.checkin.controller/admin.checkin.controller';
 import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
@@ -29,7 +31,6 @@ adminCheckinRoute
     .route('/create-daily-new-school-attendance-record')
     .post(validate(createSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createSchoolCheckInAttendanceForStudentHandler));
 
-
 //fetch SchoolCheckInAttendance For Students for entire term
 adminCheckinRoute.route('/fetch-daily-new-school-attendance-record').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchSchoolCheckInAttendanceHandler));
 
@@ -39,9 +40,7 @@ adminCheckinRoute
     .patch(validate(markSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markSchoolCheckInAttendanceForStudentHandler));
 
 /*undo checkin for a student*/
-adminCheckinRoute
-    .route('/undo-checkin/:studentId')
-    .patch(validate(undoCheckInSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(undoCheckInHandler));
+adminCheckinRoute.route('/undo-checkin/:studentId').patch(validate(undoCheckInSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(undoCheckInHandler));
 
 /*mark the check-in as false for single student ID*/
 adminCheckinRoute
@@ -57,4 +56,8 @@ adminCheckinRoute
 adminCheckinRoute
     .route('/checkin-false-for-selected-students')
     .patch(validate(markCheckInFalseForSelectedStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markCheckInFalseForSelectedStudentsHandler));
+
+/*undo false check in*/
+adminCheckinRoute.route('/undo-false-checkin/:studentId').patch(validate(undoFalseCheckinSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(undoFalseCheckinHandler));
+
 export default adminCheckinRoute;

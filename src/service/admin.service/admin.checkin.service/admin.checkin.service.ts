@@ -430,7 +430,8 @@ export async function markCheckInTrueForSelectedStudents(studentIds: string[]) {
                     id: record.id
                 },
                 data: {
-                    checkedIn: true,  checkInTime: new Date(),
+                    checkedIn: true,
+                    checkInTime: new Date(),
                     isMarked: true
                 }
             });
@@ -471,4 +472,42 @@ export async function markCheckInFalseForSelectedStudents(studentIds: string[]) 
     );
 
     return updatedRecords;
+}
+
+/*undo false check in*/
+export async function undoFalseCheckin(studentId: string) {
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    // Find the SchoolCheckInAttendance record for the specified student
+    const record = await db.schoolCheckInAttendance.findFirst({
+        where: {
+            studentId: +studentId,
+            checkedIn: false,
+            isMarked: true,
+            date: {
+                gte: startDate,
+                lte: endDate
+            }
+        }
+    });
+
+    if (!record) {
+        throw customError('No record found to undo false check-in.', 'fail', 400, true);
+    }
+
+    // Update the found record to set checkedIn as true and isMarked as false
+    const updatedRecord = await db.schoolCheckInAttendance.update({
+        where: {
+            id: record.id
+        },
+        data: {
+            checkedIn: false,
+            isMarked: false
+        }
+    });
+
+    return updatedRecord;
 }
