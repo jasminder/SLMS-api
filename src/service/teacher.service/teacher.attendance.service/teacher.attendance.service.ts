@@ -153,3 +153,17 @@ export async function createSkipReport(studentId: string, teacherId: string, rea
     });
     return skipReport;
 }
+/*fetch last 5 attendance for the students*/
+export async function getLastFiveClassAttendances(studentId:string) {
+    return await db.classAttendance.findMany({
+        where: {
+            studentClassAssignment: {
+                studentId: +studentId
+            }
+        },
+        orderBy: {
+            date: 'desc'
+        },
+        take: 5
+    });
+}
