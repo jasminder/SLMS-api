@@ -33,7 +33,8 @@ export type CreateSkipReportSchema = z.infer<typeof createSkipReportSchema>;
 /*fetch last 5 attendance for the students*/
 export const getLastFiveClassAttendancesSchema = z.object({
     params: z.object({
-        studentId: z.string().min(1, { message: 'Student ID is required' })
+        studentId: z.string().min(1, { message: 'Student ID is required' }),
+        studentClassAssignmentId: z.string().min(1, { message: 'Student ID is required' })
     })
 });
 

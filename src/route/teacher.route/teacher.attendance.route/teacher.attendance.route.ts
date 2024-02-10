@@ -36,6 +36,6 @@ teacherAttendanceRoute
 
 /*fetch last 5 attendance for the students*/
 teacherAttendanceRoute
-    .route('/get-last-attendance/:studentId')
+    .route('/get-last-attendance/:studentId/:studentClassAssignmentId')
     .get(validate(getLastFiveClassAttendancesSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(getLastFiveClassAttendancesHandler));
 export default teacherAttendanceRoute;

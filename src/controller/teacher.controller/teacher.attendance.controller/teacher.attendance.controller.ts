@@ -36,7 +36,7 @@ export const createSkipReportHandler = async (req: Request<CreateSkipReportSchem
 
 /*fetch last 5 attendance for the students*/
 export const getLastFiveClassAttendancesHandler = async (req: Request<GetLastFiveClassAttendancesSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
-    const { studentId } = req.params;
-    const attendances = await getLastFiveClassAttendances(studentId);
+    const { studentId, studentClassAssignmentId } = req.params;
+    const attendances = await getLastFiveClassAttendances(studentId, studentClassAssignmentId);
     res.status(200).json(attendances);
 };
