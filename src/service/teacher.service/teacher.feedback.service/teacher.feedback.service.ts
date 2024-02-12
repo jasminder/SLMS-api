@@ -1,7 +1,7 @@
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
 
-function getNextSundayAtFourThirty() {
+export function getNextSundayAtFourThirty() {
     const now = new Date();
     const nextSunday = new Date(now);
     nextSunday.setDate(now.getDate() + (7 - now.getDay())); // Set to next Sunday
@@ -58,10 +58,11 @@ export async function createFeedback(
             teacherId: +teacherId,
             termSubjectLevelId: +termSubjectLevelId,
             sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
-            createdAt: {
-                gte: startDate,
-                lte: endDate
-            },
+            // createdAt: {
+            //     gte: startDate,
+            //     lte: endDate
+            // },
+            sendDate,
             isSent: false
         }
     });

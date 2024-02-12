@@ -3,14 +3,18 @@ import express from 'express';
 import validate from '../../../middleware/validateResource';
 import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
 import {
+    createAutomatedMailForparentsHandler,
     createSkipReportHandler,
     fetchCheckedInStudentsWithAttendanceHandler,
+    findAutomatedMailHandler,
     getLastFiveClassAttendancesHandler,
     markStudentAsPresentHandler
 } from '../../../controller/teacher.controller/teacher.attendance.controller/teacher.attendance.controller';
 import {
+    createAutomatedMailForParentsSchema,
     createSkipReportSchema,
     fetchCheckedInStudentsWithAttendanceSchema,
+    findAutomatedMailSchema,
     getLastFiveClassAttendancesSchema,
     markStudentAsPresentSchema
 } from '../../../schema/teacher.dto/teacher.attendance.dto/teacher.attendance.dto';
@@ -38,4 +42,12 @@ teacherAttendanceRoute
 teacherAttendanceRoute
     .route('/get-last-attendance/:studentId/:studentClassAssignmentId')
     .get(validate(getLastFiveClassAttendancesSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(getLastFiveClassAttendancesHandler));
+
+/*create automated emails record for all students in the class*/
+teacherAttendanceRoute
+    .route('/create-automated-email-for-parents-in-class')
+    .post(validate(createAutomatedMailForParentsSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(createAutomatedMailForparentsHandler));
+
+/*get all automated emails for parenst for students in a class*/
+teacherAttendanceRoute.route('/find-automated-email-for-parents-in-class').get(validate(findAutomatedMailSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(findAutomatedMailHandler));
 export default teacherAttendanceRoute;

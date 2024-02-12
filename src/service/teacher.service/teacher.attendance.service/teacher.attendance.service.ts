@@ -168,3 +168,72 @@ export async function getLastFiveClassAttendances(studentId: string, studentClas
         take: 5
     });
 }
+/*create automated emails record for all students in the class*/
+export async function createAutomatedMailForParents(studentIds: string[], teacherId: string, termSubjectLevelId: string, sectionId: string, className: string, roomName: string, classTime: string) {
+    const sendDate = getNextSundayAtFourThirty();
+    let createdMails = [];
+
+    // Iterate over each student ID
+    for (const studentId of studentIds) {
+        const existingAutomatedMail = await db.automatedMailForParents.findFirst({
+            where: {
+                studentId: +studentId,
+                teacherId: +teacherId,
+                termSubjectLevelId: +termSubjectLevelId,
+                sectionId: +sectionId,
+                sendDate,
+                isSent: false
+            }
+        });
+        console.log('existingAutomatedMail', existingAutomatedMail);
+        // Create AutomatedMailForParents record if it does not exist
+        if (!existingAutomatedMail) {
+            const newMail = await db.automatedMailForParents.create({
+                data: {
+                    studentId: +studentId,
+                    teacherId: +teacherId,
+                    termSubjectLevelId: +termSubjectLevelId,
+                    sectionId: +sectionId,
+                    className,
+                    roomName,
+                    classTime,
+                    sendDate,
+                    isSent: false
+                }
+            });
+            createdMails.push(newMail);
+        }
+    }
+
+    return createdMails;
+}
+
+function getNextSundayAtFourThirty() {
+    const now = new Date();
+    const nextSunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (7 - now.getDay()));
+    nextSunday.setHours(16, 30, 0, 0);
+
+    // If it's already past 4:30 PM on Sunday, set to the Sunday of the next week
+    if (now > nextSunday) {
+        nextSunday.setDate(nextSunday.getDate() + 7);
+    }
+
+    return nextSunday;
+}
+
+/*get all automated emails for parenst for students in a class*/
+export async function findAutomatedMail(studentIds: string[], termSubjectLevelId: string, sectionId: string, teacherId: string) {
+    const sendDate = getNextSundayAtFourThirty();
+    const numericStudentIds = studentIds.map(Number);
+    const mails = await db.automatedMailForParents.findMany({
+        where: {
+            studentId: { in: numericStudentIds.map((id) => +id) },
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId,
+            sendDate, // Ensure sendDate is correctly formatted
+            teacherId: +teacherId
+        }
+    });
+
+    return mails.length;
+}

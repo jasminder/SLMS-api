@@ -39,3 +39,30 @@ export const getLastFiveClassAttendancesSchema = z.object({
 });
 
 export type GetLastFiveClassAttendancesSchema = z.infer<typeof getLastFiveClassAttendancesSchema>;
+
+/*create automated emails record for all students in the class*/
+export const createAutomatedMailForParentsSchema = z.object({
+    body: z.object({
+        studentIds: z.array(z.string().min(1, { message: 'Student ID is required' })),
+        teacherId: z.string().min(1, { message: 'Teacher ID is required' }),
+        termSubjectLevelId: z.string().min(1, { message: 'Term Subject Level ID is required' }),
+        sectionId: z.string().min(1, { message: 'Section ID is required' }),
+        className: z.string().min(1, { message: 'Class name is required' }),
+        roomName: z.string().min(1, { message: 'Room name is required' }),
+        classTime: z.string().min(1, { message: 'Class time is required' })
+    })
+});
+
+export type CreateAutomatedMailForParentsSchema = z.infer<typeof createAutomatedMailForParentsSchema>;
+
+/*get all automated emails for parenst for students in a class*/
+export const findAutomatedMailSchema = z.object({
+query: z.object({
+        studentIds: z.array(z.string().min(1, { message: 'Student ID is required' })),
+        termSubjectLevelId: z.string().min(1, { message: 'Term Subject Level ID is required' }),
+        sectionId: z.string().min(1, { message: 'Section ID is required' }),
+        teacherId: z.string().min(1, { message: 'Teacher ID is required' })
+    })
+});
+
+export type FindAutomatedMailSchema = z.infer<typeof findAutomatedMailSchema>;

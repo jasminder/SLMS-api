@@ -59,10 +59,10 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
             if (allActiveStudents.length == 0) {
                 throw customError(`There are no  active students. Please enroll students in a current term to do this action`, 'fail', 400, true);
             }
-            if (studentsWithoutAssignment.length > 0) {
-                const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
-                throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
-            }
+            // if (studentsWithoutAssignment.length > 0) {
+            //     const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
+            //     throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
+            // }
             // Check if attendance records already exist for the specified date
             const existingRecords = await db.schoolCheckInAttendance.findMany({
                 where: {

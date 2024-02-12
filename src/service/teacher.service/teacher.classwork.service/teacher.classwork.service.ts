@@ -59,10 +59,11 @@ export async function createGroupClasswork(
                 teacherId: Number(teacherId),
                 termSubjectLevelId: Number(termSubjectLevelId),
                 title,
-                createdAt: {
-                    gte: startDate,
-                    lte: endDate
-                },
+                // createdAt: {
+                //     gte: startDate,
+                //     lte: endDate
+                // },
+                sendDate: sendDate,
                 isSent: false
             }
         });
@@ -91,10 +92,11 @@ export async function createGroupClasswork(
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 sectionId: +sectionId,
-                createdAt: {
-                    gte: startDate,
-                    lte: endDate
-                },
+                // createdAt: {
+                //     gte: startDate,
+                //     lte: endDate
+                // },
+                sendDate: sendDate,
                 isSent: false
             }
         });

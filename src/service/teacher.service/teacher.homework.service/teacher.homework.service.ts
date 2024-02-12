@@ -57,10 +57,11 @@ export async function createGroupHomework(
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 title: title,
-                createdAt: {
-                    gte: startDate,
-                    lte: endDate
-                },
+                // createdAt: {
+                //     gte: startDate,
+                //     lte: endDate
+                // },
+                sendDate,
                 isSent: false
             }
         });
@@ -90,10 +91,11 @@ export async function createGroupHomework(
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 sectionId: +sectionId,
-                createdAt: {
-                    gte: startDate,
-                    lte: endDate
-                },
+                // createdAt: {
+                //     gte: startDate,
+                //     lte: endDate
+                // },
+                sendDate: sendDate,
                 isSent: false
             }
         });

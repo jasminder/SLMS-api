@@ -27,8 +27,8 @@ export const getImageDisplayPresignedUrl = async (fileUrl: string): Promise<{ do
         Expires: 72000 // 20 hours
     };
     const downloadUrl = await s3.getSignedUrlPromise('getObject', s3Params);
-    console.log(process.env.BUCKET_NAME, Key, 'inside filedisplay');
-    console.log(downloadUrl, 'inside file display');
+    // console.log(process.env.BUCKET_NAME, Key, 'inside filedisplay');
+    // console.log(downloadUrl, 'inside file display');
     return {
         downloadUrl,
         key: Key

@@ -81,7 +81,7 @@ export async function updateStudentHealthInformation(id: string, data: UpdateStu
             OR: [{ medicareNumber }]
         }
     });
-    console.log(existingStudent, 'existing student health');
+
     if (existingStudent?.id != +id) {
         throw customError(`Medicare already exists already exists`, 'fail', 400, true);
     }

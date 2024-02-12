@@ -3,10 +3,12 @@ import { InteractionType, PrismaClient } from '@prisma/client';
 import { sendConsolidatedEmail } from '../../AutomatedEmailForParents.service/AutomatedEmailForParents.service';
 import { format } from 'date-fns';
 import { capitalizeFirstCharacter } from '../../../utils/capitalizeFirstCharacter';
+import { getNextSundayAtFourThirty } from '../../teacher.service/teacher.feedback.service/teacher.feedback.service';
 
 const db = new PrismaClient();
 
 export async function consolidateStudentDataForEmail() {
+    const sendDate = getNextSundayAtFourThirty();
     const today = new Date();
     const formattedDate = format(today, 'dd-MM-yyyy');
     const startDate = new Date();
@@ -19,10 +21,11 @@ export async function consolidateStudentDataForEmail() {
             AutomatedMailForParents: {
                 some: {
                     isSent: false,
-                    createdAt: {
-                        gte: startDate,
-                        lte: endDate
-                    }
+                    // createdAt: {
+                    //     gte: startDate,
+                    //     lte: endDate
+                    // }
+                    sendDate
                 }
             }
         },
@@ -75,10 +78,11 @@ export async function consolidateStudentDataForEmail() {
                     studentId: mailEntry.studentId,
                     teacherId: mailEntry.teacherId,
                     termSubjectLevelId: mailEntry.termSubjectLevelId,
-                    createdAt: {
-                        gte: startDate,
-                        lte: endDate
-                    }
+                    // createdAt: {
+                    //     gte: startDate,
+                    //     lte: endDate
+                    // }
+                    sendDate
                 }
             });
 
@@ -88,10 +92,11 @@ export async function consolidateStudentDataForEmail() {
                     studentId: mailEntry.studentId,
                     teacherId: mailEntry.teacherId,
                     termSubjectLevelId: mailEntry.termSubjectLevelId,
-                    createdAt: {
-                        gte: startDate,
-                        lte: endDate
-                    }
+                    // createdAt: {
+                    //     gte: startDate,
+                    //     lte: endDate
+                    // }
+                    sendDate
                 }
             });
             classworkEntries = await db.groupClasswork.findMany({
@@ -100,10 +105,11 @@ export async function consolidateStudentDataForEmail() {
                     studentId: mailEntry.studentId,
                     teacherId: mailEntry.teacherId,
                     termSubjectLevelId: mailEntry.termSubjectLevelId,
-                    createdAt: {
-                        gte: startDate,
-                        lte: endDate
-                    }
+                    // createdAt: {
+                    //     gte: startDate,
+                    //     lte: endDate
+                    // }
+                    sendDate
                 }
             });
             // console.log('feedbackEntries', feedbackEntries);
