@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
-import { createHomework, findAllHomeworksBySubjectsList, findHomeworkById } from '../../service/homework.service/homework.service';
-import { CreateHomeworkSchema, FindAllHomeworksBySubjectsList, FindHomeworkByIdSchema } from '../../schema/homework.dto/homework.dto';
+import { createHomework, findAllHomeworkByTermAndSection, findAllHomeworksBySubjectsList, findHomeworkById } from '../../service/homework.service/homework.service';
+import { CreateHomeworkSchema, FindAllHomeworksBySubjectsList, FindHomeworkByIdSchema, FindHomeworkByTermAndSectionSchema } from '../../schema/homework.dto/homework.dto';
 
 export const createHomeworkHandler = async (req: Request<CreateHomeworkSchema['params'], {}, CreateHomeworkSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { attachments, description, title, uploadedUserRole } = req.body;
-    const { termSubjectLevelId, uploaderId } = req.params;
-    const newHomework = await createHomework(termSubjectLevelId, uploaderId, uploadedUserRole, title, description, attachments);
+    const { termSubjectLevelId, sectionId,uploaderId } = req.params;
+    const newHomework = await createHomework(termSubjectLevelId,sectionId, uploaderId, uploadedUserRole, title, description, attachments);
 
     res.status(200).json(newHomework);
 };
@@ -20,4 +20,13 @@ export const findHomeworkBySubjectListHandler = async (req: Request<FindAllHomew
     const termSubjectLevelIdsArray = termSubjectLevelIds .split(',').map((id) => id);
     const homework = await findAllHomeworksBySubjectsList(termSubjectLevelIdsArray,teacherId);
     res.status(200).json(homework);
+};
+
+
+/* Find all homework records for a termsubjectlevelid and sectionid */
+export const findHomeworkByTermAndSectionHandler = async (req: Request<FindHomeworkByTermAndSectionSchema['params'], {}, {}, FindHomeworkByTermAndSectionSchema['query']>, res: Response) => {
+    const { termSubjectLevelId, sectionId } = req.query;
+    const {teacherId}= req.params
+    const homeworks = await findAllHomeworkByTermAndSection(termSubjectLevelId, sectionId, teacherId);
+    res.status(200).json(homeworks);
 };

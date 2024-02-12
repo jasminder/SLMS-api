@@ -177,6 +177,7 @@ model Section {
   StudentClassAssignment  StudentClassAssignment[]
   TeacherClassAssignment  TeacherClassAssignment[]
   AutomatedMailForParents AutomatedMailForParents[]
+  Homework                Homework[]
 }
 
 model TermSubjectGroup {
@@ -623,6 +624,7 @@ model Homework {
   teacherId          Int? // Optional: ID of the teacher who uploaded the homework
   adminId            Int? // Optional: ID of the admin who uploaded the homework
   termSubjectLevelId Int?
+  sectionId          Int?
   uploadedUserRole   String // Role of the uploader ('teacher' or 'admin')
   title              String?  @default("No title")
   description        String
@@ -634,6 +636,7 @@ model Homework {
   admin              Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   termSubjectLevel TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id])
+  section          Section?          @relation(fields: [sectionId], references: [id])
 
   // @@unique([subjectId, title])
 }

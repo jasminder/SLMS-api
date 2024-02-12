@@ -2,9 +2,16 @@ import { db } from '../../utils/db.server';
 import { customError } from '../../utils/customError';
 
 /* Create a new homework record */
-export async function createHomework(termSubjectLevelId: string, uploaderId: string, uploadedUserRole: string, title: string, description = 'No description', attachments: string[]) {
+export async function createHomework(
+    termSubjectLevelId: string,
+    sectionId: string,
+    uploaderId: string,
+    uploadedUserRole: string,
+    title: string,
+    description = 'No description',
+    attachments: string[]
+) {
     const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
-
 
     let uploader;
     if (uploadedUserRole === 'TEACHER') {
@@ -20,6 +27,7 @@ export async function createHomework(termSubjectLevelId: string, uploaderId: str
     if (uploadedUserRole === 'TEACHER') {
         const data = {
             subjectId: 1,
+            sectionId: +sectionId,
             teacherId: +uploaderId,
             adminId: null,
             uploadedUserRole,
@@ -39,6 +47,7 @@ export async function createHomework(termSubjectLevelId: string, uploaderId: str
     } else if (uploadedUserRole === 'ADMIN') {
         const data = {
             subjectId: 1,
+            sectionId: +sectionId,
             teacherId: null,
             adminId: +uploaderId,
             uploadedUserRole,
@@ -57,7 +66,7 @@ export async function createHomework(termSubjectLevelId: string, uploaderId: str
     }
 }
 
-/* Find all homework records for a list of subjects */
+/* Find all homework records for a list of termsubjectlevels */
 export async function findAllHomeworksBySubjectsList(termSubjectLevelIdsArray: string[], teacherId: string) {
     // const subjectIds = subjectIdsArray;
     const numerictermSubjectLevelIds = termSubjectLevelIdsArray.map(Number);
@@ -77,6 +86,40 @@ export async function findAllHomeworksBySubjectsList(termSubjectLevelIdsArray: s
                     level: {
                         select: { name: true }
                     }
+                }
+            },
+            section: {
+                select: {
+                    name: true
+                }
+            }
+        }
+    });
+
+    return homeworks;
+}
+
+/* Find all homework records for a termsubjectlevelid and sectionid */
+export async function findAllHomeworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
+    const homeworks = await db.homework.findMany({
+        where: {
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId,
+            teacherId: +teacherId
+        },
+        include: {
+            subject: true,
+            teacher: true,
+            termSubjectLevel: {
+                select: {
+                    level: {
+                        select: { name: true }
+                    }
+                }
+            },
+            section: {
+                select: {
+                    name: true
                 }
             }
         }
@@ -130,33 +173,3 @@ export async function findHomeworkById(homeworkId: string) {
 
     return homework;
 }
-
-/* Update homework record by adding a new attachment */
-// export async function addAttachmentToHomework(homeworkId: number, newAttachment: string) {
-//     // Retrieve the current homework record
-//     const currentHomework = await db.homework.findUnique({
-//         where: { id: homeworkId },
-//         select: { attachments: true }
-//     });
-
-//     if (!currentHomework) {
-//         throw new Error('Homework not found');
-//     }
-
-//     // Add the new attachment to the existing array
-//     const updatedAttachments = [...currentHomework.attachments, newAttachment];
-
-//     // Update the homework record with the new attachments array
-//     const updatedHomework = await db.homework.update({
-//         where: { id: homeworkId },
-//         data: {
-//             attachments: updatedAttachments,
-//             updatedAt: new Date() // Update the timestamp
-//         }
-//     });
-//     if (updatedHomework) {
-//         throw customError('Failed to update homework attachment', 'fail', 400, true);
-//     }
-
-//     return updatedHomework;
-// }
