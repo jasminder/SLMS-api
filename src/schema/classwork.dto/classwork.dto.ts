@@ -9,6 +9,7 @@ export const createClassworkSchema = z.object({
     }),
     params: z.object({
         termSubjectLevelId: z.string().min(1, { message: 'Subject ID required' }),
+        sectionId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
         uploaderId: z.string().min(1, { message: 'Uploader ID required' })
     })
 });
@@ -22,3 +23,16 @@ export const findAllClassworksBySubjectsListSchema = z.object({
 });
 
 export type FindAllClassworksBySubjectsList = z.infer<typeof findAllClassworksBySubjectsListSchema>;
+
+/* Find all classwork records for a termsubjectlevelid and sectionid */
+export const findClassworkByTermAndSectionSchema = z.object({
+    query: z.object({
+        termSubjectLevelId: z.string().min(1, 'TermSubjectId is required'),
+        sectionId: z.string().min(1, 'SectionId is required')
+    }),
+    params: z.object({
+        teacherId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+
+export type FindClassworkByTermAndSectionSchema = z.infer<typeof findClassworkByTermAndSectionSchema>;

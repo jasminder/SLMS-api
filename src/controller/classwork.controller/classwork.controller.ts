@@ -1,18 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
-import { createClasswork, findAllClassworksBySubjectsList } from '../../service/classwork.service/classwork.service';
-import { CreateClassworkSchema, FindAllClassworksBySubjectsList } from '../../schema/classwork.dto/classwork.dto';
+import { createClasswork, findAllClassworkByTermAndSection, findAllClassworksBySubjectsList } from '../../service/classwork.service/classwork.service';
+import { CreateClassworkSchema, FindAllClassworksBySubjectsList, FindClassworkByTermAndSectionSchema } from '../../schema/classwork.dto/classwork.dto';
 
 export const createClassworkHandler = async (req: Request<CreateClassworkSchema['params'], {}, CreateClassworkSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { attachments, description, title, uploadedUserRole } = req.body;
-    const { termSubjectLevelId, uploaderId } = req.params;
-    const newClasswork = await createClasswork(termSubjectLevelId, uploaderId, uploadedUserRole, title, description, attachments);
+    const { termSubjectLevelId, sectionId, uploaderId } = req.params;
+    const newClasswork = await createClasswork(termSubjectLevelId, sectionId, uploaderId, uploadedUserRole, title, description, attachments);
 
     res.status(200).json(newClasswork);
 };
 export const findClassworkBySubjectListHandler = async (req: Request<FindAllClassworksBySubjectsList['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
-   
     const { termSubjectLevelIds, teacherId } = req.params;
     const termSubjectLevelIdsArray = termSubjectLevelIds.split(',').map((id) => id);
     const classwork = await findAllClassworksBySubjectsList(termSubjectLevelIdsArray, teacherId);
     res.status(200).json(classwork);
+};
+/* Find all Classwork records for a termsubjectlevelid and sectionid */
+export const findClassworkByTermAndSectionHandler = async (req: Request<FindClassworkByTermAndSectionSchema['params'], {}, {}, FindClassworkByTermAndSectionSchema['query']>, res: Response) => {
+    const { termSubjectLevelId, sectionId } = req.query;
+    const {teacherId}= req.params
+    const Classworks = await findAllClassworkByTermAndSection(termSubjectLevelId, sectionId, teacherId);
+    res.status(200).json(Classworks);
 };

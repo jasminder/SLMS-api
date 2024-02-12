@@ -1,11 +1,16 @@
 import { customError } from '../../utils/customError';
 import { db } from '../../utils/db.server';
 
-export async function createClasswork(termSubjectLevelId: string, uploaderId: string, uploadedUserRole: string, title: string, description = 'No description', attachments: string[] | undefined) {
+export async function createClasswork(
+    termSubjectLevelId: string,
+    sectionId: string,
+    uploaderId: string,
+    uploadedUserRole: string,
+    title: string,
+    description = 'No description',
+    attachments: string[] | undefined
+) {
     const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
-    // if (!subject) {
-    //     throw customError('Subject not found', 'fail', 404, true);
-    // }
 
     let uploader;
     if (uploadedUserRole === 'TEACHER') {
@@ -24,6 +29,7 @@ export async function createClasswork(termSubjectLevelId: string, uploaderId: st
     if (uploadedUserRole === 'TEACHER') {
         const data = {
             subjectId: 1,
+            sectionId: +sectionId,
             termSubjectLevelId: +termSubjectLevelId,
             teacherId: +uploaderId,
             adminId: null,
@@ -39,6 +45,7 @@ export async function createClasswork(termSubjectLevelId: string, uploaderId: st
     } else if (uploadedUserRole === 'ADMIN') {
         const data = {
             subjectId: 1,
+            sectionId: +sectionId,
             termSubjectLevelId: +termSubjectLevelId,
             teacherId: null,
             adminId: +uploaderId,
@@ -62,12 +69,12 @@ export async function createClasswork(termSubjectLevelId: string, uploaderId: st
     return newClasswork;
 }
 
-/* Find all homework records for a list of subjects */
+/* Find all classwork records for a list of subjects */
 export async function findAllClassworksBySubjectsList(termSubjectLevelIdsArray: string[], teacherId: string) {
     // const subjectIds = subjectIdsArray;
     const numerictermSubjectLevelIds = termSubjectLevelIdsArray.map(Number);
 
-    const homeworks = await db.classwork.findMany({
+    const classworks = await db.classwork.findMany({
         where: {
             termSubjectLevelId: {
                 in: numerictermSubjectLevelIds
@@ -83,9 +90,43 @@ export async function findAllClassworksBySubjectsList(termSubjectLevelIdsArray: 
                         select: { name: true }
                     }
                 }
+            },
+            section: {
+                select: {
+                    name: true
+                }
             }
         }
     });
 
-    return homeworks;
+    return classworks;
+}
+
+/* Find all classwork records for a termsubjectlevelid and sectionid */
+export async function findAllClassworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
+    const classworks = await db.classwork.findMany({
+        where: {
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId,
+            teacherId: +teacherId
+        },
+        include: {
+            subject: true,
+            teacher: true,
+            termSubjectLevel: {
+                select: {
+                    level: {
+                        select: { name: true }
+                    }
+                }
+            },
+            section: {
+                select: {
+                    name: true
+                }
+            }
+        }
+    });
+
+    return classworks;
 }
