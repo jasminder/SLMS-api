@@ -122,6 +122,9 @@ export async function findAllHomeworkByTermAndSection(termSubjectLevelId: string
                     name: true
                 }
             }
+        },
+        orderBy: {
+            createdAt: 'desc'
         }
     });
 
