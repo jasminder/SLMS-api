@@ -53,8 +53,8 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
                         gte: startDate,
                         lte: endDate
                     },
-                    checkedIn: true,
-                    isMarked: true
+                    // checkedIn: true,
+                    // isMarked: true
                 }
             });
 
@@ -128,6 +128,7 @@ export async function markStudentAsPresent(studentId: string, studentClassAssign
     if (!updatedClassAttendanceRecord) {
         throw customError(`Failed to mark student as PRESENT.`, 'fail', 400, true);
     }
+    console.log("updatedClassAttendanceRecord",updatedClassAttendanceRecord)
     return updatedClassAttendanceRecord;
 }
 

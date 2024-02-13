@@ -21,6 +21,7 @@ enum AttendanceStatus {
   ABSENT
   EXCUSED
   LATE
+  LEAVE
   // Any other statuses you might need
 }
 
