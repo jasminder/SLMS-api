@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "HomeworkSnapshot" ADD COLUMN     "sendDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

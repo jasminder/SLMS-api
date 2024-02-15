@@ -125,10 +125,12 @@ export async function consolidateStudentDataForEmail() {
                     filename: url.split('/').pop() ?? ''
                 }))
             );
+
             if (classworkEntries.length === 0) {
-                emailContent += '\nNo Classwork\n';
+                emailContent += 'Classwork:';
+                emailContent += '\nNo Classwork\n\n';
             } else {
-                emailContent += '\nClasswork:\n';
+                emailContent += '\nClasswork:\n\n';
                 for (const [index, c] of classworkEntries.entries()) {
                     if (c.description.length === 0 || (c.description.length === 1 && c.description[0] === '')) {
                         emailContent += `${index + 1}) Classwork attached\n`;
@@ -156,21 +158,37 @@ export async function consolidateStudentDataForEmail() {
 
             emailContent += 'Homework:\n';
             if (homeworkEntries.length === 0) {
-                emailContent += 'No Homework\n';
+                emailContent += 'No Homework today\n\n';
             } else {
-                for (const [index, h] of homeworkEntries.entries()) {
-                    if (h.description.length === 0 || (h.description.length === 1 && h.description[0] === '')) {
-                        emailContent += `${index + 1}) Homework attached\n`;
+                emailContent += 'Homework:\n';
+                for (const [hwIndex, homework] of homeworkEntries.entries()) {
+                    const homeworkSnapshots = await db.homeworkSnapshot.findMany({
+                        where: {
+                            groupHomeworkId: homework.id
+                        }
+                    });
+
+                    if (homeworkSnapshots.length === 0) {
+                        emailContent += `${hwIndex + 1}) No description and no attachments.\n`;
                     } else {
-                        h.description.forEach((desc: string, descIndex: number) => {
-                            if (desc === '') {
-                                emailContent += `${descIndex + 1}) Please find the attachment-${extractOriginalFileNameFromS3Url(homeworkAttachments[descIndex].path)}\n`;
+                        for (const snapshot of homeworkSnapshots) {
+                            emailContent += `${hwIndex + 1}) `; // Prefix for each homework entry
+                            if (!snapshot.description || snapshot.description.length === 0) {
+                                emailContent += 'No Description. Please find the attachment(s):\n';
                             } else {
-                                emailContent += `${descIndex + 1}) ${desc}\n`;
+                                emailContent += `Description: ${snapshot.description}\n`;
                             }
-                        });
+
+                            if (snapshot.attachments.length === 0) {
+                                emailContent += `No attachments.\n`;
+                            } else {
+                                for (const [attIndex, attachmentUrl] of snapshot.attachments.entries()) {
+                                    emailContent += `Attachment-${attIndex + 1}: ${extractOriginalFileNameFromS3Url(attachmentUrl)}\n`;
+                                }
+                            }
+                            emailContent += '\n'; // New line for separation between homework entries
+                        }
                     }
-                    emailContent += '\n';
                 }
             }
 

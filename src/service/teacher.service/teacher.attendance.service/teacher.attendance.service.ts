@@ -52,7 +52,7 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
                     date: {
                         gte: startDate,
                         lte: endDate
-                    },
+                    }
                     // checkedIn: true,
                     // isMarked: true
                 }
@@ -128,7 +128,7 @@ export async function markStudentAsPresent(studentId: string, studentClassAssign
     if (!updatedClassAttendanceRecord) {
         throw customError(`Failed to mark student as PRESENT.`, 'fail', 400, true);
     }
-    console.log("updatedClassAttendanceRecord",updatedClassAttendanceRecord)
+    console.log('updatedClassAttendanceRecord', updatedClassAttendanceRecord);
     return updatedClassAttendanceRecord;
 }
 
@@ -156,7 +156,7 @@ export async function createSkipReport(studentId: string, teacherId: string, rea
 }
 /*fetch last 5 attendance for the students*/
 export async function getLastFiveClassAttendances(studentId: string, studentClassAssignmentId: string) {
-    return await db.classAttendance.findMany({
+    const attendances = await db.classAttendance.findMany({
         where: {
             studentClassAssignment: {
                 id: +studentClassAssignmentId,
@@ -166,8 +166,10 @@ export async function getLastFiveClassAttendances(studentId: string, studentClas
         orderBy: {
             date: 'desc'
         },
-        take: 5
+        take: 6
     });
+    console.log(attendances.slice(1));
+    return attendances.slice(1);
 }
 /*create automated emails record for all students in the class*/
 export async function createAutomatedMailForParents(studentIds: string[], teacherId: string, termSubjectLevelId: string, sectionId: string, className: string, roomName: string, classTime: string) {

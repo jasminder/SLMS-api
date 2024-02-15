@@ -391,7 +391,7 @@ async function main() {
         await resetStudents();
         await seedStudents();
         await seedTeachers();
-        // await seedAdmins();
+        await seedAdmins();
 
         console.log('seed in development');
     } else {
