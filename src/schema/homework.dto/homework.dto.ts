@@ -43,3 +43,28 @@ export const findHomeworkByTermAndSectionSchema = z.object({
 });
 
 export type FindHomeworkByTermAndSectionSchema = z.infer<typeof findHomeworkByTermAndSectionSchema>;
+/*edit homework*/
+export const editHomeworkSchema = z.object({
+    body: z.object({
+        uploadedUserRole: z.string(),
+        title: z.string().default('No title'),
+        description: z.string(),
+        attachments: z.array(z.string()),
+    }),
+    params: z.object({
+        homeworkId: z.string().min(1, { message: 'Homework ID is required' }),
+        termSubjectLevelId: z.string().min(1),
+        sectionId: z.string().min(1),
+        uploaderId: z.string().min(1)
+    })
+});
+export type EditHomeworkSchema = z.infer<typeof editHomeworkSchema>;
+
+/*delete homework*/
+export const deleteHomeworkSchema = z.object({
+    params: z.object({
+        homeworkId: z.string().min(1, { message: 'Homework ID is required' })
+    })
+});
+
+export type DeleteHomeworkSchema = z.infer<typeof deleteHomeworkSchema>;

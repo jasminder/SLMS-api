@@ -1,11 +1,18 @@
 import { NextFunction, Request, Response } from 'express';
-import { createHomework, findAllHomeworkByTermAndSection, findAllHomeworksBySubjectsList, findHomeworkById } from '../../service/homework.service/homework.service';
-import { CreateHomeworkSchema, FindAllHomeworksBySubjectsList, FindHomeworkByIdSchema, FindHomeworkByTermAndSectionSchema } from '../../schema/homework.dto/homework.dto';
+import { createHomework, deleteHomework, editHomework, findAllHomeworkByTermAndSection, findAllHomeworksBySubjectsList, findHomeworkById } from '../../service/homework.service/homework.service';
+import {
+    CreateHomeworkSchema,
+    DeleteHomeworkSchema,
+    EditHomeworkSchema,
+    FindAllHomeworksBySubjectsList,
+    FindHomeworkByIdSchema,
+    FindHomeworkByTermAndSectionSchema
+} from '../../schema/homework.dto/homework.dto';
 
 export const createHomeworkHandler = async (req: Request<CreateHomeworkSchema['params'], {}, CreateHomeworkSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { attachments, description, title, uploadedUserRole } = req.body;
-    const { termSubjectLevelId, sectionId,uploaderId } = req.params;
-    const newHomework = await createHomework(termSubjectLevelId,sectionId, uploaderId, uploadedUserRole, title, description, attachments);
+    const { termSubjectLevelId, sectionId, uploaderId } = req.params;
+    const newHomework = await createHomework(termSubjectLevelId, sectionId, uploaderId, uploadedUserRole, title, description, attachments);
 
     res.status(200).json(newHomework);
 };
@@ -17,16 +24,30 @@ export const findHomeworkByIdHandler = async (req: Request<FindHomeworkByIdSchem
 };
 export const findHomeworkBySubjectListHandler = async (req: Request<FindAllHomeworksBySubjectsList['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { termSubjectLevelIds, teacherId } = req.params;
-    const termSubjectLevelIdsArray = termSubjectLevelIds .split(',').map((id) => id);
-    const homework = await findAllHomeworksBySubjectsList(termSubjectLevelIdsArray,teacherId);
+    const termSubjectLevelIdsArray = termSubjectLevelIds.split(',').map((id) => id);
+    const homework = await findAllHomeworksBySubjectsList(termSubjectLevelIdsArray, teacherId);
     res.status(200).json(homework);
 };
-
 
 /* Find all homework records for a termsubjectlevelid and sectionid */
 export const findHomeworkByTermAndSectionHandler = async (req: Request<FindHomeworkByTermAndSectionSchema['params'], {}, {}, FindHomeworkByTermAndSectionSchema['query']>, res: Response) => {
     const { termSubjectLevelId, sectionId } = req.query;
-    const {teacherId}= req.params
+    const { teacherId } = req.params;
     const homeworks = await findAllHomeworkByTermAndSection(termSubjectLevelId, sectionId, teacherId);
     res.status(200).json(homeworks);
+};
+/*edit homework*/
+export const editHomeworkHandler = async (req: Request<EditHomeworkSchema['params'], {}, EditHomeworkSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { homeworkId, termSubjectLevelId, sectionId, uploaderId } = req.params;
+    const { uploadedUserRole, title, description, attachments } = req.body;
+
+    const updatedHomework = await editHomework(homeworkId, termSubjectLevelId, sectionId, uploaderId, uploadedUserRole, title, description, attachments);
+    res.status(200).json(updatedHomework);
+};
+
+/*delete homework*/
+export const deleteHomeworkHandler = async (req: Request<DeleteHomeworkSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { homeworkId } = req.params;
+    await deleteHomework(homeworkId);
+    res.status(200).json({ message: 'Homework successfully deleted' });
 };

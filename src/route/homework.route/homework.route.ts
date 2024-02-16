@@ -1,8 +1,22 @@
 import express from 'express';
 
 import validate from '../../middleware/validateResource';
-import { createHomeworkHandler, findHomeworkByIdHandler, findHomeworkBySubjectListHandler, findHomeworkByTermAndSectionHandler } from '../../controller/homework.controller/homework.controller';
-import { createHomeworkSchema, findAllHomeworksBySubjectsListSchema, findHomeworkByIdSchema, findHomeworkByTermAndSectionSchema } from '../../schema/homework.dto/homework.dto';
+import {
+    createHomeworkHandler,
+    deleteHomeworkHandler,
+    editHomeworkHandler,
+    findHomeworkByIdHandler,
+    findHomeworkBySubjectListHandler,
+    findHomeworkByTermAndSectionHandler
+} from '../../controller/homework.controller/homework.controller';
+import {
+    createHomeworkSchema,
+    deleteHomeworkSchema,
+    editHomeworkSchema,
+    findAllHomeworksBySubjectsListSchema,
+    findHomeworkByIdSchema,
+    findHomeworkByTermAndSectionSchema
+} from '../../schema/homework.dto/homework.dto';
 import { asyncErrorHandler } from '../../utils/asyncErrorHandler';
 import { protectRoute } from '../../middleware/protectRoutes';
 import { restrict } from '../../middleware/restrict';
@@ -19,5 +33,13 @@ homeworkRoute
 homeworkRoute
     .route('/find-by-class-termSubjectLevel-section/:teacherId')
     .get(validate(findHomeworkByTermAndSectionSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findHomeworkByTermAndSectionHandler));
+
+/* edit homework*/
+homeworkRoute
+    .route('/edit/:homeworkId/:termSubjectLevelId/:sectionId/:uploaderId')
+    .patch(validate(editHomeworkSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(editHomeworkHandler));
+
+/*delete homework*/
+homeworkRoute.route('/delete/:homeworkId').delete(validate(deleteHomeworkSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(deleteHomeworkHandler));
 
 export default homeworkRoute;

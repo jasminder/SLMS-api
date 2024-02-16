@@ -24,7 +24,7 @@ export const getHomeWorkDownloadPresignedUrl = async (fileUrl: string): Promise<
     const s3Params = {
         Bucket: process.env.BUCKET_NAME,
         Key,
-        Expires: 72000
+        Expires: 500000
     };
     const downloadUrl = await s3.getSignedUrlPromise('getObject', s3Params);
 
