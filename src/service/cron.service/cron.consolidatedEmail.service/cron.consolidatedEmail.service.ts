@@ -147,13 +147,27 @@ export async function consolidateStudentDataForEmail() {
                 }
             }
 
-            let homeworkAttachments = homeworkEntries.flatMap((h) =>
-                h.attachments.map((url: any) => ({
+            // let homeworkAttachments = homeworkEntries.flatMap((h) =>
+            //     h.attachments.map((url: any) => ({
+            //         path: url,
+            //         filename: url.split('/').pop() ?? ''
+            //     }))
+            // );
+            let homeworkSnapshots = [];
+            for (const homeworkEntry of homeworkEntries) {
+                const snapshots = await db.homeworkSnapshot.findMany({
+                    where: { groupHomeworkId: homeworkEntry.id }
+                });
+                homeworkSnapshots.push(...snapshots);
+            }
+
+            // Extract attachments from HomeworkSnapshots
+            let homeworkAttachments = homeworkSnapshots.flatMap((snapshot) =>
+                snapshot.attachments.map((url) => ({
                     path: url,
                     filename: url.split('/').pop() ?? ''
                 }))
             );
-
             attachments = [...attachments, ...homeworkAttachments];
 
             emailContent += 'Homework:\n';

@@ -1,5 +1,6 @@
 import { db } from '../../utils/db.server';
 import { customError } from '../../utils/customError';
+import { getHomeWorkDownloadPresignedUrl } from '../aws.service/aws.homework.fileDownload.service/aws.homework.fileDownload.service';
 
 /* Create a new homework record */
 export async function createHomework(
@@ -221,61 +222,67 @@ export async function editHomework(
     if (!updatedHomework) {
         throw customError('Failed to update homework', 'fail', 400, true);
     }
+    const groupHomeworkEntries = await db.groupHomework.findMany({
+        where: {
+            HomeworkSnapshot: {
+                some: {
+                    homeworkId: +homeworkId
+                }
+            },
+            isSent: false
+        },
+        include: {
+            HomeworkSnapshot: {
+                where: {
+                    homeworkId: +homeworkId
+                }
+            }
+        }
+    });
+    console.log(
+        'groupHomeworkEntries',
+        groupHomeworkEntries.map((g) => g.HomeworkSnapshot),
+        homeworkId
+    );
+    const presignedAttachments = [];
+    const presignedFileNames = [];
+    for (const attachment of attachments) {
+        try {
+            const { downloadUrl } = await getHomeWorkDownloadPresignedUrl(attachment);
+            presignedAttachments.push(downloadUrl);
+            presignedFileNames.push(extractFileName(attachment));
+        } catch (error) {
+            // Handle error (e.g., log it or throw a custom error)
+            console.error('Error generating presigned URL:', error);
+            throw customError('Failed to generate presigned URL', 'fail', 500, true);
+        }
+    }
+    for (const groupHomework of groupHomeworkEntries) {
+        await db.groupHomework.update({
+            where: { id: groupHomework.id },
+            data: {
+                title,
+                description: [description],
+                attachments,
+                updatedAt: new Date()
+            }
+        });
 
+        for (const snapshot of groupHomework.HomeworkSnapshot) {
+            await db.homeworkSnapshot.update({
+                where: { id: snapshot.id },
+                data: {
+                    description,
+                    attachments: presignedAttachments,
+                    fileNames: presignedFileNames,
+                    updatedAt: new Date()
+                }
+            });
+        }
+    }
+    console.log('presignedAttachments', presignedAttachments);
     return updatedHomework;
 }
-// export async function updateHomework(
-//     homeworkId: string,
-//     termSubjectLevelId: string,
-//     sectionId: string,
-//     uploaderId: string,
-//     uploadedUserRole: string,
-//     title: string,
-//     description: string,
-//     attachments: string[]
-// ) {
-//     // Check for uploader role and existence
-//     let teacherId = null;
-//     let adminId = null;
-
-//     if (uploadedUserRole === 'TEACHER') {
-//         const uploader = await db.teacher.findUnique({ where: { id: +uploaderId } });
-//         if (!uploader) throw customError('Teacher not found', 'fail', 404, true);
-//         teacherId = +uploaderId;
-//     } else if (uploadedUserRole === 'ADMIN') {
-//         const uploader = await db.admin.findUnique({ where: { id: +uploaderId } });
-//         if (!uploader) throw customError('Admin not found', 'fail', 404, true);
-//         adminId = +uploaderId;
-//     } else {
-//         throw customError('Invalid role', 'fail', 400, true);
-//     }
-
-//     // Prepare data for updating
-//     const data = {
-//         subjectId: 1,
-//         sectionId: +sectionId,
-//         teacherId, // null if not a teacher
-//         adminId, // null if not an admin
-//         uploadedUserRole,
-//         title,
-//         description,
-//         attachments,
-//         updatedAt: new Date(),
-//         termSubjectLevelId: +termSubjectLevelId
-//     };
-
-//     // Update the homework in the database
-//     const updatedHomework = await db.homework.update({
-//         where: { id: +homeworkId },
-//         data
-//     });
-
-//     if (!updatedHomework) {
-//         throw customError('Failed to update homework', 'fail', 400, true);
-//     }
-
-//     return updatedHomework;
-// }
 
 /*delete homework*/
 export async function deleteHomework(homeworkId: string) {
@@ -287,4 +294,28 @@ export async function deleteHomework(homeworkId: string) {
         throw customError('Error deleting homework', 'fail', 400, true);
     }
     return deletedHomework;
+}
+
+// Utility function to extract file name from the URL
+function extractFileName(url: string) {
+    const originalName = url?.split('/').pop();
+    if (!originalName) return 'No file name';
+    const lastHyphenIndex = originalName.lastIndexOf('-');
+    if (lastHyphenIndex !== -1) {
+        // Extract the name including the extension
+        const nameWithExtension = originalName.substring(0, lastHyphenIndex);
+        // Find the last dot to isolate the extension
+        const lastDotIndex = nameWithExtension.lastIndexOf('.');
+        if (lastDotIndex !== -1) {
+            // Return only the name, excluding the extension
+            return nameWithExtension.substring(0, lastDotIndex);
+        }
+        return nameWithExtension; // Return the full name if there is no dot
+    }
+    // If there is no hyphen, find the dot and return the substring before it
+    const lastDotIndex = originalName.lastIndexOf('.');
+    if (lastDotIndex !== -1) {
+        return originalName.substring(0, lastDotIndex);
+    }
+    return originalName; // Default case if no hyphen and no dot found
 }

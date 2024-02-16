@@ -88,7 +88,7 @@ export async function createGroupHomework(
                     }
                 }
             });
-
+            console.log("found",found);
             if (found) {
                 existingGroupHomework = true;
                 break;
