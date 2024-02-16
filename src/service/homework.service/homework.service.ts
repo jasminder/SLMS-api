@@ -286,10 +286,41 @@ export async function editHomework(
 
 /*delete homework*/
 export async function deleteHomework(homeworkId: string) {
+    const groupHomeworkEntries = await db.groupHomework.findMany({
+        where: {
+            HomeworkSnapshot: {
+                some: {
+                    homeworkId: +homeworkId
+                }
+            }
+        },
+        include: {
+            HomeworkSnapshot: {
+                where: {
+                    homeworkId: +homeworkId
+                }
+            }
+        }
+    });
+    // Delete each found HomeworkSnapshot entry
+    for (const groupHomework of groupHomeworkEntries) {
+        for (const snapshot of groupHomework.HomeworkSnapshot) {
+            await db.homeworkSnapshot.delete({ where: { id: snapshot.id } });
+        }
+    }
     const deletedHomework = await db.homework.delete({
         where: { id: +homeworkId }
     });
+    // Delete GroupHomework entries if they have no remaining HomeworkSnapshots
+    for (const groupHomework of groupHomeworkEntries) {
+        const remainingSnapshots = await db.homeworkSnapshot.count({
+            where: { groupHomeworkId: groupHomework.id }
+        });
 
+        if (remainingSnapshots === 0) {
+            await db.groupHomework.delete({ where: { id: groupHomework.id } });
+        }
+    }
     if (!deletedHomework) {
         throw customError('Error deleting homework', 'fail', 400, true);
     }
