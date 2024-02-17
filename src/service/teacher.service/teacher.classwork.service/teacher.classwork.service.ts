@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { customError } from '../../../utils/customError';
 
 const db = new PrismaClient();
 
@@ -38,10 +39,11 @@ export async function createGroupClasswork(
     termSubjectLevelId: string,
     sectionId: string,
     title: string,
-    classworkDetails: { attachments: string; description: string }[],
+    classworkDetails: { attachments: string[]; description: string; fileNames: string[]; classworkId: string }[],
     className: string,
     roomName: string,
-    classTime: string
+    classTime: string,
+    classworkIds: string[]
 ) {
     const sendDate = await getNextScheduledDate();
     const startDate = new Date();
@@ -53,39 +55,61 @@ export async function createGroupClasswork(
 
     let groupClasswork;
     for (const studentId of numericStudentIds) {
-        const existingGroupClasswork = await db.groupClasswork.findFirst({
-            where: {
-                studentId,
-                teacherId: Number(teacherId),
-                termSubjectLevelId: Number(termSubjectLevelId),
-                title,
-                // createdAt: {
-                //     gte: startDate,
-                //     lte: endDate
-                // },
-                sendDate: sendDate,
-                isSent: false
-            }
-        });
-
-        if (existingGroupClasswork) {
-            await updateGroupClassworkAttachments(existingGroupClasswork.id.toString(), classworkDetails);
-            groupClasswork = existingGroupClasswork;
-        } else {
-            groupClasswork = await db.groupClasswork.create({
-                data: {
-                    studentId,
-                    teacherId: +teacherId,
-                    termSubjectLevelId: +termSubjectLevelId,
-                    title,
-                    attachments: classworkDetails.map((detail) => detail.attachments),
-                    description: classworkDetails.map((detail) => detail.description),
-                    isSent: false,
-                    sendDate
+        let existingGroupClasswork = false;
+        for (const classworkId of classworkIds) {
+            const found = await db.classworkSnapshot.findFirst({
+                where: {
+                    classworkId: +classworkId,
+                    groupClasswork: {
+                        studentId: studentId,
+                        teacherId: +teacherId,
+                        termSubjectLevelId: +termSubjectLevelId,
+                        sendDate,
+                        sectionId: +sectionId
+                        // Add other necessary conditions if needed
+                    }
                 }
             });
+            console.log('found', found);
+            if (found) {
+                existingGroupClasswork = true;
+                break;
+            }
         }
+        if (existingGroupClasswork) {
+            throw customError('classwork with the selected classwork already exists for this student.', 'fail', 404, true);
+        }
+        groupClasswork = await db.groupClasswork.create({
+            data: {
+                studentId: studentId,
+                teacherId: +teacherId,
+                termSubjectLevelId: +termSubjectLevelId,
+                title: title,
+                attachments: classworkDetails.flatMap((detail) => detail.attachments),
+                description: classworkDetails.map((detail) => detail.description),
+                isSent: false,
+                sendDate: sendDate,
+                sectionId: +sectionId
+            }
+        });
+           // Create ClassworkSnapshot for each Classwork ID
+           for (const classworkId of classworkIds) {
+            const matchingDes = classworkDetails.find((detail) => detail.classworkId === classworkId);
 
+            if (matchingDes) {
+                await db.classworkSnapshot.create({
+                    data: {
+                        classworkId: +classworkId,
+                        groupClassworkId: groupClasswork.id,
+                        description: matchingDes.description || '',
+                        fileNames: matchingDes.fileNames || [],
+                        attachments: matchingDes.attachments,
+                        sendDate
+                    }
+                });
+            }
+        }
+        /*********/
         const existingAutomatedMail = await db.automatedMailForParents.findFirst({
             where: {
                 studentId: studentId,
@@ -118,4 +142,40 @@ export async function createGroupClasswork(
         }
     }
     return groupClasswork;
+}
+
+/*get assignedclassworks*/
+export async function findAssignedClassworks(teacherId: string, termSubjectLevelId: string, sectionId: string) {
+    return await db.groupClasswork.findMany({
+        where: {
+            teacherId: parseInt(teacherId),
+            termSubjectLevelId: parseInt(termSubjectLevelId),
+            sectionId: parseInt(sectionId)
+        },
+        include: {
+            ClassworkSnapshot: {
+                select: {
+                    fileNames: true,
+                    sendDate: true,
+                    description: true,
+                    groupClasswork: {
+                        select: {
+                            isSent: true
+                        }
+                    },
+                    classwork: true
+                }
+            },
+            student: {
+                select: {
+                    personalDetails: true
+                }
+            },
+            teacher: {
+                select: {
+                    teacherPersonalDetails: true
+                }
+            }
+        }
+    });
 }

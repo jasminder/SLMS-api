@@ -119,40 +119,61 @@ export async function consolidateStudentDataForEmail() {
             const feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : 'No feedback';
             emailContent += `Class: ${mailEntry.className}\n` + `Room: ${mailEntry.roomName}\n` + `Class Time: ${mailEntry.classTime}\n` + `Teacher: ${teacherName}\n\n`;
             // Append classwork attachments
-            let classworkAttachments = classworkEntries.flatMap((c) =>
-                c.attachments.map((url: any) => ({
+
+            /**/
+            let classworkSnapshots = [];
+            for (const classworkEntry of classworkEntries) {
+                const snapshots = await db.classworkSnapshot.findMany({
+                    where: { groupClassworkId: classworkEntry.id }
+                });
+                classworkSnapshots.push(...snapshots);
+            }
+            let classworkAttachments = classworkSnapshots.flatMap((snapshot) =>
+                snapshot.attachments.map((url) => ({
                     path: url,
                     filename: url.split('/').pop() ?? ''
                 }))
             );
-
+            attachments = [...attachments, ...classworkAttachments];
+            emailContent += 'Classwork:\n';
             if (classworkEntries.length === 0) {
-                emailContent += 'Classwork:';
-                emailContent += '\nNo Classwork\n\n';
+                emailContent += 'No Classwork today\n\n';
             } else {
-                emailContent += '\nClasswork:\n\n';
-                for (const [index, c] of classworkEntries.entries()) {
-                    if (c.description.length === 0 || (c.description.length === 1 && c.description[0] === '')) {
-                        emailContent += `${index + 1}) Classwork attached\n`;
+                emailContent += 'Classwork:\n';
+                for (const [cwIndex, classwork] of classworkEntries.entries()) {
+                    const classworkSnapshots = await db.classworkSnapshot.findMany({
+                        where: {
+                            groupClassworkId: classwork.id
+                        }
+                    });
+
+                    if (classworkSnapshots.length === 0) {
+                        emailContent += `${cwIndex + 1}) No description and no attachments.\n`;
                     } else {
-                        c.description.forEach((desc: string, descIndex: number) => {
-                            if (desc === '') {
-                                emailContent += `${descIndex + 1}) Please find the attachment-${extractOriginalFileNameFromS3Url(classworkAttachments[descIndex].path)}\n`;
+                        for (const snapshot of classworkSnapshots) {
+                            emailContent += `${cwIndex + 1}) `; // Prefix for each homework entry
+                            if (!snapshot.description || snapshot.description.length === 0) {
+                                emailContent += 'No Description. Please find the attachment(s):\n';
                             } else {
-                                emailContent += `${descIndex + 1}) ${desc}\n`;
+                                emailContent += `Description: ${snapshot.description}\n`;
                             }
-                        });
+
+                            if (snapshot.attachments.length === 0) {
+                                emailContent += `No attachments.\n`;
+                            } else {
+                                for (const [attIndex, attachmentUrl] of snapshot.attachments.entries()) {
+                                    emailContent += `Attachment-${attIndex + 1}: ${extractOriginalFileNameFromS3Url(attachmentUrl)}\n`;
+                                }
+                            }
+                            emailContent += '\n'; // New line for separation between homework entries
+                        }
                     }
-                    emailContent += '\n';
                 }
             }
+            /**********/
 
-            // let homeworkAttachments = homeworkEntries.flatMap((h) =>
-            //     h.attachments.map((url: any) => ({
-            //         path: url,
-            //         filename: url.split('/').pop() ?? ''
-            //     }))
-            // );
+            /**/
+
             let homeworkSnapshots = [];
             for (const homeworkEntry of homeworkEntries) {
                 const snapshots = await db.homeworkSnapshot.findMany({
@@ -206,7 +227,7 @@ export async function consolidateStudentDataForEmail() {
                 }
             }
 
-            attachments = [...attachments, ...classworkAttachments];
+            // attachments = [...attachments, ...classworkAttachments];
 
             emailContent += `Feedback:\n${feedbackContent}\n`;
             emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';

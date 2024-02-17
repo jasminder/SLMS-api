@@ -53,26 +53,6 @@ export async function createGroupHomework(
     const numericStudentIds = studentIds.map(Number);
     let groupHomework;
     for (const studentId of numericStudentIds) {
-        // const existingGroupHomework = await db.groupHomework.findFirst({
-        //     where: {
-        //         studentId: studentId,
-        //         teacherId: +teacherId,
-        //         termSubjectLevelId: +termSubjectLevelId,
-        //         title: title,
-        //         // createdAt: {
-        //         //     gte: startDate,
-        //         //     lte: endDate
-        //         // },
-        //         sendDate,
-        //         isSent: false
-        //     }
-        // });
-
-        // if (existingGroupHomework) {
-        // // Update existing homework's attachments
-        // await updateGroupHomeworkAttachments(existingGroupHomework.id.toString(), homeworkDetails);
-        // groupHomework = existingGroupHomework;
-        // } else {
         let existingGroupHomework = false;
         for (const homeworkId of homeworkIds) {
             const found = await db.homeworkSnapshot.findFirst({
@@ -88,7 +68,7 @@ export async function createGroupHomework(
                     }
                 }
             });
-            console.log("found",found);
+            console.log('found', found);
             if (found) {
                 existingGroupHomework = true;
                 break;
@@ -96,7 +76,7 @@ export async function createGroupHomework(
         }
 
         if (existingGroupHomework) {
-            throw customError('Homework with the specified homework IDs already exists for this student.', 'fail', 404, true);
+            throw customError('Homework with the selected homework  already exists for this student.', 'fail', 404, true);
         }
         groupHomework = await db.groupHomework.create({
             data: {
