@@ -166,10 +166,10 @@ export async function getLastFiveClassAttendances(studentId: string, studentClas
         orderBy: {
             date: 'desc'
         },
-        take: 6
+        take: 5
     });
-    console.log(attendances.slice(1));
-    return attendances.slice(1);
+
+    return attendances;
 }
 /*create automated emails record for all students in the class*/
 export async function createAutomatedMailForParents(studentIds: string[], teacherId: string, termSubjectLevelId: string, sectionId: string, className: string, roomName: string, classTime: string) {
