@@ -42,10 +42,14 @@ export async function fetchCheckedInStudentsForCheckout() {
                         }
                     }
                 }
+            },
+            classAttendance: {
+                select: {
+                    attendanceStatus: true
+                }
             }
         }
     });
-
 
     return checkedInStudents;
 }
