@@ -185,6 +185,11 @@ export async function fetchSchoolCheckInAttendance() {
                         }
                     }
                 }
+            },
+            classAttendance: {
+                select: {
+                    attendanceStatus: true
+                }
             }
         }
     });
