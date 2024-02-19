@@ -92,8 +92,8 @@ export async function createGroupClasswork(
                 sectionId: +sectionId
             }
         });
-           // Create ClassworkSnapshot for each Classwork ID
-           for (const classworkId of classworkIds) {
+        // Create ClassworkSnapshot for each Classwork ID
+        for (const classworkId of classworkIds) {
             const matchingDes = classworkDetails.find((detail) => detail.classworkId === classworkId);
 
             if (matchingDes) {
@@ -175,7 +175,24 @@ export async function findAssignedClassworks(teacherId: string, termSubjectLevel
                 select: {
                     teacherPersonalDetails: true
                 }
+            },
+            SentClassworkSnapshot: {
+                select: {
+                    fileNames: true,
+                    sendDate: true,
+                    description: true,
+                    groupClasswork: {
+                        select: {
+                            isSent: true
+                        }
+                    },
+                    classwork: true,
+                    attachments: true
+                }
             }
+        },
+        orderBy: {
+            updatedAt: 'desc'
         }
     });
 }

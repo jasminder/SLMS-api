@@ -292,7 +292,8 @@ export async function deleteHomework(homeworkId: string) {
                 some: {
                     homeworkId: +homeworkId
                 }
-            }
+            },
+            isSent: false
         },
         include: {
             HomeworkSnapshot: {

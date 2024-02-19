@@ -173,7 +173,24 @@ export async function findAssignedHomeworks(teacherId: string, termSubjectLevelI
                 select: {
                     teacherPersonalDetails: true
                 }
+            },
+            SentHomeworkSnapshot: {
+                select: {
+                    fileNames: true,
+                    sendDate: true,
+                    description: true,
+                    groupHomework: {
+                        select: {
+                            isSent: true
+                        }
+                    },
+                    homework: true,
+                    attachments: true
+                }
             }
+        },
+        orderBy: {
+            updatedAt: 'desc'
         }
     });
 }

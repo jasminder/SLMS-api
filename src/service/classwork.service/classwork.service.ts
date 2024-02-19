@@ -318,7 +318,8 @@ export async function deleteclasswork(classworkId: string) {
                 some: {
                     classworkId: +classworkId
                 }
-            }
+            },
+            isSent: false
         },
         include: {
             ClassworkSnapshot: {

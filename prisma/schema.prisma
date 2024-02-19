@@ -642,7 +642,8 @@ model Homework {
   section            Section?          @relation(fields: [sectionId], references: [id])
 
   // @@unique([subjectId, title])
-  HomeworkSnapshot HomeworkSnapshot[]
+  HomeworkSnapshot     HomeworkSnapshot[]
+  SentHomeworkSnapshot SentHomeworkSnapshot[]
 }
 
 model Feedback {
@@ -678,11 +679,12 @@ model GroupHomework {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  student          Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher          Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  section          Section?           @relation(fields: [sectionId], references: [id])
-  termSubjectLevel TermSubjectLevel   @relation(fields: [termSubjectLevelId], references: [id])
-  HomeworkSnapshot HomeworkSnapshot[]
+  student              Student                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher              Teacher                @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  section              Section?               @relation(fields: [sectionId], references: [id])
+  termSubjectLevel     TermSubjectLevel       @relation(fields: [termSubjectLevelId], references: [id])
+  HomeworkSnapshot     HomeworkSnapshot[]
+  SentHomeworkSnapshot SentHomeworkSnapshot[]
 }
 
 model HomeworkSnapshot {
@@ -697,6 +699,22 @@ model HomeworkSnapshot {
   updatedAt       DateTime      @updatedAt
   homework        Homework      @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
   groupHomework   GroupHomework @relation(fields: [groupHomeworkId], references: [id], onDelete: Cascade)
+}
+
+model SentHomeworkSnapshot {
+  id              Int      @id @default(autoincrement())
+  homeworkId      Int? // Foreign key to Homework
+  groupHomeworkId Int // Foreign key to GroupHomework
+  description     String // Snapshot description at the time of sending
+  attachments     String[] // Snapshot attachments at the time of sending
+  fileNames       String[] // Snapshot filenames at the time of sending
+  sendDate        DateTime // Date when the snapshot was sent
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relationships
+  homework      Homework?     @relation(fields: [homeworkId], references: [id], onDelete: SetNull)
+  groupHomework GroupHomework @relation(fields: [groupHomeworkId], references: [id])
 }
 
 model Classwork {
@@ -720,7 +738,8 @@ model Classwork {
   section            Section?          @relation(fields: [sectionId], references: [id])
 
   // @@unique([subjectId, title])
-  ClassworkSnapshot ClassworkSnapshot[]
+  ClassworkSnapshot     ClassworkSnapshot[]
+  SentClassworkSnapshot SentClassworkSnapshot[]
 }
 
 model GroupClasswork {
@@ -743,7 +762,8 @@ model GroupClasswork {
   termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
 
   // @@unique([termSubjectLevelId, title])
-  ClassworkSnapshot ClassworkSnapshot[]
+  ClassworkSnapshot     ClassworkSnapshot[]
+  SentClassworkSnapshot SentClassworkSnapshot[]
 }
 
 model ClassworkSnapshot {
@@ -758,6 +778,22 @@ model ClassworkSnapshot {
   updatedAt        DateTime       @updatedAt
   classwork        Classwork      @relation(fields: [classworkId], references: [id], onDelete: Cascade)
   groupClasswork   GroupClasswork @relation(fields: [groupClassworkId], references: [id], onDelete: Cascade)
+}
+
+model SentClassworkSnapshot {
+  id               Int      @id @default(autoincrement())
+  classworkId      Int? // Foreign key to Classwork
+  groupClassworkId Int // Foreign key to GroupClasswork
+  description      String // Snapshot description at the time of sending
+  attachments      String[] // Snapshot attachments at the time of sending
+  fileNames        String[] // Snapshot filenames at the time of sending
+  sendDate         DateTime // Date when the snapshot was sent
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relationships
+  classwork      Classwork?     @relation(fields: [classworkId], references: [id], onDelete: SetNull)
+  groupClasswork GroupClasswork @relation(fields: [groupClassworkId], references: [id])
 }
 
 model AutomatedMailForParents {

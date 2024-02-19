@@ -4,6 +4,7 @@ import { sendConsolidatedEmail } from '../../AutomatedEmailForParents.service/Au
 import { format } from 'date-fns';
 import { capitalizeFirstCharacter } from '../../../utils/capitalizeFirstCharacter';
 import { getNextSundayAtFourThirty } from '../../teacher.service/teacher.feedback.service/teacher.feedback.service';
+import { GroupHomework, GroupClasswork, Feedback, HomeworkSnapshot, ClassworkSnapshot } from '@prisma/client';
 
 const db = new PrismaClient();
 
@@ -67,9 +68,9 @@ export async function consolidateStudentDataForEmail() {
             `Check-out Time: ${checkOutTime}\n\n`;
 
         let attachments: { path: string; filename: string }[] = [];
-        let feedbackEntries: any[] = [];
-        let homeworkEntries: any[] = [];
-        let classworkEntries: any[] = [];
+        let feedbackEntries: Feedback[] = [];
+        let homeworkEntries: GroupHomework[] = [];
+        let classworkEntries: GroupClasswork[] = [];
         for (const mailEntry of student.AutomatedMailForParents) {
             // Fetching feedback and homework based on the specific class details
             feedbackEntries = await db.feedback.findMany({
@@ -121,7 +122,7 @@ export async function consolidateStudentDataForEmail() {
             // Append classwork attachments
 
             /**/
-            let classworkSnapshots = [];
+            let classworkSnapshots: ClassworkSnapshot[] = [];
             for (const classworkEntry of classworkEntries) {
                 const snapshots = await db.classworkSnapshot.findMany({
                     where: { groupClassworkId: classworkEntry.id }
@@ -174,7 +175,7 @@ export async function consolidateStudentDataForEmail() {
 
             /**/
 
-            let homeworkSnapshots = [];
+            let homeworkSnapshots: HomeworkSnapshot[] = [];
             for (const homeworkEntry of homeworkEntries) {
                 const snapshots = await db.homeworkSnapshot.findMany({
                     where: { groupHomeworkId: homeworkEntry.id }
@@ -242,7 +243,55 @@ export async function consolidateStudentDataForEmail() {
                 attachments
             );
 
-            // Update the isSent flag for Feedback, GroupHomework, and AutomatedMailForParents
+            for (const homeworkEntry of homeworkEntries) {
+                const snapshots = await db.homeworkSnapshot.findMany({
+                    where: { groupHomeworkId: homeworkEntry.id },
+                    include: {
+                        homework: {
+                            select: {
+                                attachments: true
+                            }
+                        }
+                    }
+                });
+                for (const snapshot of snapshots) {
+                    await db.sentHomeworkSnapshot.create({
+                        data: {
+                            homeworkId: snapshot.homeworkId,
+                            groupHomeworkId: snapshot.groupHomeworkId,
+                            description: snapshot.description,
+                            attachments: snapshot.homework.attachments,
+                            fileNames: snapshot.fileNames,
+                            sendDate // Current date as the send date
+                        }
+                    });
+                }
+            }
+
+            for (const classworkEntry of classworkEntries) {
+                const snapshots = await db.classworkSnapshot.findMany({
+                    where: { groupClassworkId: classworkEntry.id },
+                    include: {
+                        classwork: {
+                            select: {
+                                attachments: true
+                            }
+                        }
+                    }
+                });
+                for (const snapshot of snapshots) {
+                    await db.sentClassworkSnapshot.create({
+                        data: {
+                            classworkId: snapshot.classworkId,
+                            groupClassworkId: snapshot.groupClassworkId,
+                            description: snapshot.description,
+                            attachments: snapshot.classwork.attachments,
+                            fileNames: snapshot.fileNames,
+                            sendDate // Current date as the send date
+                        }
+                    });
+                }
+            }
 
             // Sequentially update the isSent flag for Feedback, GroupHomework, and AutomatedMailForParents
             // console.log(feedbackEntries, 'feedbackentries');
