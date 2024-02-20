@@ -8,7 +8,7 @@ import { processMonthlyFees } from '../service/cron.service/cron.service';
 
 // Run every Sunday at midnight
 // Schedule to run at 11:00 AM on the second Sunday of every month
-cron.schedule('0 11 * * 0#2', async () => {
-    // console.log('Processing monthly fees for students at 11 AM on the second Sunday');
-    await processMonthlyFees();
-});
+// cron.schedule('0 11 * * 0#2', async () => {
+//     // console.log('Processing monthly fees for students at 11 AM on the second Sunday');
+//     await processMonthlyFees();
+// });

@@ -4,51 +4,51 @@ import { sendEmail } from '../../utils/email';
 
 // Schedule to run every Sunday at 4:30 PM
 
-export async function sendAutomatedEmails() {
-    // Fetch feedback entries where isSent is false
-    const feedbackEntries = await db.feedback.findMany({
-        where: {
-            isSent: false
-        },
-        include: {
-            student: {
-                include: {
-                    personalDetails: true
-                }
-            }
-        }
-    });
+// export async function sendAutomatedEmails() {
+//     // Fetch feedback entries where isSent is false
+//     const feedbackEntries = await db.feedback.findMany({
+//         where: {
+//             isSent: false
+//         },
+//         include: {
+//             student: {
+//                 include: {
+//                     personalDetails: true
+//                 }
+//             }
+//         }
+//     });
 
-    for (const feedback of feedbackEntries) {
-        // Prepare and send an email for each feedback entry
-        if (feedback.student.personalDetails?.email) {
-            const emailOptions = {
-                email: feedback.student.personalDetails?.email, // Replace with actual recipient email
-                subject: 'Feedback Update',
-                text: feedback.content
-            };
-            try {
-                await sendEmail(emailOptions);
-                // Mark feedback as sent
-                await db.feedback.update({
-                    where: { id: feedback.id },
-                    data: { isSent: true }
-                });
-                await db.interaction.create({
-                    data: {
-                        studentId: feedback.studentId,
-                        interactionType: 'AUTOMATED_EMAIL', // Assuming this is the correct type for this scenario
-                        description: `Feedback email sent: ${feedback.title}`,
-                        contactedDate: new Date(), // Current date and time of interaction
-                        createdBy: feedback.teacherId // Assuming the teacher who provided feedback is the one creating the interaction record
-                    }
-                });
-            } catch (error) {
-                // console.error('Error sending feedback email:', error);
-            }
-        }
-    }
-}
+//     for (const feedback of feedbackEntries) {
+//         // Prepare and send an email for each feedback entry
+//         if (feedback.student.personalDetails?.email) {
+//             const emailOptions = {
+//                 email: feedback.student.personalDetails?.email, // Replace with actual recipient email
+//                 subject: 'Feedback Update',
+//                 text: feedback.content
+//             };
+//             try {
+//                 await sendEmail(emailOptions);
+//                 // Mark feedback as sent
+//                 await db.feedback.update({
+//                     where: { id: feedback.id },
+//                     data: { isSent: true }
+//                 });
+//                 await db.interaction.create({
+//                     data: {
+//                         studentId: feedback.studentId,
+//                         interactionType: 'AUTOMATED_EMAIL', // Assuming this is the correct type for this scenario
+//                         description: `Feedback email sent: ${feedback.title}`,
+//                         contactedDate: new Date(), // Current date and time of interaction
+//                         createdBy: feedback.teacherId // Assuming the teacher who provided feedback is the one creating the interaction record
+//                     }
+//                 });
+//             } catch (error) {
+//                 // console.error('Error sending feedback email:', error);
+//             }
+//         }
+//     }
+// }
 
 export async function processMonthlyFees() {
     // console.log('Start processing monthly fees');

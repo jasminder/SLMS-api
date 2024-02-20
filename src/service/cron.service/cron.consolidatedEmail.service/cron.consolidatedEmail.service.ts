@@ -71,6 +71,7 @@ export async function consolidateStudentDataForEmail() {
         let feedbackEntries: Feedback[] = [];
         let homeworkEntries: GroupHomework[] = [];
         let classworkEntries: GroupClasswork[] = [];
+        let feedbackContent;
         for (const mailEntry of student.AutomatedMailForParents) {
             // Fetching feedback and homework based on the specific class details
             feedbackEntries = await db.feedback.findMany({
@@ -117,7 +118,7 @@ export async function consolidateStudentDataForEmail() {
             console.log('homeworkEntries', homeworkEntries);
             console.log('classworkEntries', classworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
-            const feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : 'No feedback';
+            feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : 'No feedback';
             emailContent += `Class: ${mailEntry.className}\n` + `Room: ${mailEntry.roomName}\n` + `Class Time: ${mailEntry.classTime}\n` + `Teacher: ${teacherName}\n\n`;
             // Append classwork attachments
 
@@ -138,9 +139,9 @@ export async function consolidateStudentDataForEmail() {
             attachments = [...attachments, ...classworkAttachments];
             emailContent += 'Classwork:\n';
             if (classworkEntries.length === 0) {
-                emailContent += 'No Classwork today\n\n';
+                emailContent += '\n\n';
+                // emailContent += 'No Classwork today\n\n';
             } else {
-                emailContent += 'Classwork:\n';
                 for (const [cwIndex, classwork] of classworkEntries.entries()) {
                     const classworkSnapshots = await db.classworkSnapshot.findMany({
                         where: {
@@ -194,9 +195,9 @@ export async function consolidateStudentDataForEmail() {
 
             emailContent += 'Homework:\n';
             if (homeworkEntries.length === 0) {
-                emailContent += 'No Homework today\n\n';
+                emailContent += '\n\n';
+                // emailContent += 'No Homework today\n\n';
             } else {
-                emailContent += 'Homework:\n';
                 for (const [hwIndex, homework] of homeworkEntries.entries()) {
                     const homeworkSnapshots = await db.homeworkSnapshot.findMany({
                         where: {
@@ -230,9 +231,13 @@ export async function consolidateStudentDataForEmail() {
 
             // attachments = [...attachments, ...classworkAttachments];
 
-            emailContent += `Feedback:\n${feedbackContent}\n`;
-            emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
+            // emailContent += `Feedback:\n${feedbackContent}\n`;
+            // emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
         }
+
+        emailContent += `Feedback:\n${feedbackContent}\n`;
+        emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
+
         console.log('emailContent', emailContent);
 
         if (student.personalDetails?.email) {
@@ -319,7 +324,7 @@ export async function consolidateStudentDataForEmail() {
                     data: {
                         studentId: student.id,
                         interactionType: InteractionType.AUTOMATED_EMAIL,
-                        description: 'Consolidated email with feedback and homework & classwor sent',
+                        description: 'Consolidated email with feedback and homework & classwork sent',
                         contactedDate: new Date(),
                         createdBy: firstMailEntry.teacherId
                     }
