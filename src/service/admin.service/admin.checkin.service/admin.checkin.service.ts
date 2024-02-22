@@ -78,7 +78,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
             }
 
             // Create SchoolCheckInAttendance records for all active students
-            const attendanceRecords = [];
+            const attendanceRecords: any = [];
             for (const student of activeStudents) {
                 const newAttendanceRecord = await db.schoolCheckInAttendance.create({
                     data: {

@@ -119,6 +119,7 @@ export async function consolidateStudentDataForEmail() {
             console.log('classworkEntries', classworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
             feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : 'No feedback';
+            emailContent += centerSeparator('-----------------------------') + '\n';
             emailContent += `Class: ${mailEntry.className}\n` + `Room: ${mailEntry.roomName}\n` + `Class Time: ${mailEntry.classTime}\n` + `Teacher: ${teacherName}\n\n`;
             // Append classwork attachments
 
@@ -231,11 +232,12 @@ export async function consolidateStudentDataForEmail() {
 
             // attachments = [...attachments, ...classworkAttachments];
 
-            // emailContent += `Feedback:\n${feedbackContent}\n`;
+            emailContent += `Feedback:\n${feedbackContent}\n`;
+            emailContent += centerSeparator('-----------------------------') + '\n';
             // emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
         }
 
-        emailContent += `Feedback:\n${feedbackContent}\n`;
+        // emailContent += `Feedback:\n${feedbackContent}\n`;
         emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
 
         console.log('emailContent', emailContent);
@@ -340,4 +342,10 @@ function extractOriginalFileNameFromS3Url(url: string) {
     }
     const fileNameMatch = url.match(/\/([^\/]+?)-[a-zA-Z0-9-]+\.(jpg|jpeg|png|pdf|doc|docx)/i);
     return fileNameMatch ? decodeURIComponent(fileNameMatch[1]) : '';
+}
+function centerSeparator(separator: string) {
+    const lineWidth = 70;
+    const separatorLength = separator.length;
+    const spaces = (lineWidth - separatorLength) / 2;
+    return ' '.repeat(Math.floor(spaces)) + separator;
 }

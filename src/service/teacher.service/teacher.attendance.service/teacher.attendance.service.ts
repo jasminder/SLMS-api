@@ -184,13 +184,12 @@ export async function createAutomatedMailForParents(studentIds: string[], teache
                 teacherId: +teacherId,
                 termSubjectLevelId: +termSubjectLevelId,
                 sectionId: +sectionId,
-                sendDate,
-                isSent: false
+                sendDate
             }
         });
         console.log('existingAutomatedMail', existingAutomatedMail);
         // Create AutomatedMailForParents record if it does not exist
-        if (!existingAutomatedMail) {
+        if (!existingAutomatedMail?.id) {
             const newMail = await db.automatedMailForParents.create({
                 data: {
                     studentId: +studentId,

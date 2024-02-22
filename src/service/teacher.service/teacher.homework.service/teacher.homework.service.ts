@@ -53,6 +53,37 @@ export async function createGroupHomework(
     const numericStudentIds = studentIds.map(Number);
     let groupHomework;
     for (const studentId of numericStudentIds) {
+        const existingAutomatedMail = await db.automatedMailForParents.findFirst({
+            where: {
+                studentId: studentId,
+                teacherId: +teacherId,
+                termSubjectLevelId: +termSubjectLevelId,
+                sectionId: +sectionId,
+                // createdAt: {
+                //     gte: startDate,
+                //     lte: endDate
+                // },
+                sendDate: sendDate
+            }
+        });
+        console.log(existingAutomatedMail);
+        if (!existingAutomatedMail?.id) {
+            await db.automatedMailForParents.create({
+                data: {
+                    studentId: +studentId,
+                    teacherId: +teacherId,
+                    termSubjectLevelId: +termSubjectLevelId,
+                    sectionId: +sectionId,
+                    className: className,
+                    roomName: roomName,
+                    sendDate: sendDate,
+                    isSent: false,
+                    classTime
+                }
+            });
+        } else if (existingAutomatedMail?.isSent) {
+            throw customError('Mails are sent for today. Please assign homework/classwork on the next working day.', 'fail', 404, true);
+        }
         let existingGroupHomework = false;
         for (const homeworkId of homeworkIds) {
             const found = await db.homeworkSnapshot.findFirst({
@@ -108,36 +139,6 @@ export async function createGroupHomework(
                     }
                 });
             }
-        }
-        const existingAutomatedMail = await db.automatedMailForParents.findFirst({
-            where: {
-                studentId: studentId,
-                teacherId: +teacherId,
-                termSubjectLevelId: +termSubjectLevelId,
-                sectionId: +sectionId,
-                // createdAt: {
-                //     gte: startDate,
-                //     lte: endDate
-                // },
-                sendDate: sendDate,
-                isSent: false
-            }
-        });
-        console.log(existingAutomatedMail);
-        if (!existingAutomatedMail) {
-            await db.automatedMailForParents.create({
-                data: {
-                    studentId: +studentId,
-                    teacherId: +teacherId,
-                    termSubjectLevelId: +termSubjectLevelId,
-                    sectionId: +sectionId,
-                    className: className,
-                    roomName: roomName,
-                    sendDate: sendDate,
-                    isSent: false,
-                    classTime
-                }
-            });
         }
     }
     return groupHomework;

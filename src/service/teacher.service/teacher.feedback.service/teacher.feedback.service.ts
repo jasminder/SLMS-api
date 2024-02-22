@@ -33,6 +33,42 @@ export async function createFeedback(
     const endDate = new Date();
     endDate.setHours(23, 59, 59, 999);
     // Create feedback
+
+    // Check for existing AutomatedMailForParents record
+    const existingAutomatedMail = await db.automatedMailForParents.findFirst({
+        where: {
+            studentId: +studentId,
+            teacherId: +teacherId,
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
+            // createdAt: {
+            //     gte: startDate,
+            //     lte: endDate
+            // },
+            sendDate
+        }
+    });
+
+    // console.log(existingAutomatedMail);
+    // console.log(studentId, teacherId, termSubjectLevelId, sectionId, sendDate);
+    // Create AutomatedMailForParents record if it does not exist
+    if (!existingAutomatedMail?.id) {
+        await db.automatedMailForParents.create({
+            data: {
+                studentId: +studentId,
+                teacherId: +teacherId,
+                termSubjectLevelId: +termSubjectLevelId,
+                sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
+                className,
+                roomName,
+                sendDate,
+                isSent: false,
+                classTime
+            }
+        });
+    } else if (existingAutomatedMail?.isSent) {
+        throw customError('Mails are sent for today. Please assign feedback on the next working day.', 'fail', 404, true);
+    }
     const feedback = await db.feedback.create({
         data: {
             student: {
@@ -50,41 +86,5 @@ export async function createFeedback(
             isSent: false
         }
     });
-
-    // Check for existing AutomatedMailForParents record
-    const existingAutomatedMail = await db.automatedMailForParents.findFirst({
-        where: {
-            studentId: +studentId,
-            teacherId: +teacherId,
-            termSubjectLevelId: +termSubjectLevelId,
-            sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
-            // createdAt: {
-            //     gte: startDate,
-            //     lte: endDate
-            // },
-            sendDate,
-            isSent: false
-        }
-    });
-
-    // console.log(existingAutomatedMail);
-    // console.log(studentId, teacherId, termSubjectLevelId, sectionId, sendDate);
-    // Create AutomatedMailForParents record if it does not exist
-    if (!existingAutomatedMail) {
-        await db.automatedMailForParents.create({
-            data: {
-                studentId: +studentId,
-                teacherId: +teacherId,
-                termSubjectLevelId: +termSubjectLevelId,
-                sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
-                className,
-                roomName,
-                sendDate,
-                isSent: false,
-                classTime
-            }
-        });
-    }
-
     return feedback;
 }

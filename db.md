@@ -776,3 +776,6 @@ function isValidHttpUrl(string) {
 
     return url.protocol === "http:" || url.protocol === "https:";
 }
+{
+throw customError('Mails are sent for today. Please assign feedback, Homework,Classwork on the next working day.', 'fail', 404, true);
+        }
