@@ -27,6 +27,11 @@ export async function findSkipReportsForToday() {
                 include: {
                     teacherPersonalDetails: true
                 }
+            },
+            admin: {
+                include: {
+                    adminPersonalDetails: true
+                }
             }
             // Include teacher details
         }

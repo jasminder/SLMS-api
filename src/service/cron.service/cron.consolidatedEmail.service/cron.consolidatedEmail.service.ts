@@ -119,7 +119,7 @@ export async function consolidateStudentDataForEmail() {
             console.log('classworkEntries', classworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
             feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : 'No feedback';
-            emailContent += centerSeparator('-----------------------------') + '\n';
+            emailContent += centerSeparator('-----------------------------------------------------------') + '\n';
             emailContent += `Class: ${mailEntry.className}\n` + `Room: ${mailEntry.roomName}\n` + `Class Time: ${mailEntry.classTime}\n` + `Teacher: ${teacherName}\n\n`;
             // Append classwork attachments
 
@@ -233,12 +233,12 @@ export async function consolidateStudentDataForEmail() {
             // attachments = [...attachments, ...classworkAttachments];
 
             emailContent += `Feedback:\n${feedbackContent}\n`;
-            emailContent += centerSeparator('-----------------------------') + '\n';
+
             // emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
         }
-
-        // emailContent += `Feedback:\n${feedbackContent}\n`;
+        emailContent += centerSeparator('-----------------------------------------------------------') + '\n';
         emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
+        emailContent += '\nThis is an unmonitored mailbox. For any queries, please contact akaalshaouni@gmail.com\n';
 
         console.log('emailContent', emailContent);
 

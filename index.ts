@@ -47,6 +47,7 @@ import groupHomeworkRoute from './src/route/teacher.route/teacher.homework.route
 import sendConsolidatedEmailsRouter from './src/route/cron.consolidatedEmail.route/cron.consolidatedEmail.route';
 import classworkRoute from './src/route/classwork.route/classwork.route';
 import groupClassworkRoute from './src/route/teacher.route/teacher.classwork.route/teacher.classwork.route';
+import skipReportRoute from './src/route/admin.skip.report.route/admin.skip.report.route';
 
 const app = express();
 app.use(cookieParser());
@@ -103,6 +104,7 @@ app.use('/api/v1/admin/student/active', adminActiveStudentRoute);
 app.use('/api/v1/admin/student/update', adminStudentUpdateRoute);
 app.use('/api/v1/admin/applicant', adminEnrollmentRoute);
 app.use('/api/v1/admin/comment-on-student', commentRoute);
+app.use('/api/v1/admin/skip-report', skipReportRoute);
 app.use('/api/v1/admin/interactions', interactionRoute);
 
 app.use('/api/v1/admin/institution', adminInstitutionRoute);
