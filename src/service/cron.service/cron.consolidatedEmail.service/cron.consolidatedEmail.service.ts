@@ -151,12 +151,12 @@ export async function consolidateStudentDataForEmail() {
                     });
 
                     if (classworkSnapshots.length === 0) {
-                        emailContent += `${cwIndex + 1}) No description and no attachments.\n`;
+                        emailContent += `\n`;
                     } else {
                         for (const snapshot of classworkSnapshots) {
                             emailContent += `${cwIndex + 1}) `; // Prefix for each homework entry
                             if (!snapshot.description || snapshot.description.length === 0) {
-                                emailContent += '\n';
+                                emailContent += 'No Description. Please find the attachment(s):\n';
                             } else {
                                 emailContent += `Description: ${snapshot.description}\n`;
                             }
@@ -207,12 +207,12 @@ export async function consolidateStudentDataForEmail() {
                     });
 
                     if (homeworkSnapshots.length === 0) {
-                        emailContent += `${hwIndex + 1}) No description and no attachments.\n`;
+                        emailContent += `\n`;
                     } else {
                         for (const snapshot of homeworkSnapshots) {
                             emailContent += `${hwIndex + 1}) `; // Prefix for each homework entry
                             if (!snapshot.description || snapshot.description.length === 0) {
-                                emailContent += '\n';
+                                emailContent += 'No Description. Please find the attachment(s):\n';
                             } else {
                                 emailContent += `Description: ${snapshot.description}\n`;
                             }
