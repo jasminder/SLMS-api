@@ -43,3 +43,10 @@ export const closeSkipReportSchema = z.object({
 });
 
 export type CloseSkipReportSchema = z.infer<typeof closeSkipReportSchema>;
+export const findAllSkipReportsSchema = z.object({
+    query: z.object({
+        status: z.enum(['open', 'closed', 'both']).optional()
+    })
+});
+
+export type FindAllSkipReportsSchema = z.infer<typeof findAllSkipReportsSchema>;

@@ -1,6 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
-import { CloseSkipReportSchema, CreateSkipReportSchema, GetSkipReportsSchema, UpdateSkipReportReasonSchema } from '../../schema/admin.dto/admin.skip.report.dto/admin.skip.report.dto';
-import { closeSkipReport, createSkipReport, getSkipReports, updateSkipReportReason } from '../../service/admin.service/admin.skip.report.service/admin.skip.report.service';
+import {
+    CloseSkipReportSchema,
+    CreateSkipReportSchema,
+    FindAllSkipReportsSchema,
+    GetSkipReportsSchema,
+    UpdateSkipReportReasonSchema
+} from '../../schema/admin.dto/admin.skip.report.dto/admin.skip.report.dto';
+import { closeSkipReport, createSkipReport, findAllSkipReports, getSkipReports, updateSkipReportReason } from '../../service/admin.service/admin.skip.report.service/admin.skip.report.service';
 
 export const updateSkipReportReasonHandler = async (req: Request<UpdateSkipReportReasonSchema['params'], {}, UpdateSkipReportReasonSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { skipReportId } = req.params;
@@ -23,10 +29,17 @@ export const createSkipReportHandler = async (req: Request<CreateSkipReportSchem
     res.status(200).json(SkipReport);
 };
 
-
 export const closeSkipReportHandler = async (req: Request<CloseSkipReportSchema['params'], {}, CloseSkipReportSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { skipReportId } = req.params;
     const { reason, adminClosingRemarks } = req.body;
     const updatedReport = await closeSkipReport(skipReportId, reason, adminClosingRemarks);
     res.status(200).json(updatedReport);
+};
+
+export const findAllSkipReportsHandler = async (req: Request<{}, {}, {}, FindAllSkipReportsSchema['query']>, res: Response, next: NextFunction) => {
+    const { status } = req.query;
+    if (status) {
+        const skipReports = await findAllSkipReports(status);
+        res.status(200).json(skipReports);
+    }
 };

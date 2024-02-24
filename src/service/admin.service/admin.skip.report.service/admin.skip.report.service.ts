@@ -103,3 +103,36 @@ export async function closeSkipReport(skipReportId: string, reason: string, admi
     });
     return updatedReport;
 }
+export async function findAllSkipReports(status: string) {
+    let whereCondition = {};
+
+    if (status === 'open') {
+        whereCondition = { isClosed: false };
+    } else if (status === 'closed') {
+        whereCondition = { isClosed: true };
+    } else {
+        whereCondition = {};
+    }
+    const skipReports = await db.skipReport.findMany({
+        where: whereCondition,
+        include: {
+            student: {
+                include: {
+                    personalDetails: true
+                }
+            }, // Include student details
+            teacher: {
+                include: {
+                    teacherPersonalDetails: true
+                }
+            },
+            admin: {
+                include: {
+                    adminPersonalDetails: true
+                }
+            }
+            // Include teacher details
+        }
+    });
+    return skipReports;
+}

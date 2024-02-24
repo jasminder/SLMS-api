@@ -10,13 +10,13 @@ export async function findSkipReportsForToday() {
     const endDate = new Date();
     endDate.setHours(23, 59, 59, 999);
     const skipReports = await db.skipReport.findMany({
-        where: {
-            date: {
-                gte: startDate,
-                lte: endDate
-            },
-            isClosed: false
-        },
+        // where: {
+        //     date: {
+        //         gte: startDate,
+        //         lte: endDate
+        //     },
+        //     isClosed: false
+        // },
         include: {
             student: {
                 include: {
