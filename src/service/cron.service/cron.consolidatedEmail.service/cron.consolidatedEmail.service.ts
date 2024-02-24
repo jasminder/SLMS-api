@@ -118,7 +118,7 @@ export async function consolidateStudentDataForEmail() {
             console.log('homeworkEntries', homeworkEntries);
             console.log('classworkEntries', classworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
-            feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : 'No feedback';
+            feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : '';
             emailContent += centerSeparator('-----------------------------------------------------------') + '\n';
             emailContent += `Class: ${mailEntry.className}\n` + `Room: ${mailEntry.roomName}\n` + `Class Time: ${mailEntry.classTime}\n` + `Teacher: ${teacherName}\n\n`;
             // Append classwork attachments
