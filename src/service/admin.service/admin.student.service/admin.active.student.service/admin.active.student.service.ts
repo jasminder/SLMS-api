@@ -104,6 +104,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     if (searchAsNumber) {
+        console.log('inside searchAsNumber');
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
         const activeStudents = await db.student.findMany({
@@ -115,19 +116,21 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                ...(subjectOption
-                    ? {
-                          enrollments: {
-                              some: {
-                                  subjectEnrollment: {
-                                      termSubject: {
-                                          subject: { name: subjectOption }
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                    : {}),
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            ...(subjectOption && { subjectId: +subjectOption }),
+                            ...(levelOption && { levelId: +levelOption })
+                            // ...(termId && { termId: termId })
+                        },
+                        ...(sectionOption && {
+                            studentClassAssignment: {
+                                some: { sectionId: +sectionOption }
+                            }
+                        })
+                    }
+                },
+
                 OR: [
                     { id: searchAsNumber },
                     {
@@ -217,18 +220,20 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
+                enrollments: {
                     some: {
-                        termId: +termId,
-                        termSubjectGroup: {
-                            subject: {
-                                some: {
-                                    name: subjectOption
-                                }
+                        termSubjectLevel: {
+                            ...(subjectOption && { subjectId: +subjectOption }),
+                            ...(levelOption && { levelId: +levelOption })
+                        },
+                        ...(sectionOption && {
+                            studentClassAssignment: {
+                                some: { sectionId: +sectionOption }
                             }
-                        }
+                        })
                     }
                 },
+
                 OR: [
                     { id: searchAsNumber },
                     {
@@ -257,6 +262,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
         });
         return { activeStudents, count };
     } else if (!searchAsNumber) {
+        console.log('inside NOT `searchAsNumber');
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
         const activeStudents = await db.student.findMany({
@@ -268,19 +274,20 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                ...(subjectOption
-                    ? {
-                          enrollments: {
-                              some: {
-                                  subjectEnrollment: {
-                                      termSubject: {
-                                          subject: { name: subjectOption }
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                    : {}),
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            ...(subjectOption && { subjectId: +subjectOption }),
+                            ...(levelOption && { levelId: +levelOption })
+                        },
+                        ...(sectionOption && {
+                            studentClassAssignment: {
+                                some: { sectionId: +sectionOption }
+                            }
+                        })
+                    }
+                },
+
                 OR: [
                     {
                         personalDetails: {
@@ -369,18 +376,20 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
+                enrollments: {
                     some: {
-                        termId: +termId,
-                        termSubjectGroup: {
-                            subject: {
-                                some: {
-                                    name: subjectOption
-                                }
+                        termSubjectLevel: {
+                            ...(subjectOption && { subjectId: +subjectOption }),
+                            ...(levelOption && { levelId: +levelOption })
+                        },
+                        ...(sectionOption && {
+                            studentClassAssignment: {
+                                some: { sectionId: +sectionOption }
                             }
-                        }
+                        })
                     }
                 },
+
                 OR: [
                     {
                         personalDetails: {
@@ -671,7 +680,7 @@ export const findCurrentTermToAssignClass = async () => {
             termSubjectLevel: {
                 include: {
                     sections: {
-                        select: { name: true }
+                        select: { name: true, id: true }
                     },
                     level: { select: { name: true } },
                     subject: { select: { name: true } }

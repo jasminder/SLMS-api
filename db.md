@@ -779,3 +779,88 @@ function isValidHttpUrl(string) {
 {
 throw customError('Mails are sent for today. Please assign feedback, Homework,Classwork on the next working day.', 'fail', 404, true);
         }
+
+
+
+        async function fetchStudents({ subjectOption, termId, levelOption, sectionOption }) {
+    // Construct the base query conditions
+    let queryConditions = {
+        role: 'STUDENT',
+        isActive: true,
+        enrollments: {
+            some: {
+                subjectEnrollment: {
+                    isNot: null
+                }
+            }
+        }
+    };
+
+    // Add conditions for subject and term
+    if (subjectOption) {
+        queryConditions.enrollments.some.subjectEnrollment = {
+            ...queryConditions.enrollments.some.subjectEnrollment,
+            termSubject: {
+                subjectId: +subjectOption
+            }
+        };
+    }
+
+    if (termId) {
+        queryConditions.enrollments.some.subjectEnrollment.termSubject = {
+            ...queryConditions.enrollments.some.subjectEnrollment.termSubject,
+            termId: termId
+        };
+    }
+
+    // Add condition for level
+    if (levelOption) {
+        queryConditions.enrollments.some.termSubjectLevel = {
+            levelId: levelOption
+        };
+    }
+
+    // Add condition for section
+    if (sectionOption) {
+        queryConditions.enrollments.some.termSubjectLevel.sections = {
+            some: {
+                id: sectionOption
+            }
+        };
+    }
+
+    // Execute the query using Prisma
+    const students = await prisma.student.findMany({
+        where: queryConditions,
+        include: {
+            enrollments: {
+                include: {
+                    subjectEnrollment: {
+                        include: {
+                            termSubject: true
+                        }
+                    },
+                    termSubjectLevel: {
+                        include: {
+                            sections: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    return students;
+}
+
+// Example usage
+fetchStudents({
+    subjectOption: '1',  // Example subject ID
+    termId: '2022',      // Example term ID
+    levelOption: '1',    // Example level ID
+    sectionOption: '1'   // Example section ID
+}).then(students => {
+    console.log(students);
+}).catch(error => {
+    console.error('Error fetching students:', error);
+});
