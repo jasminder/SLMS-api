@@ -134,7 +134,8 @@ export async function consolidateStudentDataForEmail() {
             let classworkAttachments = classworkSnapshots.flatMap((snapshot) =>
                 snapshot.attachments.map((url) => ({
                     path: url,
-                    filename: url.split('/').pop() ?? ''
+                    filename: extractOriginalFileNameFromS3Url(url) ?? ''
+                    // filename: url.split('/').pop() ?? ''
                 }))
             );
             attachments = [...attachments, ...classworkAttachments];
@@ -189,7 +190,8 @@ export async function consolidateStudentDataForEmail() {
             let homeworkAttachments = homeworkSnapshots.flatMap((snapshot) =>
                 snapshot.attachments.map((url) => ({
                     path: url,
-                    filename: url.split('/').pop() ?? ''
+                    filename: extractOriginalFileNameFromS3Url(url) ?? ''
+                    // filename: url.split('/').pop() ?? ''
                 }))
             );
             attachments = [...attachments, ...homeworkAttachments];
