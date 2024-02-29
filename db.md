@@ -864,3 +864,22 @@ fetchStudents({
 }).catch(error => {
     console.error('Error fetching students:', error);
 });
+
+
+export async function findUnassignedStudents() {
+    // Find all students with enrollments, including their class assignments
+    const enrolledStudents = await db.enrollment.findMany({
+        include: {
+            student: true,
+            studentClassAssignments: true // Includes related class assignments
+        }
+    });
+
+    // Filter out students who have a class assignment
+    const unassignedStudents = enrolledStudents.filter(enrollment => {
+        // Check if the student has no class assignments
+        return enrollment.studentClassAssignments.length === 0;
+    }).map(enrollment => enrollment.student); // Extract student details
+
+    return unassignedStudents;
+}

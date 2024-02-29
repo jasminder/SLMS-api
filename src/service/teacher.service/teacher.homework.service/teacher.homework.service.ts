@@ -66,7 +66,7 @@ export async function createGroupHomework(
                 sendDate: sendDate
             }
         });
-        console.log(existingAutomatedMail);
+        // console.log(existingAutomatedMail);
         if (!existingAutomatedMail?.id) {
             await db.automatedMailForParents.create({
                 data: {
@@ -122,6 +122,7 @@ export async function createGroupHomework(
                 sectionId: +sectionId
             }
         });
+        console.log(groupHomework, 'groupHomework');
         // }
         // Create HomeworkSnapshot for each Homework ID
         for (const homeworkId of homeworkIds) {

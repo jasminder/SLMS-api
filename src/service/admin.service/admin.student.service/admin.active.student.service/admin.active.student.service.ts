@@ -116,6 +116,11 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
+                studentTermFee: {
+                    some: {
+                        termId: termId
+                    }
+                },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
@@ -219,7 +224,11 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
         const count = await db.student.count({
             where: {
                 role: 'STUDENT',
-                isActive: true,
+                isActive: true,studentTermFee: {
+                    some: {
+                        termId: termId
+                    }
+                },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
@@ -273,7 +282,11 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             },
             where: {
                 role: 'STUDENT',
-                isActive: true,
+                isActive: true,studentTermFee: {
+                    some: {
+                        termId: termId
+                    }
+                },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
@@ -375,7 +388,11 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
         const count = await db.student.count({
             where: {
                 role: 'STUDENT',
-                isActive: true,
+                isActive: true,studentTermFee: {
+                    some: {
+                        termId: termId
+                    }
+                },
                 enrollments: {
                     some: {
                         termSubjectLevel: {

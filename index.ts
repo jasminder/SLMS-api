@@ -48,6 +48,7 @@ import sendConsolidatedEmailsRouter from './src/route/cron.consolidatedEmail.rou
 import classworkRoute from './src/route/classwork.route/classwork.route';
 import groupClassworkRoute from './src/route/teacher.route/teacher.classwork.route/teacher.classwork.route';
 import skipReportRoute from './src/route/admin.skip.report.route/admin.skip.report.route';
+import adminDashboardRoute from './src/route/admin.route/admin.dashboard.route/admin.dashboard.route';
 
 const app = express();
 app.use(cookieParser());
@@ -106,7 +107,7 @@ app.use('/api/v1/admin/applicant', adminEnrollmentRoute);
 app.use('/api/v1/admin/comment-on-student', commentRoute);
 app.use('/api/v1/admin/skip-report', skipReportRoute);
 app.use('/api/v1/admin/interactions', interactionRoute);
-
+app.use('/api/v1/admin/dashboard', adminDashboardRoute);
 app.use('/api/v1/admin/institution', adminInstitutionRoute);
 
 /*Attendance and check in and checkout*/
