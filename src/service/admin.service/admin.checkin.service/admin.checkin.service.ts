@@ -12,6 +12,19 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
 
+    let schoolDayRecord = await db.schoolDay.findFirst({
+        where: { schoolOperatedDate: startDate }
+    });
+
+    if (!schoolDayRecord) {
+        schoolDayRecord = await db.schoolDay.create({
+            data: {
+                schoolOperatedDate: startDate
+
+                // other fields if necessary
+            }
+        });
+    }
     // Create a Prisma transaction
     const transaction = await db.$transaction(
         async (db) => {

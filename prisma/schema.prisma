@@ -591,6 +591,8 @@ model SchoolCheckInAttendance {
 
   student         Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
   classAttendance ClassAttendance[]
+  SchoolDay       SchoolDay?        @relation(fields: [schoolDayId], references: [id])
+  schoolDayId     Int?
 
   @@unique([studentId, date]) // Ensuring uniqueness for check-in entry per student per day
 }
@@ -604,6 +606,8 @@ model ClassAttendance {
   remarks                   String?                 @default("NA") // Optional field for any notes
   schoolCheckInAttendance   SchoolCheckInAttendance @relation(fields: [schoolCheckInAttendanceId], references: [id])
   studentClassAssignment    StudentClassAssignment  @relation(fields: [studentClassAssignmentId], references: [id], onDelete: Cascade)
+  SchoolDay                 SchoolDay?              @relation(fields: [schoolDayId], references: [id])
+  schoolDayId               Int?
 
   @@unique([studentClassAssignmentId, date]) // Ensuring uniqueness for attendance entry per class per day
 }
@@ -873,4 +877,15 @@ model Institution {
   updatedAt        DateTime @updatedAt
 
   // You can add other fields or relationships as required
+}
+
+model SchoolDay {
+  id                 Int                       @id @default(autoincrement())
+  schoolOperatedDate DateTime // The date the school operated
+  schoolAttendances  SchoolCheckInAttendance[] // Relationship with SchoolCheckInAttendance
+  classAttendances   ClassAttendance[] // Relationship with ClassAttendance
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  // You might want to add additional fields like notes or special events on that day
 }
