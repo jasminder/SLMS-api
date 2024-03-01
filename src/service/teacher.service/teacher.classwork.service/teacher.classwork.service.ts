@@ -147,11 +147,20 @@ export async function createGroupClasswork(
 
 /*get assignedclassworks*/
 export async function findAssignedClassworks(teacherId: string, termSubjectLevelId: string, sectionId: string) {
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     return await db.groupClasswork.findMany({
         where: {
             teacherId: parseInt(teacherId),
             termSubjectLevelId: parseInt(termSubjectLevelId),
-            sectionId: parseInt(sectionId)
+            sectionId: parseInt(sectionId),
+            createdAt: {
+                gte: startDate,
+                lte: endDate
+            }
         },
         include: {
             ClassworkSnapshot: {

@@ -105,11 +105,20 @@ export async function findAllClassworksBySubjectsList(termSubjectLevelIdsArray: 
 
 /* Find all classwork records for a termsubjectlevelid and sectionid */
 export async function findAllClassworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
     const classworks = await db.classwork.findMany({
         where: {
             termSubjectLevelId: +termSubjectLevelId,
             sectionId: +sectionId,
-            teacherId: +teacherId
+            teacherId: +teacherId,
+            createdAt: {
+                gte: startDate,
+                lte: endDate
+            }
         },
         include: {
             subject: true,
