@@ -56,6 +56,7 @@ export const activeStudentEnrollDataSchema = z.object({
     })
 });
 export type ActiveStudentEnrollDataSchema = z.infer<typeof activeStudentEnrollDataSchema>;
+
 export const findTermSubjectGroupIdEnrolledSubjectsSchema = z.object({
     params: z.object({
         id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
