@@ -1,21 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import { customError } from '../../../utils/customError';
+import { setSendDate } from '../../../utils/setSendDate';
 
 const db = new PrismaClient();
 
-async function getNextScheduledDate() {
-    const now = new Date();
-    const nextSunday = new Date(now);
-    nextSunday.setDate(now.getDate() + (7 - now.getDay())); // Set to next Sunday
-    nextSunday.setHours(16, 30, 0, 0); // Set to 4:30 PM
 
-    // If it's already past 4:30 PM on Sunday, set to the Sunday of the next week
-    if (now > nextSunday) {
-        nextSunday.setDate(nextSunday.getDate() + 7);
-    }
-
-    return nextSunday;
-}
 
 async function updateGroupClassworkAttachments(groupClassworkId: string, classworkDetails: { attachments: string; description: string }[]) {
     const existingGroupClasswork = await db.groupClasswork.findUnique({
@@ -45,7 +34,7 @@ export async function createGroupClasswork(
     classTime: string,
     classworkIds: string[]
 ) {
-    const sendDate = await getNextScheduledDate();
+    const sendDate = await setSendDate();
     const startDate = new Date();
     startDate.setHours(0, 0, 0, 0);
 

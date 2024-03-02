@@ -32,7 +32,7 @@ export async function createGroupHomework(
     classTime: string,
     homeworkIds: string[]
 ) {
-    const sendDate = await setSendDate();
+    const sendDate =  setSendDate();
     const startDate = new Date();
     startDate.setHours(0, 0, 0, 0);
 
