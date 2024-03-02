@@ -202,4 +202,3 @@ export async function getGenderDistributionForCurrentTerm(): Promise<GenderDistr
 
     return genderDistribution;
 }
-

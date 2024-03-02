@@ -1,19 +1,7 @@
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
+import { setSendDate } from '../../../utils/setSendDate';
 
-export function getNextSundayAtFourThirty() {
-    const now = new Date();
-    const nextSunday = new Date(now);
-    nextSunday.setDate(now.getDate() + (7 - now.getDay())); // Set to next Sunday
-    nextSunday.setHours(16, 30, 0, 0); // Set to 4:30 PM
-
-    // If it's already past 4:30 PM on Sunday, set to the Sunday of the next week
-    if (now > nextSunday) {
-        nextSunday.setDate(nextSunday.getDate() + 7);
-    }
-
-    return nextSunday;
-}
 
 export async function createFeedback(
     studentId: string,
@@ -26,7 +14,7 @@ export async function createFeedback(
     roomName: string,
     classTime: string
 ) {
-    const sendDate = getNextSundayAtFourThirty();
+    const sendDate = setSendDate();
     const startDate = new Date();
     startDate.setHours(0, 0, 0, 0);
 

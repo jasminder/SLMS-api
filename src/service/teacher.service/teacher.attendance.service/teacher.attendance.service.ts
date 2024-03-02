@@ -1,5 +1,6 @@
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
+import { setSendDate } from '../../../utils/setSendDate';
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
 
@@ -173,7 +174,7 @@ export async function getLastFiveClassAttendances(studentId: string, studentClas
 }
 /*create automated emails record for all students in the class*/
 export async function createAutomatedMailForParents(studentIds: string[], teacherId: string, termSubjectLevelId: string, sectionId: string, className: string, roomName: string, classTime: string) {
-    const sendDate = getNextSundayAtFourThirty();
+    const sendDate = setSendDate();
     let createdMails = [];
 
     // Iterate over each student ID
@@ -210,22 +211,9 @@ export async function createAutomatedMailForParents(studentIds: string[], teache
     return createdMails;
 }
 
-function getNextSundayAtFourThirty() {
-    const now = new Date();
-    const nextSunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (7 - now.getDay()));
-    nextSunday.setHours(16, 30, 0, 0);
-
-    // If it's already past 4:30 PM on Sunday, set to the Sunday of the next week
-    if (now > nextSunday) {
-        nextSunday.setDate(nextSunday.getDate() + 7);
-    }
-
-    return nextSunday;
-}
-
 /*get all automated emails for parenst for students in a class*/
 export async function findAutomatedMail(studentIds: string[], termSubjectLevelId: string, sectionId: string, teacherId: string) {
-    const sendDate = getNextSundayAtFourThirty();
+    const sendDate = setSendDate();
     const numericStudentIds = studentIds.map(Number);
     const mails = await db.automatedMailForParents.findMany({
         where: {

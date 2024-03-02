@@ -3,13 +3,14 @@ import { InteractionType, PrismaClient } from '@prisma/client';
 import { sendConsolidatedEmail } from '../../AutomatedEmailForParents.service/AutomatedEmailForParents.service';
 import { format } from 'date-fns';
 import { capitalizeFirstCharacter } from '../../../utils/capitalizeFirstCharacter';
-import { getNextSundayAtFourThirty } from '../../teacher.service/teacher.feedback.service/teacher.feedback.service';
+
 import { GroupHomework, GroupClasswork, Feedback, HomeworkSnapshot, ClassworkSnapshot } from '@prisma/client';
+import { setSendDate } from '../../../utils/setSendDate';
 
 const db = new PrismaClient();
 
 export async function consolidateStudentDataForEmail() {
-    const sendDate = getNextSundayAtFourThirty();
+    const sendDate = setSendDate();
     const today = new Date();
     const formattedDate = format(today, 'dd-MM-yyyy');
     const startDate = new Date();
