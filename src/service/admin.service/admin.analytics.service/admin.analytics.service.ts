@@ -151,13 +151,16 @@ export async function getStudentsCountPerTerm() {
             }
         }
     });
+    return termsWithStudentCount.map((term) => {
+        // Use a Set to store unique student IDs
+        const uniqueStudentIds = new Set(term.studentTermFee.map((fee) => fee.studentId));
 
-    // Mapping to get the count of students per term
-    return termsWithStudentCount.map((term) => ({
-        termId: term.id,
-        termName: term.name,
-        studentCount: term.studentTermFee.length
-    }));
+        return {
+            termId: term.id,
+            termName: term.name,
+            studentCount: uniqueStudentIds.size // Count of unique student IDs
+        };
+    });
 }
 
 type GenderDistribution = {
@@ -191,14 +194,14 @@ export async function getGenderDistributionForCurrentTerm(): Promise<GenderDistr
             }
         }
     });
-
-    // Transform the result into a more readable format
+    console.log(genderCounts);
+    // Transform the result into a more readable format and consolidate gender cases
     const genderDistribution: GenderDistribution = {};
     genderCounts.forEach((count) => {
-        if (count.gender) {
-            genderDistribution[count.gender] = count._count.gender;
-        }
+        const genderKey = count.gender ? count.gender.toLowerCase() : 'unknown'; // Normalize to lower case
+        genderDistribution[genderKey] = (genderDistribution[genderKey] || 0) + count._count.gender;
     });
 
+    console.log(genderDistribution);
     return genderDistribution;
 }
