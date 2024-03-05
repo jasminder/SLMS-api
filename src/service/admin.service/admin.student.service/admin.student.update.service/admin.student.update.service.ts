@@ -51,7 +51,7 @@ export async function updateStudentPersonalDetail(id: string, data: UpdateStuden
 
 // update student parents details service
 export async function updateStudentParentsDetail(id: string, data: UpdateStudentParentsDetailSchema['body']['data']) {
-    const { parentContact, parentEmail } = data;
+    const { parentContact, parentEmail, fatherName, motherName } = data;
     try {
         const updateStudent = await db.student.update({
             where: {
@@ -61,7 +61,9 @@ export async function updateStudentParentsDetail(id: string, data: UpdateStudent
                 parentsDetails: {
                     update: {
                         parentContact,
-                        parentEmail
+                        parentEmail,
+                        fatherName,
+                        motherName
                     }
                 }
             }

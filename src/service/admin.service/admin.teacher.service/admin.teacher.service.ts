@@ -192,6 +192,7 @@ export async function findTeacherById(id: string) {
         select: {
             id: true,
             role: true,
+            isActive: true,
             createdAt: true,
             teacherPersonalDetails: {
                 select: {

@@ -27,7 +27,6 @@ export const PersonalSchema = z.object({
     image: z.string().optional()
 });
 export const ParentsSchema = z.object({
-    id: z.string(),
     fatherName: z.string(),
     motherName: z.string(),
     parentEmail: z.string(),
