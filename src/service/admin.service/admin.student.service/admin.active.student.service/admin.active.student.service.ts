@@ -80,6 +80,11 @@ export async function findActiveStudents(page: number, termId: number) {
                     otherInfo: true,
                     declaration: true
                 }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
             }
         }
     });
@@ -218,13 +223,19 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         otherInfo: true,
                         declaration: true
                     }
+                },
+                skipReport: {
+                    select: {
+                        isClosed: true
+                    }
                 }
             }
         });
         const count = await db.student.count({
             where: {
                 role: 'STUDENT',
-                isActive: true,studentTermFee: {
+                isActive: true,
+                studentTermFee: {
                     some: {
                         termId: termId
                     }
@@ -282,7 +293,8 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             },
             where: {
                 role: 'STUDENT',
-                isActive: true,studentTermFee: {
+                isActive: true,
+                studentTermFee: {
                     some: {
                         termId: termId
                     }
@@ -382,13 +394,19 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         otherInfo: true,
                         declaration: true
                     }
+                },
+                skipReport: {
+                    select: {
+                        isClosed: true
+                    }
                 }
             }
         });
         const count = await db.student.count({
             where: {
                 role: 'STUDENT',
-                isActive: true,studentTermFee: {
+                isActive: true,
+                studentTermFee: {
                     some: {
                         termId: termId
                     }

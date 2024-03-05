@@ -8,10 +8,13 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
 
     const startDate = new Date(date);
     startDate.setHours(0, 0, 0, 0);
-
+    const some = new Date();
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
-
+    console.log(startDate, 'startDate');
+    console.log(endDate, 'endDate');
+    console.log(date, 'from client side date');
+    console.log(some, 'date created from new Date()');
     let schoolDayRecord = await db.schoolDay.findFirst({
         where: { schoolOperatedDate: startDate }
     });
@@ -96,7 +99,8 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                 const newAttendanceRecord = await db.schoolCheckInAttendance.create({
                     data: {
                         studentId: student.id,
-                        date: new Date(date)
+                        date: new Date(date),
+                        schoolDayId: schoolDayRecord?.id
                         // other fields if necessary
                     }
                 });
@@ -139,7 +143,8 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                 studentClassAssignmentId: assignment.id,
                                 date: startDate,
                                 schoolCheckInAttendanceId: newAttendanceRecord.id,
-                                attendanceStatus: 'ABSENT'
+                                attendanceStatus: 'ABSENT',
+                                schoolDayId: schoolDayRecord?.id
                                 // other fields if necessary
                             }
                         });

@@ -132,12 +132,13 @@ export async function getActiveStudentsPerSubject() {
 }
 
 export async function getPresentAttendances() {
-    return await db.classAttendance.findMany({
+    return await db.schoolCheckInAttendance.findMany({
         where: {
-            attendanceStatus: 'PRESENT'
+            checkedIn: true,
+            isMarked: true
         },
         include: {
-            studentClassAssignment: true // or any other related data you need
+            SchoolDay: true
         }
     });
 }
@@ -194,7 +195,7 @@ export async function getGenderDistributionForCurrentTerm(): Promise<GenderDistr
             }
         }
     });
-    console.log(genderCounts);
+
     // Transform the result into a more readable format and consolidate gender cases
     const genderDistribution: GenderDistribution = {};
     genderCounts.forEach((count) => {
@@ -202,6 +203,5 @@ export async function getGenderDistributionForCurrentTerm(): Promise<GenderDistr
         genderDistribution[genderKey] = (genderDistribution[genderKey] || 0) + count._count.gender;
     });
 
-    console.log(genderDistribution);
     return genderDistribution;
 }

@@ -16,6 +16,8 @@ export const findAllActiveStudentsSchema = z.object({
     })
 });
 export type FindAllActiveStudentsSchema = z.infer<typeof findAllActiveStudentsSchema>;
+
+
 export const findStudentFeeDetailsSchema = z.object({
     params: z.object({
         studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })

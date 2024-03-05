@@ -56,7 +56,7 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
     console.log(previousSchoolDay, 'previousSchoolDay');
     // Function to fetch attendance for a given school day
     const fetchAttendance = async (schoolDay: SchoolDay | null) => {
-        if (!schoolDay) return { totalCheckedIn: [], totalCheckedOut: [], totalAbsent: [], totalLeave: [],totalPresent:[] };
+        if (!schoolDay) return { totalCheckedIn: [], totalCheckedOut: [], totalAbsent: [], totalLeave: [], totalPresent: [] };
 
         const startDate = new Date(schoolDay.schoolOperatedDate);
         startDate.setHours(0, 0, 0, 0);
@@ -139,7 +139,7 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
             }
         });
 
-        return { totalCheckedIn, totalCheckedOut, totalAbsent, totalLeave ,totalPresent};
+        return { totalCheckedIn, totalCheckedOut, totalAbsent, totalLeave, totalPresent };
     };
 
     // Fetch attendance for the most recent school day and the previous school day
@@ -259,4 +259,482 @@ export async function fetchStudentsOnAttendance(dateString: string) {
     });
 
     return attendanceRecords;
+}
+export async function findActiveStudentsWithFlags(page: number, termId: number) {
+    const take = 10;
+    const pageNum = page ?? 0;
+    const skip = pageNum * take;
+
+    const activeStudents = await db.student.findMany({
+        where: {
+            role: 'STUDENT',
+            isActive: true,
+            studentTermFee: {
+                some: {
+                    termId: +termId
+                }
+            },
+            skipReport: {
+                some: {
+                    isClosed: false
+                }
+            }
+        },
+        skip,
+        take,
+        orderBy: {
+            createdAt: 'desc'
+        },
+        select: {
+            id: true,
+            role: true,
+            isActive: true,
+            updatedAt: true,
+            createdAt: true,
+            personalDetails: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    DOB: true,
+                    gender: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    state: true,
+                    country: true,
+                    postcode: true,
+                    image: true
+                }
+            },
+            parentsDetails: {
+                select: {
+                    id: true,
+                    fatherName: true,
+                    motherName: true,
+                    parentEmail: true,
+                    parentContact: true
+                }
+            },
+            emergencyContact: {
+                select: {
+                    id: true,
+                    contactPerson: true,
+                    contactNumber: true,
+                    relationship: true
+                }
+            },
+            healthInformation: {
+                select: {
+                    id: true,
+                    medicareNumber: true,
+                    ambulanceMembershipNumber: true,
+                    medicalCondition: true,
+                    allergy: true
+                }
+            },
+            subjectRelated: true,
+            subjectsChosen: true,
+            otherInformation: {
+                select: {
+                    id: true,
+                    otherInfo: true,
+                    declaration: true
+                }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
+            }
+        }
+    });
+
+    const count = await db.student.count({
+        where: {
+            role: 'STUDENT',
+            isActive: true,
+            studentTermFee: {
+                some: {
+                    termId: termId
+                }
+            },
+            skipReport: {
+                some: {
+                    isClosed: false
+                }
+            }
+        }
+    });
+
+    return { activeStudents, count };
+}
+export async function searchActiveStudentsWithFlags(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '') {
+    const take = 10;
+    const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+    if (searchAsNumber) {
+        console.log('inside searchAsNumber');
+        const pageNum: number = page ?? 0;
+        const skip = pageNum * take;
+        const activeStudents = await db.student.findMany({
+            skip,
+            take,
+            orderBy: {
+                createdAt: 'desc'
+            },
+            where: {
+                role: 'STUDENT',
+                isActive: true,
+                studentTermFee: {
+                    some: {
+                        termId: termId
+                    }
+                },
+                skipReport: {
+                    some: {
+                        isClosed: false
+                    }
+                },
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            ...(subjectOption && { subjectId: +subjectOption }),
+                            ...(levelOption && { levelId: +levelOption })
+                            // ...(termId && { termId: termId })
+                        },
+                        ...(sectionOption && {
+                            studentClassAssignment: {
+                                some: { sectionId: +sectionOption }
+                            }
+                        })
+                    }
+                },
+
+                OR: [
+                    { id: searchAsNumber },
+                    {
+                        personalDetails: {
+                            OR: [
+                                { firstName: { contains: search, mode: 'insensitive' } },
+                                { lastName: { contains: search, mode: 'insensitive' } },
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { contact: { contains: search, mode: 'insensitive' } },
+                                { postcode: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    },
+                    {
+                        parentsDetails: {
+                            OR: [
+                                { fatherName: { contains: search, mode: 'insensitive' } },
+                                { motherName: { contains: search, mode: 'insensitive' } },
+                                { parentEmail: { contains: search, mode: 'insensitive' } },
+                                { parentContact: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    }
+                ]
+            },
+            select: {
+                id: true,
+                role: true,
+                isActive: true,
+                updatedAt: true,
+                createdAt: true,
+                personalDetails: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        DOB: true,
+                        gender: true,
+                        email: true,
+                        contact: true,
+                        address: true,
+                        suburb: true,
+                        state: true,
+                        country: true,
+                        postcode: true,
+                        image: true
+                    }
+                },
+                parentsDetails: {
+                    select: {
+                        id: true,
+                        fatherName: true,
+                        motherName: true,
+                        parentEmail: true,
+                        parentContact: true
+                    }
+                },
+                emergencyContact: {
+                    select: {
+                        id: true,
+                        contactPerson: true,
+                        contactNumber: true,
+                        relationship: true
+                    }
+                },
+                healthInformation: {
+                    select: {
+                        id: true,
+                        medicareNumber: true,
+                        ambulanceMembershipNumber: true,
+                        medicalCondition: true,
+                        allergy: true
+                    }
+                },
+                subjectRelated: true,
+                subjectsChosen: true,
+                otherInformation: {
+                    select: {
+                        id: true,
+                        otherInfo: true,
+                        declaration: true
+                    }
+                },
+                skipReport: {
+                    select: {
+                        isClosed: true
+                    }
+                }
+            }
+        });
+        const count = await db.student.count({
+            where: {
+                role: 'STUDENT',
+                isActive: true,
+                studentTermFee: {
+                    some: {
+                        termId: termId
+                    }
+                },
+                skipReport: {
+                    some: {
+                        isClosed: false
+                    }
+                },
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            ...(subjectOption && { subjectId: +subjectOption }),
+                            ...(levelOption && { levelId: +levelOption })
+                        },
+                        ...(sectionOption && {
+                            studentClassAssignment: {
+                                some: { sectionId: +sectionOption }
+                            }
+                        })
+                    }
+                },
+
+                OR: [
+                    { id: searchAsNumber },
+                    {
+                        personalDetails: {
+                            OR: [
+                                { firstName: { contains: search, mode: 'insensitive' } },
+                                { lastName: { contains: search, mode: 'insensitive' } },
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { contact: { contains: search, mode: 'insensitive' } },
+                                { postcode: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    },
+                    {
+                        parentsDetails: {
+                            OR: [
+                                { fatherName: { contains: search, mode: 'insensitive' } },
+                                { motherName: { contains: search, mode: 'insensitive' } },
+                                { parentEmail: { contains: search, mode: 'insensitive' } },
+                                { parentContact: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    }
+                ]
+            }
+        });
+        return { activeStudents, count };
+    } else if (!searchAsNumber) {
+        console.log('inside NOT `searchAsNumber');
+        const pageNum: number = page ?? 0;
+        const skip = pageNum * take;
+        const activeStudents = await db.student.findMany({
+            skip,
+            take,
+            orderBy: {
+                createdAt: 'desc'
+            },
+            where: {
+                role: 'STUDENT',
+                isActive: true,
+                studentTermFee: {
+                    some: {
+                        termId: termId
+                    }
+                },
+                skipReport: {
+                    some: {
+                        isClosed: false
+                    }
+                },
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            ...(subjectOption && { subjectId: +subjectOption }),
+                            ...(levelOption && { levelId: +levelOption })
+                        },
+                        ...(sectionOption && {
+                            studentClassAssignment: {
+                                some: { sectionId: +sectionOption }
+                            }
+                        })
+                    }
+                },
+
+                OR: [
+                    {
+                        personalDetails: {
+                            OR: [
+                                { firstName: { contains: search, mode: 'insensitive' } },
+                                { lastName: { contains: search, mode: 'insensitive' } },
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { contact: { contains: search, mode: 'insensitive' } },
+                                { postcode: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    },
+                    {
+                        parentsDetails: {
+                            OR: [
+                                { fatherName: { contains: search, mode: 'insensitive' } },
+                                { motherName: { contains: search, mode: 'insensitive' } },
+                                { parentEmail: { contains: search, mode: 'insensitive' } },
+                                { parentContact: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    }
+                ]
+            },
+            select: {
+                id: true,
+                role: true,
+                isActive: true,
+                updatedAt: true,
+                createdAt: true,
+                personalDetails: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        DOB: true,
+                        gender: true,
+                        email: true,
+                        contact: true,
+                        address: true,
+                        suburb: true,
+                        state: true,
+                        country: true,
+                        postcode: true,
+                        image: true
+                    }
+                },
+                parentsDetails: {
+                    select: {
+                        id: true,
+                        fatherName: true,
+                        motherName: true,
+                        parentEmail: true,
+                        parentContact: true
+                    }
+                },
+                emergencyContact: {
+                    select: {
+                        id: true,
+                        contactPerson: true,
+                        contactNumber: true,
+                        relationship: true
+                    }
+                },
+                healthInformation: {
+                    select: {
+                        id: true,
+                        medicareNumber: true,
+                        ambulanceMembershipNumber: true,
+                        medicalCondition: true,
+                        allergy: true
+                    }
+                },
+                subjectRelated: true,
+                subjectsChosen: true,
+                otherInformation: {
+                    select: {
+                        id: true,
+                        otherInfo: true,
+                        declaration: true
+                    }
+                },
+                skipReport: {
+                    select: {
+                        isClosed: true
+                    }
+                }
+            }
+        });
+        const count = await db.student.count({
+            where: {
+                role: 'STUDENT',
+                isActive: true,
+                studentTermFee: {
+                    some: {
+                        termId: termId
+                    }
+                },
+                skipReport: {
+                    some: {
+                        isClosed: false
+                    }
+                },
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            ...(subjectOption && { subjectId: +subjectOption }),
+                            ...(levelOption && { levelId: +levelOption })
+                        },
+                        ...(sectionOption && {
+                            studentClassAssignment: {
+                                some: { sectionId: +sectionOption }
+                            }
+                        })
+                    }
+                },
+
+                OR: [
+                    {
+                        personalDetails: {
+                            OR: [
+                                { firstName: { contains: search, mode: 'insensitive' } },
+                                { lastName: { contains: search, mode: 'insensitive' } },
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { contact: { contains: search, mode: 'insensitive' } },
+                                { postcode: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    },
+                    {
+                        parentsDetails: {
+                            OR: [
+                                { fatherName: { contains: search, mode: 'insensitive' } },
+                                { motherName: { contains: search, mode: 'insensitive' } },
+                                { parentEmail: { contains: search, mode: 'insensitive' } },
+                                { parentContact: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    }
+                ]
+            }
+        });
+        return { activeStudents, count };
+    }
 }
