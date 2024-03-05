@@ -515,7 +515,13 @@ export async function findActiveStudentById(id: string) {
             },
             enrollments: {
                 select: {
-                    subjectEnrollment: true
+                    subjectEnrollment: true,
+                    createdAt: true
+                }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
                 }
             }
         }
