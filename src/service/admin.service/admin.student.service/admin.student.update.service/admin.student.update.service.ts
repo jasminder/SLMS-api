@@ -16,7 +16,7 @@ export async function updateStudentPersonalDetail(id: string, data: UpdateStuden
             OR: [{ email }, { contact }]
         }
     });
-
+    console.log('update student*********************');
     /***********************************************************/
     /***********************************************************/
     try {

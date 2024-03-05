@@ -50,6 +50,7 @@ import groupClassworkRoute from './src/route/teacher.route/teacher.classwork.rou
 import skipReportRoute from './src/route/admin.skip.report.route/admin.skip.report.route';
 import adminDashboardRoute from './src/route/admin.route/admin.dashboard.route/admin.dashboard.route';
 import adminAnalyticsRoute from './src/route/admin.route/admin.analytics.route/admin.analytics.route';
+import adminTeacherUpdateRoute from './src/route/admin.route/admin.teacher.route/admin.teacher.update.route/admin.teacher.update.route';
 
 const app = express();
 app.use(cookieParser());
@@ -104,6 +105,7 @@ app.use('/api/v1/admin/student/enrolled', adminEnrolledStudentRoute);
 app.use('/api/v1/admin/student/late-enrolled', adminLateEnrolledStudentRoute);
 app.use('/api/v1/admin/student/active', adminActiveStudentRoute);
 app.use('/api/v1/admin/student/update', adminStudentUpdateRoute);
+app.use('/api/v1/admin/teacher/update', adminTeacherUpdateRoute);
 app.use('/api/v1/admin/applicant', adminEnrollmentRoute);
 app.use('/api/v1/admin/comment-on-student', commentRoute);
 app.use('/api/v1/admin/skip-report', skipReportRoute);
