@@ -10,6 +10,7 @@ export async function findAllTeachers() {
         select: {
             id: true,
             role: true,
+            isActive: true,
             createdAt: true,
             teacherPersonalDetails: {
                 select: {
@@ -108,6 +109,7 @@ export async function searchTeachers(search: string) {
         select: {
             id: true,
             role: true,
+            isActive: true,
             createdAt: true,
             teacherPersonalDetails: {
                 select: {
