@@ -40,6 +40,30 @@ export async function fetchCheckedInStudentsForCheckout() {
                             lastName: true,
                             email: true
                         }
+                    },
+                    schoolCheckInAttendance: {
+                        orderBy: {
+                            date: 'desc'
+                        },
+                        take: 3
+                    },skipReport: {
+                        include: {
+                            student: {
+                                include: {
+                                    personalDetails: true
+                                }
+                            }, // Include student details
+                            teacher: {
+                                include: {
+                                    teacherPersonalDetails: true
+                                }
+                            },
+                            admin: {
+                                include: {
+                                    adminPersonalDetails: true
+                                }
+                            }
+                        }
                     }
                 }
             },
