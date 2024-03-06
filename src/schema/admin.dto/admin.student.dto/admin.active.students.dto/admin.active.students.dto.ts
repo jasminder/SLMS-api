@@ -17,7 +17,6 @@ export const findAllActiveStudentsSchema = z.object({
 });
 export type FindAllActiveStudentsSchema = z.infer<typeof findAllActiveStudentsSchema>;
 
-
 export const findStudentFeeDetailsSchema = z.object({
     params: z.object({
         studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
@@ -118,7 +117,7 @@ export type AssignClassToStudentSchema = z.infer<typeof assignClassToStudentSche
 export const manageClassSchema = z.object({
     params: z.object({
         id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
-    }),
+    })
 });
 export type ManageClassSchema = z.infer<typeof manageClassSchema>;
 
@@ -126,6 +125,15 @@ export type ManageClassSchema = z.infer<typeof manageClassSchema>;
 export const deleteClassAssignmentSchema = z.object({
     params: z.object({
         id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
-    }),
+    })
 });
 export type DeleteClassAssignmentSchema = z.infer<typeof deleteClassAssignmentSchema>;
+
+// last two schoolattendanace
+export const fetchRecentSchoolAttendanceSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Student ID is required' })
+    })
+});
+
+export type FetchRecentSchoolAttendanceSchema = z.infer<typeof fetchRecentSchoolAttendanceSchema>;

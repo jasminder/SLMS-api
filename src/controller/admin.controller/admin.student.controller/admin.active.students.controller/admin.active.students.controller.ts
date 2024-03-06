@@ -5,6 +5,7 @@ import {
     deEnrollActiveStudent,
     deleteClassAssignment,
     enrollActiveStudent,
+    fetchRecentSchoolAttendanceForStudent,
     findActiveStudentById,
     findActiveStudentEnrolledSubjects,
     findActiveStudents,
@@ -22,6 +23,7 @@ import {
     ActiveStudentEnrollDataSchema,
     AssignClassToStudentSchema,
     DeleteClassAssignmentSchema,
+    FetchRecentSchoolAttendanceSchema,
     FindActiveStudentEnrolledSubjectsSchema,
     FindAllActiveStudentsSchema,
     FindStudentFeeDetailsSchemaSchema,
@@ -29,7 +31,6 @@ import {
     FindUniqueActiveStudentSchema,
     FindUniqueFeePaymentSchema,
     ManageClassSchema,
-
     SearchActiveStudentsSchema,
     UpdateAmountPaidSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
@@ -166,4 +167,10 @@ export const deEnrollActiveStudentHandler = async (req: Request<{}, {}, ActiveSt
 export const findTermToEnrollActiveStudentHandler = async (req: Request<{}, {}, {}, {}>, res: Response, next: NextFunction) => {
     const termToEnroll = await findTermToEnrollActiveStudent();
     res.status(200).json(termToEnroll);
+};
+// last two schoolattendanace
+export const fetchRecentSchoolAttendanceForStudentHandler = async (req: Request<FetchRecentSchoolAttendanceSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const attendanceRecords = await fetchRecentSchoolAttendanceForStudent(studentId);
+    res.status(200).json(attendanceRecords);
 };

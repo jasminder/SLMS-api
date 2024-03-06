@@ -201,6 +201,31 @@ export async function fetchSchoolCheckInAttendance() {
                             lastName: true,
                             email: true
                         }
+                    },
+                    schoolCheckInAttendance: {
+                        orderBy: {
+                            date: 'desc'
+                        },
+                        take: 2
+                    },
+                    skipReport: {
+                        include: {
+                            student: {
+                                include: {
+                                    personalDetails: true
+                                }
+                            }, // Include student details
+                            teacher: {
+                                include: {
+                                    teacherPersonalDetails: true
+                                }
+                            },
+                            admin: {
+                                include: {
+                                    adminPersonalDetails: true
+                                }
+                            }
+                        }
                     }
                 }
             },

@@ -6,6 +6,7 @@ import {
     activeStudentEnrollDataSchema,
     assignClassToStudentSchema,
     deleteClassAssignmentSchema,
+    fetchRecentSchoolAttendanceSchema,
     findActiveStudentEnrolledSubjectsSchema,
     findAllActiveStudentsSchema,
     findStudentFeeDetailsSchema,
@@ -21,6 +22,7 @@ import {
     deEnrollActiveStudentHandler,
     deleteClassAssignmentHandler,
     enrollActiveStudentHandler,
+    fetchRecentSchoolAttendanceForStudentHandler,
     findActiveStudentByIdHandler,
     findActiveStudentEnrolledSubjectsHandler,
     findActiveStudentsHandler,
@@ -105,4 +107,6 @@ adminActiveStudentRoute.route('/de-enroll-active-student').post(validate(activeS
 
 /* find term to enroll */
 adminActiveStudentRoute.route('/term-to-enroll-active-student').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(findTermToEnrollActiveStudentHandler));
+// last two schoolattendanace
+adminActiveStudentRoute.route('/two-recent-school-attendance/:studentId').get(validate(fetchRecentSchoolAttendanceSchema), protectRoute, restrict('ADMIN'), fetchRecentSchoolAttendanceForStudentHandler);
 export default adminActiveStudentRoute;

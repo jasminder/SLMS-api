@@ -1130,3 +1130,21 @@ export async function findTermToEnrollActiveStudent() {
 
     return currentTerm;
 }
+// last two schoolattendanace
+export async function fetchRecentSchoolAttendanceForStudent(studentId: string) {
+    const attendanceRecords = await db.schoolCheckInAttendance.findMany({
+        where: {
+            studentId: +studentId
+        },
+        orderBy: {
+            date: 'desc'
+        },
+        take: 2
+    });
+
+    if (!attendanceRecords) {
+        throw customError('Attendance records not found for the student.', 'fail', 404, true);
+    }
+
+    return attendanceRecords;
+}

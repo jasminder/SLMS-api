@@ -17,10 +17,9 @@ export type FetchSchoolCheckInAttendanceSchema = z.infer<typeof fetchSchoolCheck
 
 /*mark check in true for a single studentid*/
 export const markSchoolCheckInAttendanceForStudentSchema = z.object({
-    body: z
-        .object({
-            remarks: z.string().optional(),
-        }),
+    body: z.object({
+        remarks: z.string().optional()
+    }),
     params: z.object({
         studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     })
@@ -58,7 +57,6 @@ export const markCheckInFalseForSelectedStudentsSchema = z.object({
     })
 });
 export type MarkCheckInFalseForSelectedStudentsSchema = z.infer<typeof markCheckInFalseForSelectedStudentsSchema>;
-
 
 /*undo false check in*/
 export const undoFalseCheckinSchema = z.object({
