@@ -85,6 +85,12 @@ export async function findActiveStudents(page: number, termId: number) {
                 select: {
                     isClosed: true
                 }
+            },
+            schoolCheckInAttendance: {
+                orderBy: {
+                    date: 'desc'
+                },
+                take: 3
             }
         }
     });
@@ -228,6 +234,12 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                     select: {
                         isClosed: true
                     }
+                },
+                schoolCheckInAttendance: {
+                    orderBy: {
+                        date: 'desc'
+                    },
+                    take: 3
                 }
             }
         });
@@ -399,6 +411,12 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                     select: {
                         isClosed: true
                     }
+                },
+                schoolCheckInAttendance: {
+                    orderBy: {
+                        date: 'desc'
+                    },
+                    take: 3
                 }
             }
         });

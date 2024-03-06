@@ -206,7 +206,7 @@ export async function fetchSchoolCheckInAttendance() {
                         orderBy: {
                             date: 'desc'
                         },
-                        take: 2
+                        take: 3
                     },
                     skipReport: {
                         include: {

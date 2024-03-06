@@ -347,6 +347,12 @@ export async function findActiveStudentsWithFlags(page: number, termId: number) 
                 select: {
                     isClosed: true
                 }
+            },
+            schoolCheckInAttendance: {
+                orderBy: {
+                    date: 'desc'
+                },
+                take: 2
             }
         }
     });
@@ -498,6 +504,12 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
                     select: {
                         isClosed: true
                     }
+                },
+                schoolCheckInAttendance: {
+                    orderBy: {
+                        date: 'desc'
+                    },
+                    take: 2
                 }
             }
         });
@@ -557,7 +569,6 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
         });
         return { activeStudents, count };
     } else if (!searchAsNumber) {
-        console.log('inside NOT `searchAsNumber');
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
         const activeStudents = await db.student.findMany({
@@ -679,6 +690,12 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
                     select: {
                         isClosed: true
                     }
+                },
+                schoolCheckInAttendance: {
+                    orderBy: {
+                        date: 'desc'
+                    },
+                    take: 2
                 }
             }
         });
