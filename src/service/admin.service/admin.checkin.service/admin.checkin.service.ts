@@ -118,7 +118,26 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         attendanceValue: newAttendanceValue
                     }
                 });
-
+                if (
+                    student.id == 5218 ||
+                    student.id == 5120 ||
+                    student.id == 5234 ||
+                    student.id == 5186 ||
+                    student.id == 5135 ||
+                    student.id == 5063 ||
+                    student.id == 5261 ||
+                    student.id == 5217 ||
+                    student.id == 5259 ||
+                    student.id == 5033 ||
+                    student.id == 5173 ||
+                    student.id == 5271 ||
+                    student.id == 5300 ||
+                    student.id == 5299
+                ) {
+                    console.log(student.id, 'studentID');
+                    console.log(newAttendanceValue, 'newAttendanceValue');
+                    console.log(recentAttendanceRecords, 'recentAttendanceRecords');
+                }
                 attendanceRecords.push(newAttendanceRecord);
 
                 // Find all current studentClassAssignments for the student
