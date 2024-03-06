@@ -261,7 +261,7 @@ export async function fetchStudentsOnAttendance(dateString: string) {
     return attendanceRecords;
 }
 export async function findActiveStudentsWithFlags(page: number, termId: number) {
-    const take = 10;
+    const take = 500;
     const pageNum = page ?? 0;
     const skip = pageNum * take;
 
@@ -377,7 +377,7 @@ export async function findActiveStudentsWithFlags(page: number, termId: number) 
     return { activeStudents, count };
 }
 export async function searchActiveStudentsWithFlags(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '') {
-    const take = 10;
+    const take = 500;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     if (searchAsNumber) {
         console.log('inside searchAsNumber');
