@@ -96,12 +96,26 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
             // Create SchoolCheckInAttendance records for all active students
             const attendanceRecords: any = [];
             for (const student of activeStudents) {
+                const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
+                    where: { studentId: student.id },
+                    orderBy: { date: 'desc' },
+                    take: 2
+                });
+                let newAttendanceValue = 0;
+                const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
+
+                if (countMarkedAndCheckedIn === 2) {
+                    newAttendanceValue = 2; // Both records have isMarked and checkedIn true
+                } else if (countMarkedAndCheckedIn === 1) {
+                    newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
+                }
+
                 const newAttendanceRecord = await db.schoolCheckInAttendance.create({
                     data: {
                         studentId: student.id,
                         date: new Date(date),
-                        schoolDayId: schoolDayRecord?.id
-                        // other fields if necessary
+                        schoolDayId: schoolDayRecord?.id,
+                        attendanceValue: newAttendanceValue
                     }
                 });
 
@@ -153,7 +167,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
             }
             return attendanceRecords;
         },
-        { timeout: 20000 }
+        { timeout: 30000 }
     );
 
     return transaction;
@@ -269,7 +283,14 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
     if (attendanceRecord.checkedIn) {
         throw customError('Student is already checked in.', 'fail', 400, true);
     }
-
+    let newAttendanceValue;
+    if (attendanceRecord.checkedIn) {
+        // If already checked in, do not change the attendance value
+        newAttendanceValue = attendanceRecord.attendanceValue;
+    } else {
+        // If not checked in, calculate new value based on current attendanceValue
+        newAttendanceValue = attendanceRecord.attendanceValue === 0 ? 1 : 2;
+    }
     // Update the check-in time and set checkedIn to true
     const updatedAttendanceRecord = await db.schoolCheckInAttendance.update({
         where: {
@@ -279,7 +300,8 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
             checkInTime: new Date(), // Set the check-in time to the current time
             checkedIn: true, // Mark the student as checked in
             remarks: remarks || null,
-            isMarked: true
+            isMarked: true,
+            attendanceValue: newAttendanceValue
         }
     });
 
@@ -440,7 +462,14 @@ export async function markStudentAsNotCheckedIn(studentId: string) {
     if (!record) {
         throw customError('Student has no checked-in record to mark as not checked in.', 'fail', 400, true);
     }
-
+    let newAttendanceValue;
+    if (record.checkedIn) {
+        // If already checked in, do not change the attendance value
+        newAttendanceValue = record.attendanceValue;
+    } else {
+        // If not checked in, calculate new value based on current attendanceValue
+        newAttendanceValue = record.attendanceValue === 2 ? 1 : 0;
+    }
     // Update the found record to set checkedIn as false
     const updatedRecord = await db.schoolCheckInAttendance.update({
         where: {

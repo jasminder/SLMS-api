@@ -111,11 +111,10 @@ export async function findActiveStudents(page: number, termId: number) {
 }
 
 // search active student for the admin
-export async function searchActiveStudents(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '') {
+export async function searchActiveStudents(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '') {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     if (searchAsNumber) {
-        console.log('inside searchAsNumber');
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
         const activeStudents = await db.student.findMany({
@@ -146,6 +145,13 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
+                ...(+attendanceOption && {
+                    schoolCheckInAttendance: {
+                        some: {
+                            attendanceValue: +attendanceOption
+                        }
+                    }
+                }),
 
                 OR: [
                     { id: searchAsNumber },
@@ -265,6 +271,13 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
+                ...(+attendanceOption && {
+                    schoolCheckInAttendance: {
+                        some: {
+                            attendanceValue: +attendanceOption
+                        }
+                    }
+                }),
 
                 OR: [
                     { id: searchAsNumber },
@@ -324,6 +337,13 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
+                ...(+attendanceOption && {
+                    schoolCheckInAttendance: {
+                        some: {
+                            attendanceValue: +attendanceOption
+                        }
+                    }
+                }),
 
                 OR: [
                     {
@@ -442,6 +462,13 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
+                ...(+attendanceOption && {
+                    schoolCheckInAttendance: {
+                        some: {
+                            attendanceValue: +attendanceOption
+                        }
+                    }
+                }),
 
                 OR: [
                     {

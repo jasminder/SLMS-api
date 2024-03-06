@@ -579,16 +579,16 @@ model User {
 }
 
 model SchoolCheckInAttendance {
-  id           Int       @id @default(autoincrement())
-  studentId    Int
-  isMarked     Boolean   @default(false)
-  date         DateTime // The date of check-in
-  checkInTime  DateTime? // Nullable field for the time of check-in
-  checkedIn    Boolean   @default(false) // Default to false to indicate not checked in initially
-  isCheckedOut Boolean? // Optional field to track whether the student is checked out
-  checkOutTime DateTime?
-  remarks      String? // Optional field for notes
-
+  id              Int               @id @default(autoincrement())
+  studentId       Int
+  isMarked        Boolean           @default(false)
+  date            DateTime // The date of check-in
+  checkInTime     DateTime? // Nullable field for the time of check-in
+  checkedIn       Boolean           @default(false) // Default to false to indicate not checked in initially
+  isCheckedOut    Boolean? // Optional field to track whether the student is checked out
+  checkOutTime    DateTime?
+  remarks         String? // Optional field for notes
+  attendanceValue Int               @default(0)
   student         Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
   classAttendance ClassAttendance[]
   SchoolDay       SchoolDay?        @relation(fields: [schoolDayId], references: [id])
