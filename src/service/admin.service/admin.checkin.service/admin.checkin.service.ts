@@ -225,7 +225,20 @@ export async function fetchSchoolCheckInAttendance() {
                     studentClassAssignment: {
                         include: {
                             section: true,
-                            termSubjectLevel: true
+                            termSubjectLevel: {
+                                select: {
+                                    level: {
+                                        select: {
+                                            name: true
+                                        }
+                                    },
+                                    subject: {
+                                        select: {
+                                            name: true
+                                        }
+                                    }
+                                }
+                            }
                         }
                     },
                     personalDetails: {

@@ -31,7 +31,20 @@ export async function fetchCheckedInStudentsForCheckout() {
                     studentClassAssignment: {
                         include: {
                             section: true,
-                            termSubjectLevel: true
+                            termSubjectLevel: {
+                                select: {
+                                    level: {
+                                        select: {
+                                            name: true
+                                        }
+                                    },
+                                    subject: {
+                                        select: {
+                                            name: true
+                                        }
+                                    }
+                                }
+                            }
                         }
                     },
                     personalDetails: {
@@ -46,7 +59,8 @@ export async function fetchCheckedInStudentsForCheckout() {
                             date: 'desc'
                         },
                         take: 3
-                    },skipReport: {
+                    },
+                    skipReport: {
                         include: {
                             student: {
                                 include: {
