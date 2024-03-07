@@ -608,8 +608,82 @@ export async function findActiveStudentById(id: string) {
             }
         }
     });
+    const siblings = await db.student.findMany({
+        where: {
+            personalDetails: {
+                email: activeStudent?.personalDetails?.email
+            },
 
-    return activeStudent;
+            NOT: {
+                id: +id // Exclude the current student
+            }
+        },
+        include: {
+            personalDetails: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    DOB: true,
+                    gender: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    state: true,
+                    country: true,
+                    postcode: true,
+                    image: true
+                }
+            },
+            parentsDetails: {
+                select: {
+                    id: true,
+                    fatherName: true,
+                    motherName: true,
+                    parentEmail: true,
+                    parentContact: true
+                }
+            },
+            emergencyContact: {
+                select: {
+                    id: true,
+                    contactPerson: true,
+                    contactNumber: true,
+                    relationship: true
+                }
+            },
+            healthInformation: {
+                select: {
+                    id: true,
+                    medicareNumber: true,
+                    ambulanceMembershipNumber: true,
+                    medicalCondition: true,
+                    allergy: true
+                }
+            },
+            otherInformation: {
+                select: {
+                    id: true,
+                    otherInfo: true,
+                    declaration: true
+                }
+            },
+            enrollments: {
+                select: {
+                    subjectEnrollment: true,
+                    createdAt: true
+                }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
+            }
+        }
+    });
+
+    return { activeStudent, siblings };
 }
 export async function findStudentFeeDetails(studentId: number, termId: number) {
     const studentTermFees = await db.studentTermFee.findMany({
