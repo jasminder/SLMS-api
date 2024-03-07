@@ -10,6 +10,6 @@ import { createFeedbackHandler } from '../../../controller/teacher.controller/te
 
 const feedbackRoute = express.Router();
 
-feedbackRoute.route('/create').post(validate(createFeedbackSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(createFeedbackHandler));
+feedbackRoute.route('/create').post(validate(createFeedbackSchema), protectRoute, restrict('TEACHER','ADMIN'), asyncErrorHandler(createFeedbackHandler));
 
 export default feedbackRoute;

@@ -11,8 +11,10 @@ import { createGroupHomeworkSchema, findAssignedHomeworksSchema } from '../../..
 
 const groupHomeworkRoute = express.Router();
 
-groupHomeworkRoute.route('/create').post(validate(createGroupHomeworkSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(createGroupHomeworkHandler));
+groupHomeworkRoute.route('/create').post(validate(createGroupHomeworkSchema), protectRoute, restrict('TEACHER', 'ADMIN'), asyncErrorHandler(createGroupHomeworkHandler));
 
-groupHomeworkRoute.route('/assignedHomeworks/:teacherId/:termSubjectLevelId/:sectionId').get(protectRoute, validate(findAssignedHomeworksSchema), findAssignedHomeworksHandler);
+groupHomeworkRoute
+    .route('/assignedHomeworks/:teacherId/:termSubjectLevelId/:sectionId')
+    .get(protectRoute, restrict('TEACHER', 'ADMIN'), validate(findAssignedHomeworksSchema), findAssignedHomeworksHandler);
 
 export default groupHomeworkRoute;

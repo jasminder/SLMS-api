@@ -26,28 +26,28 @@ const teacherAttendanceRoute = express.Router();
 /* fetching the check-in record for students who have checked in with default class-attendance */
 teacherAttendanceRoute
     .route('/fetch-checkedin-students-for-attendance/:termSubjectLevelId/:sectionName')
-    .get(validate(fetchCheckedInStudentsWithAttendanceSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(fetchCheckedInStudentsWithAttendanceHandler));
+    .get(validate(fetchCheckedInStudentsWithAttendanceSchema), protectRoute, restrict('TEACHER','ADMIN'), asyncErrorHandler(fetchCheckedInStudentsWithAttendanceHandler));
 
 /*mark presenttrue for a single studentid*/
 teacherAttendanceRoute
     .route('/mark-single-student-as-present/:studentId/:studentClassAssignmentId')
-    .patch(validate(markStudentAsPresentSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(markStudentAsPresentHandler));
+    .patch(validate(markStudentAsPresentSchema), protectRoute, restrict('TEACHER','ADMIN'), asyncErrorHandler(markStudentAsPresentHandler));
 
 /* create student skip report*/
 teacherAttendanceRoute
     .route('/create-skip-report-for-student/:studentId/:teacherId')
-    .post(validate(createSkipReportSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(createSkipReportHandler));
+    .post(validate(createSkipReportSchema), protectRoute, restrict('TEACHER','ADMIN'), asyncErrorHandler(createSkipReportHandler));
 
 /*fetch last 5 attendance for the students*/
 teacherAttendanceRoute
     .route('/get-last-attendance/:studentId/:studentClassAssignmentId')
-    .get(validate(getLastFiveClassAttendancesSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(getLastFiveClassAttendancesHandler));
+    .get(validate(getLastFiveClassAttendancesSchema), protectRoute, restrict('TEACHER','ADMIN'), asyncErrorHandler(getLastFiveClassAttendancesHandler));
 
 /*create automated emails record for all students in the class*/
 teacherAttendanceRoute
     .route('/create-automated-email-for-parents-in-class')
-    .post(validate(createAutomatedMailForParentsSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(createAutomatedMailForparentsHandler));
+    .post(validate(createAutomatedMailForParentsSchema), protectRoute, restrict('TEACHER','ADMIN'), asyncErrorHandler(createAutomatedMailForparentsHandler));
 
 /*get all automated emails for parenst for students in a class*/
-teacherAttendanceRoute.route('/find-automated-email-for-parents-in-class').get(validate(findAutomatedMailSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(findAutomatedMailHandler));
+teacherAttendanceRoute.route('/find-automated-email-for-parents-in-class').get(validate(findAutomatedMailSchema), protectRoute, restrict('TEACHER','ADMIN'), asyncErrorHandler(findAutomatedMailHandler));
 export default teacherAttendanceRoute;

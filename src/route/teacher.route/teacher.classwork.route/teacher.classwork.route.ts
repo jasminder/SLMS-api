@@ -9,6 +9,6 @@ import { createGroupClassworkSchema, findAssignedClassworksSchema } from '../../
 const groupClassworkRoute = express.Router();
 
 groupClassworkRoute.route('/create')
-    .post(validate(createGroupClassworkSchema), protectRoute, restrict('TEACHER'), asyncErrorHandler(createGroupClassworkHandler));
+    .post(validate(createGroupClassworkSchema), protectRoute, restrict('TEACHER','ADMIN'), asyncErrorHandler(createGroupClassworkHandler));
     groupClassworkRoute.route('/assignedClassworks/:teacherId/:termSubjectLevelId/:sectionId').get(protectRoute, validate(findAssignedClassworksSchema), findAssignedClassworksHandler);
 export default groupClassworkRoute;
