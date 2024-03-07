@@ -333,7 +333,7 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
             checkedIn: true, // Mark the student as checked in
             remarks: remarks || null,
             isMarked: true,
-            attendanceValue: newAttendanceValue
+            // attendanceValue: newAttendanceValue
         }
     });
 

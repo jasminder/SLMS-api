@@ -11,11 +11,18 @@ import {
 // update student personal details service
 export async function updateStudentPersonalDetail(id: string, data: UpdateStudentPersonalDetailSchema['body']['data']) {
     const { firstName, lastName, DOB, gender, email, contact, address, suburb, state, country, postcode, image } = data;
-    const existingStudent = await db.personalDetails.findFirst({
+    const existingStudent = await db.student.findUnique({
         where: {
-            OR: [{ email }, { contact }]
+            id: +id
+        },
+        include: {
+            personalDetails: true,
+            parentsDetails: true
         }
     });
+    if (existingStudent?.personalDetails?.contact == existingStudent?.parentsDetails?.parentContact) {
+        throw customError(`Primary and secondary contact number must differ`, 'fail', 400, true);
+    }
     console.log('update student*********************');
     /***********************************************************/
     /***********************************************************/
