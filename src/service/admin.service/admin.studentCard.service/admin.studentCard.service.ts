@@ -73,6 +73,17 @@ export async function findActiveStudentsWithoutPagination(termId: number) {
                     otherInfo: true,
                     declaration: true
                 }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
+            },
+            schoolCheckInAttendance: {
+                orderBy: {
+                    date: 'desc'
+                },
+                take: 3
             }
         }
     });
@@ -182,6 +193,17 @@ export async function searchActiveStudentsWithoutPagination(search = '', termId:
                     otherInfo: true,
                     declaration: true
                 }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
+            },
+            schoolCheckInAttendance: {
+                orderBy: {
+                    date: 'desc'
+                },
+                take: 3
             }
         }
     });
