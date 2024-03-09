@@ -146,10 +146,10 @@ export async function findAssignedClassworks(teacherId: string, termSubjectLevel
             teacherId: parseInt(teacherId),
             termSubjectLevelId: parseInt(termSubjectLevelId),
             sectionId: parseInt(sectionId),
-            createdAt: {
-                gte: startDate,
-                lte: endDate
-            }
+            // createdAt: {
+            //     gte: startDate,
+            //     lte: endDate
+            // }
         },
         include: {
             ClassworkSnapshot: {

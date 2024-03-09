@@ -144,10 +144,10 @@ export async function findAssignedHomeworks(teacherId: string, termSubjectLevelI
             teacherId: parseInt(teacherId),
             termSubjectLevelId: parseInt(termSubjectLevelId),
             sectionId: parseInt(sectionId),
-            createdAt: {
-                gte: startDate,
-                lte: endDate
-            }
+            // createdAt: {
+            //     gte: startDate,
+            //     lte: endDate
+            // }
         },
         include: {
             HomeworkSnapshot: {
