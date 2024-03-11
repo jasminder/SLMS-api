@@ -5,36 +5,46 @@ import validate from '../../../../middleware/validateResource';
 import {
     activeStudentEnrollDataSchema,
     assignClassToStudentSchema,
+    createLeaveApplicationSchema,
     deleteClassAssignmentSchema,
+    deleteLeaveApplicationSchema,
+    fetchLeavesForStudentSchema,
     fetchRecentSchoolAttendanceSchema,
     findActiveStudentEnrolledSubjectsSchema,
     findAllActiveStudentsSchema,
+    findLeaveByIdSchema,
     findStudentFeeDetailsSchema,
     findTermSubjectGroupIdEnrolledSubjectsSchema,
     findUniqueActiveStudentSchema,
     findUniqueFeePaymentSchema,
     manageClassSchema,
     searchActiveStudentsSchema,
-    updateAmountPaidSchema
+    updateAmountPaidSchema,
+    updateLeaveApplicationSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 import {
     assignClassToStudentHandler,
+    createLeaveApplicationHandler,
     deEnrollActiveStudentHandler,
     deleteClassAssignmentHandler,
+    deleteLeaveApplicationHandler,
     enrollActiveStudentHandler,
+    fetchLeavesForStudentHandler,
     fetchRecentSchoolAttendanceForStudentHandler,
     findActiveStudentByIdHandler,
     findActiveStudentEnrolledSubjectsHandler,
     findActiveStudentsHandler,
     findCurrentTermToAssignClassHandler,
     findFeePaymentByIdHandler,
+    findLeaveByIdHandler,
     findStudentFeeDetailsHandler,
     findTermSubjectGroupIdEnrolledSubjectsHandler,
     findTermToEnrollActiveStudentHandler,
     findUniqueStudentClassDetailsHandler,
     manageClassesHandler,
     searchActiveStudentsHandler,
-    updateAmountPaidHandler
+    updateAmountPaidHandler,
+    updateLeaveApplicationHandler
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
 import { restrict } from '../../../../middleware/restrict';
 import { protectRoute } from '../../../../middleware/protectRoutes';
@@ -108,5 +118,21 @@ adminActiveStudentRoute.route('/de-enroll-active-student').post(validate(activeS
 /* find term to enroll */
 adminActiveStudentRoute.route('/term-to-enroll-active-student').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(findTermToEnrollActiveStudentHandler));
 // last two schoolattendanace
-adminActiveStudentRoute.route('/two-recent-school-attendance/:studentId').get(validate(fetchRecentSchoolAttendanceSchema), protectRoute, restrict('ADMIN'), fetchRecentSchoolAttendanceForStudentHandler);
+adminActiveStudentRoute
+    .route('/two-recent-school-attendance/:studentId')
+    .get(validate(fetchRecentSchoolAttendanceSchema), protectRoute, restrict('ADMIN'), fetchRecentSchoolAttendanceForStudentHandler);
+
+adminActiveStudentRoute
+    .route('/create-leave-application/:studentId/:appliedById/:appliedByRole')
+    .post(validate(createLeaveApplicationSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(createLeaveApplicationHandler));
+adminActiveStudentRoute.route('/update-leave-application/:leaveId/:updatedById').patch(validate(updateLeaveApplicationSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateLeaveApplicationHandler));
+
+adminActiveStudentRoute.route('/delete-leave-application/:leaveId').delete(validate(deleteLeaveApplicationSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteLeaveApplicationHandler));
+
+adminActiveStudentRoute.route('/get-all-leaves/:studentId').get(validate(fetchLeavesForStudentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchLeavesForStudentHandler));
+
+adminActiveStudentRoute
+    .route('/get-leave-by-id/:leaveId')
+    .get(validate(findLeaveByIdSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findLeaveByIdHandler));
+
 export default adminActiveStudentRoute;

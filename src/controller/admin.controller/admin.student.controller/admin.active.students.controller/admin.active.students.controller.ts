@@ -2,37 +2,47 @@ import { NextFunction, Request, Response } from 'express';
 
 import {
     assignClassToStudent,
+    createLeaveApplication,
     deEnrollActiveStudent,
     deleteClassAssignment,
+    deleteLeaveApplication,
     enrollActiveStudent,
+    fetchLeavesForStudent,
     fetchRecentSchoolAttendanceForStudent,
     findActiveStudentById,
     findActiveStudentEnrolledSubjects,
     findActiveStudents,
     findCurrentTermToAssignClass,
     findFeePaymentById,
+    findLeaveById,
     findStudentFeeDetails,
     findTermSubjectGroupIdEnrolledSubjects,
     findTermToEnrollActiveStudent,
     findUniqueStudentClassDetails,
     manageClasses,
     searchActiveStudents,
-    updateAmountPaid
+    updateAmountPaid,
+    updateLeaveApplication
 } from '../../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
 import {
     ActiveStudentEnrollDataSchema,
     AssignClassToStudentSchema,
+    CreateLeaveApplicationSchema,
     DeleteClassAssignmentSchema,
+    DeleteLeaveApplicationSchema,
+    FetchLeavesForStudentSchema,
     FetchRecentSchoolAttendanceSchema,
     FindActiveStudentEnrolledSubjectsSchema,
     FindAllActiveStudentsSchema,
+    FindLeaveByIdSchema,
     FindStudentFeeDetailsSchemaSchema,
     FindTermSubjectGroupIdEnrolledSubjectsSchema,
     FindUniqueActiveStudentSchema,
     FindUniqueFeePaymentSchema,
     ManageClassSchema,
     SearchActiveStudentsSchema,
-    UpdateAmountPaidSchema
+    UpdateAmountPaidSchema,
+    UpdateLeaveApplicationSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 
 // Find all students for the admin
@@ -52,7 +62,7 @@ export const findActiveStudentsHandler = async (req: Request<{}, {}, {}, FindAll
 export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
     const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
 
-    if (termId ) {
+    if (termId) {
         const searchResult = await searchActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption);
         res.status(200).json(searchResult);
     }
@@ -173,4 +183,34 @@ export const fetchRecentSchoolAttendanceForStudentHandler = async (req: Request<
     const { studentId } = req.params;
     const attendanceRecords = await fetchRecentSchoolAttendanceForStudent(studentId);
     res.status(200).json(attendanceRecords);
+};
+
+export const createLeaveApplicationHandler = async (req: Request<CreateLeaveApplicationSchema['params'], {}, CreateLeaveApplicationSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { studentId, appliedById, appliedByRole } = req.params;
+    const leaveData = req.body;
+    const leaveApplication = await createLeaveApplication(studentId, appliedById, appliedByRole, leaveData);
+    res.status(201).json(leaveApplication);
+};
+
+export const updateLeaveApplicationHandler = async (req: Request<UpdateLeaveApplicationSchema['params'], {}, {}, UpdateLeaveApplicationSchema['body']>, res: Response, next: NextFunction) => {
+    const { leaveId, updatedById } = req.params;
+    const updateData = req.body;
+    const updatedLeaveApplication = await updateLeaveApplication(leaveId, updatedById, updateData);
+    res.status(200).json(updatedLeaveApplication);
+};
+
+export const deleteLeaveApplicationHandler = async (req: Request<DeleteLeaveApplicationSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { leaveId } = req.params;
+    await deleteLeaveApplication(leaveId);
+    res.status(200).json({ message: 'Leave application deleted successfully' });
+};
+export const fetchLeavesForStudentHandler = async (req: Request<FetchLeavesForStudentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const leaveApplications = await fetchLeavesForStudent(Number(studentId));
+    res.status(200).json(leaveApplications);
+};
+export const findLeaveByIdHandler = async (req: Request<FindLeaveByIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { leaveId } = req.params;
+    const leaveApplication = await findLeaveById(Number(leaveId));
+    res.status(200).json(leaveApplication);
 };

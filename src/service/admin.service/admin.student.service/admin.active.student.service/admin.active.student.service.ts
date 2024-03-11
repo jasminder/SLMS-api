@@ -1,6 +1,7 @@
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 import { ActiveStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
+import { LeaveStatus, Role } from '@prisma/client';
 
 // Find all active student for the admin
 export async function findActiveStudents(page: number, termId: number) {
@@ -1373,4 +1374,61 @@ export async function fetchRecentSchoolAttendanceForStudent(studentId: string) {
     }
 
     return attendanceRecords;
+}
+
+// Leave
+export async function createLeaveApplication(studentId: string, appliedById: string, appliedByRole: string, leaveData: { startDate: string; endDate: string; reason: string; status: LeaveStatus }) {
+    const leaveApplication = await db.leave.create({
+        data: {
+            studentId: +studentId,
+            appliedById: +appliedById,
+            appliedByRole: appliedByRole === 'ADMIN' ? 'ADMIN' : 'STUDENT',
+            startDate: leaveData.startDate,
+            endDate: leaveData.endDate,
+            reason: leaveData.reason,
+            status: leaveData.status,
+            approvedOn: leaveData.status === 'APPROVED' ? new Date() : null,
+            approverId: leaveData.status === 'APPROVED' ? +appliedById : null
+        }
+    });
+
+    return leaveApplication;
+}
+
+export async function updateLeaveApplication(leaveId: string, updatedById: string, updateData: { reason?: string; comments?: string; status?: LeaveStatus }) {
+    const updatedLeaveApplication = await db.leave.update({
+        where: { id: +leaveId },
+        data: {
+            ...updateData,
+            approvedOn: updateData.status === 'APPROVED' ? new Date() : null,
+            approverId: updateData.status === 'APPROVED' ? +updatedById : null
+        }
+    });
+
+    return updatedLeaveApplication;
+}
+
+export async function deleteLeaveApplication(leaveId: string) {
+    await db.leave.delete({
+        where: { id: +leaveId }
+    });
+}
+
+export async function fetchLeavesForStudent(studentId: number) {
+    const leaveApplications = await db.leave.findMany({
+        where: { studentId: studentId }
+    });
+
+    return leaveApplications;
+}
+export async function findLeaveById(leaveId: number) {
+    const leaveApplication = await db.leave.findUnique({
+        where: { id: leaveId }
+    });
+
+    if (!leaveApplication) {
+        throw customError('Leave application not found', 'fail', 400, true);
+    }
+
+    return leaveApplication;
 }

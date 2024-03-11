@@ -138,3 +138,53 @@ export const fetchRecentSchoolAttendanceSchema = z.object({
 });
 
 export type FetchRecentSchoolAttendanceSchema = z.infer<typeof fetchRecentSchoolAttendanceSchema>;
+
+export const createLeaveApplicationSchema = z.object({
+    body: z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+        reason: z.string(),
+        status: z.enum(['PENDING', 'APPROVED', 'DECLINED'])
+    }),
+    params: z.object({
+        studentId: z.string().min(1),
+        appliedById: z.string().min(1),
+        appliedByRole: z.string().min(1)
+    })
+});
+export type CreateLeaveApplicationSchema = z.infer<typeof createLeaveApplicationSchema>;
+
+export const updateLeaveApplicationSchema = z.object({
+    body: z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+        reason: z.string().optional(),
+        comments: z.string().optional(),
+        status: z.string().optional()
+    }),
+    params: z.object({
+        leaveId: z.string().min(1),
+        updatedById: z.string().min(1)
+    })
+});
+export type UpdateLeaveApplicationSchema = z.infer<typeof updateLeaveApplicationSchema>;
+export const deleteLeaveApplicationSchema = z.object({
+    params: z.object({
+        leaveId: z.string().min(1)
+    })
+});
+export type DeleteLeaveApplicationSchema = z.infer<typeof deleteLeaveApplicationSchema>;
+export const fetchLeavesForStudentSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1).transform(Number)
+    })
+});
+export type FetchLeavesForStudentSchema = z.infer<typeof fetchLeavesForStudentSchema>;
+
+
+export const findLeaveByIdSchema = z.object({
+    params: z.object({
+        leaveId: z.string().min(1).transform(Number)
+    })
+});
+export type FindLeaveByIdSchema = z.infer<typeof findLeaveByIdSchema>;

@@ -22,7 +22,12 @@ enum AttendanceStatus {
   EXCUSED
   LATE
   LEAVE
-  // Any other statuses you might need
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  DECLINED
 }
 
 enum PaymentMethod {
@@ -69,6 +74,7 @@ model Student {
   GroupHomework           GroupHomework[]
   AutomatedMailForParents AutomatedMailForParents[]
   GroupClasswork          GroupClasswork[]
+  Leave                   Leave[]
 }
 
 model PersonalDetails {
@@ -494,6 +500,7 @@ model Admin {
   comment                   Comment[]
   Classwork                 Classwork[]
   SkipReport                SkipReport[]
+  Leave                     Leave[]
 }
 
 model AdminPersonalDetails {
@@ -888,4 +895,26 @@ model SchoolDay {
   updatedAt          DateTime                  @updatedAt
 
   // You might want to add additional fields like notes or special events on that day
+}
+
+model Leave {
+  id            Int         @id @default(autoincrement())
+  studentId     Int // Foreign key reference to Student
+  appliedById   Int // ID of the person (admin/student) who applied for the leave
+  appliedByRole Role
+  startDate     DateTime // Start date of the leave
+  endDate       DateTime // End date of the leave
+  reason        String // Reason for the leave
+  status        LeaveStatus @default(PENDING) // Status of the leave request
+  appliedOn     DateTime    @default(now()) // Date when the leave was applied for
+  approvedOn    DateTime? // Date when the leave was approved, nullable for pending leaves
+  approverId    Int? // ID of the admin/teacher who approved the leave, nullable for pending leaves
+  comments      String? // Optional comments about the leave request
+
+  student   Student  @relation(fields: [studentId], references: [id])
+  approver  Admin?   @relation(fields: [approverId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, startDate, endDate]) // Ensuring a student doesn't have overlapping leaves
 }

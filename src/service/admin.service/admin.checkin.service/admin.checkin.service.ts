@@ -332,7 +332,7 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
             checkInTime: new Date(), // Set the check-in time to the current time
             checkedIn: true, // Mark the student as checked in
             remarks: remarks || null,
-            isMarked: true,
+            isMarked: true
             // attendanceValue: newAttendanceValue
         }
     });
