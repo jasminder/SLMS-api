@@ -586,15 +586,16 @@ model User {
 }
 
 model SchoolCheckInAttendance {
-  id              Int               @id @default(autoincrement())
-  studentId       Int
-  isMarked        Boolean           @default(false)
-  date            DateTime // The date of check-in
-  checkInTime     DateTime? // Nullable field for the time of check-in
-  checkedIn       Boolean           @default(false) // Default to false to indicate not checked in initially
-  isCheckedOut    Boolean? // Optional field to track whether the student is checked out
-  checkOutTime    DateTime?
-  remarks         String? // Optional field for notes
+  id           Int       @id @default(autoincrement())
+  studentId    Int
+  isMarked     Boolean   @default(false)
+  date         DateTime // The date of check-in
+  checkInTime  DateTime? // Nullable field for the time of check-in
+  checkedIn    Boolean   @default(false) // Default to false to indicate not checked in initially
+  isCheckedOut Boolean? // Optional field to track whether the student is checked out
+  checkOutTime DateTime?
+  remarks      String? // Optional field for notes
+
   attendanceValue Int               @default(0)
   student         Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
   classAttendance ClassAttendance[]
@@ -852,8 +853,7 @@ model Interaction {
   createdBy       Int // ID of the staff member who recorded the interaction
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-
-  student Student @relation(fields: [studentId], references: [id])
+  student         Student         @relation(fields: [studentId], references: [id])
   // Optionally include a relation to the staff or teacher who created the interaction
   // staff         Staff           @relation(fields: [createdBy], references: [id])
 }
@@ -866,9 +866,8 @@ model Comment {
   createdBy       Int // ID of the admin who created the comment
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-
-  student Student @relation(fields: [studentId], references: [id])
-  admin   Admin   @relation(fields: [createdBy], references: [id])
+  student         Student         @relation(fields: [studentId], references: [id])
+  admin           Admin           @relation(fields: [createdBy], references: [id])
 }
 
 model Institution {
