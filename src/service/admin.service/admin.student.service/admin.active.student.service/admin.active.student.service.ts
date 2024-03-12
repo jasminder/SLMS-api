@@ -1377,31 +1377,75 @@ export async function fetchRecentSchoolAttendanceForStudent(studentId: string) {
 }
 
 // Leave
-export async function createLeaveApplication(studentId: string, appliedById: string, appliedByRole: string, leaveData: { startDate: string; endDate: string; reason: string; status: LeaveStatus }) {
+export async function createLeaveApplication(studentId: string, appliedById: string, appliedByRole: string, startDate: string, endDate: string, reason: string, status: string, comments: string) {
+    const formattedStartDate = new Date(startDate);
+    formattedStartDate.setHours(0, 0, 0, 0); // Set start date to beginning of the day
+
+    const formattedEndDate = new Date(endDate);
+    formattedEndDate.setHours(23, 59, 59, 999); // Set end date to end of the day
+    const existingLeave = await db.leave.findFirst({
+        where: {
+            studentId: +studentId,
+            NOT: [{ endDate: { lt: formattedStartDate } }, { startDate: { gt: formattedEndDate } }]
+        }
+    });
+
+    if (existingLeave) {
+        throw customError('A leave application already exists within the specified date range', 'fail', 400, true);
+    }
     const leaveApplication = await db.leave.create({
         data: {
             studentId: +studentId,
             appliedById: +appliedById,
             appliedByRole: appliedByRole === 'ADMIN' ? 'ADMIN' : 'STUDENT',
-            startDate: leaveData.startDate,
-            endDate: leaveData.endDate,
-            reason: leaveData.reason,
-            status: leaveData.status,
-            approvedOn: leaveData.status === 'APPROVED' ? new Date() : null,
-            approverId: leaveData.status === 'APPROVED' ? +appliedById : null
+            startDate: formattedStartDate,
+            endDate: formattedEndDate,
+            comments,
+            reason: reason,
+            status: status === 'APPROVED' ? 'APPROVED' : status === 'DECLINED' ? 'DECLINED' : 'PENDING',
+            approvedOn: status === 'APPROVED' ? new Date() : null,
+            approverId: status === 'APPROVED' ? +appliedById : null
         }
     });
 
     return leaveApplication;
 }
 
-export async function updateLeaveApplication(leaveId: string, updatedById: string, updateData: { reason?: string; comments?: string; status?: LeaveStatus }) {
+export async function updateLeaveApplication(leaveId: string, updatedById: string, reason: string, comments = '', status: string, startDate: string, endDate: string) {
+    const formattedStartDate = new Date(startDate);
+    formattedStartDate.setHours(0, 0, 0, 0); // Set start date to beginning of the day
+
+    const formattedEndDate = new Date(endDate);
+    formattedEndDate.setHours(23, 59, 59, 999); // Set end date to end of the day
+    const currentLeave = await db.leave.findUnique({ where: { id: +leaveId } });
+    if (!currentLeave) {
+        throw customError('Leave application not found.', 'fail', 400, true);
+    }
+    const overlappingLeave = await db.leave.findFirst({
+        where: {
+            AND: [
+                { id: { not: +leaveId } },
+                { studentId: currentLeave.studentId },
+                {
+                    NOT: [{ endDate: { lt: formattedStartDate } }, { startDate: { gt: formattedEndDate } }]
+                }
+            ]
+        }
+    });
+
+    if (overlappingLeave) {
+        throw customError('Another leave application already exists within the specified date range.', 'fail', 400, true);
+    }
     const updatedLeaveApplication = await db.leave.update({
         where: { id: +leaveId },
         data: {
-            ...updateData,
-            approvedOn: updateData.status === 'APPROVED' ? new Date() : null,
-            approverId: updateData.status === 'APPROVED' ? +updatedById : null
+            comments,
+            reason: reason,
+            status: status === 'APPROVED' ? 'APPROVED' : status === 'DECLINED' ? 'DECLINED' : 'PENDING',
+            startDate: formattedStartDate,
+            endDate: formattedEndDate,
+            approvedOn: status === 'APPROVED' ? new Date() : null,
+            approverId: status === 'APPROVED' ? +updatedById : null
         }
     });
 

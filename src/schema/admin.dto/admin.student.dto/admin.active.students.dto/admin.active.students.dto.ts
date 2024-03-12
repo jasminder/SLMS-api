@@ -144,7 +144,8 @@ export const createLeaveApplicationSchema = z.object({
         startDate: z.string(),
         endDate: z.string(),
         reason: z.string(),
-        status: z.enum(['PENDING', 'APPROVED', 'DECLINED'])
+        status: z.string(),
+        comments: z.string()
     }),
     params: z.object({
         studentId: z.string().min(1),
@@ -158,9 +159,9 @@ export const updateLeaveApplicationSchema = z.object({
     body: z.object({
         startDate: z.string(),
         endDate: z.string(),
-        reason: z.string().optional(),
+        reason: z.string(),
         comments: z.string().optional(),
-        status: z.string().optional()
+        status: z.string()
     }),
     params: z.object({
         leaveId: z.string().min(1),
@@ -180,7 +181,6 @@ export const fetchLeavesForStudentSchema = z.object({
     })
 });
 export type FetchLeavesForStudentSchema = z.infer<typeof fetchLeavesForStudentSchema>;
-
 
 export const findLeaveByIdSchema = z.object({
     params: z.object({

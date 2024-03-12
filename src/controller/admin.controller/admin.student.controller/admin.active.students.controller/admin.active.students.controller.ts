@@ -187,15 +187,15 @@ export const fetchRecentSchoolAttendanceForStudentHandler = async (req: Request<
 
 export const createLeaveApplicationHandler = async (req: Request<CreateLeaveApplicationSchema['params'], {}, CreateLeaveApplicationSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { studentId, appliedById, appliedByRole } = req.params;
-    const leaveData = req.body;
-    const leaveApplication = await createLeaveApplication(studentId, appliedById, appliedByRole, leaveData);
+    const {comments,endDate,reason,startDate,status} = req.body;
+    const leaveApplication = await createLeaveApplication(studentId, appliedById, appliedByRole, startDate,endDate,reason,status, comments);
     res.status(201).json(leaveApplication);
 };
 
-export const updateLeaveApplicationHandler = async (req: Request<UpdateLeaveApplicationSchema['params'], {}, {}, UpdateLeaveApplicationSchema['body']>, res: Response, next: NextFunction) => {
+export const updateLeaveApplicationHandler = async (req: Request<UpdateLeaveApplicationSchema['params'], {}, UpdateLeaveApplicationSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { leaveId, updatedById } = req.params;
-    const updateData = req.body;
-    const updatedLeaveApplication = await updateLeaveApplication(leaveId, updatedById, updateData);
+    const { endDate, startDate, comments, reason, status } = req.body;
+    const updatedLeaveApplication = await updateLeaveApplication(leaveId, updatedById, reason,comments,status,startDate,endDate);
     res.status(200).json(updatedLeaveApplication);
 };
 
