@@ -1502,49 +1502,52 @@ export async function updateLeaveApplication(leaveId: string, updatedById: strin
     const currentEndDate = new Date();
     currentEndDate.setHours(23, 59, 59, 999);
 
-    if (formattedStartDate <= currentEndDate && formattedEndDate >= currentDate && status === 'APPROVED') {
-        // Find the schoolCheckInAttendance record for the current day
-        const schoolAttendanceRecord = await db.schoolCheckInAttendance.findFirst({
-            where: {
-                studentId: currentLeave.studentId,
-                date: {
-                    gte: currentDate,
-                    lte: currentEndDate
-                }
-            }
-        });
+    console.log("ioutside'");
+    console.log(formattedStartDate, currentEndDate);
+    console.log(formattedEndDate, currentDate);
+    console.log(status);
 
-        if (schoolAttendanceRecord) {
-            // Update the schoolCheckInAttendance record to mark isOnLeave as true
-            await db.schoolCheckInAttendance.update({
-                where: {
-                    id: schoolAttendanceRecord.id
-                },
-                data: {
-                    isOnLeave: true
-                }
-            });
+    const isCurrentDateWithinLeave = formattedStartDate <= currentEndDate && formattedEndDate >= currentDate;
+
+    // Update the schoolCheckInAttendance and classAttendance records based on the condition
+    const schoolAttendanceRecord = await db.schoolCheckInAttendance.findFirst({
+        where: {
+            studentId: currentLeave.studentId,
+            date: {
+                gte: currentDate,
+                lte: currentEndDate
+            }
         }
+    });
 
-        // Find and update classAttendance records for the current day
-        const classAttendanceRecords = await db.classAttendance.findMany({
+    if (schoolAttendanceRecord) {
+        await db.schoolCheckInAttendance.update({
             where: {
-                studentClassAssignment: {
-                    studentId: currentLeave.studentId
-                },
-                date: currentDate
+                id: schoolAttendanceRecord.id
+            },
+            data: {
+                isOnLeave: isCurrentDateWithinLeave && status === 'APPROVED'
             }
         });
+    }
 
-        classAttendanceRecords.forEach(async (record) => {
-            await db.classAttendance.update({
-                where: {
-                    id: record.id
-                },
-                data: {
-                    attendanceStatus: 'LEAVE'
-                }
-            });
+    const classAttendanceRecords = await db.classAttendance.findMany({
+        where: {
+            studentClassAssignment: {
+                studentId: currentLeave.studentId
+            },
+            date: currentDate
+        }
+    });
+
+    for (const record of classAttendanceRecords) {
+        await db.classAttendance.update({
+            where: {
+                id: record.id
+            },
+            data: {
+                attendanceStatus: isCurrentDateWithinLeave && status === 'APPROVED' ? 'LEAVE' : 'ABSENT'
+            }
         });
     }
 
@@ -1564,39 +1567,65 @@ export async function deleteLeaveApplication(leaveId: string) {
     if (!leaveApplication) {
         throw customError('Leave application not found.', 'fail', 400, true);
     }
-    const { studentId, startDate, endDate } = leaveApplication;
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
 
-    // Update schoolCheckInAttendance records
-    await db.schoolCheckInAttendance.updateMany({
-        where: {
-            studentId: studentId,
-            date: {
-                gte: startDate,
-                lte: endDate
+    const { studentId, startDate, endDate } = leaveApplication;
+    const formattedStartDate = new Date(startDate);
+    formattedStartDate.setHours(0, 0, 0, 0);
+    const formattedEndDate = new Date(endDate);
+    formattedEndDate.setHours(23, 59, 59, 999);
+
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+    const currentEndDate = new Date();
+    currentEndDate.setHours(23, 59, 59, 999);
+
+    const isCurrentDateWithinLeave = formattedStartDate <= currentEndDate && formattedEndDate >= currentDate;
+
+    // Update schoolCheckInAttendance and classAttendance if current date is within leave period
+    if (isCurrentDateWithinLeave) {
+        const schoolAttendanceRecord = await db.schoolCheckInAttendance.findFirst({
+            where: {
+                studentId: studentId,
+                date: {
+                    gte: currentDate,
+                    lte: currentEndDate
+                }
             }
-        },
-        data: {
-            isOnLeave: false
+        });
+
+        if (schoolAttendanceRecord) {
+            await db.schoolCheckInAttendance.update({
+                where: {
+                    id: schoolAttendanceRecord.id
+                },
+                data: {
+                    isOnLeave: false
+                }
+            });
         }
-    });
-    // Update classAttendance records
-    await db.classAttendance.updateMany({
-        where: {
-            studentClassAssignment: {
-                studentId: studentId
-            },
-            date: {
-                gte: startDate,
-                lte: endDate
+
+        const classAttendanceRecords = await db.classAttendance.findMany({
+            where: {
+                studentClassAssignment: {
+                    studentId: studentId
+                },
+                date: currentDate
             }
-        },
-        data: {
-            // Update this logic to set the appropriate attendance status
-            attendanceStatus: 'ABSENT'
+        });
+
+        for (const record of classAttendanceRecords) {
+            await db.classAttendance.update({
+                where: {
+                    id: record.id
+                },
+                data: {
+                    attendanceStatus: 'ABSENT'
+                }
+            });
         }
-    });
+    }
+
+    // Finally, delete the leave application
     await db.leave.delete({
         where: { id: +leaveId }
     });
