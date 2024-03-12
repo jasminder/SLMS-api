@@ -96,6 +96,19 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
             // Create SchoolCheckInAttendance records for all active students
             const attendanceRecords: any = [];
             for (const student of activeStudents) {
+                const leaveRecord = await db.leave.findFirst({
+                    where: {
+                        studentId: student.id,
+                        startDate: { lte: new Date(date) },
+                        endDate: { gte: new Date(date) },
+                        status: 'APPROVED'
+                    }
+                });
+                let isOnLeave = false;
+                if (leaveRecord) {
+                    isOnLeave = true;
+                }
+                const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
                 const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
                     where: { studentId: student.id },
                     orderBy: { date: 'desc' },
@@ -115,7 +128,8 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         studentId: student.id,
                         date: new Date(date),
                         schoolDayId: schoolDayRecord?.id,
-                        attendanceValue: newAttendanceValue
+                        attendanceValue: newAttendanceValue,
+                        isOnLeave: isOnLeave
                     }
                 });
 
@@ -157,7 +171,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                 studentClassAssignmentId: assignment.id,
                                 date: startDate,
                                 schoolCheckInAttendanceId: newAttendanceRecord.id,
-                                attendanceStatus: 'ABSENT',
+                                attendanceStatus: attendanceStatus,
                                 schoolDayId: schoolDayRecord?.id
                                 // other fields if necessary
                             }
