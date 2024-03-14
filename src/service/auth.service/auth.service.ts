@@ -19,7 +19,7 @@ export async function signUpUser(email: string, password: string, confirmPasswor
 
     // Check if user already has login credentials in the User model
     const existingUser = await db.user.findUnique({
-        where: { email: email}
+        where: { email: email }
     });
     if (existingUser) {
         throw customError('User already exists. Please log in.', 'fail', 400, true);
@@ -27,6 +27,7 @@ export async function signUpUser(email: string, password: string, confirmPasswor
 
     // Determine the user's role and check if allowed to login
     const { userRole, isAllowedLogin } = await findUserRoleAndLoginPermission(email);
+    // console.log(userRole, isAllowedLogin, 'userRole,isAllowedLogin');
 
     if (!isAllowedLogin) {
         throw customError('User is not allowed to sign up. Contact School', 'fail', 400, true);
@@ -50,7 +51,14 @@ export async function signUpUser(email: string, password: string, confirmPasswor
         }
         teacherId = teacher.teacherId;
     } else if (userRole === Role.STUDENT) {
-        const student = await db.personalDetails.findFirst({ where: { email: email.toLowerCase() } });
+        const student = await db.personalDetails.findFirst({
+            where: {
+                email: {
+                    equals: email,
+                    mode: 'insensitive'
+                }
+            }
+        });
         if (!student) {
             throw customError('Student not found. Please contact the admin.', 'fail', 404, true);
         }
@@ -132,7 +140,7 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
     const adminDetails = await db.adminPersonalDetails.findUnique({ where: { email } });
     if (adminDetails) {
         const existingAdmin = await db.admin.findUnique({
-            where: { id: adminDetails.id }
+            where: { id: adminDetails.adminId }
         });
         if (existingAdmin && existingAdmin.isAllowedLogin) {
             userRole = Role.ADMIN;
@@ -144,7 +152,7 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
     const teacherDetails = await db.teacherPersonalDetails.findUnique({ where: { email } });
     if (teacherDetails) {
         const existingTeacher = await db.teacher.findUnique({
-            where: { id: teacherDetails.id }
+            where: { id: teacherDetails.teacherId }
         });
         if (existingTeacher && existingTeacher.isAllowedLogin) {
             userRole = Role.TEACHER;
@@ -153,11 +161,20 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
     }
 
     // Check in PersonalDetails for Student
-    const studentDetails = await db.personalDetails.findFirst({ where: { email } });
+    const studentDetails = await db.personalDetails.findFirst({
+        where: {
+            email: {
+                equals: email,
+                mode: 'insensitive'
+            }
+        }
+    });
+    console.log(studentDetails, 'studentDetails');
     if (studentDetails) {
         const existingStudent = await db.student.findUnique({
-            where: { id: studentDetails.id }
+            where: { id: studentDetails.studentId }
         });
+        console.log(existingStudent, 'existingStudent');
         if (existingStudent && existingStudent.isAllowedLogin) {
             userRole = Role.STUDENT;
             isAllowedLogin = existingStudent.isAllowedLogin;
@@ -166,9 +183,9 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
 
     /******RE CONSIDER THIS IF ADMIN SHOULD NOT REGISTER*******/
 
-    if (userRole === Role.STUDENT) {
-        throw customError('Registration as student is not allowed. Please check with school', 'fail', 400, true);
-    }
+    // if (userRole === Role.STUDENT) {
+    //     throw customError('Registration as student is not allowed. Please check with school', 'fail', 400, true);
+    // }
 
     /******RE CONSIDER THIS IF ADMIN SHOULD NOT REGISTER*******/
     if (!isAllowedLogin) {
@@ -185,8 +202,13 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
 /*Login user*/
 export async function loginUser(email: string, password: string) {
     // Find the user by email
-    const user = await db.user.findUnique({
-        where: { email: email.toLowerCase() }
+    const user = await db.user.findFirst({
+        where: {
+            email: {
+                equals: email,
+                mode: 'insensitive'
+            }
+        }
     });
 
     if (!user) {
