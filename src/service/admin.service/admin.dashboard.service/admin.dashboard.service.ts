@@ -122,20 +122,16 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
                 }
             }
         });
-        const totalLeave = await db.classAttendance.findMany({
+        const totalLeave = await db.schoolCheckInAttendance.findMany({
             where: {
                 date: {
                     gte: startDate,
                     lte: endDate
                 },
-                attendanceStatus: 'LEAVE'
+                isOnLeave: true
             },
             include: {
-                studentClassAssignment: {
-                    include: {
-                        student: true
-                    }
-                }
+                student: true
             }
         });
 
