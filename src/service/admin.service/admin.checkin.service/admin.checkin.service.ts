@@ -186,6 +186,52 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
 
     return transaction;
 }
+export async function undoSchoolCheckInAttendanceForStudent(date: string) {
+    if (!date) {
+        throw customError('You need to provide a date to undo School CheckIn Attendance records.', 'fail', 400, true);
+    }
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const transaction = await db.$transaction(
+        async (db) => {
+            const attendanceRecords = await db.schoolCheckInAttendance.findMany({
+                where: {
+                    date: {
+                        gte: startDate,
+                        lte: endDate
+                    }
+                },
+                include: {
+                    classAttendance: true // Include related class attendance records
+                }
+            });
+
+            for (const record of attendanceRecords) {
+                if (record.classAttendance && record.classAttendance.length > 0) {
+                    await db.classAttendance.deleteMany({
+                        where: { id: { in: record.classAttendance.map(ca => ca.id) } }
+                    });
+                }
+
+                await db.schoolCheckInAttendance.delete({
+                    where: { id: record.id }
+                });
+            }
+
+            // Optional: Delete SchoolDay record if necessary
+            // ...
+
+            return { message: 'Undo operation completed successfully.' };
+        },
+        { timeout: 30000 }
+    );
+
+    return transaction;
+}
 
 /*fetch all freshly created schoolCheckInAttendance */
 export async function fetchSchoolCheckInAttendance() {
