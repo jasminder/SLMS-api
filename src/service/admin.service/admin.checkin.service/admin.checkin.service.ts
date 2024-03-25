@@ -11,10 +11,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
     const some = new Date();
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
-    console.log(startDate, 'startDate');
-    console.log(endDate, 'endDate');
-    console.log(date, 'from client side date');
-    console.log(some, 'date created from new Date()');
+
     let schoolDayRecord = await db.schoolDay.findFirst({
         where: { schoolOperatedDate: startDate }
     });
@@ -50,31 +47,48 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                 },
                 include: {
                     studentClassAssignment: true,
-                    personalDetails: true
-                }
-            });
-
-            const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
-            console.log(studentsWithoutAssignment);
-
-            const allActiveStudents = await db.student.findMany({
-                where: {
-                    isActive: true // Filters to only include active students
-                },
-                include: {
-                    // Include any related data you might need, like personal details
                     personalDetails: true,
-                    parentsDetails: true
-                    // Add any other relations you need here
+                    enrollments: {
+                        include: {
+                            subjectEnrollment: {
+                                include: {
+                                    termSubject: true
+                                }
+                            }
+                        }
+                    }
                 }
-                // Optionally, you can also add ordering or pagination here
-                // orderBy: {
-                //     createdAt: 'desc'
-                // }
             });
-            if (allActiveStudents.length == 0) {
-                throw customError(`There are no  active students. Please enroll students in a current term to do this action`, 'fail', 400, true);
-            }
+
+
+            // const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
+            // console.log(studentsWithoutAssignment);
+
+            // const allActiveStudents = await db.student.findMany({
+            //     where: {
+            //         isActive: true // Filters to only include active students
+            //     },
+            //     include: {
+            //         studentClassAssignment: true,
+            //         personalDetails: true,
+            //         enrollments: {
+            //             include: {
+            //                 subjectEnrollment: {
+            //                     include: {
+            //                         termSubject: true
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     }
+            //     // Optionally, you can also add ordering or pagination here
+            //     // orderBy: {
+            //     //     createdAt: 'desc'
+            //     // }
+            // });
+            // if (allActiveStudents.length == 0) {
+            //     throw customError(`There are no  active students. Please enroll students in a current term to do this action`, 'fail', 400, true);
+            // }
             // if (studentsWithoutAssignment.length > 0) {
             //     const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
             //     throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
@@ -96,6 +110,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
             // Create SchoolCheckInAttendance records for all active students
             const attendanceRecords: any = [];
             for (const student of activeStudents) {
+                // student.enrollments.map(s=>s.)÷
                 const leaveRecord = await db.leave.findFirst({
                     where: {
                         studentId: student.id,
@@ -209,11 +224,11 @@ export async function undoSchoolCheckInAttendanceForStudent(date: string) {
                     classAttendance: true // Include related class attendance records
                 }
             });
-
+            const schoolDayId = attendanceRecords[0].schoolDayId;
             for (const record of attendanceRecords) {
                 if (record.classAttendance && record.classAttendance.length > 0) {
                     await db.classAttendance.deleteMany({
-                        where: { id: { in: record.classAttendance.map(ca => ca.id) } }
+                        where: { id: { in: record.classAttendance.map((ca) => ca.id) } }
                     });
                 }
 
@@ -221,9 +236,38 @@ export async function undoSchoolCheckInAttendanceForStudent(date: string) {
                     where: { id: record.id }
                 });
             }
+            for (const record of attendanceRecords) {
+                const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
+                    where: {
+                        studentId: record.studentId,
+                        date: { lt: startDate }
+                    },
+                    orderBy: { date: 'desc' },
+                    take: 2
+                });
 
-            // Optional: Delete SchoolDay record if necessary
-            // ...
+                let newAttendanceValue = 0;
+                const countMarkedAndCheckedIn = recentAttendanceRecords.filter((rec) => rec.isMarked && rec.checkedIn).length;
+
+                if (countMarkedAndCheckedIn === 2) {
+                    newAttendanceValue = 2;
+                } else if (countMarkedAndCheckedIn === 1) {
+                    newAttendanceValue = 1;
+                }
+
+                if (recentAttendanceRecords.length > 0) {
+                    await db.schoolCheckInAttendance.update({
+                        where: { id: recentAttendanceRecords[0].id },
+                        data: { attendanceValue: newAttendanceValue }
+                    });
+                }
+            }
+            // Delete the SchoolDay record if it exists
+            if (schoolDayId) {
+                await db.schoolDay.delete({
+                    where: { id: schoolDayId }
+                });
+            }
 
             return { message: 'Undo operation completed successfully.' };
         },

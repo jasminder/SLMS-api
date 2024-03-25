@@ -212,6 +212,8 @@ model TermSubject {
   termSubjectGroupId Int
   subjectId          Int
   termId             Int
+  isOnSunday  Boolean @default(false)
+  isOnWeekday Boolean @default(false)
   level              Level[]
   subject            Subject             @relation(fields: [subjectId], references: [id])
   subjectEnrollments SubjectEnrollment[]
