@@ -156,7 +156,15 @@ export const findAllClassesAssignedForTeacher = async (teacherId: string) => {
         include: {
             termSubjectLevel: {
                 include: {
-                    subject: true,
+                    subject: {
+                        include: {
+                            termSubject: {
+                                select:{
+                                    isOnSunday:true,isOnWeekday:true
+                                }
+                            }
+                        }
+                    },
                     level: true,
                     term: true
                 }
