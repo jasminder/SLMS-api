@@ -43,6 +43,15 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         some: {
                             termId: currentTerm?.id
                         }
+                    },
+                    enrollments: {
+                        some: {
+                            subjectEnrollment: {
+                                termSubject: {
+                                    isOnSunday: true
+                                }
+                            }
+                        }
                     }
                 },
                 include: {
@@ -59,7 +68,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 }
             });
-
 
             // const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
             // console.log(studentsWithoutAssignment);
@@ -110,7 +118,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
             // Create SchoolCheckInAttendance records for all active students
             const attendanceRecords: any = [];
             for (const student of activeStudents) {
-                // student.enrollments.map(s=>s.)÷
                 const leaveRecord = await db.leave.findFirst({
                     where: {
                         studentId: student.id,
@@ -155,6 +162,22 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     where: {
                         studentId: student.id,
                         isCurrentlyAssigned: true
+                    },
+                    include: {
+                        enrollment: {
+                            include: {
+                                subjectEnrollment: {
+                                    where: {
+                                        termSubject: {
+                                            isOnSunday: true
+                                        }
+                                    },
+                                    include: {
+                                        termSubject: true
+                                    }
+                                }
+                            }
+                        }
                     }
                 });
 
