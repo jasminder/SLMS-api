@@ -3,7 +3,8 @@ import {
     getActiveStudentsPerSubject,
     getGenderDistributionForCurrentTerm,
     getPresentAttendances,
-    getStudentsCountPerTerm
+    getStudentsCountPerTerm,
+    getWeekdayPresentAttendances
 } from '../../../service/admin.service/admin.analytics.service/admin.analytics.service';
 import { ActiveStudentsPerSubjectSchema } from '../../../schema/admin.dto/admin.analytics.dto/admin.analytics.dto';
 
@@ -22,4 +23,9 @@ export const getStudentsPerTermHandler = async (req: Request, res: Response, nex
 export const getGenderDistributionForCurrentTermHandler = async (req: Request, res: Response, next: NextFunction) => {
     const genderDistribution = await getGenderDistributionForCurrentTerm();
     res.status(200).json(genderDistribution);
+};
+/*********** */
+export const getWeekdayPresentAttendancesHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const presentAttendances = await getWeekdayPresentAttendances();
+    res.status(200).json(presentAttendances);
 };

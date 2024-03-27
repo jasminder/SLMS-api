@@ -3,6 +3,7 @@ import {
     createAutomatedMailForParents,
     createSkipReport,
     fetchCheckedInStudentsWithAttendance,
+    fetchSchooldayType,
     findAutomatedMail,
     getLastFiveClassAttendances,
     markStudentAsPresent
@@ -11,6 +12,7 @@ import {
     CreateAutomatedMailForParentsSchema,
     CreateSkipReportSchema,
     FetchCheckedInStudentsWithAttendanceSchema,
+    FetchSchooldayTypeSchema,
     FindAutomatedMailSchema,
     GetLastFiveClassAttendancesSchema,
     MarkStudentAsPresentSchema
@@ -20,6 +22,11 @@ import {
 export const fetchCheckedInStudentsWithAttendanceHandler = async (req: Request<FetchCheckedInStudentsWithAttendanceSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { termSubjectLevelId, sectionName } = req.params;
     const markSchoolCheckInAttendance = await fetchCheckedInStudentsWithAttendance(termSubjectLevelId, sectionName);
+    res.status(200).json(markSchoolCheckInAttendance);
+};
+export const fetchSchooldayTypeHandler = async (req: Request<FetchSchooldayTypeSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { termSubjectLevelId} = req.params;
+    const markSchoolCheckInAttendance = await fetchSchooldayType(termSubjectLevelId);
     res.status(200).json(markSchoolCheckInAttendance);
 };
 

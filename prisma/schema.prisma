@@ -212,8 +212,8 @@ model TermSubject {
   termSubjectGroupId Int
   subjectId          Int
   termId             Int
-  isOnSunday  Boolean @default(false)
-  isOnWeekday Boolean @default(false)
+  isOnSunday         Boolean             @default(false)
+  isOnWeekday        Boolean             @default(false)
   level              Level[]
   subject            Subject             @relation(fields: [subjectId], references: [id])
   subjectEnrollments SubjectEnrollment[]
@@ -892,6 +892,8 @@ model SchoolDay {
   schoolOperatedDate DateTime // The date the school operated
   schoolAttendances  SchoolCheckInAttendance[] // Relationship with SchoolCheckInAttendance
   classAttendances   ClassAttendance[] // Relationship with ClassAttendance
+  isOnSunday         Boolean                   @default(true)
+  isOnWeekday        Boolean                   @default(false)
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
 

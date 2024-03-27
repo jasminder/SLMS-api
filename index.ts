@@ -51,6 +51,8 @@ import skipReportRoute from './src/route/admin.skip.report.route/admin.skip.repo
 import adminDashboardRoute from './src/route/admin.route/admin.dashboard.route/admin.dashboard.route';
 import adminAnalyticsRoute from './src/route/admin.route/admin.analytics.route/admin.analytics.route';
 import adminTeacherUpdateRoute from './src/route/admin.route/admin.teacher.route/admin.teacher.update.route/admin.teacher.update.route';
+import adminTeacherWeekdayCheckinRoute from './src/route/admin.route/admin.checkin.route/admin.weekday.checkin.route/admin.weekday.checkin.route';
+import teacherWeekdayAttendanceRoute from './src/route/teacher.route/teacher.attendance.route/teacher.weekday.attendance.route/teacher.weekday.attendance.route';
 
 const app = express();
 app.use(cookieParser());
@@ -119,6 +121,10 @@ app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);
 app.use('/api/v1/admin/attendance/checkout', adminCheckoutRoute);
 app.use('/api/v1/admin/attendance/skip-reports', adminAttendanceRoute);
 app.use('/api/v1/teacher/attendance', teacherAttendanceRoute);
+/********** for Kirtan*********/
+app.use('/api/v1/admin-teacher/attendance/weekday/checkin', adminTeacherWeekdayCheckinRoute);
+app.use('/api/v1/teacher/attendance/weekday/class', teacherWeekdayAttendanceRoute);
+/********** for Kirtan*********/
 
 app.use('/api/v1/teacher', teacherRoute);
 app.use('/api/v1/teacher-feedback-for-student', feedbackRoute);

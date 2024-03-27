@@ -31,7 +31,9 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
         where: {
             schoolOperatedDate: {
                 lte: startDate // Less than or equal to the query date
-            }
+            },
+            isOnSunday: true,
+            isOnWeekday: false
         },
         orderBy: {
             schoolOperatedDate: 'desc'
@@ -47,7 +49,9 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
         where: {
             schoolOperatedDate: {
                 lt: recentSchoolDay?.schoolOperatedDate
-            }
+            },
+            isOnSunday: true,
+            isOnWeekday: false
         },
         orderBy: {
             schoolOperatedDate: 'desc'
@@ -750,4 +754,58 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
         });
         return { activeStudents, count };
     }
+}
+/****************************/
+export async function fetchWeekdayActiveCheckedInStudents(dateString: string) {
+    const date = new Date(dateString);
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        },
+        select: {
+            id: true
+        }
+    });
+    const activeStudents = await db.student.count({
+        where: {
+            isActive: true,
+            role: 'STUDENT',
+            studentTermFee: {
+                some: {
+                    termId: currentTerm?.id
+                }
+            },
+            enrollments: {
+                some: {
+                    subjectEnrollment: {
+                        termSubject: {
+                            isOnWeekday: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+    const lastFiveSchoolDay = await db.schoolDay.findMany({
+        where: {
+            schoolOperatedDate: {
+                lte: startDate // Less than or equal to the query date
+            },
+            isOnSunday: false,
+            isOnWeekday: true
+        },
+        include: {
+            schoolAttendances: true
+        },
+        take: 5,
+        orderBy: {
+            schoolOperatedDate: 'desc'
+        }
+    });
+    return { activeStudents, lastFiveSchoolDay };
 }

@@ -107,10 +107,25 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     date: {
                         gte: startDate,
                         lte: endDate
+                    },
+                    classAttendance: {
+                        every: {
+                            studentClassAssignment: {
+                                termSubjectLevel: {
+                                    subject: {
+                                        termSubject: {
+                                            every: {
+                                                isOnSunday: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             });
-
+            console.log(existingRecords, "existingRecords");
             if (existingRecords.length > 0) {
                 throw customError('Attendance already created for today.', 'fail', 400, true);
             }
@@ -161,7 +176,16 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                 const studentClassAssignments = await db.studentClassAssignment.findMany({
                     where: {
                         studentId: student.id,
-                        isCurrentlyAssigned: true
+                        isCurrentlyAssigned: true,
+                        termSubjectLevel: {
+                            subject: {
+                                termSubject: {
+                                    every: {
+                                        isOnSunday: true
+                                    }
+                                }
+                            }
+                        }
                     },
                     include: {
                         enrollment: {
@@ -169,7 +193,8 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                 subjectEnrollment: {
                                     where: {
                                         termSubject: {
-                                            isOnSunday: true
+                                            isOnSunday: true,
+                                            isOnWeekday: true
                                         }
                                     },
                                     include: {
@@ -318,6 +343,22 @@ export async function fetchSchoolCheckInAttendance() {
                 gte: startDate,
                 lte: endDate
             }
+            // classAttendance: {
+            //     every: {
+            //         studentClassAssignment: {
+            //             termSubjectLevel: {
+            //                 subject: {
+            //                     termSubject: {
+            //                         every: {
+            //                             isOnSunday: true,
+            //                             isOnWeekday: true
+            //                         }
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
         },
 
         orderBy: {
@@ -342,7 +383,13 @@ export async function fetchSchoolCheckInAttendance() {
                                     },
                                     subject: {
                                         select: {
-                                            name: true
+                                            name: true,
+                                            termSubject: {
+                                                select: {
+                                                    isOnSunday: true
+                                                    // isOnWeekday: true
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -423,14 +470,14 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
     if (attendanceRecord.checkedIn) {
         throw customError('Student is already checked in.', 'fail', 400, true);
     }
-    let newAttendanceValue;
-    if (attendanceRecord.checkedIn) {
-        // If already checked in, do not change the attendance value
-        newAttendanceValue = attendanceRecord.attendanceValue;
-    } else {
-        // If not checked in, calculate new value based on current attendanceValue
-        newAttendanceValue = attendanceRecord.attendanceValue === 0 ? 1 : 2;
-    }
+    // let newAttendanceValue;
+    // if (attendanceRecord.checkedIn) {
+    //     // If already checked in, do not change the attendance value
+    //     newAttendanceValue = attendanceRecord.attendanceValue;
+    // } else {
+    //     // If not checked in, calculate new value based on current attendanceValue
+    //     newAttendanceValue = attendanceRecord.attendanceValue === 0 ? 1 : 2;
+    // }
     // Update the check-in time and set checkedIn to true
     const updatedAttendanceRecord = await db.schoolCheckInAttendance.update({
         where: {

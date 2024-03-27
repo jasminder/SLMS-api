@@ -29,7 +29,20 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
                     studentClassAssignment: {
                         include: {
                             section: true,
-                            termSubjectLevel: true
+                            termSubjectLevel: {
+                                include: {
+                                    subject: {
+                                        include: {
+                                            termSubject: {
+                                                select: {
+                                                    isOnSunday: true,
+                                                    isOnWeekday: true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     },
                     personalDetails: true
@@ -86,7 +99,24 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
 
     return filteredStudents;
 }
-
+export async function fetchSchooldayType(termSubjectLevelId: string) {
+    const schooldayType = await db.termSubjectLevel.findUnique({
+        where: { id: +termSubjectLevelId },
+        select: {
+            subject: {
+                select: {
+                    termSubject: {
+                        select: {
+                            isOnSunday: true,
+                            isOnWeekday: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+    return schooldayType;
+}
 export async function markStudentAsPresent(studentId: string, studentClassAssignmentId: string) {
     // Update the existing ClassAttendance record to mark the student as "PRESENT"
 

@@ -6,6 +6,7 @@ import {
     fetchStudentsOnAbsent,
     fetchStudentsOnAttendance,
     fetchStudentsOnLeave,
+    fetchWeekdayActiveCheckedInStudents,
     findActiveStudentsWithFlags,
     searchActiveStudentsWithFlags
 } from '../../../service/admin.service/admin.dashboard.service/admin.dashboard.service';
@@ -64,4 +65,10 @@ export const searchActiveStudentsWithFlagsHandler = async (req: Request<{}, {}, 
         const searchResult = await searchActiveStudentsWithFlags(search, +page, +termId, subjectOption, levelOption, sectionOption);
         res.status(200).json(searchResult);
     }
+};
+/****************************/
+export const fetchWeekdayActiveCheckedInStudentsHandler = async (req: Request<{}, {}, {}, FetchActiveCheckedInStudentsSchema['query']>, res: Response, next: NextFunction) => {
+    const { dateString } = req.query;
+    const students = await fetchWeekdayActiveCheckedInStudents(dateString);
+    res.status(200).json(students);
 };

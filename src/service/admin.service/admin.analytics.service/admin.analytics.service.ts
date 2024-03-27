@@ -135,13 +135,46 @@ export async function getPresentAttendances() {
     return await db.schoolCheckInAttendance.findMany({
         where: {
             checkedIn: true,
-            isMarked: true
+            isMarked: true,
+
+            classAttendance: {
+                every: {
+                    studentClassAssignment: {
+                        termSubjectLevel: {
+                            subject: {
+                                termSubject: {
+                                    some: {
+                                        isOnSunday: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
         include: {
             SchoolDay: true
         }
     });
 }
+export async function getWeekdayPresentAttendances() {
+    const attendances = await db.schoolCheckInAttendance.findMany({
+        where: {
+            checkedIn: true,
+            SchoolDay: {
+                isOnWeekday: true
+            }
+        },
+        select: {
+            date: true,
+            checkedIn: true
+        }
+    });
+
+    return attendances;
+}
+
 export async function getStudentsCountPerTerm() {
     const termsWithStudentCount = await db.term.findMany({
         include: {

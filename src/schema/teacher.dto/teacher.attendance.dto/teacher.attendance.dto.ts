@@ -7,6 +7,12 @@ export const fetchCheckedInStudentsWithAttendanceSchema = z.object({
     })
 });
 export type FetchCheckedInStudentsWithAttendanceSchema = z.infer<typeof fetchCheckedInStudentsWithAttendanceSchema>;
+export const fetchSchooldayTypeSchema = z.object({
+    params: z.object({
+        termSubjectLevelId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type FetchSchooldayTypeSchema = z.infer<typeof fetchSchooldayTypeSchema>;
 
 /*mark presenttrue for a single studentid*/
 export const markStudentAsPresentSchema = z.object({
@@ -57,7 +63,7 @@ export type CreateAutomatedMailForParentsSchema = z.infer<typeof createAutomated
 
 /*get all automated emails for parenst for students in a class*/
 export const findAutomatedMailSchema = z.object({
-query: z.object({
+    query: z.object({
         studentIds: z.array(z.string().min(1, { message: 'Student ID is required' })),
         termSubjectLevelId: z.string().min(1, { message: 'Term Subject Level ID is required' }),
         sectionId: z.string().min(1, { message: 'Section ID is required' }),
