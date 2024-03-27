@@ -1,6 +1,7 @@
 import { ChangeCurrentTermNameSchema, CreateNewTermSetupSchema, ExtendCurrentTermSchema, FindUniqueTermSchema } from '../../../schema/admin.dto/admin.administration.dto/admin.administration.dto';
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
+import { startOfDay, endOfDay } from 'date-fns';
 
 /* ORGANISTAION SET UP*/
 
@@ -794,4 +795,24 @@ export async function findPublishTermAdministration() {
     });
 
     return publishTerm;
+}
+export async function findSchoolDaysToday() {
+    const today = new Date();
+    const startOfToday = startOfDay(today);
+    const endOfToday = endOfDay(today);
+
+    const schoolDaysToday = await db.schoolDay.findMany({
+        where: {
+            schoolOperatedDate: {
+                gte: startOfToday,
+                lte: endOfToday
+            }
+        },
+        select: {
+            isOnSunday: true,
+            isOnWeekday: true
+        }
+    });
+
+    return schoolDaysToday;
 }

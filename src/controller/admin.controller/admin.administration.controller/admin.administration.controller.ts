@@ -17,7 +17,8 @@ import {
     makePublishTerm,
     findPublishTermAdministration,
     unPublishTerm,
-    findCurrentTermForeFilter
+    findCurrentTermForeFilter,
+    findSchoolDaysToday
 } from '../../../service/admin.service/admin.administration.service/admin.administration.service';
 import {
     ChangeCurrentTermNameSchema,
@@ -123,4 +124,9 @@ export const findCurrentTermForeFilterHandler = async (req: Request, res: Respon
 export const findPublishTermAdministrationHandler = async (req: Request, res: Response, next: NextFunction) => {
     const activeTerm = await findPublishTermAdministration();
     res.status(200).json(activeTerm);
+};
+
+export const findSchoolDaysTodayHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const schoolDaysToday = await findSchoolDaysToday();
+    res.status(200).json(schoolDaysToday);
 };
