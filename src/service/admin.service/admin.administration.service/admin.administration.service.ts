@@ -125,26 +125,6 @@ export const createNewTermSetup = async (setupData: CreateNewTermSetupSchema['bo
     return transactionResult;
 };
 
-// const m=findAllTerm().then(res=>console.log(res))
-
-// createNewTermSetup(setupOrgData);
-
-/* ORGANISTAION SET UP*/
-/*
-Terms CRUD
-// rename term(*)
-// find unique one
-// delete term
-// list all terms
-// end a term
-// add enrollment only if the term is open.(*)
-// create a new term
-*/
-/*
-subjects CRUD
-discontinue subjects -> make iActive flag toggle
-*/
-//list all terms
 export async function findAllTerm() {
     const allTerms = await db.term.findMany({
         select: {
@@ -411,18 +391,26 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
                 currentTerm: false
             }
         });
-
+        ///READ THIS--> school doesnt want batch student -> alumni/
         // Set all currently active students to alumni
-        await db.student.updateMany({
-            where: {
-                role: 'STUDENT',
-                isActive: true
-            },
-            data: {
-                role: 'ALUMNI',
-                isActive: false
-            }
+        // await db.student.updateMany({
+        //     where: {
+        //         role: 'STUDENT',
+        //         isActive: true
+        //     },
+        //     data: {
+        //         role: 'ALUMNI',
+        //         isActive: false
+        //     }
+        // });
+        const lastActiveStudent = await db.student.findFirst({
+            where: { isActive: true, role: 'STUDENT' },
+            orderBy: { akaalId: 'desc' }
         });
+        let nextAkaalId = 1;
+        if (lastActiveStudent?.akaalId) {
+            nextAkaalId = lastActiveStudent ? lastActiveStudent?.akaalId + 1 : 1;
+        }
 
         // Find the term to be set as the current term
         const newCurrentTerm = await db.term.findUnique({
@@ -444,17 +432,36 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
                 currentTerm: true
             }
         });
-
-        // Update all students with role STUDENT and isActive false to be active again
-        await db.student.updateMany({
+        // Retrieve IDs of students to update
+        const studentsToUpdate = await db.student.findMany({
             where: {
                 role: 'STUDENT',
                 isActive: false
             },
-            data: {
-                isActive: true
-            }
+            select: { id: true }
         });
+
+        // Update all students with role STUDENT and isActive false to be active again
+        // await db.student.updateMany({
+        //     where: {
+        //         role: 'STUDENT',
+        //         isActive: false
+        //     },
+        //     data: {
+        //         isActive: true
+        //     }
+        // });
+        const batchSize = 100; // Adjust the batch size as needed
+        for (let i = 0; i < studentsToUpdate.length; i += batchSize) {
+            const batch = studentsToUpdate.slice(i, i + batchSize);
+            const updates = batch.map((student) =>
+                db.student.update({
+                    where: { id: student.id, isActive: false, role: 'STUDENT' },
+                    data: { isActive: true, akaalId: nextAkaalId++ }
+                })
+            );
+            await Promise.all(updates);
+        }
 
         // Return the updated term
         return updatedTerm;

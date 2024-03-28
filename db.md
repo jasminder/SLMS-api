@@ -883,3 +883,51 @@ export async function findUnassignedStudents() {
 
     return unassignedStudents;
 }
+
+
+*********************************
+ok , using that schema the way i create logic is by using route, controller , schema and service where route is
+adminEnrollmentRoute.route('/enroll-applicant-to-student/:id').post(validate(findUniqueApplicantSchema), protectRoute, restrict('ADMIN'),asyncErrorHandler(enrollApplicantToStudentHandler));
+
+and controller is export const enrollApplicantToStudentHandler = async (req: Request<FindUniqueApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const enrolledSubjects = await enrollApplicantToStudent(+id);
+    res.status(200).json(enrolledSubjects);
+};
+ and schema is export const findUniqueApplicantSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+
+export type FindUniqueApplicantSchema = z.infer<typeof findUniqueApplicantSchema>; and service is export async function enrollApplicantToStudent(id: number) {
+    // Fetch the student record
+    const student = await db.student.findUnique({
+        where: { id }
+    });
+
+    // Check if student record exists
+    if (!student) {
+        throw customError(`No student found with ID ${id}`, 'fail', 404, true);
+    }
+    const enrollments = await db.enrollment.findMany({
+        where: { studentId: id }
+    });
+
+    if (enrollments.length === 0) {
+        throw customError(`No enrollments found for the applicant. Please enroll a subject at the subject & classes tab.`, 'fail', 404, true);
+    }
+
+    // Check if the student's role is already 'STUDENT'
+    if (student.role === 'STUDENT') {
+        throw customError(`The applicant is already a student`, 'fail', 404, true);
+    }
+
+    // Update the student's role to 'STUDENT'
+    await db.student.update({
+        where: { id },
+        data: { role: 'STUDENT' }
+    });
+
+    return { message: `The applicant enrolled to Student successfully` };
+}

@@ -50,6 +50,7 @@ enum PaymentType {
 
 model Student {
   id                      Int                       @id @default(autoincrement())
+  akaalId                 Int?
   role                    Role                      @default(APPLICANT)
   isActive                Boolean                   @default(false)
   isAllowedLogin          Boolean                   @default(false)

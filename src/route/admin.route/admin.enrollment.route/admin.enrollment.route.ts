@@ -37,7 +37,11 @@ adminEnrollmentRoute.route('/find-enrolled-subjects-applicant/:id').get(validate
 
 //***** */  NOT USED *****//
 /*enroll the applicant to student*/
+
+
 adminEnrollmentRoute.route('/enroll-applicant-to-student/:id').post(validate(findUniqueApplicantSchema), protectRoute, restrict('ADMIN'),asyncErrorHandler(enrollApplicantToStudentHandler));
+
+
 //***** */  NOT USED *****//
 
 /* de-enroll applicant to subjects */

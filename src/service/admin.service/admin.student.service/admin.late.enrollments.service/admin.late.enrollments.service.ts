@@ -598,11 +598,18 @@ export async function lateEnrolledActiveStudent(id: number, termId: string) {
     if (enrollments.length === 0) {
         throw customError(`No enrollments found for the applicant. Please enroll a subject at the subject & classes tab.`, 'fail', 404, true);
     }
-
+    const lastActiveStudent = await db.student.findFirst({
+        where: { isActive: true, role: 'STUDENT' },
+        orderBy: { akaalId: 'desc' }
+    });
+    let nextAkaalId = 1;
+    if (lastActiveStudent?.akaalId) {
+        nextAkaalId = lastActiveStudent ? lastActiveStudent?.akaalId + 1 : 1;
+    }
     // Update the student's role to 'STUDENT'
     await db.student.update({
         where: { id },
-        data: { isActive: true, isAllowedLogin: true }
+        data: { isActive: true, isAllowedLogin: true, akaalId: nextAkaalId }
     });
 
     return { message: `The applicant enrolled to Student successfully` };
