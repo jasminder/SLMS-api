@@ -125,7 +125,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 }
             });
-            console.log(existingRecords, "existingRecords");
+            console.log(existingRecords, 'existingRecords');
             if (existingRecords.length > 0) {
                 throw customError('Attendance already created for today.', 'fail', 400, true);
             }
@@ -396,6 +396,7 @@ export async function fetchSchoolCheckInAttendance() {
                             }
                         }
                     },
+
                     personalDetails: {
                         select: {
                             firstName: true,

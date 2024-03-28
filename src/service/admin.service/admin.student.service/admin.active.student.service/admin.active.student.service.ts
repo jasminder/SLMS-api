@@ -752,7 +752,7 @@ export async function findActiveStudentById(id: string) {
             }
         }
     });
-
+    console.log(activeStudent);
     return { activeStudent, siblings };
 }
 export async function findStudentFeeDetails(studentId: number, termId: number) {
