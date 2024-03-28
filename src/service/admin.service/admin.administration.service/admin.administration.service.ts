@@ -711,7 +711,12 @@ export async function findCurrentTerm() {
                 select: {
                     id: true,
                     subject: true,
-                    level: true
+                    level: true,
+                    isOnSunday: true,
+                    isOnWeekday: true
+                },
+                orderBy: {
+                    id: 'desc'
                 }
             },
             termSubjectGroup: {
@@ -719,6 +724,17 @@ export async function findCurrentTerm() {
                     id: true,
                     fee: true,
                     subjectGroup: true
+                }
+            },
+            studentTermFee: {
+                select: {
+                    student: {
+                        select: {
+                            id: true,
+                            isActive: true,
+                            role: true
+                        }
+                    }
                 }
             }
         }
@@ -815,4 +831,68 @@ export async function findSchoolDaysToday() {
     });
 
     return schoolDaysToday;
+}
+
+export async function changeIsOnSunday(termSubjectId: string, isOnSunday: boolean) {
+    // Check if the term subject exists
+    const termSubject = await db.termSubject.findUnique({
+        where: {
+            id: +termSubjectId
+        }
+    });
+
+    if (!termSubject) {
+        throw customError(`Term subject not found`, 'fail', 404, true);
+    }
+
+    // Update the isOnSunday field
+    const updatedTermSubject = await db.termSubject.update({
+        where: {
+            id: +termSubjectId
+        },
+        data: {
+            isOnSunday
+        },
+        select: {
+            id: true,
+            termId: true,
+            subjectId: true,
+            isOnSunday: true
+            // Include any other fields you want to return
+        }
+    });
+
+    return updatedTermSubject;
+}
+
+export async function changeIsOnWeekday(termSubjectId: string, isOnWeekday: boolean) {
+    // Verify if the TermSubject exists
+    const termSubject = await db.termSubject.findUnique({
+        where: {
+            id: +termSubjectId
+        }
+    });
+
+    if (!termSubject) {
+        throw customError(`Term subject not found`, 'fail', 404, true);
+    }
+
+    // Update the isOnWeekday field
+    const updatedTermSubject = await db.termSubject.update({
+        where: {
+            id: +termSubjectId
+        },
+        data: {
+            isOnWeekday
+        },
+        select: {
+            id: true,
+            termId: true,
+            subjectId: true,
+            isOnWeekday: true
+            // You can include additional fields if needed
+        }
+    });
+
+    return updatedTermSubject;
 }

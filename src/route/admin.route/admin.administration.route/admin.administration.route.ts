@@ -20,25 +20,34 @@ import {
     findPublishTermAdministrationHandler,
     unPublishTermTermHandler,
     findCurrentTermForeFilterHandler,
-    findSchoolDaysTodayHandler
+    findSchoolDaysTodayHandler,
+    changeIsOnSundayHandler,
+    changeIsOnWeekdayHandler
 } from '../../../controller/admin.controller/admin.administration.controller/admin.administration.controller';
-import { changeCurrentTermNameSchema, createNewTermSetupSchema, extendCurrentTermSchema, findUniqueTermSchema } from '../../../schema/admin.dto/admin.administration.dto/admin.administration.dto';
+import {
+    changeCurrentTermNameSchema,
+    changeIsOnSundaySchema,
+    changeIsOnWeekdaySchema,
+    createNewTermSetupSchema,
+    extendCurrentTermSchema,
+    findUniqueTermSchema
+} from '../../../schema/admin.dto/admin.administration.dto/admin.administration.dto';
 import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
 
 const adminAdministrationRoute = express.Router();
 
 /*Term CRUD*/
-adminAdministrationRoute.route('/find-all-terms').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findAllTermHandler));
-adminAdministrationRoute.route('/find/term-detail/:id').get(validate(findUniqueTermSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(findUniqueTermHandler));
-adminAdministrationRoute.route('/update/end-term/:id').patch(validate(findUniqueTermSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(endTermHandler));
-adminAdministrationRoute.route('/delete-term/:id').delete(validate(findUniqueTermSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteTermHandler));
-adminAdministrationRoute.route('/update/term-name/:id').put(validate(changeCurrentTermNameSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(changeCurrentTermNameHandler));
-adminAdministrationRoute.route('/update/extend-term/:id').put(validate(extendCurrentTermSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(extendCurrentTermHandler));
-adminAdministrationRoute.route('/find-current-term').get(protectRoute, restrict('ADMIN', 'TEACHER'),asyncErrorHandler(findCurrentTermHandler));
-adminAdministrationRoute.route('/find-current-term-for-filter').get(protectRoute, restrict('ADMIN', 'TEACHER'),asyncErrorHandler(findCurrentTermForeFilterHandler));
-adminAdministrationRoute.route('/find-published-term-administration').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findPublishTermAdministrationHandler));
-adminAdministrationRoute.route('/find-schoolday-type').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findSchoolDaysTodayHandler));
+adminAdministrationRoute.route('/find-all-terms').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(findAllTermHandler));
+adminAdministrationRoute.route('/find/term-detail/:id').get(validate(findUniqueTermSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findUniqueTermHandler));
+adminAdministrationRoute.route('/update/end-term/:id').patch(validate(findUniqueTermSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(endTermHandler));
+adminAdministrationRoute.route('/delete-term/:id').delete(validate(findUniqueTermSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteTermHandler));
+adminAdministrationRoute.route('/update/term-name/:id').put(validate(changeCurrentTermNameSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(changeCurrentTermNameHandler));
+adminAdministrationRoute.route('/update/extend-term/:id').put(validate(extendCurrentTermSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(extendCurrentTermHandler));
+adminAdministrationRoute.route('/find-current-term').get(protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findCurrentTermHandler));
+adminAdministrationRoute.route('/find-current-term-for-filter').get(protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findCurrentTermForeFilterHandler));
+adminAdministrationRoute.route('/find-published-term-administration').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(findPublishTermAdministrationHandler));
+adminAdministrationRoute.route('/find-schoolday-type').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(findSchoolDaysTodayHandler));
 
 // find students in a term
 adminAdministrationRoute.route('/term-students-list/:id').get(validate(findUniqueTermSchema), asyncErrorHandler(findAllStudentsInATermHandler));
@@ -48,6 +57,10 @@ adminAdministrationRoute.route('/create-new-term-setup').post(validate(createNew
 adminAdministrationRoute.route('/update/make-current-term/:id').patch(validate(findUniqueTermSchema), asyncErrorHandler(makeCurrentTermHandler));
 adminAdministrationRoute.route('/update/make-publish-term/:id').patch(validate(findUniqueTermSchema), asyncErrorHandler(makePublishTermHandler));
 adminAdministrationRoute.route('/update/un-publish-term/:id').patch(validate(findUniqueTermSchema), asyncErrorHandler(unPublishTermTermHandler));
+adminAdministrationRoute
+    .route('/update-termSubject/isOnSunday/:termSubjectId')
+    .patch(validate(changeIsOnSundaySchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(changeIsOnSundayHandler));
+adminAdministrationRoute.route('/update-termSubject/isOnWeekday/:termSubjectId').patch(validate(changeIsOnWeekdaySchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(changeIsOnWeekdayHandler));
 
 /*Groups*/
 adminAdministrationRoute.route('/get-all-groups').get(asyncErrorHandler(findAllGroupsHandler));

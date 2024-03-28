@@ -18,10 +18,14 @@ import {
     findPublishTermAdministration,
     unPublishTerm,
     findCurrentTermForeFilter,
-    findSchoolDaysToday
+    findSchoolDaysToday,
+    changeIsOnSunday,
+    changeIsOnWeekday
 } from '../../../service/admin.service/admin.administration.service/admin.administration.service';
 import {
     ChangeCurrentTermNameSchema,
+    ChangeIsOnSundaySchema,
+    ChangeIsOnWeekdaySchema,
     CreateNewTermSetupSchema,
     ExtendCurrentTermSchema,
     FindAllStudentsInATermSchema,
@@ -129,4 +133,18 @@ export const findPublishTermAdministrationHandler = async (req: Request, res: Re
 export const findSchoolDaysTodayHandler = async (req: Request, res: Response, next: NextFunction) => {
     const schoolDaysToday = await findSchoolDaysToday();
     res.status(200).json(schoolDaysToday);
+};
+export const changeIsOnSundayHandler = async (req: Request<ChangeIsOnSundaySchema['params'], {}, ChangeIsOnSundaySchema['body'], {}>, res: Response, next: NextFunction) => {
+    const {  termSubjectId } = req.params;
+    const { isOnSunday } = req.body;
+    const updatedTermSubject = await changeIsOnSunday( termSubjectId, isOnSunday);
+    res.status(200).json(updatedTermSubject);
+};
+
+export const changeIsOnWeekdayHandler = async (req: Request<ChangeIsOnWeekdaySchema['params'], {}, ChangeIsOnWeekdaySchema['body'], {}>, res: Response, next: NextFunction) => {
+    const {  termSubjectId } = req.params;
+    const { isOnWeekday } = req.body;
+
+    const updatedTermSubject = await changeIsOnWeekday( termSubjectId, isOnWeekday);
+    res.status(200).json(updatedTermSubject);
 };

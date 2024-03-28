@@ -14,8 +14,6 @@ export const findAllStudentsInATermSchema = z.object({
 });
 export type FindAllStudentsInATermSchema = z.infer<typeof findAllStudentsInATermSchema>;
 
-
-
 export const createNewTermSetupSchema = z.object({
     body: z.object({
         termName: z.string().min(4, { message: 'Minimum 4 characters required' }),
@@ -140,3 +138,22 @@ export const extendCurrentTermSchema = z.object({
     })
 });
 export type ExtendCurrentTermSchema = z.infer<typeof extendCurrentTermSchema>;
+
+export const changeIsOnSundaySchema = z.object({
+    params: z.object({
+        termSubjectId: z.string().min(1, 'Term Subject ID required')
+    }),
+    body: z.object({
+        isOnSunday: z.boolean()
+    })
+});
+export type ChangeIsOnSundaySchema = z.infer<typeof changeIsOnSundaySchema>;
+export const changeIsOnWeekdaySchema = z.object({
+    params: z.object({
+        termSubjectId: z.string().min(1, 'Term Subject ID required')
+    }),
+    body: z.object({
+        isOnWeekday: z.boolean()
+    })
+});
+export type ChangeIsOnWeekdaySchema = z.infer<typeof changeIsOnWeekdaySchema>;

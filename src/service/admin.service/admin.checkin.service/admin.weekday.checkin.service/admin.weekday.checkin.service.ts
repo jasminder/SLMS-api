@@ -129,7 +129,7 @@ export async function createWeekdaySchoolCheckInAttendanceForStudent(date: strin
             });
             console.log(activeStudents, 'existingRecords');
             if (existingRecords.length > 0) {
-                throw customError('Attendance alreadyjgjj created for today.', 'fail', 400, true);
+                throw customError('Attendance already created for today.', 'fail', 400, true);
             }
 
             // Create SchoolCheckInAttendance records for all active students
