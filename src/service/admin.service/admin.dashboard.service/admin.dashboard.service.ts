@@ -287,6 +287,7 @@ export async function findActiveStudentsWithFlags(page: number, termId: number) 
         },
         select: {
             id: true,
+            akaalId:true,
             role: true,
             isActive: true,
             updatedAt: true,
@@ -418,7 +419,7 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
                 },
 
                 OR: [
-                    { id: searchAsNumber },
+                    { akaalId: searchAsNumber },
                     {
                         personalDetails: {
                             OR: [
@@ -444,6 +445,7 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
             },
             select: {
                 id: true,
+                akaalId: true,
                 role: true,
                 isActive: true,
                 updatedAt: true,
@@ -542,7 +544,7 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
                 },
 
                 OR: [
-                    { id: searchAsNumber },
+                    { akaalId: searchAsNumber },
                     {
                         personalDetails: {
                             OR: [
@@ -630,6 +632,7 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
             },
             select: {
                 id: true,
+                akaalId: true,
                 role: true,
                 isActive: true,
                 updatedAt: true,

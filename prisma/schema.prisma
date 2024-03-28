@@ -49,33 +49,34 @@ enum PaymentType {
 }
 
 model Student {
-  id                      Int                       @id @default(autoincrement())
-  akaalId                 Int?
-  role                    Role                      @default(APPLICANT)
-  isActive                Boolean                   @default(false)
-  isAllowedLogin          Boolean                   @default(false)
-  enrollments             Enrollment[]
-  personalDetails         PersonalDetails?
-  parentsDetails          ParentsDetails?
-  emergencyContact        EmergencyContact?
-  healthInformation       HealthInformation?
-  otherInformation        OtherInformation?
-  studentTermFee          StudentTermFee[]
-  subjectsChosen          String[]                  @default(["Subjects Chosen Not available"])
-  subjectRelated          String[]                  @default(["Options Not available"])
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  studentClassAssignment  StudentClassAssignment[]
-  user                    User?
-  schoolCheckInAttendance SchoolCheckInAttendance[]
-  skipReport              SkipReport[]
-  feedback                Feedback[]
-  interaction             Interaction[]
-  comment                 Comment[]
-  GroupHomework           GroupHomework[]
-  AutomatedMailForParents AutomatedMailForParents[]
-  GroupClasswork          GroupClasswork[]
-  Leave                   Leave[]
+  id                        Int                       @id @default(autoincrement())
+  akaalId                   Int?
+  attendancePercentageValue Int @default(0)
+  role                      Role                      @default(APPLICANT)
+  isActive                  Boolean                   @default(false)
+  isAllowedLogin            Boolean                   @default(false)
+  enrollments               Enrollment[]
+  personalDetails           PersonalDetails?
+  parentsDetails            ParentsDetails?
+  emergencyContact          EmergencyContact?
+  healthInformation         HealthInformation?
+  otherInformation          OtherInformation?
+  studentTermFee            StudentTermFee[]
+  subjectsChosen            String[]                  @default(["Subjects Chosen Not available"])
+  subjectRelated            String[]                  @default(["Options Not available"])
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
+  studentClassAssignment    StudentClassAssignment[]
+  user                      User?
+  schoolCheckInAttendance   SchoolCheckInAttendance[]
+  skipReport                SkipReport[]
+  feedback                  Feedback[]
+  interaction               Interaction[]
+  comment                   Comment[]
+  GroupHomework             GroupHomework[]
+  AutomatedMailForParents   AutomatedMailForParents[]
+  GroupClasswork            GroupClasswork[]
+  Leave                     Leave[]
 }
 
 model PersonalDetails {

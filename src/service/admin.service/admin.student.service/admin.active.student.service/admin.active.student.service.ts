@@ -22,14 +22,16 @@ export async function findActiveStudents(page: number, termId: number) {
         skip,
         take,
         orderBy: {
-            createdAt: 'desc'
+            akaalId: 'desc'
         },
         select: {
             id: true,
+            akaalId: true,
             role: true,
             isActive: true,
             updatedAt: true,
             createdAt: true,
+
             personalDetails: {
                 select: {
                     id: true,
@@ -118,7 +120,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
     if (searchAsNumber) {
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
-        const latestAttendanceIds = (
+        const latestAttendanceIdsRaw = (
             await db.student.findMany({
                 where: {
                     role: 'STUDENT',
@@ -135,11 +137,12 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                 }
             })
         ).map((student) => student.schoolCheckInAttendance[0]?.id);
+        const latestAttendanceIds = latestAttendanceIdsRaw.filter((id) => id !== undefined);
         const activeStudents = await db.student.findMany({
             skip,
             take,
             orderBy: {
-                createdAt: 'desc'
+                akaalId: 'desc'
             },
             where: {
                 role: 'STUDENT',
@@ -190,7 +193,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                       }),
 
                 OR: [
-                    { id: searchAsNumber },
+                    { akaalId: searchAsNumber },
                     {
                         personalDetails: {
                             OR: [
@@ -216,6 +219,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             },
             select: {
                 id: true,
+                akaalId: true,
                 role: true,
                 isActive: true,
                 updatedAt: true,
@@ -307,14 +311,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
-                // ...(+attendanceOption && {
-                //     schoolCheckInAttendance: {
-                //         some: {
-                //             id: { in: latestAttendanceIds },
-                //             attendanceValue: +attendanceOption
-                //         }
-                //     }
-                // }),
+
                 ...(attendanceOption === '0'
                     ? {
                           schoolCheckInAttendance: {
@@ -334,7 +331,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                       }),
 
                 OR: [
-                    { id: searchAsNumber },
+                    { akaalId: searchAsNumber },
                     {
                         personalDetails: {
                             OR: [
@@ -364,7 +361,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
         console.log('inside NOT `searchAsNumber');
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
-        const latestAttendanceIds = (
+        const latestAttendanceIdsRaw = (
             await db.student.findMany({
                 where: {
                     role: 'STUDENT',
@@ -381,12 +378,13 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                 }
             })
         ).map((student) => student.schoolCheckInAttendance[0]?.id);
+        const latestAttendanceIds = latestAttendanceIdsRaw.filter((id) => id !== undefined);
         console.log(latestAttendanceIds, 'latestAttendanceIds');
         const activeStudents = await db.student.findMany({
             skip,
             take,
             orderBy: {
-                createdAt: 'desc'
+                akaalId: 'desc'
             },
             where: {
                 role: 'STUDENT',
@@ -461,6 +459,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             },
             select: {
                 id: true,
+                akaalId: true,
                 role: true,
                 isActive: true,
                 updatedAt: true,
