@@ -159,7 +159,7 @@ export async function markStudentAsPresent(studentId: string, studentClassAssign
     if (!updatedClassAttendanceRecord) {
         throw customError(`Failed to mark student as PRESENT.`, 'fail', 400, true);
     }
-    console.log('updatedClassAttendanceRecord', updatedClassAttendanceRecord);
+
     return updatedClassAttendanceRecord;
 }
 
@@ -218,7 +218,7 @@ export async function createAutomatedMailForParents(studentIds: string[], teache
                 sendDate
             }
         });
-        console.log('existingAutomatedMail', existingAutomatedMail);
+
         // Create AutomatedMailForParents record if it does not exist
         if (!existingAutomatedMail?.id) {
             const newMail = await db.automatedMailForParents.create({

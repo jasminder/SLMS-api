@@ -90,7 +90,7 @@ export async function createGroupClasswork(
                     }
                 }
             });
-            console.log('found', found);
+
             if (found) {
                 existingGroupClasswork = true;
                 break;

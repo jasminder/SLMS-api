@@ -90,7 +90,7 @@ export async function searchApplicants(search: string, page: number) {
     // if (search.length == 0) {
     //     throw customError(`No Search query string available`, 'fail', 400, true);
     // }
-    console.log(search);
+
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
 
 

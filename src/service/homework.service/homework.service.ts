@@ -248,11 +248,11 @@ export async function editHomework(
             }
         }
     });
-    console.log(
-        'groupHomeworkEntries',
-        groupHomeworkEntries.map((g) => g.HomeworkSnapshot),
-        homeworkId
-    );
+    // console.log(
+    //     'groupHomeworkEntries',
+    //     groupHomeworkEntries.map((g) => g.HomeworkSnapshot),
+    //     homeworkId
+    // );
     const presignedAttachments = [];
     const presignedFileNames = [];
     for (const attachment of attachments) {
@@ -289,7 +289,7 @@ export async function editHomework(
             });
         }
     }
-    console.log('presignedAttachments', presignedAttachments);
+    // console.log('presignedAttachments', presignedAttachments);
     return updatedHomework;
 }
 

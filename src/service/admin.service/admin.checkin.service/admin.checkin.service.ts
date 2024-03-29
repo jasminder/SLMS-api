@@ -69,39 +69,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                 }
             });
 
-            // const studentsWithoutAssignment = activeStudents.filter((student) => !student.studentClassAssignment || student.studentClassAssignment.length === 0);
-            // console.log(studentsWithoutAssignment);
-
-            // const allActiveStudents = await db.student.findMany({
-            //     where: {
-            //         isActive: true // Filters to only include active students
-            //     },
-            //     include: {
-            //         studentClassAssignment: true,
-            //         personalDetails: true,
-            //         enrollments: {
-            //             include: {
-            //                 subjectEnrollment: {
-            //                     include: {
-            //                         termSubject: true
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            //     // Optionally, you can also add ordering or pagination here
-            //     // orderBy: {
-            //     //     createdAt: 'desc'
-            //     // }
-            // });
-            // if (allActiveStudents.length == 0) {
-            //     throw customError(`There are no  active students. Please enroll students in a current term to do this action`, 'fail', 400, true);
-            // }
-            // if (studentsWithoutAssignment.length > 0) {
-            //     const studentsWithoutClass = studentsWithoutAssignment.map((student) => student.personalDetails?.firstName);
-            //     throw customError(`Some active students ${studentsWithoutClass.join(',')}  are not assigned to any class. Please assign students to classes.`, 'fail', 400, true);
-            // }
-            // Check if attendance records already exist for the specified date
             const existingRecords = await db.schoolCheckInAttendance.findMany({
                 where: {
                     date: {
@@ -125,7 +92,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 }
             });
-            console.log(existingRecords, 'existingRecords');
+
             if (existingRecords.length > 0) {
                 throw customError('Attendance already created for today.', 'fail', 400, true);
             }

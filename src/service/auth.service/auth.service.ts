@@ -27,7 +27,6 @@ export async function signUpUser(email: string, password: string, confirmPasswor
 
     // Determine the user's role and check if allowed to login
     const { userRole, isAllowedLogin } = await findUserRoleAndLoginPermission(email);
-    // console.log(userRole, isAllowedLogin, 'userRole,isAllowedLogin');
 
     if (!isAllowedLogin) {
         throw customError('User is not allowed to sign up. Contact School', 'fail', 400, true);
@@ -169,12 +168,12 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
             }
         }
     });
-    console.log(studentDetails, 'studentDetails');
+
     if (studentDetails) {
         const existingStudent = await db.student.findUnique({
             where: { id: studentDetails.studentId }
         });
-        console.log(existingStudent, 'existingStudent');
+
         if (existingStudent && existingStudent.isAllowedLogin) {
             userRole = Role.STUDENT;
             isAllowedLogin = existingStudent.isAllowedLogin;

@@ -115,9 +115,9 @@ export async function consolidateStudentDataForEmail() {
                     sendDate
                 }
             });
-            // console.log('feedbackEntries', feedbackEntries);
-            console.log('homeworkEntries', homeworkEntries);
-            console.log('classworkEntries', classworkEntries);
+            // // console.log('feedbackEntries', feedbackEntries);
+            // console.log('homeworkEntries', homeworkEntries);
+            // console.log('classworkEntries', classworkEntries);
             const teacherName = `${mailEntry.teacher.teacherPersonalDetails?.firstName} ${mailEntry.teacher.teacherPersonalDetails?.lastName}`;
             feedbackContent = feedbackEntries.length > 0 ? feedbackEntries.map((f) => f.content).join('\n') : '';
             emailContent += centerSeparator('-----------------------------------------------------------') + '\n';
@@ -243,7 +243,7 @@ export async function consolidateStudentDataForEmail() {
         emailContent += '\nAkaal Shaoui Gurmat Vidyala.\n' + '1565 Western Port Highway\n' + 'Langwarrin VIC 3910\n' + 'Mobile: 0433029912\n';
         emailContent += '\nThis is an unmonitored mailbox. For any queries, please contact akaalshaouni@gmail.com\n';
 
-        console.log('emailContent', emailContent);
+        // console.log('emailContent', emailContent);
 
         if (student.personalDetails?.email) {
             await sendConsolidatedEmail(

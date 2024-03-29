@@ -87,7 +87,7 @@ export async function createGroupHomework(
                     }
                 }
             });
-            console.log('found', found);
+
             if (found) {
                 existingGroupHomework = true;
                 break;
@@ -110,7 +110,7 @@ export async function createGroupHomework(
                 sectionId: +sectionId
             }
         });
-        console.log(groupHomework, 'groupHomework');
+        // console.log(groupHomework, 'groupHomework');
         // }
         // Create HomeworkSnapshot for each Homework ID
         for (const homeworkId of homeworkIds) {

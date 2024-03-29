@@ -57,7 +57,7 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
             schoolOperatedDate: 'desc'
         }
     });
-    console.log(previousSchoolDay, 'previousSchoolDay');
+
     // Function to fetch attendance for a given school day
     const fetchAttendance = async (schoolDay: SchoolDay | null) => {
         if (!schoolDay) return { totalCheckedIn: [], totalCheckedOut: [], totalAbsent: [], totalLeave: [], totalPresent: [] };
@@ -287,7 +287,7 @@ export async function findActiveStudentsWithFlags(page: number, termId: number) 
         },
         select: {
             id: true,
-            akaalId:true,
+            akaalId: true,
             role: true,
             isActive: true,
             updatedAt: true,
@@ -381,7 +381,6 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
     const take = 500;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     if (searchAsNumber) {
-        console.log('inside searchAsNumber');
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
         const activeStudents = await db.student.findMany({

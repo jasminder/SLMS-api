@@ -358,7 +358,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
         });
         return { activeStudents, count };
     } else if (!searchAsNumber) {
-        console.log('inside NOT `searchAsNumber');
+
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
         const latestAttendanceIdsRaw = (
@@ -379,7 +379,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             })
         ).map((student) => student.schoolCheckInAttendance[0]?.id);
         const latestAttendanceIds = latestAttendanceIdsRaw.filter((id) => id !== undefined);
-        console.log(latestAttendanceIds, 'latestAttendanceIds');
+
         const activeStudents = await db.student.findMany({
             skip,
             take,
@@ -752,7 +752,7 @@ export async function findActiveStudentById(id: string) {
             }
         }
     });
-    console.log(activeStudent);
+
     return { activeStudent, siblings };
 }
 export async function findStudentFeeDetails(studentId: number, termId: number) {
@@ -965,7 +965,7 @@ export const findCurrentTermToAssignClass = async () => {
 
 /****** * assign class to student*****/
 export async function assignClassToStudent(studentId: string, termId: string, subjectName: string, levelName: string, sectionName: string) {
-    // console.log(sectionName);
+
     // Find Subject ID
     const subject = await db.subject.findUnique({
         where: {
@@ -1501,10 +1501,10 @@ export async function updateLeaveApplication(leaveId: string, updatedById: strin
     const currentEndDate = new Date();
     currentEndDate.setHours(23, 59, 59, 999);
 
-    console.log("ioutside'");
-    console.log(formattedStartDate, currentEndDate);
-    console.log(formattedEndDate, currentDate);
-    console.log(status);
+    // console.log("ioutside'");
+    // console.log(formattedStartDate, currentEndDate);
+    // console.log(formattedEndDate, currentDate);
+    // console.log(status);
 
     const isCurrentDateWithinLeave = formattedStartDate <= currentEndDate && formattedEndDate >= currentDate;
 

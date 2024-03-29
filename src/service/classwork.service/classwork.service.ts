@@ -251,11 +251,7 @@ export async function editClasswork(
             }
         }
     });
-    console.log(
-        'groupclassworkEntries',
-        groupclassworkEntries.map((g) => g.ClassworkSnapshot),
-        classworkId
-    );
+
     const presignedAttachments = [];
     const presignedFileNames = [];
     for (const attachment of attachments) {
@@ -292,7 +288,7 @@ export async function editClasswork(
             });
         }
     }
-    console.log('presignedAttachments', presignedAttachments);
+
     return updatedclasswork;
 }
 // Utility function to extract file name from the URL

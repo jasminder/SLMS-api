@@ -23,7 +23,7 @@ export async function updateStudentPersonalDetail(id: string, data: UpdateStuden
     // if (existingStudent?.personalDetails?.contact == existingStudent?.parentsDetails?.parentContact) {
     //     throw customError(`Primary and secondary contact number must differ`, 'fail', 400, true);
     // }
-    console.log('update student*********************');
+
     /***********************************************************/
     /***********************************************************/
     try {
