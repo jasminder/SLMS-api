@@ -6,6 +6,7 @@ import {
     activeStudentEnrollDataSchema,
     assignClassToStudentSchema,
     createLeaveApplicationSchema,
+    defaultSelectActiveStudentsSchema,
     deleteClassAssignmentSchema,
     deleteLeaveApplicationSchema,
     fetchLeavesForStudentSchema,
@@ -19,6 +20,7 @@ import {
     findUniqueFeePaymentSchema,
     manageClassSchema,
     searchActiveStudentsSchema,
+    selectActiveStudentsSchema,
     updateAmountPaidSchema,
     updateLeaveApplicationSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
@@ -26,6 +28,7 @@ import {
     assignClassToStudentHandler,
     createLeaveApplicationHandler,
     deEnrollActiveStudentHandler,
+    defaultSelectActiveStudentsHandler,
     deleteClassAssignmentHandler,
     deleteLeaveApplicationHandler,
     enrollActiveStudentHandler,
@@ -43,6 +46,7 @@ import {
     findUniqueStudentClassDetailsHandler,
     manageClassesHandler,
     searchActiveStudentsHandler,
+    selectActiveStudentsHandler,
     updateAmountPaidHandler,
     updateLeaveApplicationHandler
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
@@ -61,7 +65,12 @@ adminActiveStudentRoute.route('/get-all-active-students').get(validate(findAllAc
 
 /*search active students*/
 adminActiveStudentRoute.route('/search-active-students').get(validate(searchActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsHandler));
-// Without Pagination
+
+
+adminActiveStudentRoute.route('/get-default-active-students').get(validate(defaultSelectActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(defaultSelectActiveStudentsHandler));
+//selectActiveStudentsSchema
+adminActiveStudentRoute.route('/select-active-students').get(validate(selectActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(selectActiveStudentsHandler));
+
 
 /*find all enrolled students*/
 adminActiveStudentRoute
@@ -125,14 +134,14 @@ adminActiveStudentRoute
 adminActiveStudentRoute
     .route('/create-leave-application/:studentId/:appliedById/:appliedByRole')
     .post(validate(createLeaveApplicationSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(createLeaveApplicationHandler));
-adminActiveStudentRoute.route('/update-leave-application/:leaveId/:updatedById').patch(validate(updateLeaveApplicationSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateLeaveApplicationHandler));
+adminActiveStudentRoute
+    .route('/update-leave-application/:leaveId/:updatedById')
+    .patch(validate(updateLeaveApplicationSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateLeaveApplicationHandler));
 
 adminActiveStudentRoute.route('/delete-leave-application/:leaveId').delete(validate(deleteLeaveApplicationSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteLeaveApplicationHandler));
 
 adminActiveStudentRoute.route('/get-all-leaves/:studentId').get(validate(fetchLeavesForStudentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchLeavesForStudentHandler));
 
-adminActiveStudentRoute
-    .route('/get-leave-by-id/:leaveId')
-    .get(validate(findLeaveByIdSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findLeaveByIdHandler));
+adminActiveStudentRoute.route('/get-leave-by-id/:leaveId').get(validate(findLeaveByIdSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findLeaveByIdHandler));
 
 export default adminActiveStudentRoute;

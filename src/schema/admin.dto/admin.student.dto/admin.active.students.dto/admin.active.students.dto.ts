@@ -16,6 +16,13 @@ export const findAllActiveStudentsSchema = z.object({
     })
 });
 export type FindAllActiveStudentsSchema = z.infer<typeof findAllActiveStudentsSchema>;
+export const defaultSelectActiveStudentsSchema = z.object({
+    query: z.object({
+        page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
+    })
+});
+export type DefaultSelectActiveStudentsSchema = z.infer<typeof defaultSelectActiveStudentsSchema>;
 
 export const findStudentFeeDetailsSchema = z.object({
     params: z.object({
@@ -40,6 +47,18 @@ export const searchActiveStudentsSchema = z.object({
     })
 });
 export type SearchActiveStudentsSchema = z.infer<typeof searchActiveStudentsSchema>;
+export const selectActiveStudentsSchema = z.object({
+    query: z.object({
+        search: z.string().optional(),
+        subjectOption: z.string().optional(),
+        levelOption: z.string().optional(),
+        sectionOption: z.string().optional(),
+        attendanceOption: z.string().optional(),
+        page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
+    })
+});
+export type SelectActiveStudentsSchema = z.infer<typeof selectActiveStudentsSchema>;
 
 /* enroll activeStudent to subjects */
 export const activeStudentEnrollDataSchema = z.object({
