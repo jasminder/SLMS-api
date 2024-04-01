@@ -20,8 +20,10 @@ import { consolidateStudentDataForEmail } from '../service/cron.service/cron.con
 cron.schedule('30 16 * * 0-5', async () => {
     try {
         // Attempt to run the consolidation function
-        await consolidateStudentDataForEmail();
-        console.log('Cron job executed successfully: consolidateStudentDataForEmail');
+        if (process.env.NODE_ENV == 'production') {
+            await consolidateStudentDataForEmail();
+            console.log('Cron job executed successfully: consolidateStudentDataForEmail');
+        }
     } catch (error) {
         // Log any errors that occur
         console.error('Error occurred in cron job: consolidateStudentDataForEmail', error);

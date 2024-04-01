@@ -51,7 +51,7 @@ enum PaymentType {
 model Student {
   id                        Int                       @id @default(autoincrement())
   akaalId                   Int?
-  attendancePercentageValue Int @default(0)
+  attendancePercentageValue Int                       @default(0)
   role                      Role                      @default(APPLICANT)
   isActive                  Boolean                   @default(false)
   isAllowedLogin            Boolean                   @default(false)
@@ -505,6 +505,7 @@ model Admin {
   Classwork                 Classwork[]
   SkipReport                SkipReport[]
   Leave                     Leave[]
+  EmailTemplate             EmailTemplate[]
 }
 
 model AdminPersonalDetails {
@@ -922,4 +923,16 @@ model Leave {
   updatedAt DateTime @updatedAt
 
   @@unique([studentId, startDate, endDate]) // Ensuring a student doesn't have overlapping leaves
+}
+
+model EmailTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String // A unique name for identifying the template
+  description String? // An optional description of the template
+  subject     String // The subject line of the email
+  text        String // The body text of the email template
+  adminId     Int // Foreign key to reference the admin who created the template
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  admin       Admin    @relation(fields: [adminId], references: [id]) // Relation to the Admin model
 }
