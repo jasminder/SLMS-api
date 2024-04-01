@@ -1,6 +1,7 @@
 import { NewApplicantSchema } from '../../schema/new.applicant.dto/new.applicant.dto';
 import { customError } from '../../utils/customError';
 import { db } from '../../utils/db.server';
+import { sendEmail } from '../../utils/email';
 
 //  create new application
 export async function createApplicant(data: NewApplicantSchema['body']) {
@@ -91,6 +92,14 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
                 }
             }
         });
+        const template = await db.emailTemplate.findFirst({});
+        if (student && template) {
+            const resonse = await sendEmail({
+                email: email,
+                subject: template.subject,
+                text: template.text
+            });
+        }
         return student;
     } catch (e) {
         // console.log(e);
@@ -117,7 +126,9 @@ export async function findPublishTerm() {
                 select: {
                     id: true,
                     subject: true,
-                    level: true
+                    level: true,
+                    isOnSunday: true,
+                    isOnWeekday: true
                 }
             },
             termSubjectGroup: {
@@ -125,6 +136,17 @@ export async function findPublishTerm() {
                     id: true,
                     fee: true,
                     subjectGroup: true
+                }
+            },
+            studentTermFee: {
+                select: {
+                    student: {
+                        select: {
+                            id: true,
+                            isActive: true,
+                            role: true
+                        }
+                    }
                 }
             }
         }

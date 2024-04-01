@@ -3,16 +3,22 @@ import { db } from '../../../utils/db.server';
 
 // admin.communication.service
 export async function createEmailTemplate(adminId: string, name: string, subject: string, text: string) {
-    const newTemplate = await db.emailTemplate.create({
-        data: {
-            name,
-            subject,
-            text,
-            adminId: +adminId // Assuming adminId is passed as a string
-        }
-    });
+    return await db.$transaction(async (prisma) => {
+        // Delete all existing templates
+        await prisma.emailTemplate.deleteMany();
 
-    return newTemplate;
+        // Create the new template
+        const newTemplate = await prisma.emailTemplate.create({
+            data: {
+                name,
+                subject,
+                text,
+                adminId: +adminId // Convert adminId to a number
+            }
+        });
+
+        return newTemplate;
+    });
 }
 
 export async function getAllEmailTemplates() {
@@ -39,9 +45,9 @@ export async function updateEmailTemplate(templateId: string, name: string, subj
 
     return updatedTemplate;
 }
-export async function deleteEmailTemplate(templateId:string) {
+export async function deleteEmailTemplate(templateId: string) {
     const template = await db.emailTemplate.findUnique({
-        where: { id: +templateId}
+        where: { id: +templateId }
     });
 
     if (!template) {

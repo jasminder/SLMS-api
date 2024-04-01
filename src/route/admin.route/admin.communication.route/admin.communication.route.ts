@@ -16,7 +16,7 @@ const adminEmailTemplateRoute = express.Router();
 
 adminEmailTemplateRoute.route('/create-email-template/:adminId').post(validate(createEmailTemplateSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createEmailTemplateHandler));
 adminEmailTemplateRoute.route('/update-email-template/:templateId').patch(validate(updateEmailTemplateSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateEmailTemplateHandler));
-adminEmailTemplateRoute.route('/email-templates').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(getAllEmailTemplatesHandler));
+adminEmailTemplateRoute.route('/get-email-templates').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(getAllEmailTemplatesHandler));
 adminEmailTemplateRoute.route('/delete-email-template/:templateId').delete(validate(deleteEmailTemplateSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteEmailTemplateHandler));
 
 export default adminEmailTemplateRoute;

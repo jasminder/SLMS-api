@@ -140,7 +140,9 @@ export async function findAllTerm() {
                 select: {
                     id: true,
                     level: true,
-                    subject: true
+                    subject: true,
+                    isOnSunday: true,
+                    isOnWeekday: true
                 }
             },
             termSubjectGroup: {
@@ -159,7 +161,19 @@ export async function findAllTerm() {
                     subject: {
                         select: {
                             id: true,
-                            name: true
+                            name: true,
+                            isActive: true
+                        }
+                    }
+                }
+            },
+            studentTermFee: {
+                include: {
+                    student: {
+                        select: {
+                            id: true,
+                            role: true,
+                            isActive: true
                         }
                     }
                 }
