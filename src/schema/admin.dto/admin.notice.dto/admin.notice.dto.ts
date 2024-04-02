@@ -55,3 +55,12 @@ export const resetNoticeViewsSchema = z.object({
 });
 
 export type ResetNoticeViewsSchema = z.infer<typeof resetNoticeViewsSchema>;
+
+export const acknowledgeNoticeSchema = z.object({
+    params: z.object({
+        noticeId: z.string(),
+        teacherId: z.string()
+    })
+});
+
+export type AcknowledgeNoticeSchema = z.infer<typeof acknowledgeNoticeSchema>;

@@ -103,3 +103,18 @@ export async function resetNoticeViews(noticeId: string) {
         }
     });
 }
+
+export async function acknowledgeNotice(noticeId: string, teacherId: string) {
+    // Update the NoticeAcknowledgement for this teacher and notice
+    await db.noticeAcknowledgement.updateMany({
+        where: {
+            noticeId: +noticeId,
+            teacherId: +teacherId,
+            isSeen: false
+        },
+        data: {
+            isSeen: true,
+            seenAt: new Date() // Set this to the current time
+        }
+    });
+}

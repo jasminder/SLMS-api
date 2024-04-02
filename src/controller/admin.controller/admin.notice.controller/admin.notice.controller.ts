@@ -1,6 +1,16 @@
 import { NextFunction, Request, Response } from 'express';
-import { createNotice, deleteNotice, getAllNotices, getNotice, getUnseenNotices, resetNoticeViews, updateNotice } from '../../../service/admin.service/admin.notice.service/admin.notice.service';
 import {
+    acknowledgeNotice,
+    createNotice,
+    deleteNotice,
+    getAllNotices,
+    getNotice,
+    getUnseenNotices,
+    resetNoticeViews,
+    updateNotice
+} from '../../../service/admin.service/admin.notice.service/admin.notice.service';
+import {
+    AcknowledgeNoticeSchema,
     CreateNoticeSchema,
     DeleteNoticeSchema,
     GetNoticeSchema,
@@ -56,4 +66,10 @@ export const resetNoticeViewsHandler = async (req: Request<ResetNoticeViewsSchem
     const { noticeId } = req.params;
     await resetNoticeViews(noticeId);
     res.status(200).json({ message: 'Notice views reset successfully' });
+};
+
+export const acknowledgeNoticeHandler = async (req: Request<AcknowledgeNoticeSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { noticeId, teacherId } = req.params;
+    await acknowledgeNotice(noticeId, teacherId);
+    res.status(200).json({ message: 'Notice acknowledged successfully' });
 };
