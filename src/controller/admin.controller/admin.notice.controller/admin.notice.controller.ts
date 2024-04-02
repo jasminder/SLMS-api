@@ -1,6 +1,13 @@
 import { NextFunction, Request, Response } from 'express';
-import { createNotice, deleteNotice, getAllNotices, getNotice, getUnseenNotices } from '../../../service/admin.service/admin.notice.service/admin.notice.service';
-import { CreateNoticeSchema, DeleteNoticeSchema, GetNoticeSchema, GetUnseenNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
+import { createNotice, deleteNotice, getAllNotices, getNotice, getUnseenNotices, resetNoticeViews, updateNotice } from '../../../service/admin.service/admin.notice.service/admin.notice.service';
+import {
+    CreateNoticeSchema,
+    DeleteNoticeSchema,
+    GetNoticeSchema,
+    GetUnseenNoticesSchema,
+    ResetNoticeViewsSchema,
+    UpdateNoticeSchema
+} from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
 
 export const createNoticeHandler = async (req: Request<CreateNoticeSchema['params'], {}, CreateNoticeSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { title, content } = req.body;
@@ -34,4 +41,19 @@ export const getNoticeHandler = async (req: Request<GetNoticeSchema['params'], {
     } else {
         res.status(404).json({ message: 'Notice not found' });
     }
+};
+
+export const updateNoticeHandler = async (req: Request<UpdateNoticeSchema['params'], {}, UpdateNoticeSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { noticeId } = req.params;
+    const { title, content } = req.body;
+    const updatedNotice = await updateNotice(noticeId, title, content);
+    if (!updatedNotice) {
+        return res.status(404).json({ message: 'Notice not found' });
+    }
+    res.status(200).json({ message: 'Notice updated successfully', updatedNotice });
+};
+export const resetNoticeViewsHandler = async (req: Request<ResetNoticeViewsSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { noticeId } = req.params;
+    await resetNoticeViews(noticeId);
+    res.status(200).json({ message: 'Notice views reset successfully' });
 };

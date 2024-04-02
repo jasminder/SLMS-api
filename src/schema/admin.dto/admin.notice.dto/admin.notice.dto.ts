@@ -35,3 +35,23 @@ export const getNoticeSchema = z.object({
 });
 
 export type GetNoticeSchema = z.infer<typeof getNoticeSchema>;
+
+export const updateNoticeSchema = z.object({
+    params: z.object({
+        noticeId: z.string().min(1, { message: 'Notice ID is required' }).regex(/^\d+$/, 'Notice ID must be a number')
+    }),
+    body: z.object({
+        title: z.string().min(1, 'Title is required'),
+        content: z.string().min(1, 'Content is required')
+    })
+});
+
+export type UpdateNoticeSchema = z.infer<typeof updateNoticeSchema>;
+
+export const resetNoticeViewsSchema = z.object({
+    params: z.object({
+        noticeId: z.string().min(1, { message: 'Notice ID is required' }).regex(/^\d+$/, 'Notice ID must be a number')
+    })
+});
+
+export type ResetNoticeViewsSchema = z.infer<typeof resetNoticeViewsSchema>;

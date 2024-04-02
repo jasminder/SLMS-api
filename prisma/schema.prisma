@@ -956,7 +956,7 @@ model NoticeAcknowledgement {
   teacherId Int
   isSeen    Boolean   @default(false)
   seenAt    DateTime? // Set this to the current time when the notice is seen
-  notice    Notice    @relation(fields: [noticeId], references: [id])
+  notice    Notice    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
   teacher   Teacher   @relation(fields: [teacherId], references: [id])
 
   @@unique([noticeId, teacherId]) // Ensuring a unique record per notice per teacher
