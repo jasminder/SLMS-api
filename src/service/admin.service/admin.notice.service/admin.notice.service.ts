@@ -52,3 +52,9 @@ export async function getUnseenNotices(teacherId: string) {
 
     return notices;
 }
+
+export async function getNotice(noticeId: string) {
+    return await db.notice.findUnique({
+        where: { id: +noticeId }
+    });
+}

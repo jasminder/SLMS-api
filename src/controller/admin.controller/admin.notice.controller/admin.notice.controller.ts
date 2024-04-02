@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { createNotice, deleteNotice, getAllNotices, getUnseenNotices } from '../../../service/admin.service/admin.notice.service/admin.notice.service';
-import { CreateNoticeSchema, DeleteNoticeSchema, GetUnseenNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
+import { createNotice, deleteNotice, getAllNotices, getNotice, getUnseenNotices } from '../../../service/admin.service/admin.notice.service/admin.notice.service';
+import { CreateNoticeSchema, DeleteNoticeSchema, GetNoticeSchema, GetUnseenNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
 
 export const createNoticeHandler = async (req: Request<CreateNoticeSchema['params'], {}, CreateNoticeSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { title, content } = req.body;
@@ -24,4 +24,14 @@ export const getUnseenNoticesHandler = async (req: Request<GetUnseenNoticesSchem
     const { teacherId } = req.params;
     const notices = await getUnseenNotices(teacherId);
     res.status(200).json(notices);
+};
+
+export const getNoticeHandler = async (req: Request<GetNoticeSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { noticeId } = req.params;
+    const notice = await getNotice(noticeId);
+    if (notice) {
+        res.status(200).json(notice);
+    } else {
+        res.status(404).json({ message: 'Notice not found' });
+    }
 };

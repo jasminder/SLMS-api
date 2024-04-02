@@ -4,14 +4,21 @@ import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
 import validate from '../../../middleware/validateResource';
 import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
-import { createNoticeSchema, deleteNoticeSchema, getUnseenNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
-import { createNoticeHandler, deleteNoticeHandler, getAllNoticesHandler, getUnseenNoticesHandler } from '../../../controller/admin.controller/admin.notice.controller/admin.notice.controller';
+import { createNoticeSchema, deleteNoticeSchema, getNoticeSchema, getUnseenNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
+import {
+    createNoticeHandler,
+    deleteNoticeHandler,
+    getAllNoticesHandler,
+    getNoticeHandler,
+    getUnseenNoticesHandler
+} from '../../../controller/admin.controller/admin.notice.controller/admin.notice.controller';
 
 const adminNoticeRoute = express.Router();
 
-adminNoticeRoute.route('/create-notice').post(validate(createNoticeSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createNoticeHandler));
+adminNoticeRoute.route('/create/:adminId').post(validate(createNoticeSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createNoticeHandler));
 adminNoticeRoute.route('/get-all-notices').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(getAllNoticesHandler));
-adminNoticeRoute.route('/delete-notice/:id').delete(validate(deleteNoticeSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteNoticeHandler));
+adminNoticeRoute.route('/delete-notice/:noticeId').delete(validate(deleteNoticeSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteNoticeHandler));
 adminNoticeRoute.route('/unseen-notices-for-teacher/:teacherId').get(validate(getUnseenNoticesSchema), protectRoute, restrict('TEACHER', 'ADMIN'), asyncErrorHandler(getUnseenNoticesHandler));
+adminNoticeRoute.route('/notice-detail/:noticeId').get(validate(getNoticeSchema), protectRoute, restrict('TEACHER', 'ADMIN'), asyncErrorHandler(getNoticeHandler));
 
 export default adminNoticeRoute;
