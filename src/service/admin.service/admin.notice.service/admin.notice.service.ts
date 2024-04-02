@@ -94,7 +94,7 @@ export async function updateNotice(noticeId: string, title: string, content: str
 export async function resetNoticeViews(noticeId: string) {
     await db.noticeAcknowledgement.updateMany({
         where: {
-            id: +noticeId,
+            noticeId: +noticeId,
             isSeen: true
         },
         data: {
