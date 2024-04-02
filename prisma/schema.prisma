@@ -388,6 +388,7 @@ model Teacher {
   AutomatedMailForParents          AutomatedMailForParents[]
   Classwork                        Classwork[]
   GroupClasswork                   GroupClasswork[]
+  NoticeAcknowledgement            NoticeAcknowledgement[]
 }
 
 model TeacherPersonalDetails {
@@ -506,6 +507,7 @@ model Admin {
   SkipReport                SkipReport[]
   Leave                     Leave[]
   EmailTemplate             EmailTemplate[]
+  Notice                    Notice[]
 }
 
 model AdminPersonalDetails {
@@ -935,4 +937,27 @@ model EmailTemplate {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   admin       Admin    @relation(fields: [adminId], references: [id]) // Relation to the Admin model
+}
+
+model Notice {
+  id               Int                     @id @default(autoincrement())
+  title            String
+  content          String
+  adminId          Int
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  admin            Admin                   @relation(fields: [adminId], references: [id])
+  acknowledgements NoticeAcknowledgement[]
+}
+
+model NoticeAcknowledgement {
+  id        Int       @id @default(autoincrement())
+  noticeId  Int
+  teacherId Int
+  isSeen    Boolean   @default(false)
+  seenAt    DateTime? // Set this to the current time when the notice is seen
+  notice    Notice    @relation(fields: [noticeId], references: [id])
+  teacher   Teacher   @relation(fields: [teacherId], references: [id])
+
+  @@unique([noticeId, teacherId]) // Ensuring a unique record per notice per teacher
 }
