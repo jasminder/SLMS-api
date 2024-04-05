@@ -14,6 +14,7 @@ import {
     findActiveStudentEnrolledSubjectsSchema,
     findAllActiveStudentsSchema,
     findLeaveByIdSchema,
+    findStudentAttendanceByIdSchema,
     findStudentFeeDetailsSchema,
     findTermSubjectGroupIdEnrolledSubjectsSchema,
     findUniqueActiveStudentSchema,
@@ -44,6 +45,7 @@ import {
     findTermSubjectGroupIdEnrolledSubjectsHandler,
     findTermToEnrollActiveStudentHandler,
     findUniqueStudentClassDetailsHandler,
+    getStudentAttendanceByIdHandler,
     manageClassesHandler,
     searchActiveStudentsHandler,
     selectActiveStudentsHandler,
@@ -66,11 +68,9 @@ adminActiveStudentRoute.route('/get-all-active-students').get(validate(findAllAc
 /*search active students*/
 adminActiveStudentRoute.route('/search-active-students').get(validate(searchActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsHandler));
 
-
 adminActiveStudentRoute.route('/get-default-active-students').get(validate(defaultSelectActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(defaultSelectActiveStudentsHandler));
 //selectActiveStudentsSchema
 adminActiveStudentRoute.route('/select-active-students').get(validate(selectActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(selectActiveStudentsHandler));
-
 
 /*find all enrolled students*/
 adminActiveStudentRoute
@@ -143,5 +143,10 @@ adminActiveStudentRoute.route('/delete-leave-application/:leaveId').delete(valid
 adminActiveStudentRoute.route('/get-all-leaves/:studentId').get(validate(fetchLeavesForStudentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchLeavesForStudentHandler));
 
 adminActiveStudentRoute.route('/get-leave-by-id/:leaveId').get(validate(findLeaveByIdSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findLeaveByIdHandler));
+
+// routes/studentRoute.js
+adminActiveStudentRoute
+    .route('/attendance-detail/:studentId')
+    .get(validate(findStudentAttendanceByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(getStudentAttendanceByIdHandler));
 
 export default adminActiveStudentRoute;

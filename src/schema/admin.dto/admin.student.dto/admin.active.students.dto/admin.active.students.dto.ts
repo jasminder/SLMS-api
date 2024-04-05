@@ -207,3 +207,11 @@ export const findLeaveByIdSchema = z.object({
     })
 });
 export type FindLeaveByIdSchema = z.infer<typeof findLeaveByIdSchema>;
+
+export const findStudentAttendanceByIdSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+
+export type FindStudentAttendanceByIdSchema = z.infer<typeof findStudentAttendanceByIdSchema>;

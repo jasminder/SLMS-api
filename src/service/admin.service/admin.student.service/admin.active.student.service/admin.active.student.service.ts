@@ -2080,3 +2080,26 @@ export async function findLeaveById(leaveId: number) {
 
     return leaveApplication;
 }
+
+// services/studentService.js
+export async function findStudentAttendanceById(studentId: string) {
+    const attendance = await db.student.findUnique({
+        where: { id: +studentId },
+
+        select: {
+            schoolCheckInAttendance: {
+                orderBy: {
+                    date: 'desc'
+                }
+            },
+            personalDetails: true,
+            akaalId: true
+        }
+    });
+
+    if (!attendance) {
+        throw new Error(`No attendance records found for student with ID ${studentId}`);
+    }
+
+    return attendance;
+}

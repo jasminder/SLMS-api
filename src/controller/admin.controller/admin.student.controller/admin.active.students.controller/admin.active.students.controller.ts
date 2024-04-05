@@ -16,6 +16,7 @@ import {
     findCurrentTermToAssignClass,
     findFeePaymentById,
     findLeaveById,
+    findStudentAttendanceById,
     findStudentFeeDetails,
     findTermSubjectGroupIdEnrolledSubjects,
     findTermToEnrollActiveStudent,
@@ -38,6 +39,7 @@ import {
     FindActiveStudentEnrolledSubjectsSchema,
     FindAllActiveStudentsSchema,
     FindLeaveByIdSchema,
+    FindStudentAttendanceByIdSchema,
     FindStudentFeeDetailsSchemaSchema,
     FindTermSubjectGroupIdEnrolledSubjectsSchema,
     FindUniqueActiveStudentSchema,
@@ -211,15 +213,15 @@ export const fetchRecentSchoolAttendanceForStudentHandler = async (req: Request<
 
 export const createLeaveApplicationHandler = async (req: Request<CreateLeaveApplicationSchema['params'], {}, CreateLeaveApplicationSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { studentId, appliedById, appliedByRole } = req.params;
-    const {comments,endDate,reason,startDate,status} = req.body;
-    const leaveApplication = await createLeaveApplication(studentId, appliedById, appliedByRole, startDate,endDate,reason,status, comments);
+    const { comments, endDate, reason, startDate, status } = req.body;
+    const leaveApplication = await createLeaveApplication(studentId, appliedById, appliedByRole, startDate, endDate, reason, status, comments);
     res.status(201).json(leaveApplication);
 };
 
 export const updateLeaveApplicationHandler = async (req: Request<UpdateLeaveApplicationSchema['params'], {}, UpdateLeaveApplicationSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { leaveId, updatedById } = req.params;
     const { endDate, startDate, comments, reason, status } = req.body;
-    const updatedLeaveApplication = await updateLeaveApplication(leaveId, updatedById, reason,comments,status,startDate,endDate);
+    const updatedLeaveApplication = await updateLeaveApplication(leaveId, updatedById, reason, comments, status, startDate, endDate);
     res.status(200).json(updatedLeaveApplication);
 };
 
@@ -237,4 +239,11 @@ export const findLeaveByIdHandler = async (req: Request<FindLeaveByIdSchema['par
     const { leaveId } = req.params;
     const leaveApplication = await findLeaveById(Number(leaveId));
     res.status(200).json(leaveApplication);
+};
+
+// controllers/studentController.js
+export const getStudentAttendanceByIdHandler = async (req: Request<FindStudentAttendanceByIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const attendanceRecords = await findStudentAttendanceById(studentId);
+    res.status(200).json(attendanceRecords);
 };
