@@ -12,12 +12,12 @@ export async function findActiveStudents(page: number, termId: number) {
     const activeStudents = await db.student.findMany({
         where: {
             role: 'STUDENT',
-            isActive: true,
-            studentTermFee: {
-                some: {
-                    termId: +termId
-                }
-            }
+            isActive: true
+            // studentTermFee: {
+            //     some: {
+            //         termId: +termId
+            //     }
+            // }
         },
         skip,
         take,
@@ -101,12 +101,12 @@ export async function findActiveStudents(page: number, termId: number) {
     const count = await db.student.count({
         where: {
             role: 'STUDENT',
-            isActive: true,
-            studentTermFee: {
-                some: {
-                    termId: termId
-                }
-            }
+            isActive: true
+            // studentTermFee: {
+            //     some: {
+            //         termId: +termId
+            //     }
+            // }
         }
     });
 
@@ -147,17 +147,16 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
-                    some: {
-                        termId: termId
-                    }
-                },
+                // studentTermFee: {
+                //     some: {
+                //         termId: +termId
+                //     }
+                // },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
                             ...(subjectOption && { subjectId: +subjectOption }),
                             ...(levelOption && { levelId: +levelOption })
-                            // ...(termId && { termId: termId })
                         },
                         ...(sectionOption && {
                             studentClassAssignment: {
@@ -166,14 +165,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
-                // ...(+attendanceOption && {
-                //     schoolCheckInAttendance: {
-                //         some: {
-                //             id: { in: latestAttendanceIds },
-                //             attendanceValue: +attendanceOption
-                //         }
-                //     }
-                // }),
+
                 ...(attendanceOption === '0'
                     ? {
                           schoolCheckInAttendance: {
@@ -293,11 +285,11 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
-                    some: {
-                        termId: termId
-                    }
-                },
+                // studentTermFee: {
+                //     some: {
+                //         termId: +termId
+                //     }
+                // },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
@@ -388,11 +380,11 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
-                    some: {
-                        termId: termId
-                    }
-                },
+                // studentTermFee: {
+                //     some: {
+                //         termId: +termId
+                //     }
+                // },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
@@ -532,11 +524,11 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
-                    some: {
-                        termId: termId
-                    }
-                },
+                // studentTermFee: {
+                //     some: {
+                //         termId: +termId
+                //     }
+                // },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
@@ -608,12 +600,12 @@ export async function defaultSelectActiveStudents(page: number, termId: number) 
     const activeStudents = await db.student.findMany({
         where: {
             role: 'STUDENT',
-            isActive: true,
-            studentTermFee: {
-                some: {
-                    termId: +termId
-                }
-            }
+            isActive: true
+            // studentTermFee: {
+            //     some: {
+            //         termId: +termId
+            //     }
+            // }
         },
         orderBy: {
             akaalId: 'desc'
@@ -647,12 +639,12 @@ export async function defaultSelectActiveStudents(page: number, termId: number) 
     const count = await db.student.count({
         where: {
             role: 'STUDENT',
-            isActive: true,
-            studentTermFee: {
-                some: {
-                    termId: termId
-                }
-            }
+            isActive: true
+            // studentTermFee: {
+            //     some: {
+            //         termId: +termId
+            //     }
+            // }
         }
     });
 
@@ -686,17 +678,16 @@ export async function selectActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
-                    some: {
-                        termId: termId
-                    }
-                },
+                // studentTermFee: {
+                //     some: {
+                //         termId: +termId
+                //     }
+                // },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
                             ...(subjectOption && { subjectId: +subjectOption }),
                             ...(levelOption && { levelId: +levelOption })
-                            // ...(termId && { termId: termId })
                         },
                         ...(sectionOption && {
                             studentClassAssignment: {
@@ -778,11 +769,11 @@ export async function selectActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
-                    some: {
-                        termId: termId
-                    }
-                },
+                // studentTermFee: {
+                //     some: {
+                //         termId: +termId
+                //     }
+                // },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
@@ -869,11 +860,11 @@ export async function selectActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
-                    some: {
-                        termId: termId
-                    }
-                },
+                // studentTermFee: {
+                //     some: {
+                //         termId: +termId
+                //     }
+                // },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
@@ -966,11 +957,11 @@ export async function selectActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                studentTermFee: {
-                    some: {
-                        termId: termId
-                    }
-                },
+                // studentTermFee: {
+                //     some: {
+                //         termId: +termId
+                //     }
+                // },
                 enrollments: {
                     some: {
                         termSubjectLevel: {
@@ -1680,14 +1671,14 @@ export async function deEnrollActiveStudent(deEnrollData: ActiveStudentEnrollDat
         where: {
             studentId: deEnrollData.activeStudentId,
             termSubjectGroup: {
-                termId: termId
+                termId: +termId
             }
         }
     });
 
-    if (totalEnrollments <= deEnrollData.enrollData.length) {
-        throw customError('The student must be enrolled in at least one subject.', 'fail', 400, true);
-    }
+    // if (totalEnrollments <= deEnrollData.enrollData.length) {
+    //     throw customError('The student must be enrolled in at least one subject.', 'fail', 400, true);
+    // }
 
     let deEnrolledSubjects = [];
 
@@ -2102,4 +2093,21 @@ export async function findStudentAttendanceById(studentId: string) {
     }
 
     return attendance;
+}
+
+export async function alumniStudentById(studentId: string) {
+    const student = await db.student.update({
+        where: { id: +studentId },
+        data: {
+            role: 'ALUMNI',
+            isActive: false,
+            isAllowedLogin: false
+        }
+    });
+
+    if (!student) {
+        throw customError(`No student found with ID ${studentId}`, 'fail', 400, true);
+    }
+
+    return student;
 }

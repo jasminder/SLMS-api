@@ -42,5 +42,7 @@ adminLateEnrolledStudentRoute
 adminLateEnrolledStudentRoute.route('/enroll-late-enrolled-student').post(validate(enrolledStudentEnrollDataSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(enrollStudentEnrolledToSubjectsHandler));
 /* de-enroll enrolled student to subjects */
 adminLateEnrolledStudentRoute.route('/de-enroll-late-enrolled-student').post(validate(enrolledStudentEnrollDataSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(deEnrollStudentEnrolledToSubjectsHandler));
+
 adminLateEnrolledStudentRoute.route('/enroll-late-enrolled-student-to-active').post(validate(lateEnrolledActiveStudentSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(lateEnrolledActiveStudentHandler));
+
 export default adminLateEnrolledStudentRoute;

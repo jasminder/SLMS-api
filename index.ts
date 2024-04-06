@@ -55,6 +55,7 @@ import adminTeacherWeekdayCheckinRoute from './src/route/admin.route/admin.check
 import teacherWeekdayAttendanceRoute from './src/route/teacher.route/teacher.attendance.route/teacher.weekday.attendance.route/teacher.weekday.attendance.route';
 import adminEmailTemplateRoute from './src/route/admin.route/admin.communication.route/admin.communication.route';
 import adminNoticeRoute from './src/route/admin.route/admin.notice.route/admin.notice.route';
+import adminAlumniRoute from './src/route/admin.route/admin.alumni.route/admin.alumni.route';
 
 const app = express();
 app.use(cookieParser());
@@ -119,6 +120,8 @@ app.use('/api/v1/admin/analytics', adminAnalyticsRoute);
 app.use('/api/v1/admin/institution', adminInstitutionRoute);
 app.use('/api/v1/admin/communication', adminEmailTemplateRoute);
 app.use('/api/v1/admin/notice', adminNoticeRoute);
+app.use('/api/v1/admin/alumni', adminAlumniRoute);
+
 
 /*Attendance and check in and checkout*/
 app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);

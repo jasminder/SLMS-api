@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 
 import {
+    alumniStudentById,
     assignClassToStudent,
     createLeaveApplication,
     deEnrollActiveStudent,
@@ -29,6 +30,7 @@ import {
 } from '../../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
 import {
     ActiveStudentEnrollDataSchema,
+    AlumniStudentByIdSchema,
     AssignClassToStudentSchema,
     CreateLeaveApplicationSchema,
     DefaultSelectActiveStudentsSchema,
@@ -241,9 +243,14 @@ export const findLeaveByIdHandler = async (req: Request<FindLeaveByIdSchema['par
     res.status(200).json(leaveApplication);
 };
 
-// controllers/studentController.js
 export const getStudentAttendanceByIdHandler = async (req: Request<FindStudentAttendanceByIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { studentId } = req.params;
     const attendanceRecords = await findStudentAttendanceById(studentId);
     res.status(200).json(attendanceRecords);
+};
+
+export const alumniStudentByIdHandler = async (req: Request<AlumniStudentByIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const updatedStudent = await alumniStudentById(studentId);
+    res.status(200).json(updatedStudent);
 };

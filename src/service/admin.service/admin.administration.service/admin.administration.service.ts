@@ -206,7 +206,9 @@ export async function findUniqueTerm(id: FindUniqueTermSchema['params']['id']) {
                 select: {
                     id: true,
                     subject: true,
-                    level: true
+                    level: true,
+                    isOnSunday: true,
+                    isOnWeekday: true
                 }
             },
             termSubjectGroup: {
@@ -214,6 +216,17 @@ export async function findUniqueTerm(id: FindUniqueTermSchema['params']['id']) {
                     id: true,
                     fee: true,
                     subjectGroup: true
+                }
+            },
+            studentTermFee: {
+                include: {
+                    student: {
+                        select: {
+                            id: true,
+                            role: true,
+                            isActive: true
+                        }
+                    }
                 }
             }
         }
@@ -818,7 +831,9 @@ export async function findPublishTermAdministration() {
                 select: {
                     id: true,
                     subject: true,
-                    level: true
+                    level: true,
+                    isOnSunday: true,
+                    isOnWeekday: true
                 }
             },
             termSubjectGroup: {
@@ -826,6 +841,17 @@ export async function findPublishTermAdministration() {
                     id: true,
                     fee: true,
                     subjectGroup: true
+                }
+            },
+            studentTermFee: {
+                select: {
+                    student: {
+                        select: {
+                            id: true,
+                            isActive: true,
+                            role: true
+                        }
+                    }
                 }
             }
         }

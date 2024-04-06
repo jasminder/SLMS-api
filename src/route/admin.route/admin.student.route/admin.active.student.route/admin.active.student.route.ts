@@ -4,6 +4,7 @@ import { asyncErrorHandler } from '../../../../utils/asyncErrorHandler';
 import validate from '../../../../middleware/validateResource';
 import {
     activeStudentEnrollDataSchema,
+    alumniStudentByIdSchema,
     assignClassToStudentSchema,
     createLeaveApplicationSchema,
     defaultSelectActiveStudentsSchema,
@@ -26,6 +27,7 @@ import {
     updateLeaveApplicationSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 import {
+    alumniStudentByIdHandler,
     assignClassToStudentHandler,
     createLeaveApplicationHandler,
     deEnrollActiveStudentHandler,
@@ -144,9 +146,13 @@ adminActiveStudentRoute.route('/get-all-leaves/:studentId').get(validate(fetchLe
 
 adminActiveStudentRoute.route('/get-leave-by-id/:leaveId').get(validate(findLeaveByIdSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findLeaveByIdHandler));
 
-// routes/studentRoute.js
 adminActiveStudentRoute
     .route('/attendance-detail/:studentId')
     .get(validate(findStudentAttendanceByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(getStudentAttendanceByIdHandler));
 
+// routes/studentRoute.js
+adminActiveStudentRoute.route('/make-alumni/:studentId').patch(validate(alumniStudentByIdSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(alumniStudentByIdHandler));
+
+
 export default adminActiveStudentRoute;
+//makeAlumniToActiveByIdHandler

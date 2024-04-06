@@ -215,3 +215,11 @@ export const findStudentAttendanceByIdSchema = z.object({
 });
 
 export type FindStudentAttendanceByIdSchema = z.infer<typeof findStudentAttendanceByIdSchema>;
+
+export const alumniStudentByIdSchema = z.object({
+    params: z.object({
+        studentId: z.string().regex(/^\d+$/, { message: 'Invalid student ID format' })
+    })
+});
+
+export type AlumniStudentByIdSchema = z.infer<typeof alumniStudentByIdSchema>;
