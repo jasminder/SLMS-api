@@ -562,9 +562,9 @@ export async function deEnrollAlumniEnrolledToSubjects(deEnrollData: AlumniEnrol
         }
     });
 
-    if (totalEnrollments <= deEnrollData.enrollData.length) {
-        throw customError('The student must be enrolled in at least one subject.', 'fail', 404, true);
-    }
+    // if (totalEnrollments <= deEnrollData.enrollData.length) {
+    //     throw customError('The student must be enrolled in at least one subject.', 'fail', 404, true);
+    // }
 
     let deEnrolledSubjects = [];
 
