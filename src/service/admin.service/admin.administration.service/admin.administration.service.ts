@@ -238,6 +238,37 @@ export async function findUniqueTerm(id: FindUniqueTermSchema['params']['id']) {
 
     return uniqueTerm;
 }
+export async function findTermForSetup(id: FindUniqueTermSchema['params']['id']) {
+    const uniqueTerm = await db.term.findFirst({
+        where: {
+            id: +id // Ensure id is a number
+        },
+        select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            termSubjectGroup: {
+                include: {
+                    fee: true,
+                    subjectGroup: true,
+                    termSubject: {
+                        include: {
+                            subject: true,
+                            level: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!uniqueTerm) {
+        throw customError(`Term with ID ${id} could not be found. Please try again later.`, 'fail', 404, true);
+    }
+
+    return uniqueTerm;
+}
 
 // extend current term
 

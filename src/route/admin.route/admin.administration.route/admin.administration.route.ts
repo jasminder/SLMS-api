@@ -24,7 +24,8 @@ import {
     findCurrentTermForeFilterHandler,
     findSchoolDaysTodayHandler,
     changeIsOnSundayHandler,
-    changeIsOnWeekdayHandler
+    changeIsOnWeekdayHandler,
+    findTermForSetupHandler
 } from '../../../controller/admin.controller/admin.administration.controller/admin.administration.controller';
 import {
     changeCurrentTermNameSchema,
@@ -42,6 +43,7 @@ const adminAdministrationRoute = express.Router();
 /*Term CRUD*/
 adminAdministrationRoute.route('/find-all-terms').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(findAllTermHandler));
 adminAdministrationRoute.route('/find/term-detail/:id').get(validate(findUniqueTermSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findUniqueTermHandler));
+adminAdministrationRoute.route('/find/term-detail-for-setup/:id').get(validate(findUniqueTermSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findTermForSetupHandler));
 adminAdministrationRoute.route('/update/end-term/:id').patch(validate(findUniqueTermSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(endTermHandler));
 adminAdministrationRoute.route('/delete-term/:id').delete(validate(findUniqueTermSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteTermHandler));
 adminAdministrationRoute.route('/update/term-name/:id').put(validate(changeCurrentTermNameSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(changeCurrentTermNameHandler));

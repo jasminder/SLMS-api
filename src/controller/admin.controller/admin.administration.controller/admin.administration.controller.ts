@@ -20,7 +20,8 @@ import {
     findCurrentTermForeFilter,
     findSchoolDaysToday,
     changeIsOnSunday,
-    changeIsOnWeekday
+    changeIsOnWeekday,
+    findTermForSetup
 } from '../../../service/admin.service/admin.administration.service/admin.administration.service';
 import {
     ChangeCurrentTermNameSchema,
@@ -36,6 +37,11 @@ export const findUniqueTermHandler = async (req: Request<FindUniqueTermSchema['p
     const id = req.params.id;
     const currentTerm = await findUniqueTerm(id);
     res.status(200).json(currentTerm);
+};
+export const findTermForSetupHandler = async (req: Request<FindUniqueTermSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+    const term = await findTermForSetup(id);
+    res.status(200).json(term);
 };
 
 export const findAllTermHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -135,16 +141,16 @@ export const findSchoolDaysTodayHandler = async (req: Request, res: Response, ne
     res.status(200).json(schoolDaysToday);
 };
 export const changeIsOnSundayHandler = async (req: Request<ChangeIsOnSundaySchema['params'], {}, ChangeIsOnSundaySchema['body'], {}>, res: Response, next: NextFunction) => {
-    const {  termSubjectId } = req.params;
+    const { termSubjectId } = req.params;
     const { isOnSunday } = req.body;
-    const updatedTermSubject = await changeIsOnSunday( termSubjectId, isOnSunday);
+    const updatedTermSubject = await changeIsOnSunday(termSubjectId, isOnSunday);
     res.status(200).json(updatedTermSubject);
 };
 
 export const changeIsOnWeekdayHandler = async (req: Request<ChangeIsOnWeekdaySchema['params'], {}, ChangeIsOnWeekdaySchema['body'], {}>, res: Response, next: NextFunction) => {
-    const {  termSubjectId } = req.params;
+    const { termSubjectId } = req.params;
     const { isOnWeekday } = req.body;
 
-    const updatedTermSubject = await changeIsOnWeekday( termSubjectId, isOnWeekday);
+    const updatedTermSubject = await changeIsOnWeekday(termSubjectId, isOnWeekday);
     res.status(200).json(updatedTermSubject);
 };
