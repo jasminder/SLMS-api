@@ -68,7 +68,10 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 }
             });
-
+            console.log(activeStudents, 'activeStudents');
+            if (activeStudents.length == 0) {
+                throw customError('No students are enrolled for today. Nothing to generate. Check isWeekDay/isSunday.', 'fail', 400, true);
+            }
             const existingRecords = await db.schoolCheckInAttendance.findMany({
                 where: {
                     date: {
@@ -99,6 +102,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
 
             // Create SchoolCheckInAttendance records for all active students
             const attendanceRecords: any = [];
+
             for (const student of activeStudents) {
                 const leaveRecord = await db.leave.findFirst({
                     where: {
@@ -136,7 +140,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         isOnLeave: isOnLeave
                     }
                 });
-
+                console.log('hello', newAttendanceRecord);
                 attendanceRecords.push(newAttendanceRecord);
 
                 // Find all current studentClassAssignments for the student
@@ -209,6 +213,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 }
             }
+
             return attendanceRecords;
         },
         { timeout: 30000 }
