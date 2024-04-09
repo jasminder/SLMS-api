@@ -159,8 +159,14 @@ export const findAllClassesAssignedForTeacher = async (teacherId: string) => {
                     subject: {
                         include: {
                             termSubject: {
-                                select:{
-                                    isOnSunday:true,isOnWeekday:true
+                                where: {
+                                    term: {
+                                        currentTerm: true
+                                    }
+                                },
+                                select: {
+                                    isOnSunday: true,
+                                    isOnWeekday: true
                                 }
                             }
                         }
@@ -172,6 +178,7 @@ export const findAllClassesAssignedForTeacher = async (teacherId: string) => {
             section: true
         }
     });
+    console.log(assignedClasses);
     return assignedClasses;
 };
 // find students in the same class

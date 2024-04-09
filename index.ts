@@ -56,6 +56,7 @@ import teacherWeekdayAttendanceRoute from './src/route/teacher.route/teacher.att
 import adminEmailTemplateRoute from './src/route/admin.route/admin.communication.route/admin.communication.route';
 import adminNoticeRoute from './src/route/admin.route/admin.notice.route/admin.notice.route';
 import adminAlumniRoute from './src/route/admin.route/admin.alumni.route/admin.alumni.route';
+import studentDashboardRoute from './src/route/student.route/student.dashboard.route/student.dashboard.route';
 
 const app = express();
 app.use(cookieParser());
@@ -136,11 +137,9 @@ app.use('/api/v1/teacher/attendance/weekday/class', teacherWeekdayAttendanceRout
 app.use('/api/v1/teacher', teacherRoute);
 app.use('/api/v1/teacher-feedback-for-student', feedbackRoute);
 app.use('/api/v1/teacher-homework-for-student', groupHomeworkRoute);
-
 app.use('/api/v1/teacher-classwork-for-student', groupClassworkRoute);
 
 app.use('/api/v1/auth', authRoute);
-
 app.use('/api/v1/home-work', homeworkRoute);
 app.use('/api/v1/class-work', classworkRoute);
 //aws presigned route
@@ -151,6 +150,10 @@ app.use('/api/v1/download-home-work', homeWorkDownloadRoute);
 
 app.use('/api/v1/send-mail', sendMailHomeWorkRouter);
 app.use('/api/v1/automated-mail', sendConsolidatedEmailsRouter);
+app.use('/api/v1/student-portal', studentDashboardRoute);
+
+
+
 
 // Server frontend static assets and handle catch-all route
 // if (process.env.NODE_ENV === 'production') {

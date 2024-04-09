@@ -11,6 +11,6 @@ import { fileDisplayImageSchema } from '../../schema/aws.dto/aws.image.fileDispl
 
 const ImageDisplayRoute = express.Router();
 
-ImageDisplayRoute.route('/presignedUrl').get(validate(fileDisplayImageSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(getImageDisplayPresignedUrlHandler));
+ImageDisplayRoute.route('/presignedUrl').get(validate(fileDisplayImageSchema), protectRoute, restrict('ADMIN', 'TEACHER','STUDENT'), asyncErrorHandler(getImageDisplayPresignedUrlHandler));
 
 export default ImageDisplayRoute;
