@@ -38,6 +38,7 @@ export async function findStudentDetailsById(studentId: string) {
             personalDetails: {
                 select: {
                     id: true,
+                    studentId: true,
                     firstName: true,
                     lastName: true,
                     DOB: true,
@@ -101,6 +102,29 @@ export async function findStudentDetailsById(studentId: string) {
                     termSubjectLevel: {
                         term: {
                             id: currentTerm?.id
+                        }
+                    }
+                },
+                include: {
+                    section: true,
+                    termSubjectLevel: {
+                        select: {
+                            level: {
+                                select: {
+                                    name: true
+                                }
+                            },
+                            subject: {
+                                select: {
+                                    name: true,
+                                    termSubject: {
+                                        select: {
+                                            isOnSunday: true,
+                                            isOnWeekday: true
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
