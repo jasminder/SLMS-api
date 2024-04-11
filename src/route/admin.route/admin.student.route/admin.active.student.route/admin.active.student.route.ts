@@ -32,6 +32,7 @@ import {
     createLeaveApplicationHandler,
     deEnrollActiveStudentHandler,
     defaultSelectActiveStudentsHandler,
+    defaultSelectActiveStudentsWIthNoSubjectsHandler,
     deleteClassAssignmentHandler,
     deleteLeaveApplicationHandler,
     enrollActiveStudentHandler,
@@ -40,6 +41,7 @@ import {
     findActiveStudentByIdHandler,
     findActiveStudentEnrolledSubjectsHandler,
     findActiveStudentsHandler,
+    findActiveStudentsWithNoSubjectsHandler,
     findCurrentTermToAssignClassHandler,
     findFeePaymentByIdHandler,
     findLeaveByIdHandler,
@@ -50,7 +52,9 @@ import {
     getStudentAttendanceByIdHandler,
     manageClassesHandler,
     searchActiveStudentsHandler,
+    searchActiveStudentsWithNoSubjectsHandler,
     selectActiveStudentsHandler,
+    selectActiveStudentsWithNoSubjectsHandler,
     updateAmountPaidHandler,
     updateLeaveApplicationHandler
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
@@ -66,15 +70,30 @@ const adminActiveStudentRoute = express.Router();
 
 /*find all enrolled students*/
 adminActiveStudentRoute.route('/get-all-active-students').get(validate(findAllActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentsHandler));
+adminActiveStudentRoute
+    .route('/get-all-active-students-with-no-subjects')
+    .get(validate(findAllActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentsWithNoSubjectsHandler));
 
 /*search active students*/
 adminActiveStudentRoute.route('/search-active-students').get(validate(searchActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsHandler));
+adminActiveStudentRoute
+    .route('/search-active-students-with-no-subjects')
+    .get(validate(searchActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsWithNoSubjectsHandler));
 
+//defaultActiveStudentsSchema
 adminActiveStudentRoute.route('/get-default-active-students').get(validate(defaultSelectActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(defaultSelectActiveStudentsHandler));
+adminActiveStudentRoute
+    .route('/get-default-active-students-with-no-subjects')
+    .get(validate(defaultSelectActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(defaultSelectActiveStudentsWIthNoSubjectsHandler));
+
 //selectActiveStudentsSchema
 adminActiveStudentRoute.route('/select-active-students').get(validate(selectActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(selectActiveStudentsHandler));
+adminActiveStudentRoute
+    .route('/select-active-students-with-no-subjects')
+    .get(validate(selectActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(selectActiveStudentsWithNoSubjectsHandler));
 
 /*find all enrolled students*/
+/*used to print student id cards*/
 adminActiveStudentRoute
     .route('/get-all-active-students-WO-pagination')
     .get(validate(findAllActiveStudentsWOPaginatonSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentsWithoutPaginationHandler));
@@ -152,7 +171,6 @@ adminActiveStudentRoute
 
 // routes/studentRoute.js
 adminActiveStudentRoute.route('/make-alumni/:studentId').patch(validate(alumniStudentByIdSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(alumniStudentByIdHandler));
-
 
 export default adminActiveStudentRoute;
 //makeAlumniToActiveByIdHandler

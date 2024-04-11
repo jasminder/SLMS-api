@@ -19,3 +19,94 @@ export async function findStudentsByEmail(email: string) {
 
     return students;
 }
+
+// find unqiue student by ID for internal queries
+export async function findStudentDetailsById(studentId: string) {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        },
+        select: {
+            id: true
+        }
+    });
+    const activeStudent = await db.student.findUnique({
+        where: {
+            id: +studentId
+        },
+        include: {
+            personalDetails: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    DOB: true,
+                    gender: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    state: true,
+                    country: true,
+                    postcode: true,
+                    image: true
+                }
+            },
+            parentsDetails: {
+                select: {
+                    id: true,
+                    fatherName: true,
+                    motherName: true,
+                    parentEmail: true,
+                    parentContact: true
+                }
+            },
+            emergencyContact: {
+                select: {
+                    id: true,
+                    contactPerson: true,
+                    contactNumber: true,
+                    relationship: true
+                }
+            },
+            healthInformation: {
+                select: {
+                    id: true,
+                    medicareNumber: true,
+                    ambulanceMembershipNumber: true,
+                    medicalCondition: true,
+                    allergy: true
+                }
+            },
+            otherInformation: {
+                select: {
+                    id: true,
+                    otherInfo: true,
+                    declaration: true
+                }
+            },
+            enrollments: {
+                select: {
+                    subjectEnrollment: true,
+                    createdAt: true
+                }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
+            },
+            studentClassAssignment: {
+                where: {
+                    termSubjectLevel: {
+                        term: {
+                            id: currentTerm?.id
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    return activeStudent;
+}

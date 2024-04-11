@@ -6,6 +6,7 @@ import {
     createLeaveApplication,
     deEnrollActiveStudent,
     defaultSelectActiveStudents,
+    defaultSelectActiveStudentsWIthNoSubjects,
     deleteClassAssignment,
     deleteLeaveApplication,
     enrollActiveStudent,
@@ -14,6 +15,7 @@ import {
     findActiveStudentById,
     findActiveStudentEnrolledSubjects,
     findActiveStudents,
+    findActiveStudentsWithNoSubjects,
     findCurrentTermToAssignClass,
     findFeePaymentById,
     findLeaveById,
@@ -24,7 +26,9 @@ import {
     findUniqueStudentClassDetails,
     manageClasses,
     searchActiveStudents,
+    searchActiveStudentsWithNoSubjects,
     selectActiveStudents,
+    selectActiveStudentsWithNoSubjects,
     updateAmountPaid,
     updateLeaveApplication
 } from '../../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
@@ -66,6 +70,18 @@ export const findActiveStudentsHandler = async (req: Request<{}, {}, {}, FindAll
         res.status(200).json(allStudent);
     }
 };
+export const findActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {}, {}, FindAllActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
+    const { page, termId } = req.query;
+
+    if (page && termId) {
+        const allStudent = await findActiveStudentsWithNoSubjects(+page, +termId);
+        res.status(200).json(allStudent);
+    } else if (termId) {
+        const page = 0;
+        const allStudent = await findActiveStudentsWithNoSubjects(page, +termId);
+        res.status(200).json(allStudent);
+    }
+};
 
 export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
     const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
@@ -75,9 +91,17 @@ export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, Searc
         res.status(200).json(searchResult);
     }
 };
+export const searchActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
+
+    if (termId) {
+        const searchResult = await searchActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption);
+        res.status(200).json(searchResult);
+    }
+};
 export const defaultSelectActiveStudentsHandler = async (req: Request<{}, {}, {}, DefaultSelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
     const { page, termId } = req.query;
-
+    console.log(page, termId, 'controller');
     if (page && termId) {
         const allStudent = await defaultSelectActiveStudents(+page, +termId);
         res.status(200).json(allStudent);
@@ -87,11 +111,31 @@ export const defaultSelectActiveStudentsHandler = async (req: Request<{}, {}, {}
         res.status(200).json(allStudent);
     }
 };
+export const defaultSelectActiveStudentsWIthNoSubjectsHandler = async (req: Request<{}, {}, {}, DefaultSelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
+    const { page, termId } = req.query;
+    console.log(page, termId, 'controller');
+    if (page && termId) {
+        const allStudent = await defaultSelectActiveStudentsWIthNoSubjects(+page, +termId);
+        res.status(200).json(allStudent);
+    } else if (termId) {
+        const page = 0;
+        const allStudent = await defaultSelectActiveStudentsWIthNoSubjects(page, +termId);
+        res.status(200).json(allStudent);
+    }
+};
 export const selectActiveStudentsHandler = async (req: Request<{}, {}, {}, SelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
     const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
 
     if (termId) {
         const searchResult = await selectActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption);
+        res.status(200).json(searchResult);
+    }
+};
+export const selectActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {}, {}, SelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
+
+    if (termId) {
+        const searchResult = await selectActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption);
         res.status(200).json(searchResult);
     }
 };
