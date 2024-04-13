@@ -1,7 +1,10 @@
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 import { ActiveStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
-import { LeaveStatus, Role } from '@prisma/client';
+
+type AttendanceFilter = {
+    attendancePercentageValue?: number;
+};
 
 // Find all active student for the admin
 export async function findActiveStudents(page: number, termId: number) {
@@ -230,27 +233,14 @@ export async function findActiveStudentsWithNoSubjects(page: number, termId: num
 export async function searchActiveStudents(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '') {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+    const attendanceFilter: AttendanceFilter = {};
+    if (attendanceOption !== '') {
+        attendanceFilter.attendancePercentageValue = +attendanceOption;
+    }
     if (searchAsNumber) {
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
-        const latestAttendanceIdsRaw = (
-            await db.student.findMany({
-                where: {
-                    role: 'STUDENT',
-                    isActive: true
-                    // ... other conditions as needed
-                },
-                select: {
-                    id: true,
-                    schoolCheckInAttendance: {
-                        take: 1,
-                        orderBy: { date: 'desc' },
-                        select: { id: true }
-                    }
-                }
-            })
-        ).map((student) => student.schoolCheckInAttendance[0]?.id);
-        const latestAttendanceIds = latestAttendanceIdsRaw.filter((id) => id !== undefined);
+
         const activeStudents = await db.student.findMany({
             skip,
             take,
@@ -260,6 +250,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
+                ...attendanceFilter,
                 studentTermFee: {
                     some: {
                         termId: +termId
@@ -278,24 +269,6 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
-
-                ...(attendanceOption === '0'
-                    ? {
-                          schoolCheckInAttendance: {
-                              some: {
-                                  id: { in: latestAttendanceIds },
-                                  attendanceValue: { notIn: [1, 2] }
-                              }
-                          }
-                      }
-                    : +attendanceOption && {
-                          schoolCheckInAttendance: {
-                              some: {
-                                  id: { in: latestAttendanceIds },
-                                  attendanceValue: +attendanceOption
-                              }
-                          }
-                      }),
 
                 OR: [
                     { akaalId: searchAsNumber },
@@ -400,6 +373,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
+                ...attendanceFilter,
                 studentTermFee: {
                     some: {
                         termId: +termId
@@ -418,24 +392,6 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
-
-                ...(attendanceOption === '0'
-                    ? {
-                          schoolCheckInAttendance: {
-                              some: {
-                                  id: { in: latestAttendanceIds },
-                                  attendanceValue: { notIn: [1, 2] }
-                              }
-                          }
-                      }
-                    : +attendanceOption && {
-                          schoolCheckInAttendance: {
-                              some: {
-                                  id: { in: latestAttendanceIds },
-                                  attendanceValue: +attendanceOption
-                              }
-                          }
-                      }),
 
                 OR: [
                     { akaalId: searchAsNumber },
@@ -467,24 +423,6 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
     } else if (!searchAsNumber) {
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
-        const latestAttendanceIdsRaw = (
-            await db.student.findMany({
-                where: {
-                    role: 'STUDENT',
-                    isActive: true
-                    // ... other conditions as needed
-                },
-                select: {
-                    id: true,
-                    schoolCheckInAttendance: {
-                        take: 1,
-                        orderBy: { date: 'desc' },
-                        select: { id: true }
-                    }
-                }
-            })
-        ).map((student) => student.schoolCheckInAttendance[0]?.id);
-        const latestAttendanceIds = latestAttendanceIdsRaw.filter((id) => id !== undefined);
 
         const activeStudents = await db.student.findMany({
             skip,
@@ -495,6 +433,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
+                ...attendanceFilter,
                 studentTermFee: {
                     some: {
                         termId: +termId
@@ -513,31 +452,6 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
-                // ...(+attendanceOption && {
-                //     schoolCheckInAttendance: {
-                //         some: {
-                //             id: { in: latestAttendanceIds },
-                //             attendanceValue: +attendanceOption
-                //         }
-                //     }
-                // }),
-                ...(attendanceOption === '0'
-                    ? {
-                          schoolCheckInAttendance: {
-                              some: {
-                                  id: { in: latestAttendanceIds },
-                                  attendanceValue: { notIn: [1, 2] }
-                              }
-                          }
-                      }
-                    : +attendanceOption && {
-                          schoolCheckInAttendance: {
-                              some: {
-                                  id: { in: latestAttendanceIds },
-                                  attendanceValue: +attendanceOption
-                              }
-                          }
-                      }),
 
                 OR: [
                     {
@@ -641,6 +555,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
+                ...attendanceFilter,
                 studentTermFee: {
                     some: {
                         termId: +termId
@@ -659,31 +574,6 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                         })
                     }
                 },
-                // ...(+attendanceOption && {
-                //     schoolCheckInAttendance: {
-                //         some: {
-                //             id: { in: latestAttendanceIds },
-                //             attendanceValue: +attendanceOption
-                //         }
-                //     }
-                // }),
-                ...(attendanceOption === '0'
-                    ? {
-                          schoolCheckInAttendance: {
-                              some: {
-                                  id: { in: latestAttendanceIds },
-                                  attendanceValue: { notIn: [1, 2] }
-                              }
-                          }
-                      }
-                    : +attendanceOption && {
-                          schoolCheckInAttendance: {
-                              some: {
-                                  id: { in: latestAttendanceIds },
-                                  attendanceValue: +attendanceOption
-                              }
-                          }
-                      }),
 
                 OR: [
                     {
