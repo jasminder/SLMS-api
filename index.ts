@@ -40,6 +40,7 @@ import './src/cron/sendFeedBackEmails';
 import './src/cron/processMonthlyFees';
 import './src/cron/processTermFees';
 import './src/cron/sendConsolidatedEmailForParents';
+import './src/cron/calculateTermAttendance'
 import commentRoute from './src/route/admin.route/admin.comment.route/admin.comment.route';
 import interactionRoute from './src/route/admin.route/admin.interactions.route/admin.interactions.route';
 import adminInstitutionRoute from './src/route/admin.route/admin.institution.route/admin.institution.route';

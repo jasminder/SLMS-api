@@ -28,6 +28,9 @@ export async function findActiveStudents(page: number, termId: number) {
             id: true,
             akaalId: true,
             role: true,
+            termAttendance: true,
+            attendancePercentageValue: true,
+
             isActive: true,
             updatedAt: true,
             createdAt: true,
@@ -136,6 +139,8 @@ export async function findActiveStudentsWithNoSubjects(page: number, termId: num
             id: true,
             akaalId: true,
             role: true,
+            termAttendance: true,
+            attendancePercentageValue: true,
             isActive: true,
             updatedAt: true,
             createdAt: true,
@@ -324,6 +329,8 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                 isActive: true,
                 updatedAt: true,
                 createdAt: true,
+                termAttendance: true,
+                attendancePercentageValue: true,
                 personalDetails: {
                     select: {
                         id: true,
@@ -563,6 +570,8 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                 isActive: true,
                 updatedAt: true,
                 createdAt: true,
+                termAttendance: true,
+                attendancePercentageValue: true,
                 personalDetails: {
                     select: {
                         id: true,
@@ -775,6 +784,8 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
                 isActive: true,
                 updatedAt: true,
                 createdAt: true,
+                termAttendance: true,
+                attendancePercentageValue: true,
                 personalDetails: {
                     select: {
                         id: true,
@@ -945,6 +956,7 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
                 isActive: true,
                 updatedAt: true,
                 createdAt: true,
+                termAttendance: true,
                 personalDetails: {
                     select: {
                         id: true,
@@ -1049,7 +1061,6 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
     }
 }
 export async function defaultSelectActiveStudents(page: number, termId: number) {
-
     const activeStudents = await db.student.findMany({
         where: {
             role: 'STUDENT',
