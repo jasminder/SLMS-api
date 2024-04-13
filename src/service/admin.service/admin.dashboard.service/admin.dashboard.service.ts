@@ -289,6 +289,7 @@ export async function findActiveStudentsWithFlags(page: number, termId: number) 
             id: true,
             akaalId: true,
             role: true,
+            attendancePercentageValue:true, termAttendance:true,
             isActive: true,
             updatedAt: true,
             createdAt: true,
@@ -446,7 +447,7 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
                 id: true,
                 akaalId: true,
                 role: true,
-                isActive: true,
+                isActive: true,attendancePercentageValue:true, termAttendance:true,
                 updatedAt: true,
                 createdAt: true,
                 personalDetails: {
@@ -633,7 +634,7 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
                 id: true,
                 akaalId: true,
                 role: true,
-                isActive: true,
+                isActive: true,attendancePercentageValue:true, termAttendance:true,
                 updatedAt: true,
                 createdAt: true,
                 personalDetails: {
