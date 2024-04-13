@@ -67,4 +67,3 @@ async function calculateTermAttendance() {
 }
 
 // Call the function or set it to be called by a scheduler
-calculateTermAttendance();
