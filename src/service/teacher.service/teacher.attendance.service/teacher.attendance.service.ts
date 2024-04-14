@@ -14,7 +14,10 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
             section: {
                 name: sectionName
             },
-            isCurrentlyAssigned: true
+            isCurrentlyAssigned: true,
+            student: {
+                role: 'STUDENT'
+            }
         },
         orderBy: {
             student: {
