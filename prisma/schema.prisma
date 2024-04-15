@@ -964,9 +964,9 @@ model NoticeAcknowledgement {
 }
 
 model Event {
-  id    Int         @id @default(autoincrement())
-  start DateTime    @default(now()) // Start date and time for the event
-  end   DateTime    @default(now()) // End date and time for the event
+  id    Int          @id @default(autoincrement())
+  start DateTime     @default(now()) // Start date and time for the event
+  end   DateTime     @default(now()) // End date and time for the event
   data  Appointment?
 }
 
@@ -976,10 +976,10 @@ model Appointment {
   title       String
   color       String? // Optional color of the appointment
   isCompleted Boolean? @default(false)
-  location    String? // Optional location of the appointment
-  status      String? // Optional status of the appointment
-  address     String? // Optional address related to the appointment
-  remarks     String? // Optional remarks
-  type        String? // Optional type of the appointment
+  location    String?  @default("School")
+  status      String?  @default("Melbourne")
+  address     String?  @default("Langwarren")
+  remarks     String?  @default("NA")
+  type        String?  @default("Event")
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }

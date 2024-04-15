@@ -20,3 +20,35 @@ export const createNewEventSchema = z.object({
 });
 
 export type CreateNewEventSchema = z.infer<typeof createNewEventSchema>;
+
+export const updateEventSchema = z.object({
+    body: z.object({
+        start: z.string(),
+        end: z.string(),
+        data: z.object({
+            appointment: z.object({
+                title: z.string().min(3, { message: 'Title is required' }),
+                color: z.string().optional(),
+                isCompleted: z.boolean().optional(),
+                location: z.string().optional(),
+                status: z.string().optional(),
+                address: z.string().optional(),
+                remarks: z.string().optional(),
+                type: z.string().optional()
+            })
+        })
+    }),
+    params: z.object({
+        eventId: z.string()
+    })
+});
+
+export type UpdateEventSchema = z.infer<typeof updateEventSchema>;
+
+export const deleteEventSchema = z.object({
+    params: z.object({
+        eventId: z.string()
+    })
+});
+
+export type DeleteEventSchema = z.infer<typeof deleteEventSchema>;
