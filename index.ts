@@ -58,6 +58,7 @@ import adminEmailTemplateRoute from './src/route/admin.route/admin.communication
 import adminNoticeRoute from './src/route/admin.route/admin.notice.route/admin.notice.route';
 import adminAlumniRoute from './src/route/admin.route/admin.alumni.route/admin.alumni.route';
 import studentDashboardRoute from './src/route/student.route/student.dashboard.route/student.dashboard.route';
+import adminEventRoute from './src/route/admin.route/admin.events.route/admin.events.route';
 
 const app = express();
 app.use(cookieParser());
@@ -123,6 +124,8 @@ app.use('/api/v1/admin/institution', adminInstitutionRoute);
 app.use('/api/v1/admin/communication', adminEmailTemplateRoute);
 app.use('/api/v1/admin/notice', adminNoticeRoute);
 app.use('/api/v1/admin/alumni', adminAlumniRoute);
+app.use('/api/v1/admin/event', adminEventRoute);
+
 
 
 /*Attendance and check in and checkout*/

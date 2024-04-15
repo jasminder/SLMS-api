@@ -1,26 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+
 import { customError } from '../../../utils/customError';
-import { setSendDate } from '../../../utils/setSendDate';
 
-const db = new PrismaClient();
-
-
-
-async function updateGroupClassworkAttachments(groupClassworkId: string, classworkDetails: { attachments: string; description: string }[]) {
-    const existingGroupClasswork = await db.groupClasswork.findUnique({
-        where: { id: +groupClassworkId },
-        select: { attachments: true, description: true }
-    });
-
-    if (existingGroupClasswork) {
-        const updatedAttachments = [...existingGroupClasswork.attachments, ...classworkDetails.map((detail) => detail.attachments)];
-        const updatedDescriptions = [...existingGroupClasswork.description, ...classworkDetails.map((detail) => detail.description)];
-        await db.groupClasswork.update({
-            where: { id: +groupClassworkId },
-            data: { attachments: updatedAttachments, description: updatedDescriptions }
-        });
-    }
-}
+import { db } from '../../../utils/db.server';
 
 export async function createGroupClasswork(
     studentIds: string[],
@@ -34,7 +15,44 @@ export async function createGroupClasswork(
     classTime: string,
     classworkIds: string[]
 ) {
-    const sendDate = await setSendDate();
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    const termSubjectLevel = await db.termSubjectLevel.findUnique({
+        where: { id: +termSubjectLevelId },
+        include: {
+            term: {
+                include: {
+                    termSubject: {
+                        where: {
+                            termId: currentTerm?.id
+                        },
+                        select: {
+                            isOnSunday: true,
+                            isOnWeekday: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    let sendDate = new Date();
+    if (termSubjectLevel?.term.termSubject[0].isOnSunday) {
+        const day = sendDate.getDay(); // Get current day (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+        let diff = 7 - day; // Calculate days until next Sunday
+        if (day === 0) {
+            // If today is Sunday, set to next Sunday instead of today
+            diff = 7;
+        }
+        sendDate.setDate(sendDate.getDate() + diff); // Set to next Sunday
+    } else {
+        sendDate.setDate(sendDate.getDate()); // Set to today
+    }
+    sendDate.setHours(16, 30, 0, 0);
+
     const startDate = new Date();
     startDate.setHours(0, 0, 0, 0);
 
@@ -145,7 +163,7 @@ export async function findAssignedClassworks(teacherId: string, termSubjectLevel
         where: {
             teacherId: parseInt(teacherId),
             termSubjectLevelId: parseInt(termSubjectLevelId),
-            sectionId: parseInt(sectionId),
+            sectionId: parseInt(sectionId)
             // createdAt: {
             //     gte: startDate,
             //     lte: endDate

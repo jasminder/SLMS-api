@@ -51,7 +51,7 @@ enum PaymentType {
 model Student {
   id                        Int                       @id @default(autoincrement())
   akaalId                   Int?
-  attendancePercentageValue Int                      @default(0)
+  attendancePercentageValue Int                       @default(0)
   termAttendance            Int                       @default(0)
   role                      Role                      @default(APPLICANT)
   isActive                  Boolean                   @default(false)
@@ -961,4 +961,25 @@ model NoticeAcknowledgement {
   teacher   Teacher   @relation(fields: [teacherId], references: [id])
 
   @@unique([noticeId, teacherId]) // Ensuring a unique record per notice per teacher
+}
+
+model Event {
+  id    Int         @id @default(autoincrement())
+  start DateTime    @default(now()) // Start date and time for the event
+  end   DateTime    @default(now()) // End date and time for the event
+  data  Appointment?
+}
+
+model Appointment {
+  id          Int      @id @default(autoincrement())
+  eventId     Int      @unique
+  title       String
+  color       String? // Optional color of the appointment
+  isCompleted Boolean? @default(false)
+  location    String? // Optional location of the appointment
+  status      String? // Optional status of the appointment
+  address     String? // Optional address related to the appointment
+  remarks     String? // Optional remarks
+  type        String? // Optional type of the appointment
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
