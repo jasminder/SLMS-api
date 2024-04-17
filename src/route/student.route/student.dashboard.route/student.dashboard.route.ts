@@ -20,5 +20,5 @@ studentDashboardRoute.route('/get-all-student-portal-notices').get(protectRoute,
 
 studentDashboardRoute
     .route('/student-portal-notice-detail/:noticeId')
-    .get(validate(getStudentNoticeSchema), protectRoute, restrict('SUDENT', 'ADMIN'), asyncErrorHandler(getStudentNoticePortalHandler));
+    .get(validate(getStudentNoticeSchema), protectRoute, restrict('STUDENT', 'ADMIN'), asyncErrorHandler(getStudentNoticePortalHandler));
 export default studentDashboardRoute;
