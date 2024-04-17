@@ -14,3 +14,11 @@ export const findActiveStudentDetailsSchema = z.object({
     })
 });
 export type FindActiveStudentDetailsSchema = z.infer<typeof findActiveStudentDetailsSchema>;
+
+export const getStudentNoticeSchema = z.object({
+    params: z.object({
+        noticeId: z.string().min(1, { message: 'Notice ID is required' }).regex(/^\d+$/, 'Notice ID must be a number')
+    })
+});
+
+export type GetStudentNoticeSchema = z.infer<typeof getStudentNoticeSchema>;

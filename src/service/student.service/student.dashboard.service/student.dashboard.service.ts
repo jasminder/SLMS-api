@@ -20,7 +20,6 @@ export async function findStudentsByEmail(email: string) {
     return students;
 }
 
-// find unqiue student by ID for internal queries
 export async function findStudentDetailsById(studentId: string) {
     const currentTerm = await db.term.findFirst({
         where: {
@@ -133,4 +132,25 @@ export async function findStudentDetailsById(studentId: string) {
     });
 
     return activeStudent;
+}
+export async function getAllStudentPortalNotices() {
+    const notices = await db.studentNotice.findMany({
+        include: {
+            studentAcknowledgement: true
+        },
+        orderBy: {
+            updatedAt: 'desc'
+        },
+        take: 5
+    });
+    return notices;
+}
+
+export async function getStudentPortalNotice(noticeId: string) {
+    return await db.studentNotice.findUnique({
+        where: { id: +noticeId },
+        include: {
+            studentAcknowledgement: true
+        }
+    });
 }
