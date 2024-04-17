@@ -49,35 +49,36 @@ enum PaymentType {
 }
 
 model Student {
-  id                        Int                       @id @default(autoincrement())
-  akaalId                   Int?
-  attendancePercentageValue Int                       @default(0)
-  termAttendance            Int                       @default(0)
-  role                      Role                      @default(APPLICANT)
-  isActive                  Boolean                   @default(false)
-  isAllowedLogin            Boolean                   @default(false)
-  enrollments               Enrollment[]
-  personalDetails           PersonalDetails?
-  parentsDetails            ParentsDetails?
-  emergencyContact          EmergencyContact?
-  healthInformation         HealthInformation?
-  otherInformation          OtherInformation?
-  studentTermFee            StudentTermFee[]
-  subjectsChosen            String[]                  @default(["Subjects Chosen Not available"])
-  subjectRelated            String[]                  @default(["Options Not available"])
-  createdAt                 DateTime                  @default(now())
-  updatedAt                 DateTime                  @updatedAt
-  studentClassAssignment    StudentClassAssignment[]
-  user                      User?
-  schoolCheckInAttendance   SchoolCheckInAttendance[]
-  skipReport                SkipReport[]
-  feedback                  Feedback[]
-  interaction               Interaction[]
-  comment                   Comment[]
-  GroupHomework             GroupHomework[]
-  AutomatedMailForParents   AutomatedMailForParents[]
-  GroupClasswork            GroupClasswork[]
-  Leave                     Leave[]
+  id                           Int                            @id @default(autoincrement())
+  akaalId                      Int?
+  attendancePercentageValue    Int                            @default(0)
+  termAttendance               Int                            @default(0)
+  role                         Role                           @default(APPLICANT)
+  isActive                     Boolean                        @default(false)
+  isAllowedLogin               Boolean                        @default(false)
+  enrollments                  Enrollment[]
+  personalDetails              PersonalDetails?
+  parentsDetails               ParentsDetails?
+  emergencyContact             EmergencyContact?
+  healthInformation            HealthInformation?
+  otherInformation             OtherInformation?
+  studentTermFee               StudentTermFee[]
+  subjectsChosen               String[]                       @default(["Subjects Chosen Not available"])
+  subjectRelated               String[]                       @default(["Options Not available"])
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @updatedAt
+  studentClassAssignment       StudentClassAssignment[]
+  user                         User?
+  schoolCheckInAttendance      SchoolCheckInAttendance[]
+  skipReport                   SkipReport[]
+  feedback                     Feedback[]
+  interaction                  Interaction[]
+  comment                      Comment[]
+  GroupHomework                GroupHomework[]
+  AutomatedMailForParents      AutomatedMailForParents[]
+  GroupClasswork               GroupClasswork[]
+  Leave                        Leave[]
+  StudentNoticeAcknowledgement StudentNoticeAcknowledgement[]
 }
 
 model PersonalDetails {
@@ -509,6 +510,7 @@ model Admin {
   Leave                     Leave[]
   EmailTemplate             EmailTemplate[]
   Notice                    Notice[]
+  StudentNotice             StudentNotice[]
 }
 
 model AdminPersonalDetails {
@@ -955,12 +957,38 @@ model NoticeAcknowledgement {
   id        Int       @id @default(autoincrement())
   noticeId  Int
   teacherId Int
+
   isSeen    Boolean   @default(false)
   seenAt    DateTime? // Set this to the current time when the notice is seen
   notice    Notice    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
-  teacher   Teacher   @relation(fields: [teacherId], references: [id])
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+
 
   @@unique([noticeId, teacherId]) // Ensuring a unique record per notice per teacher
+}
+
+model StudentNotice {
+  id                     Int                            @id @default(autoincrement())
+  title                  String
+  content                String
+  adminId                Int
+  createdAt              DateTime                       @default(now())
+  updatedAt              DateTime                       @updatedAt
+  admin                  Admin                          @relation(fields: [adminId], references: [id])
+  studentAcknowledgement StudentNoticeAcknowledgement[]
+}
+
+model StudentNoticeAcknowledgement {
+  id              Int           @id @default(autoincrement())
+  studentNoticeId Int
+  studentId       Int // Foreign key reference to Student
+  isSeen          Boolean       @default(false)
+  seenAt          DateTime? // Set this to the current time when the notice is seen
+  studentNotice   StudentNotice @relation(fields: [studentNoticeId], references: [id], onDelete: Cascade)
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([studentNoticeId, studentId]) // Ensuring a unique record per notice per teacher
 }
 
 model Event {

@@ -25,11 +25,14 @@ export async function createNotice(adminId: string, title: string, content: stri
     }
     return newNotice;
 }
-
+// for admin to view all notices
 export async function getAllNotices() {
     const notices = await db.notice.findMany({
         include: {
             acknowledgements: true
+        },
+        orderBy: {
+            updatedAt: 'desc'
         }
     });
 
@@ -48,7 +51,7 @@ export async function deleteNotice(noticeId: string) {
         where: { id: +noticeId }
     });
 }
-
+// for teacher to show the unseen notice
 export async function getUnseenNotices(teacherId: string) {
     const notices = await db.notice.findMany({
         where: {
@@ -70,13 +73,13 @@ export async function getUnseenNotices(teacherId: string) {
 
     return notices;
 }
-
+// to view notice detail for admin
 export async function getNotice(noticeId: string) {
     return await db.notice.findUnique({
         where: { id: +noticeId }
     });
 }
-
+// admin tp update notice
 export async function updateNotice(noticeId: string, title: string, content: string) {
     const notice = await db.notice.findUnique({ where: { id: +noticeId } });
     if (!notice) {
@@ -90,7 +93,7 @@ export async function updateNotice(noticeId: string, title: string, content: str
 
     return updatedNotice;
 }
-
+// admin to reset the notcie so that it will be shown to teacher
 export async function resetNoticeViews(noticeId: string) {
     await db.noticeAcknowledgement.updateMany({
         where: {
@@ -103,7 +106,7 @@ export async function resetNoticeViews(noticeId: string) {
         }
     });
 }
-
+//to update whether teacher has seen the notice
 export async function acknowledgeNotice(noticeId: string, teacherId: string) {
     // Update the NoticeAcknowledgement for this teacher and notice
     await db.noticeAcknowledgement.updateMany({
@@ -117,4 +120,99 @@ export async function acknowledgeNotice(noticeId: string, teacherId: string) {
             seenAt: new Date() // Set this to the current time
         }
     });
+}
+
+// ---------------------------student notice---------------------------
+export async function createStudentNotice(adminId: string, title: string, content: string) {
+    return db.$transaction(async (prisma) => {
+        const newNotice = await prisma.studentNotice.create({
+            data: {
+                adminId: +adminId,
+                title,
+                content
+            }
+        });
+
+        // Fetch all active, student role, allowed login student IDs
+        const activeStudents = await prisma.student.findMany({
+            where: {
+                isActive: true,
+                role: 'STUDENT',
+                isAllowedLogin: true
+            },
+            select: { id: true } // Select only the ID
+        });
+
+        // Prepare acknowledgements for each student
+        const acknowledgementPromises = activeStudents.map((student) => {
+            return prisma.studentNoticeAcknowledgement.create({
+                data: {
+                    studentNoticeId: newNotice.id,
+                    studentId: student.id,
+                    isSeen: false
+                }
+            });
+        });
+
+        // Execute all the acknowledgements creation in parallel
+        await Promise.all(acknowledgementPromises);
+
+        return newNotice;
+    });
+}
+export async function getAllStudentNotices() {
+    const notices = await db.studentNotice.findMany({
+        include: {
+            studentAcknowledgement: true
+        },
+        orderBy: {
+            updatedAt: 'desc'
+        }
+    });
+    return notices;
+}
+
+export async function deleteStudentNotice(noticeId: string) {
+    // Start a transaction
+    const transaction = await db.$transaction(async (prisma) => {
+        // First, delete all related acknowledgements
+        await prisma.studentNoticeAcknowledgement.deleteMany({
+            where: {
+                studentNoticeId: +noticeId
+            }
+        });
+
+        // Then, delete the notice itself
+        const deletedNotice = await prisma.studentNotice.delete({
+            where: {
+                id: +noticeId
+            }
+        });
+
+        return deletedNotice;
+    });
+
+    return transaction;
+}
+export async function getStudentNotice(noticeId: string) {
+    return await db.studentNotice.findUnique({
+        where: { id: +noticeId }
+    });
+}
+export async function updateStudentNotice(noticeId: string, title: string, content: string) {
+    const notice = await db.notice.findUnique({ where: { id: +noticeId } });
+    if (!notice) {
+        throw new Error('Notice not found');
+    }
+
+    const updatedNotice = await db.studentNotice.update({
+        where: { id: +noticeId },
+        // data: {
+        //     ...(title && { title }), // Only include title if provided
+        //     ...(content && { content }) // Only include content if provided
+        // }
+        data: { title, content }
+    });
+
+    return updatedNotice;
 }

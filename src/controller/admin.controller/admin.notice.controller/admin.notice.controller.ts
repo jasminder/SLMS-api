@@ -2,12 +2,17 @@ import { NextFunction, Request, Response } from 'express';
 import {
     acknowledgeNotice,
     createNotice,
+    createStudentNotice,
     deleteNotice,
+    deleteStudentNotice,
     getAllNotices,
+    getAllStudentNotices,
     getNotice,
+    getStudentNotice,
     getUnseenNotices,
     resetNoticeViews,
-    updateNotice
+    updateNotice,
+    updateStudentNotice
 } from '../../../service/admin.service/admin.notice.service/admin.notice.service';
 import {
     AcknowledgeNoticeSchema,
@@ -19,6 +24,7 @@ import {
     UpdateNoticeSchema
 } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
 
+// ---------------------------------------teacher notice---------------------------------------//
 export const createNoticeHandler = async (req: Request<CreateNoticeSchema['params'], {}, CreateNoticeSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { title, content } = req.body;
     const { adminId } = req.params; // Assuming admin ID is in the request user object
@@ -72,4 +78,40 @@ export const acknowledgeNoticeHandler = async (req: Request<AcknowledgeNoticeSch
     const { noticeId, teacherId } = req.params;
     await acknowledgeNotice(noticeId, teacherId);
     res.status(200).json({ message: 'Notice acknowledged successfully' });
+};
+// ---------------------------------------student notice---------------------------------------//
+export const createStudentNoticeHandler = async (req: Request<CreateNoticeSchema['params'], {}, CreateNoticeSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { title, content } = req.body;
+    const { adminId } = req.params; // Assuming admin ID is in the request user object
+    const notice = await createStudentNotice(adminId, title, content);
+    res.status(201).json({ message: 'Notice created successfully', notice });
+};
+export const getAllStudentNoticesHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const notices = await getAllStudentNotices();
+    res.status(200).json(notices);
+};
+export const deleteStudentNoticeHandler = async (req: Request<DeleteNoticeSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { noticeId } = req.params;
+    await deleteStudentNotice(noticeId);
+    res.status(200).json({ message: 'Notice deleted successfully' });
+};
+
+export const getStudentNoticeHandler = async (req: Request<GetNoticeSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { noticeId } = req.params;
+    const notice = await getStudentNotice(noticeId);
+    if (notice) {
+        res.status(200).json(notice);
+    } else {
+        res.status(404).json({ message: 'Notice not found' });
+    }
+};
+
+export const updateStudentNoticeHandler = async (req: Request<UpdateNoticeSchema['params'], {}, UpdateNoticeSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { noticeId } = req.params;
+    const { title, content } = req.body;
+    const updatedNotice = await updateStudentNotice(noticeId, title, content);
+    if (!updatedNotice) {
+        return res.status(404).json({ message: 'Notice not found' });
+    }
+    res.status(200).json({ message: 'Notice updated successfully', updatedNotice });
 };
