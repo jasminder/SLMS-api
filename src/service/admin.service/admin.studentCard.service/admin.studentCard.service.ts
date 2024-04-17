@@ -20,6 +20,8 @@ export async function findActiveStudentsWithoutPagination(termId: number) {
             id: true,
             akaalId: true,
             role: true,
+            termAttendance: true,
+            attendancePercentageValue: true,
             isActive: true,
             updatedAt: true,
             createdAt: true,
@@ -144,6 +146,8 @@ export async function searchActiveStudentsWithoutPagination(search = '', termId:
             isActive: true,
             updatedAt: true,
             createdAt: true,
+            termAttendance: true,
+            attendancePercentageValue: true,
             personalDetails: {
                 select: {
                     id: true,
