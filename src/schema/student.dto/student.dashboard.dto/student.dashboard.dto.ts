@@ -22,3 +22,11 @@ export const getStudentNoticeSchema = z.object({
 });
 
 export type GetStudentNoticeSchema = z.infer<typeof getStudentNoticeSchema>;
+
+export const getStudentportalNoticesSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Teacher ID is required' }).regex(/^\d+$/, 'Teacher ID must be a number')
+    })
+});
+
+export type GetStudentportalNoticesSchema = z.infer<typeof getStudentportalNoticesSchema>;

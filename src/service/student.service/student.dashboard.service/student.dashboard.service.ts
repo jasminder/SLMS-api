@@ -133,10 +133,22 @@ export async function findStudentDetailsById(studentId: string) {
 
     return activeStudent;
 }
-export async function getAllStudentPortalNotices() {
+export async function getAllStudentPortalNotices(studentId: string) {
     const notices = await db.studentNotice.findMany({
+        where: {
+            studentAcknowledgement: {
+                some: {
+                    studentId: +studentId
+                }
+            }
+        },
         include: {
-            studentAcknowledgement: true
+            // Including all acknowledgements for these notices that match the student
+            studentAcknowledgement: {
+                where: {
+                    studentId: +studentId
+                }
+            }
         },
         orderBy: {
             updatedAt: 'desc'
@@ -148,9 +160,6 @@ export async function getAllStudentPortalNotices() {
 
 export async function getStudentPortalNotice(noticeId: string) {
     return await db.studentNotice.findUnique({
-        where: { id: +noticeId },
-        include: {
-            studentAcknowledgement: true
-        }
+        where: { id: +noticeId }
     });
 }

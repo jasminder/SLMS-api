@@ -64,3 +64,12 @@ export const acknowledgeNoticeSchema = z.object({
 });
 
 export type AcknowledgeNoticeSchema = z.infer<typeof acknowledgeNoticeSchema>;
+
+
+export const getStudentportalNoticesSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Teacher ID is required' }).regex(/^\d+$/, 'Teacher ID must be a number')
+    })
+});
+
+export type GetStudentportalNoticesSchema = z.infer<typeof getStudentportalNoticesSchema>;

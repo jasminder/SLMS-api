@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { FindActiveStudentDetailsSchema, FindStudentsByEmailSchema, GetStudentNoticeSchema } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import { findStudentDetailsById, findStudentsByEmail, getAllStudentPortalNotices, getStudentPortalNotice } from '../../../service/student.service/student.dashboard.service/student.dashboard.service';
+import { GetStudentportalNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
 
 export const findStudentsByEmailHandler = async (req: Request<FindStudentsByEmailSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { email } = req.params;
@@ -13,8 +14,9 @@ export const findStudentDetailsByIdHandler = async (req: Request<FindActiveStude
     res.status(200).json(student);
 };
 
-export const getAllStudentPortalNoticesHandler = async (req: Request, res: Response, next: NextFunction) => {
-    const notices = await getAllStudentPortalNotices();
+export const getAllStudentPortalNoticesHandler = async (req: Request<GetStudentportalNoticesSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const notices = await getAllStudentPortalNotices(studentId);
     res.status(200).json(notices);
 };
 
