@@ -1,6 +1,17 @@
 import { NextFunction, Request, Response } from 'express';
-import { FindActiveStudentDetailsSchema, FindStudentsByEmailSchema, GetStudentNoticeSchema } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
-import { findStudentDetailsById, findStudentsByEmail, getAllStudentPortalNotices, getStudentPortalNotice } from '../../../service/student.service/student.dashboard.service/student.dashboard.service';
+import {
+    AcknowledgeStudentNoticeSchema,
+    FindActiveStudentDetailsSchema,
+    FindStudentsByEmailSchema,
+    GetStudentNoticeSchema
+} from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
+import {
+    acknowledgeStudentNotice,
+    findStudentDetailsById,
+    findStudentsByEmail,
+    getAllStudentPortalNotices,
+    getStudentPortalNotice
+} from '../../../service/student.service/student.dashboard.service/student.dashboard.service';
 import { GetStudentportalNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
 
 export const findStudentsByEmailHandler = async (req: Request<FindStudentsByEmailSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
@@ -28,4 +39,10 @@ export const getStudentNoticePortalHandler = async (req: Request<GetStudentNotic
     } else {
         res.status(404).json({ message: 'Notice not found' });
     }
+};
+
+export const acknowledgeStudentNoticeHandler = async (req: Request<AcknowledgeStudentNoticeSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId, studentNoticeId } = req.params;
+    const updatedAcknowledgement = await acknowledgeStudentNotice(studentId, studentNoticeId);
+    res.status(200).json(updatedAcknowledgement);
 };

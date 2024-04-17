@@ -4,8 +4,14 @@ import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
 import validate from '../../../middleware/validateResource';
 import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
-import { findActiveStudentDetailsSchema, findStudentsByEmailSchema, getStudentNoticeSchema } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
+    acknowledgeStudentNoticeSchema,
+    findActiveStudentDetailsSchema,
+    findStudentsByEmailSchema,
+    getStudentNoticeSchema
+} from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
+import {
+    acknowledgeStudentNoticeHandler,
     findStudentDetailsByIdHandler,
     findStudentsByEmailHandler,
     getAllStudentPortalNoticesHandler,
@@ -21,4 +27,8 @@ studentDashboardRoute.route('/get-all-student-portal-notices/:studentId').get(pr
 studentDashboardRoute
     .route('/student-portal-notice-detail/:noticeId')
     .get(validate(getStudentNoticeSchema), protectRoute, restrict('STUDENT', 'ADMIN'), asyncErrorHandler(getStudentNoticePortalHandler));
+studentDashboardRoute
+    .route('/acknowledge-student-portal-notice/:studentId/:studentNoticeId')
+    .patch(validate(acknowledgeStudentNoticeSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(acknowledgeStudentNoticeHandler));
+
 export default studentDashboardRoute;

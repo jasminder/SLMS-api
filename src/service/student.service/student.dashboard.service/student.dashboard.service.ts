@@ -163,3 +163,33 @@ export async function getStudentPortalNotice(noticeId: string) {
         where: { id: +noticeId }
     });
 }
+
+export async function acknowledgeStudentNotice(studentId: string, studentNoticeId: string) {
+    return db.$transaction(async (prisma) => {
+        // Check if acknowledgement exists
+        const acknowledgement = await prisma.studentNoticeAcknowledgement.findUnique({
+            where: {
+                studentNoticeId_studentId: {
+                    studentId: +studentId,
+                    studentNoticeId: +studentNoticeId
+                }
+            }
+        });
+
+        // If it doesn't exist, throw error
+        if (!acknowledgement) {
+            throw new Error('Acknowledgement not found.');
+        }
+
+        // If it exists, update the record
+        return prisma.studentNoticeAcknowledgement.update({
+            where: {
+                id: acknowledgement.id
+            },
+            data: {
+                isSeen: true,
+                seenAt: new Date() // Sets the seenAt to the current date/time
+            }
+        });
+    });
+}
