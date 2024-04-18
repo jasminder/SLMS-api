@@ -26,7 +26,20 @@ export async function createNotice(adminId: string, title: string, content: stri
 export async function getAllNotices() {
     const notices = await db.notice.findMany({
         include: {
-            acknowledgements: true
+            acknowledgements: {
+                include: {
+                    teacher: {
+                        select: {
+                            teacherPersonalDetails: {
+                                select: {
+                                    firstName: true,
+                                    lastName: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
         orderBy: {
             updatedAt: 'desc'
