@@ -26,9 +26,9 @@ import {
 
 // ---------------------------------------teacher notice---------------------------------------//
 export const createNoticeHandler = async (req: Request<CreateNoticeSchema['params'], {}, CreateNoticeSchema['body'], {}>, res: Response, next: NextFunction) => {
-    const { title, content } = req.body;
+    const { title, content, teacherIds } = req.body;
     const { adminId } = req.params; // Assuming admin ID is in the request user object
-    const notice = await createNotice(adminId, title, content);
+    const notice = await createNotice(adminId, title, content, teacherIds);
     res.status(201).json({ message: 'Notice created successfully', notice });
 };
 

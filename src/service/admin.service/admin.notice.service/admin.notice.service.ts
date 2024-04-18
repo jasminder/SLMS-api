@@ -2,7 +2,7 @@
 
 import { db } from '../../../utils/db.server';
 
-export async function createNotice(adminId: string, title: string, content: string) {
+export async function createNotice(adminId: string, title: string, content: string, teacherIds: string[]) {
     const newNotice = await db.notice.create({
         data: {
             adminId: +adminId,
@@ -10,15 +10,12 @@ export async function createNotice(adminId: string, title: string, content: stri
             content
         }
     });
-    // Fetch all teacher IDs
-    const teachers = await db.teacher.findMany({
-        select: { id: true } // Select only the ID
-    });
-    for (const teacher of teachers) {
+
+    for (const teacherId of teacherIds) {
         await db.noticeAcknowledgement.create({
             data: {
                 noticeId: newNotice.id,
-                teacherId: teacher.id,
+                teacherId: +teacherId,
                 isSeen: false
             }
         });

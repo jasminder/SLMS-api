@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const createNoticeSchema = z.object({
     body: z.object({
         title: z.string().min(1, 'Title is required'),
-        content: z.string().min(1, 'Content is required')
+        content: z.string().min(1, 'Content is required'),
+        teacherIds: z.array(z.string().min(1, 'Content is required'))
     }),
     params: z.object({
         adminId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
@@ -64,7 +65,6 @@ export const acknowledgeNoticeSchema = z.object({
 });
 
 export type AcknowledgeNoticeSchema = z.infer<typeof acknowledgeNoticeSchema>;
-
 
 export const getStudentportalNoticesSchema = z.object({
     params: z.object({
