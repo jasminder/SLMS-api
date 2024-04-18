@@ -43,7 +43,8 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
                                                 }
                                             }
                                         }
-                                    }
+                                    },
+                                    level: true
                                 }
                             }
                         }
