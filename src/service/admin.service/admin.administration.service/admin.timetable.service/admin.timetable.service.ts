@@ -68,3 +68,29 @@ export async function updateTimetable(id: UpdateTimeTableSchema['params']['id'],
 
     return updatedTimeTable;
 }
+// ------------------- for time table ------------------- //
+exports.createTimetable = async (timetableData:any) => {
+    const { name, isActive, timetableSlots } = timetableData;
+
+    const createdTimetable = await db.timetable.create({
+        data: {
+            name,
+            isActive,
+            timetableSlots: {
+                create: timetableSlots.map((slot:any) => ({
+                    classroomId: slot.classroomId,
+                    timeSlotId: slot.timeSlotId,
+                    termSubjectLevelId: slot.termSubjectLevelId,
+                    sectionId: slot.sectionId,
+                    teacherId: slot.teacherId
+                }))
+            }
+        },
+        include: {
+            timetableSlots: true
+        }
+    });
+
+    return createdTimetable;
+};
+// ------------------- for time table ------------------- //

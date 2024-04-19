@@ -192,6 +192,7 @@ model Section {
   Classwork               Classwork[]
   GroupHomework           GroupHomework[]
   GroupClasswork          GroupClasswork[]
+  TimetableSlot           TimetableSlot[]
 }
 
 model TermSubjectGroup {
@@ -245,6 +246,7 @@ model TermSubjectLevel {
   GroupClasswork          GroupClasswork[]
   Classwork               Classwork[]
   Homework                Homework[]
+  TimetableSlot           TimetableSlot[]
 
   @@unique([termId, subjectId, levelId])
 }
@@ -391,6 +393,7 @@ model Teacher {
   Classwork                        Classwork[]
   GroupClasswork                   GroupClasswork[]
   NoticeAcknowledgement            NoticeAcknowledgement[]
+  TimetableSlot                    TimetableSlot[]
 }
 
 model TeacherPersonalDetails {
@@ -954,15 +957,14 @@ model Notice {
 }
 
 model NoticeAcknowledgement {
-  id        Int       @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   noticeId  Int
   teacherId Int
 
-  isSeen    Boolean   @default(false)
-  seenAt    DateTime? // Set this to the current time when the notice is seen
-  notice    Notice    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
-  teacher   Teacher  @relation(fields: [teacherId], references: [id])
-
+  isSeen  Boolean   @default(false)
+  seenAt  DateTime? // Set this to the current time when the notice is seen
+  notice  Notice    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  teacher Teacher   @relation(fields: [teacherId], references: [id])
 
   @@unique([noticeId, teacherId]) // Ensuring a unique record per notice per teacher
 }
@@ -1011,3 +1013,45 @@ model Appointment {
   type        String?  @default("Event")
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
+
+model ClassRoom {
+  id             Int             @id @default(autoincrement())
+  name           String          @unique
+  timetableSlots TimetableSlot[]
+}
+
+// ------------------- for time table ------------------- //
+model TimeSlot {
+  id             Int             @id @default(autoincrement())
+  timeRange      String // "11:00 AM to 12:30 PM"
+  timetableSlots TimetableSlot[]
+}
+
+model TimetableSlot {
+  id                 Int              @id @default(autoincrement())
+  timetableId        Int // Foreign key to link to Timetable
+  classroomId        Int
+  timeSlotId         Int
+  termSubjectLevelId Int
+  sectionId          Int
+  teacherId          Int
+  classroom          ClassRoom        @relation(fields: [classroomId], references: [id])
+  timeSlot           TimeSlot         @relation(fields: [timeSlotId], references: [id])
+  termSubjectLevel   TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
+  section            Section          @relation(fields: [sectionId], references: [id])
+  teacher            Teacher          @relation(fields: [teacherId], references: [id])
+  timetable          Timetable        @relation(fields: [timetableId], references: [id])
+
+  @@unique([timetableId, classroomId, timeSlotId, termSubjectLevelId, sectionId, teacherId])
+}
+
+model Timetable {
+  id             Int             @id @default(autoincrement())
+  name           String?         @default("Timetable")
+  isActive       Boolean         @default(true)
+  timetableSlots TimetableSlot[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+// ------------------- for time table ------------------- //

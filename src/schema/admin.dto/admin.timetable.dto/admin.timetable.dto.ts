@@ -44,3 +44,21 @@ export const findUniqueTimetableSchema = z.object({
     })
 });
 export type FindUniqueTimetableSchema = z.infer<typeof findUniqueTimetableSchema>;
+
+// ------------------- for time table ------------------- //
+export const timetableSchema = z.object({
+    body: z.object({
+        name: z.string(),
+        isActive: z.boolean(),
+        timetableSlots: z.array(
+            z.object({
+                classroomId: z.number(),
+                timeSlotId: z.number(),
+                termSubjectLevelId: z.number(),
+                sectionId: z.number(),
+                teacherId: z.number()
+            })
+        )
+    })
+});
+// ------------------- for time table ------------------- //
