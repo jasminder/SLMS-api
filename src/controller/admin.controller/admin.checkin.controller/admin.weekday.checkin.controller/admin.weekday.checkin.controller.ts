@@ -6,8 +6,8 @@ export const createWeekdaySchoolCheckInAttendanceForStudentHandler = async (
     res: Response,
     next: NextFunction
 ) => {
-    const { date } = req.body;
+    const { date, termSubjectLevelId, sectionName } = req.body;
 
-    const schoolCheckInAttendance = await createWeekdaySchoolCheckInAttendanceForStudent(date);
+    const schoolCheckInAttendance = await createWeekdaySchoolCheckInAttendanceForStudent(date, termSubjectLevelId, sectionName);
     res.status(200).json(schoolCheckInAttendance);
 };

@@ -1,7 +1,7 @@
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
 
-export async function createWeekdaySchoolCheckInAttendanceForStudent(date: string) {
+export async function createWeekdaySchoolCheckInAttendanceForStudent(date: string, termSubjectLevelId: string, sectionName: string) {
     if (!date) {
         throw customError('You need to provide a date to create School CheckIn Attendance record.', 'fail', 404, true);
     }
@@ -44,6 +44,14 @@ export async function createWeekdaySchoolCheckInAttendanceForStudent(date: strin
                     studentTermFee: {
                         some: {
                             termId: currentTerm?.id
+                        }
+                    },
+                    studentClassAssignment: {
+                        some: {
+                            termSubjectLevelId: parseInt(termSubjectLevelId),
+                            section: {
+                                name: sectionName
+                            }
                         }
                     },
                     enrollments: {
