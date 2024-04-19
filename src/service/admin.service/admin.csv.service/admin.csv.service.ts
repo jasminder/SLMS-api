@@ -47,3 +47,53 @@ export async function downloadStudentsCsvService(): Promise<string> {
 
     return parse(flattenedStudents, opts);
 }
+
+export async function downloadTeachersCsvService() {
+    const teachers = await db.teacher.findMany({
+        include: {
+            teacherPersonalDetails: true,
+            teacherEmergencyContact: true,
+            teacherWWCHealthInformation: true,
+            teacherWorkRights: true,
+            teacherQualificationAvailability: true,
+            teacherBankDetails: true,
+            teacherOtherInformation: true
+        }
+    });
+
+    return teachers.map((teacher) => ({
+        id: teacher.id,
+        role: teacher.role,
+        isActive: teacher.isActive,
+        isAllowedLogin: teacher.isAllowedLogin,
+        firstName: teacher.teacherPersonalDetails?.firstName || '',
+        lastName: teacher.teacherPersonalDetails?.lastName || '',
+        DOB: teacher.teacherPersonalDetails?.DOB || '',
+        gender: teacher.teacherPersonalDetails?.gender || '',
+        email: teacher.teacherPersonalDetails?.email || '',
+        contact: teacher.teacherPersonalDetails?.contact || '',
+        address: teacher.teacherPersonalDetails?.address || '',
+        suburb: teacher.teacherPersonalDetails?.suburb || '',
+        state: teacher.teacherPersonalDetails?.state || '',
+        country: teacher.teacherPersonalDetails?.country || '',
+        postcode: teacher.teacherPersonalDetails?.postcode || '',
+        contactPerson: teacher.teacherEmergencyContact?.contactPerson || '',
+        contactNumber: teacher.teacherEmergencyContact?.contactNumber || '',
+        relationship: teacher.teacherEmergencyContact?.relationship || '',
+        medicareNumber: teacher.teacherWWCHealthInformation?.medicareNumber || '',
+        medicalCondition: teacher.teacherWWCHealthInformation?.medicalCondition || '',
+        childrenCheckCardNumber: teacher.teacherWWCHealthInformation?.childrenCheckCardNumber || '',
+        workingWithChildrenCheckExpiry: teacher.teacherWWCHealthInformation?.workingWithChildrenCheckExpiry?.toISOString().split('T')[0] || '',
+        workRights: teacher.teacherWorkRights?.workRights,
+        immigrationStatus: teacher.teacherWorkRights?.immigrationStatus || '',
+        qualification: teacher.teacherQualificationAvailability?.qualification || '',
+        experience: teacher.teacherQualificationAvailability?.experience || '',
+        subjectsChosen: teacher.teacherQualificationAvailability?.subjectsChosen.join(', ') || '',
+        timeSlotsChosen: teacher.teacherQualificationAvailability?.timeSlotsChosen.join(', ') || '',
+        bankAccountName: teacher.teacherBankDetails?.bankAccountName || '',
+        BSB: teacher.teacherBankDetails?.BSB || '',
+        accountNumber: teacher.teacherBankDetails?.accountNumber || '',
+        ABN: teacher.teacherBankDetails?.ABN || '',
+        otherInfo: teacher.teacherOtherInformation?.otherInfo || ''
+    }));
+}
