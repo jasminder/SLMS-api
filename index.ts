@@ -59,6 +59,7 @@ import adminNoticeRoute from './src/route/admin.route/admin.notice.route/admin.n
 import adminAlumniRoute from './src/route/admin.route/admin.alumni.route/admin.alumni.route';
 import studentDashboardRoute from './src/route/student.route/student.dashboard.route/student.dashboard.route';
 import adminEventRoute from './src/route/admin.route/admin.events.route/admin.events.route';
+import adminCSVRouter from './src/route/admin.route/admin.csv.route/admin.csv.route';
 
 const app = express();
 app.use(cookieParser());
@@ -125,6 +126,8 @@ app.use('/api/v1/admin/communication', adminEmailTemplateRoute);
 app.use('/api/v1/admin/notice', adminNoticeRoute);
 app.use('/api/v1/admin/alumni', adminAlumniRoute);
 app.use('/api/v1/admin/event', adminEventRoute);
+app.use('/api/v1/admin/csv', adminCSVRouter);
+
 
 
 
