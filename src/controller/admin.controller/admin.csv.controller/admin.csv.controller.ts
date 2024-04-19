@@ -4,38 +4,12 @@ import { downloadStudentsCsvService, downloadTeachersCsvService } from '../../..
 
 export const downloadStudentCsvHandler = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const students = await downloadStudentsCsvService();
+        const csv = await downloadStudentsCsvService(); // Get the CSV string directly
 
-        const fields = [
-            'id',
-            'akaalId',
-            'firstName',
-            'lastName',
-            'DOB',
-            'gender',
-            'email',
-            'contact',
-            'address',
-            'suburb',
-            'state',
-            'country',
-            'postcode',
-            'fatherName',
-            'motherName',
-            'parentEmail',
-            'parentContact',
-            'emergencyContactPerson',
-            'contactNumber',
-            'relationship',
-            'medicareNumber',
-            'ambulanceMembershipNumber',
-            'medicalCondition',
-            'allergy',
-            'otherInfo',
-            'declaration'
-        ];
-        const opts = { fields };
-        const csv = parse(students, opts);
+        if (!csv) {
+            res.status(404).send('No data available to generate CSV.');
+            return;
+        }
 
         res.header('Content-Type', 'text/csv');
         res.attachment('students-details.csv');
@@ -46,25 +20,17 @@ export const downloadStudentCsvHandler = async (req: Request, res: Response, nex
     }
 };
 
-
-
 export const downloadTeacherCsvHandler = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const teachers = await downloadTeachersCsvService();
+        const csv = await downloadTeachersCsvService(); // Get the CSV string directly
 
-        const fields = [
-            'id', 'role', 'isActive', 'isAllowedLogin', 'firstName', 'lastName', 'DOB', 'gender',
-            'email', 'contact', 'address', 'suburb', 'state', 'country', 'postcode', 'contactPerson',
-            'contactNumber', 'relationship', 'medicareNumber', 'medicalCondition', 'childrenCheckCardNumber',
-            'workingWithChildrenCheckExpiry', 'workRights', 'immigrationStatus', 'qualification',
-            'experience', 'subjectsChosen', 'timeSlotsChosen', 'bankAccountName', 'BSB', 'accountNumber',
-            'ABN', 'otherInfo'
-        ];
-        const opts = { fields };
-        const csv = parse(teachers, opts);
+        if (!csv) {
+            res.status(404).send('No data available to generate CSV.');
+            return;
+        }
 
         res.header('Content-Type', 'text/csv');
-        res.attachment('teachers-details.csv');
+        res.attachment('teacher-details.csv');
         res.send(csv);
     } catch (error) {
         console.error(error);

@@ -7,6 +7,6 @@ import { downloadStudentCsvHandler, downloadTeacherCsvHandler } from '../../../c
 
 const adminCSVRouter = express.Router();
 
-adminCSVRouter.route('/download-students-csv').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(downloadStudentCsvHandler));
+adminCSVRouter.route('/download-students-csv').get(protectRoute, asyncErrorHandler(downloadStudentCsvHandler));
 adminCSVRouter.route('/download-teachers-csv').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(downloadTeacherCsvHandler));
 export default adminCSVRouter;

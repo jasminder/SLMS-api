@@ -1,7 +1,7 @@
 import { db } from '../../../utils/db.server';
 import { parse } from 'json2csv';
 
-export async function downloadStudentsCsvService(): Promise<string> {
+export async function downloadStudentsCsvService() {
     const students = await db.student.findMany({
         include: {
             personalDetails: true,
@@ -12,10 +12,13 @@ export async function downloadStudentsCsvService(): Promise<string> {
         }
     });
 
+    if (!students.length) {
+        console.log('No data available to generate CSV.');
+        return ''; // Return an empty CSV or handle it as needed
+    }
+
     const flattenedStudents = students.map((student) => ({
-        id: student.akaalId,
-        role: student.role,
-        isActive: student.isActive,
+        id: student.akaalId ?? 0,
         firstName: student.personalDetails?.firstName || '',
         lastName: student.personalDetails?.lastName || '',
         DOB: student.personalDetails?.DOB || '',
@@ -39,13 +42,10 @@ export async function downloadStudentsCsvService(): Promise<string> {
         medicalCondition: student.healthInformation?.medicalCondition || '',
         allergy: student.healthInformation?.allergy || '',
         otherInfo: student.otherInformation?.otherInfo || '',
-        declaration: student.otherInformation?.declaration.join(', ') || ''
+        declaration: ''
     }));
 
-    const fields = ['id', 'akaalId', 'firstName', 'lastName', 'email', 'fatherName', 'motherName', 'emergencyContactPerson', 'healthConditions', 'otherInfo'];
-    const opts = { fields };
-
-    return parse(flattenedStudents, opts);
+    return parse(flattenedStudents, { fields: flattenedStudents[0] ? Object.keys(flattenedStudents[0]) : [] });
 }
 
 export async function downloadTeachersCsvService() {
@@ -61,11 +61,8 @@ export async function downloadTeachersCsvService() {
         }
     });
 
-    return teachers.map((teacher) => ({
+    const flattenedTeachers = teachers.map((teacher) => ({
         id: teacher.id,
-        role: teacher.role,
-        isActive: teacher.isActive,
-        isAllowedLogin: teacher.isAllowedLogin,
         firstName: teacher.teacherPersonalDetails?.firstName || '',
         lastName: teacher.teacherPersonalDetails?.lastName || '',
         DOB: teacher.teacherPersonalDetails?.DOB || '',
@@ -96,4 +93,5 @@ export async function downloadTeachersCsvService() {
         ABN: teacher.teacherBankDetails?.ABN || '',
         otherInfo: teacher.teacherOtherInformation?.otherInfo || ''
     }));
+    return parse(flattenedTeachers, { fields: flattenedTeachers[0] ? Object.keys(flattenedTeachers[0]) : [] });
 }
