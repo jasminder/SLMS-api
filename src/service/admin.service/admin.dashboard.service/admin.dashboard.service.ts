@@ -289,7 +289,8 @@ export async function findActiveStudentsWithFlags(page: number, termId: number) 
             id: true,
             akaalId: true,
             role: true,
-            attendancePercentageValue:true, termAttendance:true,
+            attendancePercentageValue: true,
+            termAttendance: true,
             isActive: true,
             updatedAt: true,
             createdAt: true,
@@ -447,7 +448,9 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
                 id: true,
                 akaalId: true,
                 role: true,
-                isActive: true,attendancePercentageValue:true, termAttendance:true,
+                isActive: true,
+                attendancePercentageValue: true,
+                termAttendance: true,
                 updatedAt: true,
                 createdAt: true,
                 personalDetails: {
@@ -634,7 +637,9 @@ export async function searchActiveStudentsWithFlags(search = '', page: number, t
                 id: true,
                 akaalId: true,
                 role: true,
-                isActive: true,attendancePercentageValue:true, termAttendance:true,
+                isActive: true,
+                attendancePercentageValue: true,
+                termAttendance: true,
                 updatedAt: true,
                 createdAt: true,
                 personalDetails: {
@@ -799,11 +804,23 @@ export async function fetchWeekdayActiveCheckedInStudents(dateString: string) {
             schoolOperatedDate: {
                 lte: startDate // Less than or equal to the query date
             },
-            isOnSunday: false,
+            // isOnSunday: false,
             isOnWeekday: true
         },
         include: {
-            schoolAttendances: true
+            schoolAttendances: {
+                where: {
+                    classAttendance: {
+                        some: {
+                            studentClassAssignment: {
+                                termSubjectLevel: {
+                                    subject: { termSubject: { every: { isOnWeekday: true } } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
         take: 5,
         orderBy: {

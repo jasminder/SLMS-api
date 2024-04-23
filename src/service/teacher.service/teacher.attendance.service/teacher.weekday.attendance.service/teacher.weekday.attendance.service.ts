@@ -27,8 +27,8 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
     const attendanceRecord = await db.schoolCheckInAttendance.findFirst({
         where: {
             studentId: +studentId,
-            checkedIn: false,
-            isMarked: false,
+            // checkedIn: false,
+            // isMarked: false,
             date: {
                 gte: startDate,
                 lte: endDate
@@ -40,9 +40,9 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
     }
 
     // Check if the student has already been checked in
-    if (attendanceRecord.checkedIn) {
-        throw customError('Student is already checked in.', 'fail', 400, true);
-    }
+    // if (attendanceRecord.checkedIn) {
+    //     throw customError('Student is already checked in.', 'fail', 400, true);
+    // }
     const updatedAttendanceRecord = await db.schoolCheckInAttendance.update({
         where: {
             id: attendanceRecord.id
