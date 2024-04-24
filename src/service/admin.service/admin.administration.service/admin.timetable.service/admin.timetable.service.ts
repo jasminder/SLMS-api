@@ -69,7 +69,7 @@ export async function updateTimetable(id: UpdateTimeTableSchema['params']['id'],
     return updatedTimeTable;
 }
 // ------------------- for time table ------------------- //
-exports.createTimetable = async (timetableData:any) => {
+export const createTimetable1 = async (timetableData: any) => {
     const { name, isActive, timetableSlots } = timetableData;
 
     const createdTimetable = await db.timetable.create({
@@ -77,7 +77,7 @@ exports.createTimetable = async (timetableData:any) => {
             name,
             isActive,
             timetableSlots: {
-                create: timetableSlots.map((slot:any) => ({
+                create: timetableSlots.map((slot: any) => ({
                     classroomId: slot.classroomId,
                     timeSlotId: slot.timeSlotId,
                     termSubjectLevelId: slot.termSubjectLevelId,
@@ -94,3 +94,32 @@ exports.createTimetable = async (timetableData:any) => {
     return createdTimetable;
 };
 // ------------------- for time table ------------------- //
+// const studentTimetable = await db.student.findUnique({
+//     where: { id: studentId },  // replace studentId with actual student's ID
+//     include: {
+//       studentClassAssignment: {
+//         include: {
+//           section: {
+//             include: {
+//               timetableSlot: {
+//                 include: {
+//                   timeSlot: true,
+//                   classRoom: true
+//                 }
+//               }
+//             }
+//           },
+//           termSubjectLevel: {
+//             include: {
+//               timetableSlot: {
+//                 include: {
+//                   timeSlot: true,
+//                   classRoom: true
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   });

@@ -8,17 +8,18 @@ import {
     markStudentAsNotCheckedIn,
     undoCheckIn,
     undoFalseCheckin,
-    undoSchoolCheckInAttendanceForStudent
+    undoSchoolCheckInAttendanceForStudent,
+    undoSchoolCheckInAttendanceForStudentById
 } from '../../../service/admin.service/admin.checkin.service/admin.checkin.service';
 import {
     CreateSchoolCheckInAttendanceForStudentSchema,
-    FetchSchoolCheckInAttendanceSchema,
     MarkCheckInFalseForSelectedStudentsSchema,
     MarkCheckInTrueForSelectedStudentsSchema,
     MarkSchoolCheckInAttendanceForStudentSchema,
     MarkStudentAsNotCheckedInSchema,
     UndoCheckInSchema,
-    UndoFalseCheckinSchema
+    UndoFalseCheckinSchema,
+    UndoSchoolCheckInAttendanceForStudentByIdSchema
 } from '../../../schema/admin.dto/admin.checkin.dto/admin.checkin.dto';
 
 export const createSchoolCheckInAttendanceForStudentHandler = async (req: Request<{}, {}, CreateSchoolCheckInAttendanceForStudentSchema['body'], {}>, res: Response, next: NextFunction) => {
@@ -87,5 +88,13 @@ export const markCheckInFalseForSelectedStudentsHandler = async (req: Request<{}
 export const undoFalseCheckinHandler = async (req: Request<UndoFalseCheckinSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { studentId } = req.params;
     const updatedRecord = await undoFalseCheckin(studentId);
+    res.status(200).json(updatedRecord);
+};
+
+//undo creation of school checkin and class atendance by student id and date
+export const undoSchoolCheckInAttendanceForStudentByIdHandler = async (req: Request<{}, {}, UndoSchoolCheckInAttendanceForStudentByIdSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { studentId, date } = req.body;
+
+    const updatedRecord = await undoSchoolCheckInAttendanceForStudentById(studentId, date);
     res.status(200).json(updatedRecord);
 };

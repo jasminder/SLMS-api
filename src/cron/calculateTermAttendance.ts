@@ -18,6 +18,10 @@ cron.schedule('0 17 * * *', () => {
 async function calculateTermAttendance() {
     try {
         const students = await db.student.findMany({
+            where: {
+                role: 'STUDENT',
+                isActive: true
+            },
             include: {
                 schoolCheckInAttendance: {
                     // Optionally filter by specific terms if applicable

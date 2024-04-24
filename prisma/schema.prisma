@@ -1014,13 +1014,13 @@ model Appointment {
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
+// ------------------- for time table ------------------- //
 model ClassRoom {
   id             Int             @id @default(autoincrement())
   name           String          @unique
   timetableSlots TimetableSlot[]
 }
 
-// ------------------- for time table ------------------- //
 model TimeSlot {
   id             Int             @id @default(autoincrement())
   timeRange      String // "11:00 AM to 12:30 PM"

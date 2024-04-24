@@ -10,7 +10,8 @@ import {
     markSchoolCheckInAttendanceForStudentSchema,
     markStudentAsNotCheckedInSchema,
     undoCheckInSchema,
-    undoFalseCheckinSchema
+    undoFalseCheckinSchema,
+    undoSchoolCheckInAttendanceForStudentByIdSchema
 } from '../../../schema/admin.dto/admin.checkin.dto/admin.checkin.dto';
 import {
     createSchoolCheckInAttendanceForStudentHandler,
@@ -21,6 +22,7 @@ import {
     markStudentAsNotCheckedInHandler,
     undoCheckInHandler,
     undoFalseCheckinHandler,
+    undoSchoolCheckInAttendanceForStudentByIdHandler,
     undoSchoolCheckInAttendanceForStudentHandler
 } from '../../../controller/admin.controller/admin.checkin.controller/admin.checkin.controller';
 import { protectRoute } from '../../../middleware/protectRoutes';
@@ -63,4 +65,6 @@ adminCheckinRoute
 /*undo false check in*/
 adminCheckinRoute.route('/undo-false-checkin/:studentId').patch(validate(undoFalseCheckinSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(undoFalseCheckinHandler));
 
+//undo creation of school checkin and class atendance by student id and date
+adminCheckinRoute.route('/undo-school-attendance-record-by-studentId').post(validate(undoSchoolCheckInAttendanceForStudentByIdSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(undoSchoolCheckInAttendanceForStudentByIdHandler));
 export default adminCheckinRoute;

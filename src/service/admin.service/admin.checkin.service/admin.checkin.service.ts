@@ -102,7 +102,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 }
             });
-            console.log(existingRecords, 'existingRecords ');
+
             if (existingRecords.length > 0) {
                 throw customError('Attendance already created for today.', 'fail', 400, true);
             }
@@ -120,9 +120,8 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         }
                     }
                 });
-                console.log('existingAttendance', existingAttendance?.id);
+
                 if (!existingAttendance) {
-                    console.log('creating unique SCA ,', student.id);
                     const leaveRecord = await db.leave.findFirst({
                         where: {
                             studentId: student.id,
@@ -266,7 +265,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                             }
                         }
                     });
-                    if (student.id == 5212) console.log(studentClassAssignments, 'studentassignments');
+
                     for (const assignment of studentClassAssignments) {
                         // Check if a ClassAttendance record already exists for the assignment and date
                         const existingClassAttendance = await db.classAttendance.findUnique({
@@ -277,7 +276,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                 }
                             }
                         });
-                        if (student.id == 5212) console.log(existingClassAttendance, 'existingClassAttendance');
+
                         // If a record exists, update it, otherwise create a new one
                         if (!existingClassAttendance) {
                             const newClasses = await db.classAttendance.create({
@@ -290,7 +289,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                     // other fields if necessary
                                 }
                             });
-                            // console.log(newClasses, 'class attendance for keertana');
                         }
                     }
                 }
@@ -379,6 +377,111 @@ export async function undoSchoolCheckInAttendanceForStudent(date: string) {
     return transaction;
 }
 
+export async function undoSchoolCheckInAttendanceForStudentById(studentId: string, date: string) {
+    // Input validation
+    if (!studentId || !date) {
+        throw customError('Student ID and date must be provided.', 'fail', 404, true);
+    }
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Start a transaction
+    const transaction = await db.$transaction(async (db) => {
+        //0 find the schoolcheckinattendance
+        const schoolCheckinAttendance = await db.schoolCheckInAttendance.findFirst({
+            where: {
+                studentId: +studentId,
+                date: {
+                    gte: startDate,
+                    lte: endDate
+                }
+            },
+            include: {
+                classAttendance: true // Include related class attendance records
+            }
+        });
+        if (!schoolCheckinAttendance) {
+            throw customError('No check-in attendance record found for the given student and date.', 'fail', 404, true);
+        }
+
+        if (schoolCheckinAttendance && schoolCheckinAttendance.classAttendance && schoolCheckinAttendance?.classAttendance.length > 0) {
+            await db.classAttendance.deleteMany({
+                where: { id: { in: schoolCheckinAttendance.classAttendance.map((ca) => ca.id) } }
+            });
+            await db.schoolCheckInAttendance.delete({
+                where: { id: schoolCheckinAttendance.id }
+            });
+        } else {
+            await db.schoolCheckInAttendance.delete({
+                where: { id: schoolCheckinAttendance.id }
+            });
+        }
+
+        const attendanceRecords = await db.schoolCheckInAttendance.findMany({
+            where: { studentId: +studentId },
+            orderBy: { date: 'desc' }
+        });
+
+        if (attendanceRecords.length > 0) {
+            const totalCheckedIn = attendanceRecords.filter((att) => att.checkedIn).length;
+            const termAttendance = ((totalCheckedIn / attendanceRecords.length) * 100).toFixed(2); // Calculate percentage
+
+            // Update student record with new values
+            const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
+                where: { studentId: +studentId },
+                orderBy: { date: 'desc' },
+                take: 2
+            });
+            let newAttendanceValue = 0;
+            const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
+
+            if (countMarkedAndCheckedIn === 2) {
+                newAttendanceValue = 2; // Both records have isMarked and checkedIn true
+            } else if (countMarkedAndCheckedIn === 1) {
+                newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
+            }
+
+            await db.student.update({
+                where: { id: +studentId },
+                data: { termAttendance: parseFloat(termAttendance), attendancePercentageValue: newAttendanceValue }
+            });
+        } else {
+            await db.student.update({
+                where: { id: +studentId },
+                data: { termAttendance: 0, attendancePercentageValue: 0 }
+            });
+        }
+
+        // 3. Recalculate new attendance value for other students
+        const remainingAttendances = await db.schoolCheckInAttendance.count({
+            where: {
+                date: {
+                    gte: startDate,
+                    lte: endDate
+                }
+            }
+        });
+
+        // If no remaining attendances, delete the SchoolDay record
+        let deletedSchoolDay = null;
+        if (remainingAttendances === 0 && schoolCheckinAttendance.schoolDayId) {
+            // Fetch the SchoolDay id first
+
+            deletedSchoolDay = await db.schoolDay.delete({
+                where: {
+                    id: schoolCheckinAttendance.schoolDayId // Use the fetched id to delete
+                }
+            });
+        }
+    });
+
+    return transaction;
+}
+
+//-----------------------------------//
 /*fetch all freshly created schoolCheckInAttendance */
 export async function fetchSchoolCheckInAttendance() {
     // Calculate today's date as a string in ISO format (YYYY-MM-DD)

@@ -66,3 +66,11 @@ export const undoFalseCheckinSchema = z.object({
 });
 
 export type UndoFalseCheckinSchema = z.infer<typeof undoFalseCheckinSchema>;
+export const undoSchoolCheckInAttendanceForStudentByIdSchema = z.object({
+    body: z.object({
+        studentId: z.string().min(1, { message: 'Student ID is required' }),
+        date: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+
+export type UndoSchoolCheckInAttendanceForStudentByIdSchema = z.infer<typeof undoSchoolCheckInAttendanceForStudentByIdSchema>;
