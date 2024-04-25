@@ -40,9 +40,14 @@ async function calculateTermAttendance() {
                         const termAttendance = ((totalCheckedIn / totalRecords) * 100).toFixed(4);
 
                         const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
-                            where: { studentId: student.id },
+                            where: { studentId: student.id ,isOnLeave: false },
                             orderBy: { date: 'desc' },
                             take: 2
+                        });
+                        const lastSchoolCheckinAttendance = await db.schoolCheckInAttendance.findFirst({
+                            where: { studentId: student.id ,},
+                            orderBy: { date: 'desc' },
+                            take: 1
                         });
                         let newAttendanceValue = 0;
                         const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
@@ -52,7 +57,7 @@ async function calculateTermAttendance() {
                         } else if (countMarkedAndCheckedIn === 1) {
                             newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
                         }
-
+                        await db.schoolCheckInAttendance.update({ where: { id: lastSchoolCheckinAttendance?.id }, data: { attendanceValue: newAttendanceValue } });
                         await db.student.update({
                             where: { id: student.id },
                             data: { termAttendance: parseFloat(termAttendance), attendancePercentageValue: newAttendanceValue }

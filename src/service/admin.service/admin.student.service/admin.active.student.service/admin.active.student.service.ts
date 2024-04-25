@@ -2612,14 +2612,14 @@ export async function findStudentAttendanceById(studentId: string) {
     const attendance = await db.student.findUnique({
         where: { id: +studentId },
 
-        select: {
+        include: {
             schoolCheckInAttendance: {
+                include: { classAttendance: true },
                 orderBy: {
                     date: 'desc'
                 }
             },
-            personalDetails: true,
-            akaalId: true
+            personalDetails: true
         }
     });
 
@@ -2645,4 +2645,145 @@ export async function alumniStudentById(studentId: string) {
     }
 
     return student;
+}
+
+// edit change attendance at the attendance tab in activestudent detail page
+
+export async function markPresentByEditSchoolCheckInAttendanceForStudent(studentId: string, date: string, remarks?: string) {
+    const currentDate = new Date(date);
+    currentDate.setHours(0, 0, 0, 0); // Set time to start of the day
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999); // Set time to end of the day
+
+    // Find the SchoolCheckInAttendance record for the specified student and date
+    const attendanceRecord = await db.schoolCheckInAttendance.findFirst({
+        where: {
+            studentId: +studentId,
+
+            date: {
+                gte: currentDate,
+                lte: endDate
+            }
+        }
+    });
+
+    if (!attendanceRecord) {
+        throw customError('Attendance record not found for today.', 'fail', 404, true);
+    }
+
+    // Update the check-in time, set checkedIn to true, and mark attendance
+    const updatedAttendanceRecord = await db.schoolCheckInAttendance.update({
+        where: {
+            id: attendanceRecord.id
+        },
+        data: {
+            checkInTime: new Date(),
+            checkedIn: true,
+            remarks: remarks || null,
+            isMarked: true,
+            checkOutTime: new Date(),
+            isCheckedOut: true
+        }
+    });
+
+    // If SchoolCheckInAttendance update is successful, update ClassAttendance records
+    const updatedClassAttendanceRecords = await db.classAttendance.updateMany({
+        where: {
+            schoolCheckInAttendanceId: updatedAttendanceRecord.id,
+            date: {
+                gte: currentDate,
+                lte: endDate
+            },
+            attendanceStatus: 'ABSENT' // Only update if previously marked as ABSENT
+        },
+        data: {
+            attendanceStatus: 'PRESENT'
+        }
+    });
+
+    // Retrieve the most recent 2 records to calculate new attendance value
+    const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
+        where: { studentId: +studentId, isOnLeave: false },
+        orderBy: { date: 'desc' },
+        take: 2
+    });
+    let newAttendanceValue = 0;
+    const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
+
+    if (countMarkedAndCheckedIn === 2) {
+        newAttendanceValue = 2; // Both records have isMarked and checkedIn true
+    } else if (countMarkedAndCheckedIn === 1) {
+        newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
+    }
+
+    // Update the attendance value of the updated record
+    const finalAttendanceUpdate = await db.schoolCheckInAttendance.update({
+        where: {
+            id: updatedAttendanceRecord.id
+        },
+        data: {
+            attendanceValue: newAttendanceValue
+        }
+    });
+
+    return finalAttendanceUpdate;
+}
+export async function markAbsentByEditSchoolCheckInAttendanceForStudent(studentId: string, date: string, remarks?: string) {
+    const currentDate = new Date(date);
+    currentDate.setHours(0, 0, 0, 0); // Set time to start of the day
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999); // Set time to end of the day
+
+    // Find the SchoolCheckInAttendance record for the specified student and date
+    const attendanceRecord = await db.schoolCheckInAttendance.findFirst({
+        where: {
+            studentId: +studentId,
+            date: {
+                gte: currentDate,
+                lte: endDate
+            },
+            isMarked: true, // targeting records not yet marked for today
+            checkedIn: true
+        }
+    });
+
+    if (!attendanceRecord) {
+        throw customError('Attendance record not found or already marked for today.', 'fail', 404, true);
+    }
+
+    // Mark as not checked in and update the marked status
+    const updatedSchoolAttendance = await db.schoolCheckInAttendance.update({
+        where: {
+            id: attendanceRecord.id
+        },
+        data: {
+            checkedIn: false,
+            isCheckedOut: false,
+            checkInTime: null,
+            checkOutTime: null,
+            remarks: remarks || null,
+            isMarked: false
+        }
+    });
+
+    // Update related ClassAttendance records to mark them as 'ABSENT'
+    const updatedClassAttendanceRecords = await db.classAttendance.updateMany({
+        where: {
+            schoolCheckInAttendanceId: updatedSchoolAttendance.id,
+            date: {
+                gte: currentDate,
+                lte: endDate
+            }
+        },
+        data: {
+            attendanceStatus: 'ABSENT'
+        }
+    });
+
+    return {
+        updatedSchoolAttendance,
+        updatedClassAttendanceRecords
+    };
 }

@@ -25,6 +25,8 @@ import {
     findTermToEnrollActiveStudent,
     findUniqueStudentClassDetails,
     manageClasses,
+    markAbsentByEditSchoolCheckInAttendanceForStudent,
+    markPresentByEditSchoolCheckInAttendanceForStudent,
     searchActiveStudents,
     searchActiveStudentsWithNoSubjects,
     selectActiveStudents,
@@ -51,6 +53,8 @@ import {
     FindUniqueActiveStudentSchema,
     FindUniqueFeePaymentSchema,
     ManageClassSchema,
+    MarkAbsentByEditSchoolCheckInAttendanceForStudentSchema,
+    MarkPresentByEditSchoolCheckInAttendanceForStudentSchema,
     SearchActiveStudentsSchema,
     SelectActiveStudentsSchema,
     UpdateAmountPaidSchema,
@@ -297,4 +301,39 @@ export const alumniStudentByIdHandler = async (req: Request<AlumniStudentByIdSch
     const { studentId } = req.params;
     const updatedStudent = await alumniStudentById(studentId);
     res.status(200).json(updatedStudent);
+};
+
+// edit change attendance at the attendance tab in activestudent detail page
+
+export const markPresentByEditSchoolCheckInAttendanceForStudentHandler = async (
+    req: Request<MarkPresentByEditSchoolCheckInAttendanceForStudentSchema['params'], {}, MarkPresentByEditSchoolCheckInAttendanceForStudentSchema['body'], {}>,
+    res: Response,
+    next: NextFunction
+) => {
+    const remarks = req.body?.remarks;
+    const date = req.body.date;
+    const { studentId } = req.params;
+    if (remarks) {
+        const markSchoolCheckInAttendance = await markPresentByEditSchoolCheckInAttendanceForStudent(studentId, date, remarks);
+        res.status(200).json(markSchoolCheckInAttendance);
+    } else {
+        const markSchoolCheckInAttendance = await markPresentByEditSchoolCheckInAttendanceForStudent(studentId, date);
+        res.status(200).json(markSchoolCheckInAttendance);
+    }
+};
+export const markAbsentByEditSchoolCheckInAttendanceForStudentHandler = async (
+    req: Request<MarkAbsentByEditSchoolCheckInAttendanceForStudentSchema['params'], {}, MarkAbsentByEditSchoolCheckInAttendanceForStudentSchema['body'], {}>,
+    res: Response,
+    next: NextFunction
+) => {
+    const remarks = req.body?.remarks;
+    const date = req.body.date;
+    const { studentId } = req.params;
+    if (remarks) {
+        const markSchoolCheckInAttendance = await markAbsentByEditSchoolCheckInAttendanceForStudent(studentId, date, remarks);
+        res.status(200).json(markSchoolCheckInAttendance);
+    } else {
+        const markSchoolCheckInAttendance = await markAbsentByEditSchoolCheckInAttendanceForStudent(studentId, date);
+        res.status(200).json(markSchoolCheckInAttendance);
+    }
 };

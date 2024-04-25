@@ -21,6 +21,8 @@ import {
     findUniqueActiveStudentSchema,
     findUniqueFeePaymentSchema,
     manageClassSchema,
+    markAbsentByEditSchoolCheckInAttendanceForStudentSchema,
+    markPresentByEditSchoolCheckInAttendanceForStudentSchema,
     searchActiveStudentsSchema,
     selectActiveStudentsSchema,
     updateAmountPaidSchema,
@@ -51,6 +53,8 @@ import {
     findUniqueStudentClassDetailsHandler,
     getStudentAttendanceByIdHandler,
     manageClassesHandler,
+    markAbsentByEditSchoolCheckInAttendanceForStudentHandler,
+    markPresentByEditSchoolCheckInAttendanceForStudentHandler,
     searchActiveStudentsHandler,
     searchActiveStudentsWithNoSubjectsHandler,
     selectActiveStudentsHandler,
@@ -65,6 +69,7 @@ import {
     searchActiveStudentsWithoutPaginationHandler
 } from '../../../../controller/admin.controller/admin.studentCard.controller/admin.studentCard.controller';
 import { findAllActiveStudentsWOPaginatonSchema, searchActiveStudentsWOPaginatonSchema } from '../../../../schema/admin.dto/admin.studentCard.dto/admin.studentCard.dto';
+import { markSchoolCheckInAttendanceForStudentHandler } from '../../../../controller/admin.controller/admin.checkin.controller/admin.checkin.controller';
 
 const adminActiveStudentRoute = express.Router();
 
@@ -169,8 +174,11 @@ adminActiveStudentRoute
     .route('/attendance-detail/:studentId')
     .get(validate(findStudentAttendanceByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(getStudentAttendanceByIdHandler));
 
-// routes/studentRoute.js
+
 adminActiveStudentRoute.route('/make-alumni/:studentId').patch(validate(alumniStudentByIdSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(alumniStudentByIdHandler));
+
+adminActiveStudentRoute.route('/mark-present-by-edit-attendance/:studentId').patch(validate(markPresentByEditSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markPresentByEditSchoolCheckInAttendanceForStudentHandler));
+adminActiveStudentRoute.route('/mark-absent-by-edit-attendance/:studentId').patch(validate(markAbsentByEditSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markAbsentByEditSchoolCheckInAttendanceForStudentHandler));
 
 export default adminActiveStudentRoute;
 //makeAlumniToActiveByIdHandler

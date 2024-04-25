@@ -224,3 +224,24 @@ export const alumniStudentByIdSchema = z.object({
 });
 
 export type AlumniStudentByIdSchema = z.infer<typeof alumniStudentByIdSchema>;
+
+export const markPresentByEditSchoolCheckInAttendanceForStudentSchema = z.object({
+    body: z.object({
+        remarks: z.string().optional(),
+        date: z.string()
+    }),
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type MarkPresentByEditSchoolCheckInAttendanceForStudentSchema = z.infer<typeof markPresentByEditSchoolCheckInAttendanceForStudentSchema>;
+export const markAbsentByEditSchoolCheckInAttendanceForStudentSchema = z.object({
+    body: z.object({
+        remarks: z.string().optional(),
+        date: z.string()
+    }),
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type MarkAbsentByEditSchoolCheckInAttendanceForStudentSchema = z.infer<typeof markAbsentByEditSchoolCheckInAttendanceForStudentSchema>;

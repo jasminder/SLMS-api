@@ -136,7 +136,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                     const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
                     const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
-                        where: { studentId: student.id },
+                        where: { studentId: student.id, isOnLeave: false },
                         orderBy: { date: 'desc' },
                         take: 2
                     });
