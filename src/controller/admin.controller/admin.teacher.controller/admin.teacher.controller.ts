@@ -19,7 +19,8 @@ import {
     searchTeachers,
     findAllAssignedClassesForTeachers,
     deleteTeacherSubject,
-    deleteClassForTeacher
+    deleteClassForTeacher,
+    findAllAssignedClasses
 } from '../../../service/admin.service/admin.teacher.service/admin.teacher.service';
 
 //find all applicants
@@ -101,4 +102,9 @@ export const deleteClassForTeacherHandler = async (req: Request<DeleteClassToTea
         const teacher = await deleteClassForTeacher(teacherId, termId, subjectName, levelName, sectionName);
         res.status(200).json(teacher);
     }
+};
+
+export const findAllAssignedClassesHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const allClasses = await findAllAssignedClasses();
+    res.status(200).json(allClasses);
 };

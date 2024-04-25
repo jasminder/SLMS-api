@@ -536,3 +536,48 @@ export async function deleteClassForTeacher(teacherId: string, termId: string, s
 
     return 'Class assignment successfully deleted';
 }
+// quick view
+export const findAllAssignedClasses = async () => {
+    const assignedClasses = await db.teacherClassAssignment.findMany({
+        where: {
+            termSubjectLevel: {
+                term: {
+                    currentTerm: true
+                },
+                subject: {
+                    termSubject: {
+                        some: {
+                            isOnSunday: true
+                        }
+                    }
+                }
+            }
+        },
+        include: {
+            termSubjectLevel: {
+                include: {
+                    subject: {
+                        include: {
+                            termSubject: {
+                                select: {
+                                    isOnSunday: true,
+                                    isOnWeekday: true
+                                }
+                            }
+                        }
+                    },
+                    level: true,
+                    term: true
+                }
+            },
+            section: true,
+            teacher: {
+                include: {
+                    teacherPersonalDetails: true
+                }
+            }
+        }
+    });
+
+    return assignedClasses;
+};

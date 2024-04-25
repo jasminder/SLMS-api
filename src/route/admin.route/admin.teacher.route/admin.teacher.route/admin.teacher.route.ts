@@ -8,6 +8,7 @@ import {
     deleteClassForTeacherHandler,
     deleteTeacherSubjectHandler,
     findAllAssignedClassesForTeachersHandler,
+    findAllAssignedClassesHandler,
     findAllSubjectsToAssignTeacherHandler,
     findAllTeachersHandler,
     findCurrentTermToAssignClassHandler,
@@ -48,5 +49,6 @@ adminTeacherRoute.route('/find-assigned-classes-for-teacher/:id').get(validate(f
 adminTeacherRoute.route('/delete-subject-for-teacher/:teacherId').delete(validate(deleteSubjectToApprovedTeacherSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteTeacherSubjectHandler));
 /*delete classes for teachers*/
 adminTeacherRoute.route('/delete-class-for-teacher/:teacherId/:termId').delete(validate(deleteClassToTeacherSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteClassForTeacherHandler));
+adminTeacherRoute.route('/get-all-classes-for-teachers').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findAllAssignedClassesHandler));
 
 export default adminTeacherRoute;
