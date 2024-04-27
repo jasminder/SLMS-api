@@ -65,9 +65,9 @@ export async function createGroupClasswork(
         const existingAutomatedMail = await db.automatedMailForParents.findFirst({
             where: {
                 studentId: studentId,
-                teacherId: +teacherId,
-                termSubjectLevelId: +termSubjectLevelId,
-                sectionId: +sectionId,
+                // teacherId: +teacherId,
+                // termSubjectLevelId: +termSubjectLevelId,
+                // sectionId: +sectionId,
                 // createdAt: {
                 //     gte: startDate,
                 //     lte: endDate

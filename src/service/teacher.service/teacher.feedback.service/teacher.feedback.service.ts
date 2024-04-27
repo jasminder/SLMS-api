@@ -26,9 +26,9 @@ export async function createFeedback(
     const existingAutomatedMail = await db.automatedMailForParents.findFirst({
         where: {
             studentId: +studentId,
-            teacherId: +teacherId,
-            termSubjectLevelId: +termSubjectLevelId,
-            sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
+            // teacherId: +teacherId,
+            // termSubjectLevelId: +termSubjectLevelId,
+            // sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
             // createdAt: {
             //     gte: startDate,
             //     lte: endDate
