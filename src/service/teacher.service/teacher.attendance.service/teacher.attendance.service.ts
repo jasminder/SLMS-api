@@ -216,9 +216,9 @@ export async function createAutomatedMailForParents(studentIds: string[], teache
         const existingAutomatedMail = await db.automatedMailForParents.findFirst({
             where: {
                 studentId: +studentId,
-                teacherId: +teacherId,
-                termSubjectLevelId: +termSubjectLevelId,
-                sectionId: +sectionId,
+                // teacherId: +teacherId,
+                // termSubjectLevelId: +termSubjectLevelId,
+                // sectionId: +sectionId,
                 sendDate
             }
         });
