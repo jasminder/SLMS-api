@@ -106,7 +106,7 @@ export async function undoMarkWeekdayStudentAsPresent(studentId: string, student
             },
             isMarked: true,
             checkedIn: true,
-            isCheckedOut: true
+
         }
     });
 
