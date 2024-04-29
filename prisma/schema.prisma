@@ -622,13 +622,13 @@ model ClassAttendance {
   id                        Int                     @id @default(autoincrement())
   studentClassAssignmentId  Int
   schoolCheckInAttendanceId Int
-  date                      DateTime // The date of the class
-  attendanceStatus          AttendanceStatus        @default(ABSENT) // Enum for presence, absence, etc.
+  date                      DateTime // The date creating record
+  schoolDayId               Int?
   remarks                   String?                 @default("NA") // Optional field for any notes
+  attendanceStatus          AttendanceStatus        @default(ABSENT) // Enum for presence, absence, etc.
   schoolCheckInAttendance   SchoolCheckInAttendance @relation(fields: [schoolCheckInAttendanceId], references: [id])
   studentClassAssignment    StudentClassAssignment  @relation(fields: [studentClassAssignmentId], references: [id], onDelete: Cascade)
   SchoolDay                 SchoolDay?              @relation(fields: [schoolDayId], references: [id])
-  schoolDayId               Int?
 
   @@unique([studentClassAssignmentId, date]) // Ensuring uniqueness for attendance entry per class per day
 }

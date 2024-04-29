@@ -10,26 +10,9 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
 
     const endDate = new Date();
     endDate.setHours(23, 59, 59, 999);
-    // const openSkipReports = await db.skipReport.findFirst({
-    //     where: {
-    //         studentId: +studentId,
-    //         date: {
-    //             gte: startDate,
-    //             lte: endDate
-    //         },
-    //         isClosed: false
-    //     }
-    // });
-
-    // If there are open skip reports, throw an error
-    // if (!openSkipReports?.isClosed) {
-    //     throw customError(`Cannot mark student as PRESENT due to open skip report is not closed by ADMIN.`, 'fail', 400, true);
-    // }
     const attendanceRecord = await db.schoolCheckInAttendance.findFirst({
         where: {
             studentId: +studentId,
-            // checkedIn: false,
-            // isMarked: false,
             date: {
                 gte: startDate,
                 lte: endDate
@@ -39,11 +22,8 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
     if (!attendanceRecord) {
         throw customError('Attendance record not found for today.', 'fail', 404, true);
     }
-
-    // Check if the student has already been checked in
-    // if (attendanceRecord.checkedIn) {
-    //     throw customError('Student is already checked in.', 'fail', 400, true);
-    // }
+    const today = new Date();
+    const isSunday = today.getDay() === 0;
     const updatedAttendanceRecord = await db.schoolCheckInAttendance.update({
         where: {
             id: attendanceRecord.id
@@ -53,13 +33,14 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
             checkedIn: true, // Mark the student as checked in
             remarks: remarks || null,
             isMarked: true,
-            // isCheckedOut: true, // Mark the student as checked out
-            // checkOutTime: (() => {
-            //     const date = new Date();
-            //     date.setHours(date.getHours() + 1); // Add one hour
-            //     return date;
-            // })()
-            // attendanceValue: newAttendanceValue
+            isCheckedOut: isSunday ? null : true, // Conditional assignment based on whether today is Sunday
+            checkOutTime: isSunday
+                ? null
+                : (() => {
+                      const date = new Date();
+                      date.setHours(date.getHours() + 1); // Add one hour
+                      return date;
+                  })() // Assign check out time conditionally
         }
     });
 
@@ -105,8 +86,7 @@ export async function undoMarkWeekdayStudentAsPresent(studentId: string, student
                 lte: endDate
             },
             isMarked: true,
-            checkedIn: true,
-
+            checkedIn: true
         }
     });
 
