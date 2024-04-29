@@ -159,10 +159,10 @@ export async function markSelectedStudentsAsCheckedOut(studentIds: string[]) {
             isMarked: true
         }
     });
-    const alreadyCheckedOut = attendanceRecords.some((record) => record.isCheckedOut);
-    if (alreadyCheckedOut) {
-        throw new Error('One or more students are already checked out.');
-    }
+    // const alreadyCheckedOut = attendanceRecords.some((record) => record.isCheckedOut);
+    // if (alreadyCheckedOut) {
+    //     throw new Error('One or more students are already checked out.');
+    // }
 
     for (const attendanceRecord of attendanceRecords) {
         // Update each SchoolCheckInAttendance record to mark the student as checked out
