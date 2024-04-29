@@ -1,5 +1,6 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
+import { getIo } from '../../../sockets/socket';
 
 export async function createSchoolCheckInAttendanceForStudent(date: string) {
     if (!date) {
@@ -362,13 +363,29 @@ export async function undoSchoolCheckInAttendanceForStudent(date: string) {
                     });
                 }
             }
+            const mailsToDelete = await db.automatedMailForParents.findMany({
+                where: {
+                    createdAt: {
+                        gte: startDate,
+                        lte: endDate
+                    }
+                }
+            });
+            if (mailsToDelete.length > 0) {
+                await db.automatedMailForParents.deleteMany({
+                    where: {
+                        id: { in: mailsToDelete.map((mail) => mail.id) }
+                    }
+                });
+            }
+
             // Delete the SchoolDay record if it exists
             if (schoolDayId) {
                 await db.schoolDay.delete({
                     where: { id: schoolDayId }
                 });
             }
-
+            console.log(`Deleted ${mailsToDelete.length} automated mails created today.`);
             return { message: 'Undo operation completed successfully.' };
         },
         { timeout: 30000 }
@@ -649,7 +666,12 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
             // attendanceValue: newAttendanceValue
         }
     });
-
+    const io = getIo();
+    io.emit('markSchoolCheckInAttendanceForStudent', {
+        studentId: studentId,
+        status: 'CheckedIn',
+        date: new Date()
+    });
     return updatedAttendanceRecord;
 }
 

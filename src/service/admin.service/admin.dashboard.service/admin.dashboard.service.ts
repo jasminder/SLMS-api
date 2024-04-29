@@ -27,13 +27,36 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
             }
         }
     });
+    /**
+      const activeStudents = await db.student.findMany({
+        where: {
+            isActive: true,
+            role: 'STUDENT',
+            enrollments: {
+                some: {
+                    termSubjectLevel: {
+                        termId: currentTerm?.id,
+                        subject: {
+                            termSubject: {
+                                some: {
+                                    isOnSunday: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+     */
     const recentSchoolDay = await db.schoolDay.findFirst({
         where: {
             schoolOperatedDate: {
                 lte: startDate // Less than or equal to the query date
             },
-            isOnSunday: true,
-            isOnWeekday: false
+            isOnSunday: true
+            // isOnWeekday: false
         },
         orderBy: {
             schoolOperatedDate: 'desc'

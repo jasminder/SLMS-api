@@ -1,7 +1,6 @@
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
-import { setSendDate } from '../../../utils/setSendDate';
-
+import { calculateSendDate } from '../../../utils/setSendDate';
 
 export async function createFeedback(
     studentId: string,
@@ -14,15 +13,8 @@ export async function createFeedback(
     roomName: string,
     classTime: string
 ) {
-    const sendDate = setSendDate();
-    const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
+    const sendDate = await calculateSendDate(termSubjectLevelId);
 
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
-    // Create feedback
-
-    // Check for existing AutomatedMailForParents record
     const existingAutomatedMail = await db.automatedMailForParents.findFirst({
         where: {
             studentId: +studentId,

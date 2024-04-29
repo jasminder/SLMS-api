@@ -5,12 +5,13 @@ import { format } from 'date-fns';
 import { capitalizeFirstCharacter } from '../../../utils/capitalizeFirstCharacter';
 
 import { GroupHomework, GroupClasswork, Feedback, HomeworkSnapshot, ClassworkSnapshot } from '@prisma/client';
-import { setSendDate } from '../../../utils/setSendDate';
+
 
 const db = new PrismaClient();
 
 export async function consolidateStudentDataForEmail() {
-    const sendDate = setSendDate();
+    const sendDate = new Date();
+    sendDate.setHours(20, 30, 0, 0);
     const today = new Date();
     const formattedDate = format(today, 'dd-MM-yyyy');
     const startDate = new Date();

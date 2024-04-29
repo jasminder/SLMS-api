@@ -1,6 +1,7 @@
+import { getIo } from '../../../sockets/socket';
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
-import { setSendDate } from '../../../utils/setSendDate';
+import { calculateSendDate } from '../../../utils/setSendDate';
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
 
@@ -163,7 +164,12 @@ export async function markStudentAsPresent(studentId: string, studentClassAssign
     if (!updatedClassAttendanceRecord) {
         throw customError(`Failed to mark student as PRESENT.`, 'fail', 400, true);
     }
-
+    const io = getIo();
+    io.emit('markStudentAsPresentInClass', {
+        studentId: studentId,
+        status: 'PRESENT',
+        date: new Date()
+    });
     return updatedClassAttendanceRecord;
 }
 
@@ -187,6 +193,9 @@ export async function createSkipReport(studentId: string, teacherId: string, rea
             className
         }
     });
+    const io = getIo();
+    io.emit('newSkipReport', { reportDetails: skipReport });
+
     return skipReport;
 }
 /*fetch last 5 attendance for the students*/
@@ -208,7 +217,7 @@ export async function getLastFiveClassAttendances(studentId: string, studentClas
 }
 /*create automated emails record for all students in the class*/
 export async function createAutomatedMailForParents(studentIds: string[], teacherId: string, termSubjectLevelId: string, sectionId: string, className: string, roomName: string, classTime: string) {
-    const sendDate = setSendDate();
+    const sendDate = await calculateSendDate(termSubjectLevelId);
     let createdMails = [];
 
     // Iterate over each student ID
@@ -247,7 +256,8 @@ export async function createAutomatedMailForParents(studentIds: string[], teache
 
 /*get all automated emails for parenst for students in a class*/
 export async function findAutomatedMail(studentIds: string[], termSubjectLevelId: string, sectionId: string, teacherId: string) {
-    const sendDate = setSendDate();
+    const sendDate = new Date();
+    sendDate.setHours(16, 30, 0, 0);
     const numericStudentIds = studentIds.map(Number);
     const mails = await db.automatedMailForParents.findMany({
         where: {

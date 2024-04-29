@@ -181,17 +181,11 @@ export async function createWeekdaySchoolCheckInAttendanceForStudent(date: strin
                         // },
                         where: {
                             studentId: student.id,
-
-                            isCurrentlyAssigned: true,
-                            termSubjectLevel: {
-                                subject: {
-                                    termSubject: {
-                                        every: {
-                                            isOnWeekday: true
-                                        }
-                                    }
-                                }
-                            }
+                            termSubjectLevelId: +termSubjectLevelId,
+                            section: {
+                                name: sectionName
+                            },
+                            isCurrentlyAssigned: true
                         },
                         include: {
                             enrollment: {

@@ -1,7 +1,7 @@
-
 import { customError } from '../../../utils/customError';
 
 import { db } from '../../../utils/db.server';
+import { calculateSendDate } from '../../../utils/setSendDate';
 
 export async function createGroupClasswork(
     studentIds: string[],
@@ -15,49 +15,8 @@ export async function createGroupClasswork(
     classTime: string,
     classworkIds: string[]
 ) {
-    const currentTerm = await db.term.findFirst({
-        where: {
-            currentTerm: true
-        }
-    });
-    const termSubjectLevel = await db.termSubjectLevel.findUnique({
-        where: { id: +termSubjectLevelId },
-        include: {
-            term: {
-                include: {
-                    termSubject: {
-                        where: {
-                            termId: currentTerm?.id
-                        },
-                        select: {
-                            isOnSunday: true,
-                            isOnWeekday: true
-                        }
-                    }
-                }
-            }
-        }
-    });
+    const sendDate = await calculateSendDate(termSubjectLevelId);
 
-    let sendDate = new Date();
-    if (termSubjectLevel?.term.termSubject[0].isOnSunday) {
-        const day = sendDate.getDay(); // Get current day (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-        let diff = 7 - day; // Calculate days until next Sunday
-        if (day === 0) {
-            // If today is Sunday, set to next Sunday instead of today
-            diff = 7;
-        }
-        sendDate.setDate(sendDate.getDate() + diff); // Set to next Sunday
-    } else {
-        sendDate.setDate(sendDate.getDate()); // Set to today
-    }
-    sendDate.setHours(16, 30, 0, 0);
-
-    const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
     const numericStudentIds = studentIds.map(Number);
 
     let groupClasswork;
@@ -154,11 +113,6 @@ export async function createGroupClasswork(
 
 /*get assignedclassworks*/
 export async function findAssignedClassworks(teacherId: string, termSubjectLevelId: string, sectionId: string) {
-    const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
     return await db.groupClasswork.findMany({
         where: {
             teacherId: parseInt(teacherId),

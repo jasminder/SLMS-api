@@ -1,4 +1,6 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
+import { Server as SocketIOServer } from 'socket.io';
+import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -40,7 +42,7 @@ import './src/cron/sendFeedBackEmails';
 import './src/cron/processMonthlyFees';
 import './src/cron/processTermFees';
 import './src/cron/sendConsolidatedEmailForParents';
-import './src/cron/calculateTermAttendance'
+import './src/cron/calculateTermAttendance';
 import commentRoute from './src/route/admin.route/admin.comment.route/admin.comment.route';
 import interactionRoute from './src/route/admin.route/admin.interactions.route/admin.interactions.route';
 import adminInstitutionRoute from './src/route/admin.route/admin.institution.route/admin.institution.route';
@@ -60,14 +62,18 @@ import adminAlumniRoute from './src/route/admin.route/admin.alumni.route/admin.a
 import studentDashboardRoute from './src/route/student.route/student.dashboard.route/student.dashboard.route';
 import adminEventRoute from './src/route/admin.route/admin.events.route/admin.events.route';
 import adminCSVRouter from './src/route/admin.route/admin.csv.route/admin.csv.route';
+import { initSocket } from './src/sockets/socket';
 
-const app = express();
+const app: Express = express();
+const server = http.createServer(app);
+initSocket(server)
 app.use(cookieParser());
 
 const origin =
     process.env.NODE_ENV === 'development'
         ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8080', 'https://slms-client-2aam.vercel.app']
         : ['https://SLMS.com', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://slms-client-2aam.vercel.app', 'https://akaalshaouni.org'];
+
 app.use(
     cors({
         credentials: true,
@@ -89,6 +95,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 app.use(morgan('common'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+// Socket.io connection handler
 
 // unhandled exception Error
 process.on('uncaughtException', (err: Err) => {
@@ -128,9 +135,6 @@ app.use('/api/v1/admin/alumni', adminAlumniRoute);
 app.use('/api/v1/admin/event', adminEventRoute);
 app.use('/api/v1/admin/csv', adminCSVRouter);
 
-
-
-
 /*Attendance and check in and checkout*/
 app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);
 app.use('/api/v1/admin/attendance/checkout', adminCheckoutRoute);
@@ -159,9 +163,6 @@ app.use('/api/v1/send-mail', sendMailHomeWorkRouter);
 app.use('/api/v1/automated-mail', sendConsolidatedEmailsRouter);
 app.use('/api/v1/student-portal', studentDashboardRoute);
 
-
-
-
 // Server frontend static assets and handle catch-all route
 // if (process.env.NODE_ENV === 'production') {
 //     const __dirname = path.resolve();
@@ -179,7 +180,7 @@ app.all('*', (req: Request, res: Response, next: NextFunction) => {
 app.use(globalErrorHandler);
 // server setup to listen to port
 
-const server = app.listen(config.server.port, () => log.info(`Server Port: http://localhost:${config.server.port}`));
+server.listen(config.server.port, () => log.info(`Server Port: http://localhost:${config.server.port}`));
 
 // unhandled promise rejection
 process.on('unhandledRejection', (err: Err) => {

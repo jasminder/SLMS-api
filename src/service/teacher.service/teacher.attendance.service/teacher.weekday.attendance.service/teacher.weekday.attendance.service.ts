@@ -1,3 +1,4 @@
+import { getIo } from '../../../../sockets/socket';
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
 
@@ -52,12 +53,12 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
             checkedIn: true, // Mark the student as checked in
             remarks: remarks || null,
             isMarked: true,
-            isCheckedOut: true, // Mark the student as checked out
-            checkOutTime: (() => {
-                const date = new Date();
-                date.setHours(date.getHours() + 1); // Add one hour
-                return date;
-            })()
+            // isCheckedOut: true, // Mark the student as checked out
+            // checkOutTime: (() => {
+            //     const date = new Date();
+            //     date.setHours(date.getHours() + 1); // Add one hour
+            //     return date;
+            // })()
             // attendanceValue: newAttendanceValue
         }
     });
@@ -81,12 +82,17 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
     if (!updatedClassAttendanceRecord) {
         throw customError(`Failed to mark student as PRESENT.`, 'fail', 400, true);
     }
-
+    const io = getIo();
+    io.emit('studentAttendanceUpdated', {
+        studentId: studentId,
+        status: 'ABSENT',
+        date: new Date()
+    });
     return { updatedClassAttendanceRecord, updatedAttendanceRecord };
 }
 export async function undoMarkWeekdayStudentAsPresent(studentId: string, studentClassAssignmentId: string) {
     const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0); 
+    startDate.setHours(0, 0, 0, 0);
 
     const endDate = new Date();
     endDate.setHours(23, 59, 59, 999);
@@ -141,8 +147,12 @@ export async function undoMarkWeekdayStudentAsPresent(studentId: string, student
     if (!updatedClassAttendanceRecords) {
         throw customError(`Failed to revert attendance status for student.`, 'fail', 400, true);
     }
+    const io = getIo();
+    io.emit('studentAttendanceUpdated', {
+        studentId: studentId,
+        status: 'ABSENT',
+        date: new Date()
+    });
 
     return { updatedAttendanceRecord, updatedClassAttendanceRecords };
 }
-
-

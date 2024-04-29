@@ -17,7 +17,7 @@ import { consolidateStudentDataForEmail } from '../service/cron.service/cron.con
 //     console.log('Running cron job: Send Feedback Emails');
 //     await consolidateStudentDataForEmail();
 // });
-cron.schedule('30 20 * * 0-5', async () => {
+cron.schedule('30 20 * * 0-6', async () => {
     try {
         // Attempt to run the consolidation function
         if (process.env.NODE_ENV == 'production') {
