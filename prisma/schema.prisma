@@ -333,7 +333,7 @@ model StudentTermFee {
 model FeePayment {
   id               Int             @id @default(autoincrement())
   invoiceId        String? // combination fo studentId_01
-  feeId            Int
+  feeId            Int?
   feeTemplateId    Int?
   dueDate          DateTime
   paidDate         DateTime? // Nullable, set when payment is made
@@ -350,7 +350,7 @@ model FeePayment {
   receivedBy       String?
   status           PaymentStatus   @default(NODUES)
   method           PaymentMethod   @default(NA)
-  fee              Fee             @relation(fields: [feeId], references: [id])
+  fee              Fee?            @relation(fields: [feeId], references: [id])
   studentTermFee   StudentTermFee? @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
   feeTemplate      FeeTemplate?    @relation(fields: [feeTemplateId], references: [id], onDelete: Cascade)
   updatedAt        DateTime?       @updatedAt
