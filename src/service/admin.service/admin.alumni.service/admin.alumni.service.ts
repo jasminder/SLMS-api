@@ -529,20 +529,20 @@ export async function enrollAlumniToSubjects(enrollData: AlumniEnrollDataSchema[
                     feeId: feeInfo.feeId
                 }
             });
-            if (!existingFeePayment) {
-                await db.feePayment.create({
-                    data: {
-                        feeId: feeInfo.feeId,
-                        studentTermFeeId: studentTermFee.id,
-                        dueDate: feeInfo?.enrollment?.find((en) => en.termSubjectGroupId === termSubjectGroupId)?.dueDate || new Date(),
-                        amountPaid: 0,
-                        dueAmount: feeInfo.fee?.amount || 0,
-                        status: 'PENDING',
-                        method: 'NA',
-                        feeAmount: feeInfo.fee?.amount || 0
-                    }
-                });
-            }
+            // if (!existingFeePayment) {
+            //     await db.feePayment.create({
+            //         data: {
+            //             feeId: feeInfo.feeId,
+            //             studentTermFeeId: studentTermFee.id,
+            //             dueDate: feeInfo?.enrollment?.find((en) => en.termSubjectGroupId === termSubjectGroupId)?.dueDate || new Date(),
+            //             amountPaid: 0,
+            //             dueAmount: feeInfo.fee?.amount || 0,
+            //             status: 'PENDING',
+            //             method: 'NA',
+            //             feeAmount: feeInfo.fee?.amount || 0
+            //         }
+            //     });
+            // }
         }
     }
 

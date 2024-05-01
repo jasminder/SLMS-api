@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "FeePayment" ALTER COLUMN "updatedAt" DROP NOT NULL,
+ALTER COLUMN "invoiceId" DROP NOT NULL;

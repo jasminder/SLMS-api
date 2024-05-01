@@ -41,6 +41,8 @@ enum PaymentStatus {
   PENDING
   PAID
   NODUES
+  DUE
+  OVERDUE
 }
 
 enum PaymentType {
@@ -79,6 +81,9 @@ model Student {
   GroupClasswork               GroupClasswork[]
   Leave                        Leave[]
   StudentNoticeAcknowledgement StudentNoticeAcknowledgement[]
+  hasOverDue                   Boolean                        @default(false) // Indicates if there is any overdue amount
+  overDue                      Int                            @default(0) // Amount overdue for payment
+  currentInvoiceDue            Int                            @default(0)
 }
 
 model PersonalDetails {
@@ -171,6 +176,7 @@ model Term {
   termSubjectGroupSubject TermSubjectGroupSubject[]
   studentTermFee          StudentTermFee[]
   termSubjectLevel        TermSubjectLevel[]
+  FeeDashboard            FeeDashboard[]
 }
 
 model Level {
@@ -324,20 +330,59 @@ model StudentTermFee {
 
 model FeePayment {
   id               Int             @id @default(autoincrement())
+  invoiceId        String? // combination fo studentId_01
   feeId            Int
+  feeTemplateId    Int?
   dueDate          DateTime
   paidDate         DateTime? // Nullable, set when payment is made
   amountPaid       Int             @default(0)
   dueAmount        Int // Amount still due (if any)
-  remarks          String          @default("No remarks")
   creditAmount     Int             @default(0)
   feeAmount        Int?
   studentTermFeeId Int?
+  hasOverDue       Boolean         @default(false)
+  hasPaid          Boolean         @default(false)
+  hasDue           Boolean         @default(true)
+  isActive         Boolean         @default(true)
+  remarks          String          @default("No remarks")
+  receivedBy       String?
   status           PaymentStatus   @default(NODUES)
   method           PaymentMethod   @default(NA)
   fee              Fee             @relation(fields: [feeId], references: [id])
   studentTermFee   StudentTermFee? @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
+  feeTemplate      FeeTemplate?    @relation(fields: [feeTemplateId], references: [id], onDelete: Cascade)
+  updatedAt        DateTime?       @updatedAt
   createdAt        DateTime        @default(now())
+}
+
+model FeeTemplate {
+  id          Int          @id @default(autoincrement())
+  invoiceName String
+  month       String
+  year        String
+  termName    String
+  amount      Int
+  dueDate     DateTime
+  notes       String
+  interval    PaymentType
+  feePayments FeePayment[]
+  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime     @default(now())
+}
+
+model FeeDashboard {
+  id                   Int      @id @default(autoincrement())
+  totalFeesInvoiced    Int      @default(0)
+  totalFeesPaid        Int      @default(0)
+  totalFeesDue         Int      @default(0)
+  totalFeesOverdue     Int      @default(0)
+  totalFeesOverduePrev Int      @default(0)
+  termId               Int // Link to the term if these values are specific to a term
+  updatedAt            DateTime @updatedAt
+  createdAt            DateTime @default(now())
+  term                 Term     @relation(fields: [termId], references: [id])
+
+  @@unique([termId, createdAt]) // Assuming you want unique records per term and snapshot
 }
 
 model TermSubjectGroupSubject {
