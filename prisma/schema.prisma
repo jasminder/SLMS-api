@@ -177,6 +177,7 @@ model Term {
   studentTermFee          StudentTermFee[]
   termSubjectLevel        TermSubjectLevel[]
   FeeDashboard            FeeDashboard[]
+  FeeTemplate             FeeTemplate[]
 }
 
 model Level {
@@ -214,6 +215,7 @@ model TermSubjectGroup {
   termSubject             TermSubject[]
   termSubjectGroupSubject TermSubjectGroupSubject[]
   studentTermFee          StudentTermFee[]
+  FeeTemplate             FeeTemplate[]
 
   @@unique([termId, subjectGroupId])
 }
@@ -356,18 +358,23 @@ model FeePayment {
 }
 
 model FeeTemplate {
-  id          Int          @id @default(autoincrement())
-  invoiceName String
-  month       String
-  year        String
-  termName    String
-  amount      Int
-  dueDate     DateTime
-  notes       String
-  interval    PaymentType
-  feePayments FeePayment[]
-  updatedAt   DateTime     @updatedAt
-  createdAt   DateTime     @default(now())
+  id                 Int               @id @default(autoincrement())
+  invoiceName        String
+  groupName          String
+  month              String
+  year               String
+  termName           String
+  amount             Int
+  dueDate            DateTime
+  notes              String
+  interval           PaymentType
+  feePayments        FeePayment[]
+  termId             Int? // Optional link to Term
+  termSubjectGroupId Int? // Optional link to TermSubjectGroup
+  term               Term?             @relation(fields: [termId], references: [id])
+  termSubjectGroup   TermSubjectGroup? @relation(fields: [termSubjectGroupId], references: [id])
+  updatedAt          DateTime          @updatedAt
+  createdAt          DateTime          @default(now())
 }
 
 model FeeDashboard {
