@@ -280,7 +280,7 @@ model StudentClassAssignment {
 model Enrollment {
   id                      Int                       @id @default(autoincrement())
   studentId               Int
-  dueDate                 DateTime
+  dueDate                 DateTime?
   termSubjectGroupId      Int
   subjectEnrollmentId     Int?                      @unique
   createdAt               DateTime                  @default(now())

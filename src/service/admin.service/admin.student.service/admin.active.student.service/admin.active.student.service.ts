@@ -2130,7 +2130,7 @@ export async function enrollActiveStudent(enrollData: ActiveStudentEnrollDataSch
             data: {
                 studentId: enrollData.activeStudentId,
                 termSubjectGroupId: enrollmentItem.termSubjectGroupId,
-                dueDate: dueDate
+                // dueDate: dueDate
             },
             select: { id: true }
         });

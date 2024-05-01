@@ -422,8 +422,8 @@ export async function enrollStudentEnrolledToSubjects(enrollData: EnrolledStuden
         const newEnrollment = await db.enrollment.create({
             data: {
                 studentId: enrollData.enrolledStudentId,
-                termSubjectGroupId: enrollmentItem.termSubjectGroupId,
-                dueDate: dueDate
+                termSubjectGroupId: enrollmentItem.termSubjectGroupId
+                // dueDate: dueDate
             },
             select: { id: true }
         });

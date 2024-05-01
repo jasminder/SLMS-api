@@ -626,7 +626,7 @@ export async function enrollStudentEnrolledToSubjects(enrollData: EnrolledStuden
             data: {
                 studentId: enrollData.enrolledStudentId,
                 termSubjectGroupId: enrollmentItem.termSubjectGroupId,
-                dueDate: dueDate
+                // dueDate: dueDate
             },
             select: { id: true }
         });

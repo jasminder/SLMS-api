@@ -481,7 +481,7 @@ export async function enrollAlumniToSubjects(enrollData: AlumniEnrollDataSchema[
             data: {
                 studentId: enrollData.alumniId,
                 termSubjectGroupId: enrollmentItem.termSubjectGroupId,
-                dueDate: dueDate
+                // dueDate: dueDate
             },
             select: { id: true }
         });
