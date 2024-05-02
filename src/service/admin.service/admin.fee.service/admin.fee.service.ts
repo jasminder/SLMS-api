@@ -206,7 +206,10 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                         where: { studentId: +studentId, termId: +termId, termSubjectGroupId: +termSubjectGroupId }
                     });
 
-                    if (!studentTermFee) return null; // Continue if no corresponding term fee is found
+                    if (!studentTermFee) {
+                        // Throw an error if the student is not enrolled in the specified term subject group
+                        throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
+                    }
 
                     const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
                     const invoiceId = `${student.akaalId}_${monthNumber}`;
