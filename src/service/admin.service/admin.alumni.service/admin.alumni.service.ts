@@ -523,12 +523,12 @@ export async function enrollAlumniToSubjects(enrollData: AlumniEnrollDataSchema[
                 select: { id: true }
             });
 
-            const existingFeePayment = await db.feePayment.findFirst({
-                where: {
-                    studentTermFeeId: studentTermFee.id,
-                    feeId: feeInfo.feeId
-                }
-            });
+            // const existingFeePayment = await db.feePayment.findFirst({
+            //     where: {
+            //         studentTermFeeId: studentTermFee.id,
+            //         feeId: feeInfo.feeId
+            //     }
+            // });
             // if (!existingFeePayment) {
             //     await db.feePayment.create({
             //         data: {

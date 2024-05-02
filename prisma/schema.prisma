@@ -311,7 +311,6 @@ model Fee {
   amount           Int
   paymentType      PaymentType
   termSubjectGroup TermSubjectGroup[]
-  feePayment       FeePayment[]
 
   @@unique([amount, paymentType])
 }
@@ -330,31 +329,42 @@ model StudentTermFee {
   @@unique([studentId, termSubjectGroupId, termId])
 }
 
+model PaymentInstallment {
+  id            Int           @id @default(autoincrement())
+  feePaymentId  Int
+  paidAmount    Int           @default(0)
+  paidDate      DateTime?
+  paymentMethod PaymentMethod @default(NA)
+  paymentStatus PaymentStatus @default(PENDING)
+  remarks       String        @default("No remarks")
+  receivedBy    String?
+  feePayment    FeePayment    @relation(fields: [feePaymentId], references: [id])
+
+  @@index([feePaymentId])
+}
+
 model FeePayment {
-  id               Int             @id @default(autoincrement())
-  invoiceId        String? // combination fo studentId_01
-  feeId            Int?
-  feeTemplateId    Int?
-  dueDate          DateTime
-  paidDate         DateTime? // Nullable, set when payment is made
-  amountPaid       Int             @default(0)
-  dueAmount        Int // Amount still due (if any)
-  creditAmount     Int             @default(0)
-  feeAmount        Int?
-  studentTermFeeId Int?
-  hasOverDue       Boolean         @default(false)
-  hasPaid          Boolean         @default(false)
-  hasDue           Boolean         @default(true)
-  isActive         Boolean         @default(true)
-  remarks          String          @default("No remarks")
-  receivedBy       String?
-  status           PaymentStatus   @default(NODUES)
-  method           PaymentMethod   @default(NA)
-  fee              Fee?            @relation(fields: [feeId], references: [id])
-  studentTermFee   StudentTermFee? @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
-  feeTemplate      FeeTemplate?    @relation(fields: [feeTemplateId], references: [id], onDelete: Cascade)
-  updatedAt        DateTime?       @updatedAt
-  createdAt        DateTime        @default(now())
+  id                  Int                  @id @default(autoincrement())
+  invoiceId           String // combination fo studentId_01
+  feeTemplateId       Int
+  dueDate             DateTime
+  dueAmount           Int // Amount still due (if any)
+  creditAmount        Int                  @default(0)
+  feeAmount           Int
+  studentTermFeeId    Int
+  hasDiscount         Boolean              @default(false)
+  hasOverDue          Boolean              @default(false)
+  hasDue              Boolean              @default(true)
+  isActive            Boolean              @default(true)
+  adjustedFeeAmount   Int                   // Fee amount after discount or adjustment
+  discountAmount      Int                  @default(0) // Amount of discount applied
+  discountReason      String? // Reason for the discount
+  paymentStatus       PaymentStatus        @default(PENDING)
+  studentTermFee      StudentTermFee?      @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
+  feeTemplate         FeeTemplate?         @relation(fields: [feeTemplateId], references: [id], onDelete: Cascade)
+  updatedAt           DateTime?            @updatedAt
+  createdAt           DateTime             @default(now())
+  paymentInstallments PaymentInstallment[]
 }
 
 model FeeTemplate {

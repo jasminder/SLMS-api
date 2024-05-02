@@ -1803,43 +1803,43 @@ export async function findFeePaymentById(id: string) {
 }
 /*update fee - amount paid made by the admin*/
 export async function updateAmountPaid(id: string, newAmountPaid: string, remarks: string) {
-    const amountPaid = parseInt(newAmountPaid);
-    const currentFeePayment = await db.feePayment.findUnique({
-        where: { id: +id },
-        select: { dueAmount: true, amountPaid: true, creditAmount: true }
-    });
-    if (!currentFeePayment) {
-        throw customError('Fee payment record not found', 'fail', 400, true);
-    }
+    // const amountPaid = parseInt(newAmountPaid);
+    // const currentFeePayment = await db.feePayment.findUnique({
+    //     where: { id: +id },
+    //     select: { dueAmount: true, amountPaid: true, creditAmount: true }
+    // });
+    // if (!currentFeePayment) {
+    //     throw customError('Fee payment record not found', 'fail', 400, true);
+    // }
 
-    // Apply existing credit to reduce due amount
-    let remainingDueAmount = currentFeePayment.dueAmount - currentFeePayment.creditAmount;
+    // // Apply existing credit to reduce due amount
+    // let remainingDueAmount = currentFeePayment.dueAmount - currentFeePayment.creditAmount;
 
-    // Apply payment to remaining due amount
-    remainingDueAmount -= amountPaid;
-    // Calculate new credit amount
-    let newCreditAmount = 0;
-    if (remainingDueAmount < 0) {
-        newCreditAmount = Math.max(amountPaid - currentFeePayment.dueAmount, 0);
-        remainingDueAmount = 0;
-    }
+    // // Apply payment to remaining due amount
+    // remainingDueAmount -= amountPaid;
+    // // Calculate new credit amount
+    // let newCreditAmount = 0;
+    // if (remainingDueAmount < 0) {
+    //     newCreditAmount = Math.max(amountPaid - currentFeePayment.dueAmount, 0);
+    //     remainingDueAmount = 0;
+    // }
 
-    // Update the fee payment record
+    // // Update the fee payment record
 
-    const updatedFeePayment = await db.feePayment.update({
-        where: { id: +id },
-        data: {
-            amountPaid: currentFeePayment.amountPaid + amountPaid,
-            dueAmount: remainingDueAmount,
-            creditAmount: newCreditAmount,
-            status: remainingDueAmount > 0 ? 'PENDING' : 'NODUES',
-            method: 'DISCOUNT',
-            paidDate: new Date(),
-            remarks
-        }
-    });
+    // const updatedFeePayment = await db.feePayment.update({
+    //     where: { id: +id },
+    //     data: {
+    //         amountPaid: currentFeePayment.amountPaid + amountPaid,
+    //         dueAmount: remainingDueAmount,
+    //         creditAmount: newCreditAmount,
+    //         status: remainingDueAmount > 0 ? 'PENDING' : 'NODUES',
+    //         method: 'DISCOUNT',
+    //         paidDate: new Date(),
+    //         remarks
+    //     }
+    // });
 
-    return updatedFeePayment;
+    // return updatedFeePayment;
 }
 
 export async function findActiveStudentEnrolledSubjects(studentId: string, termId: string) {

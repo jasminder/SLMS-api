@@ -168,3 +168,69 @@ const getTotalFeesOverduePrevTerm = async (currentTermId) => {
 }
 
 */
+import { db } from '../../../utils/db.server';
+import { customError } from '../../../utils/customError';
+import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
+import { PaymentType } from '@prisma/client';
+
+export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
+    const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes } = feeTemplateData;
+
+    // Execute all operations in a transaction
+    return db.$transaction(async (prisma) => {
+        // Create FeeTemplate inside the transaction
+        const feeTemplate = await prisma.feeTemplate.create({
+            data: {
+                groupName: termSubjectGroupName,
+                month,
+                year,
+                termName,
+                termId: +termId,
+                termSubjectGroupId: +termSubjectGroupId,
+                amount: +amount,
+                dueDate: new Date(dueDate),
+                interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM,
+                invoiceName: `${termSubjectGroupName}_${month}_${year}`,
+                notes
+            }
+        });
+
+        // Create FeePayment records for each student also inside the transaction
+        const feePayments = await Promise.all(
+            studentIds
+                .map(async (studentId) => {
+                    const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
+                    if (!student) return null; // Continue if no student is found
+
+                    const studentTermFee = await prisma.studentTermFee.findFirst({
+                        where: { studentId: +studentId, termId: +termId, termSubjectGroupId: +termSubjectGroupId }
+                    });
+
+                    if (!studentTermFee) return null; // Continue if no corresponding term fee is found
+
+                    const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
+                    const invoiceId = `${student.akaalId}_${monthNumber}`;
+
+                    return prisma.feePayment.create({
+                        data: {
+                            invoiceId,
+                            studentTermFeeId: studentTermFee.id,
+                            feeTemplateId: feeTemplate.id,
+                            dueDate: new Date(dueDate),
+                            dueAmount: +amount,
+                            paymentStatus: 'PENDING',
+                            feeAmount: +amount,
+                            adjustedFeeAmount: +amount
+                        }
+                    });
+                })
+                .filter((task) => task !== null)
+        ); // Filter out null tasks
+
+        return {
+            message: 'FeeTemplate and FeePayments created successfully.',
+            feeTemplate,
+            feePayments
+        };
+    });
+}
