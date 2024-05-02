@@ -61,6 +61,7 @@ import studentDashboardRoute from './src/route/student.route/student.dashboard.r
 import adminEventRoute from './src/route/admin.route/admin.events.route/admin.events.route';
 import adminCSVRouter from './src/route/admin.route/admin.csv.route/admin.csv.route';
 import { initSocket } from './src/sockets/socket';
+import adminFeeRoute from './src/route/admin.route/admin.fee.route/admin.fee.route';
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -132,6 +133,7 @@ app.use('/api/v1/admin/notice', adminNoticeRoute);
 app.use('/api/v1/admin/alumni', adminAlumniRoute);
 app.use('/api/v1/admin/event', adminEventRoute);
 app.use('/api/v1/admin/csv', adminCSVRouter);
+app.use('/api/v1/admin/fee', adminFeeRoute);
 
 /*Attendance and check in and checkout*/
 app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);
