@@ -105,7 +105,7 @@ export const searchActiveStudentsWithNoSubjectsHandler = async (req: Request<{},
 };
 export const defaultSelectActiveStudentsHandler = async (req: Request<{}, {}, {}, DefaultSelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
     const { page, termId } = req.query;
-    console.log(page, termId, 'controller');
+
     if (page && termId) {
         const allStudent = await defaultSelectActiveStudents(+page, +termId);
         res.status(200).json(allStudent);
@@ -117,7 +117,7 @@ export const defaultSelectActiveStudentsHandler = async (req: Request<{}, {}, {}
 };
 export const defaultSelectActiveStudentsWIthNoSubjectsHandler = async (req: Request<{}, {}, {}, DefaultSelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
     const { page, termId } = req.query;
-    console.log(page, termId, 'controller');
+
     if (page && termId) {
         const allStudent = await defaultSelectActiveStudentsWIthNoSubjects(+page, +termId);
         res.status(200).json(allStudent);

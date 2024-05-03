@@ -17,3 +17,38 @@ export const feeTemplateSchema = z.object({
     })
 });
 export type FeeTemplateDataSchema = z.infer<typeof feeTemplateSchema>;
+
+//To find all active students for Admin
+export const findAllActiveStudentsForFeeCreationSchema = z.object({
+    query: z.object({
+        page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
+    })
+});
+export type FindAllActiveStudentsForFeeCreationSchema = z.infer<typeof findAllActiveStudentsForFeeCreationSchema>;
+export const defaultSelectActiveStudentsForFeeCreationSchema = z.object({
+    query: z.object({
+        page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
+    })
+});
+export type DefaultSelectActiveStudentsForFeeCreationSchema = z.infer<typeof defaultSelectActiveStudentsForFeeCreationSchema>;
+
+export const searchActiveStudentsForfeeCreationSchema = z.object({
+    query: z.object({
+        search: z.string().optional(),
+        page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
+        termSubjectGroupId: z.string()
+    })
+});
+export type SearchActiveStudentsForfeeCreationSchema = z.infer<typeof searchActiveStudentsForfeeCreationSchema>;
+export const selectActiveStudentsForFeeCreationSchema = z.object({
+    query: z.object({
+        search: z.string().optional(),
+        termSubjectGroupId: z.string().optional(),
+        page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
+    })
+});
+export type SelectActiveStudentsForFeeCreationSchema = z.infer<typeof selectActiveStudentsForFeeCreationSchema>;
