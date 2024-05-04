@@ -174,7 +174,7 @@ import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/a
 import { PaymentType } from '@prisma/client';
 
 export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
-    const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes } = feeTemplateData;
+    const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes,invoiceName } = feeTemplateData;
 
     // Execute all operations in a transaction
     return db.$transaction(async (prisma) => {
@@ -190,7 +190,7 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                 amount: +amount,
                 dueDate: new Date(dueDate),
                 interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM,
-                invoiceName: `${termSubjectGroupName}_${month}_${year}`,
+                invoiceName,
                 notes
             }
         });
@@ -212,7 +212,7 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     }
 
                     const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
-                    const invoiceId = `${student.akaalId}_${monthNumber}`;
+                    const invoiceId = `${student.akaalId}_${termSubjectGroupId}_${monthNumber}`;
 
                     return prisma.feePayment.create({
                         data: {

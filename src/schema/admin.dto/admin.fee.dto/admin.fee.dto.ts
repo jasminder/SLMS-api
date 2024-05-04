@@ -5,6 +5,7 @@ export const feeTemplateSchema = z.object({
     body: z.object({
         studentIds: z.array(z.string()),
         interval: z.string(),
+        invoiceName: z.string(),
         notes: z.string(),
         month: z.string(),
         year: z.string(),
