@@ -31,7 +31,7 @@ export const getCurrentTermSubjectGroupsHandler = async (req: Request, res: Resp
 };
 export const findActiveStudentsForFeeCreationHandler = async (req: Request<{}, {}, {}, FindAllActiveStudentsForFeeCreationSchema['query']>, res: Response, next: NextFunction) => {
     const { page, termId } = req.query;
-    console.log('getALlActiveStudentsForFeeCreationHandler ');
+
     if (page && termId) {
         const allStudent = await findActiveStudentsForFeeCreation(+page, +termId);
         res.status(200).json(allStudent);
@@ -54,7 +54,7 @@ export const defaultSelectActiveStudentsForFeeCreationHandler = async (req: Requ
 };
 export const searchActiveStudentsForFeeCreationHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsForfeeCreationSchema['query']>, res: Response, next: NextFunction) => {
     const { search, page = 0, termId, termSubjectGroupId } = req.query;
-    console.log('searchActiveStudentsForFeeCreationHandler ');
+
     const searchResult = await searchActiveStudentsForFeeCreation(search, +page, +termId, +termSubjectGroupId);
     res.status(200).json(searchResult);
 };

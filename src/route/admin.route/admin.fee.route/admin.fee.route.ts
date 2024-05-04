@@ -1,10 +1,9 @@
 import express from 'express';
-
 import validate from '../../../middleware/validateResource';
 import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
-import { defaultSelectActiveStudentsForFeeCreationSchema, feeTemplateSchema, findAllActiveStudentsForFeeCreationSchema, searchActiveStudentsForfeeCreationSchema, selectActiveStudentsForFeeCreationSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
 import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
+import { defaultSelectActiveStudentsForFeeCreationSchema, feeTemplateSchema, findAllActiveStudentsForFeeCreationSchema, searchActiveStudentsForfeeCreationSchema, selectActiveStudentsForFeeCreationSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
 import { createFeeTemplateHandler, defaultSelectActiveStudentsForFeeCreationHandler, findActiveStudentsForFeeCreationHandler, getCurrentTermSubjectGroupsHandler, searchActiveStudentsForFeeCreationHandler, selectActiveStudentsForFeeCreationHandler,} from '../../../controller/admin.controller/admin.fee.controller/admin.fee.controller';
 
 const adminFeeRoute = express.Router();
