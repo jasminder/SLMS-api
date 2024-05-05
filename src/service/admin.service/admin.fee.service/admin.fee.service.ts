@@ -459,7 +459,6 @@ export async function defaultSelectActiveStudentsForFeeCreation(page: number, te
 export async function searchActiveStudentsForFeeCreation(search = '', page: number, termId: number, termSubjectGroupId = 999) {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
-    console.log(termSubjectGroupId, 'termSubjectGroupId');
     if (searchAsNumber) {
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
