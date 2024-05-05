@@ -10,7 +10,7 @@
 ALTER TABLE "FeePayment" ADD COLUMN     "feeTemplateId" INTEGER,
 ADD COLUMN     "hasDue" SET DEFAULT false,
 ADD COLUMN     "hasOverDue" SET DEFAULT false,
-ADD COLUMN     "hasPaid" SET DEFAULT false;;
+ADD COLUMN     "hasPaid" SET DEFAULT false;
 
 -- CreateTable
 CREATE TABLE "FeeTemplate" (
