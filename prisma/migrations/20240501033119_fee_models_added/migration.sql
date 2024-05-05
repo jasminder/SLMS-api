@@ -8,9 +8,9 @@
 */
 -- AlterTable
 ALTER TABLE "FeePayment" ADD COLUMN     "feeTemplateId" INTEGER,
-ADD COLUMN     "hasDue" BOOLEAN NOT NULL,
-ADD COLUMN     "hasOverDue" BOOLEAN NOT NULL,
-ADD COLUMN     "hasPaid" BOOLEAN NOT NULL;
+ADD COLUMN     "hasDue" SET DEFAULT false,
+ADD COLUMN     "hasOverDue" SET DEFAULT false,
+ADD COLUMN     "hasPaid" SET DEFAULT false;;
 
 -- CreateTable
 CREATE TABLE "FeeTemplate" (
