@@ -8,7 +8,3 @@
 
 ALTER TYPE "PaymentStatus" ADD VALUE 'DUE';
 ALTER TYPE "PaymentStatus" ADD VALUE 'OVERDUE';
-
--- AlterTable
-ALTER TABLE "FeePayment" ALTER COLUMN "hasDue" SET DEFAULT true,
-ALTER COLUMN "isActive" SET DEFAULT true;

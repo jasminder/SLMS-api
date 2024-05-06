@@ -221,7 +221,7 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                             feeTemplateId: feeTemplate.id,
                             dueDate: new Date(dueDate),
                             dueAmount: +amount,
-                            paymentStatus: 'PENDING',
+                            status: 'PENDING',
                             feeAmount: +amount,
                             adjustedFeeAmount: +amount
                         }

@@ -1,3 +1,4 @@
+import { PaymentStatus } from '@prisma/client';
 import { db } from '../../../utils/db.server';
 
 export async function getAllFeePayments(search = '', page: number, termId: number, paymentStatus = '', dueAmountSort = 'asc', invoiceName = '') {
@@ -17,14 +18,14 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
                         mode: 'insensitive'
                     }
                 },
-                // {
-                //     feeTemplate: {
-                //         invoiceName: {
-                //             contains: search,
-                //             mode: 'insensitive'
-                //         }
-                //     }
-                // },
+                {
+                    feeTemplate: {
+                        notes: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
                 {
                     studentTermFee: {
                         student: {
@@ -54,7 +55,7 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
                     }
                 }
             ],
-            paymentStatus: paymentStatus === 'PAID' ? 'PAID' : paymentStatus === 'PENDING' ? 'PENDING' : paymentStatus === 'OVERDUE' ? 'OVERDUE' : undefined
+            status: paymentStatus === 'PAID' ? PaymentStatus.PAID : paymentStatus === 'PENDING' ? PaymentStatus.PENDING : paymentStatus === 'OVERDUE' ? PaymentStatus.OVERDUE : undefined
         },
         skip,
         take,
@@ -130,7 +131,7 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
                     }
                 }
             ],
-            paymentStatus: paymentStatus === 'PAID' ? 'PAID' : paymentStatus === 'PENDING' ? 'PENDING' : paymentStatus === 'OVERDUE' ? 'OVERDUE' : undefined
+            status: paymentStatus === 'PAID' ? PaymentStatus.PAID : paymentStatus === 'PENDING' ? PaymentStatus.PENDING : paymentStatus === 'OVERDUE' ? PaymentStatus.OVERDUE : undefined
         }
     });
 
