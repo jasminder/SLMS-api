@@ -58,3 +58,23 @@ export async function deleteEmailTemplate(templateId: string) {
         where: { id: template.id }
     });
 }
+
+export async function fetchEmailContentByDate(date: string) {
+    //setHours(20, 30, 0, 0);
+    const queryDate = new Date(date);
+    queryDate.setHours(20, 30, 0, 0);
+    const emailContents = await db.emailContent.findMany({
+        where: {
+            sendDate: queryDate
+        },
+        include: {
+            student: {
+                select: {
+                    akaalId: true,
+                    personalDetails: true
+                }
+            }
+        }
+    });
+    return emailContents;
+}

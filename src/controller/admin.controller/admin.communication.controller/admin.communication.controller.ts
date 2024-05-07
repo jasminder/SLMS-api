@@ -1,6 +1,17 @@
 import { NextFunction, Request, Response } from 'express';
-import { CreateEmailTemplateSchema, DeleteEmailTemplateSchema, UpdateEmailTemplateSchema } from '../../../schema/admin.dto/admin.communication.dto/admin.communication.dto';
-import { createEmailTemplate, deleteEmailTemplate, getAllEmailTemplates, updateEmailTemplate } from '../../../service/admin.service/admin.communication.service/admin.communication.service';
+import {
+    CreateEmailTemplateSchema,
+    DeleteEmailTemplateSchema,
+    FetchEmailContentByDateSchema,
+    UpdateEmailTemplateSchema
+} from '../../../schema/admin.dto/admin.communication.dto/admin.communication.dto';
+import {
+    createEmailTemplate,
+    deleteEmailTemplate,
+    fetchEmailContentByDate,
+    getAllEmailTemplates,
+    updateEmailTemplate
+} from '../../../service/admin.service/admin.communication.service/admin.communication.service';
 
 export const createEmailTemplateHandler = async (req: Request<CreateEmailTemplateSchema['params'], {}, CreateEmailTemplateSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { name, subject, text } = req.body;
@@ -34,4 +45,9 @@ export const deleteEmailTemplateHandler = async (req: Request<DeleteEmailTemplat
         status: 'success',
         data: null // No content to send back
     });
+};
+export const fetchEmailContentByDateHandler = async (req: Request<FetchEmailContentByDateSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { date } = req.params;
+    const emailContents = await fetchEmailContentByDate(date);
+    res.status(200).json(emailContents);
 };

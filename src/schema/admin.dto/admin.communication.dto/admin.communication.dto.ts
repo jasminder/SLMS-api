@@ -34,3 +34,12 @@ export const deleteEmailTemplateSchema = z.object({
 });
 
 export type DeleteEmailTemplateSchema = z.infer<typeof deleteEmailTemplateSchema>;
+
+
+export const fetchEmailContentByDateSchema = z.object({
+    params: z.object({
+        date: z.string().min(1, { message: 'Date is required' }),
+    }),
+});
+
+export type FetchEmailContentByDateSchema = z.infer<typeof fetchEmailContentByDateSchema>;

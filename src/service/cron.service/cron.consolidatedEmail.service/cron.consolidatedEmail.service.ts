@@ -6,7 +6,6 @@ import { capitalizeFirstCharacter } from '../../../utils/capitalizeFirstCharacte
 
 import { GroupHomework, GroupClasswork, Feedback, HomeworkSnapshot, ClassworkSnapshot } from '@prisma/client';
 
-
 const db = new PrismaClient();
 
 export async function consolidateStudentDataForEmail() {
@@ -247,12 +246,14 @@ export async function consolidateStudentDataForEmail() {
         // console.log('emailContent', emailContent);
 
         if (student.personalDetails?.email) {
-            await sendConsolidatedEmail(
-                student.personalDetails.email,
-                `${capitalizeFirstCharacter(student.personalDetails.firstName)} ${' '}${capitalizeFirstCharacter(student.personalDetails.lastName)} - Your Academic Update`,
-                emailContent,
-                attachments
-            );
+            if (process.env.NODE_ENV == 'production') {
+                await sendConsolidatedEmail(
+                    student.personalDetails.email,
+                    `${capitalizeFirstCharacter(student.personalDetails.firstName)} ${' '}${capitalizeFirstCharacter(student.personalDetails.lastName)} - Your Academic Update`,
+                    emailContent,
+                    attachments
+                );
+            }
 
             for (const homeworkEntry of homeworkEntries) {
                 const snapshots = await db.homeworkSnapshot.findMany({
@@ -266,7 +267,7 @@ export async function consolidateStudentDataForEmail() {
                     }
                 });
                 for (const snapshot of snapshots) {
-                    await db.sentHomeworkSnapshot.create({
+                    const sentHw = await db.sentHomeworkSnapshot.create({
                         data: {
                             homeworkId: snapshot.homeworkId,
                             groupHomeworkId: snapshot.groupHomeworkId,
@@ -276,6 +277,7 @@ export async function consolidateStudentDataForEmail() {
                             sendDate // Current date as the send date
                         }
                     });
+                    console.log(sentHw);
                 }
             }
 
@@ -291,7 +293,7 @@ export async function consolidateStudentDataForEmail() {
                     }
                 });
                 for (const snapshot of snapshots) {
-                    await db.sentClassworkSnapshot.create({
+                    const sentCw = await db.sentClassworkSnapshot.create({
                         data: {
                             classworkId: snapshot.classworkId,
                             groupClassworkId: snapshot.groupClassworkId,
@@ -301,6 +303,7 @@ export async function consolidateStudentDataForEmail() {
                             sendDate // Current date as the send date
                         }
                     });
+                    console.log(sentCw);
                 }
             }
 
@@ -336,6 +339,13 @@ export async function consolidateStudentDataForEmail() {
                     }
                 });
             }
+            await db.emailContent.create({
+                data: {
+                    studentId: student.id,
+                    emailcontent: emailContent,
+                    sendDate
+                }
+            });
         }
     }
 }

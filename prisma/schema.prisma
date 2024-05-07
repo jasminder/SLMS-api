@@ -84,6 +84,7 @@ model Student {
   hasOverDue                   Boolean?                       @default(false) // Indicates if there is any overdue amount
   overDue                      Int?                           @default(0) // Amount overdue for payment
   currentInvoiceDue            Int?                           @default(0)
+  EmailContent                 EmailContent[]
 }
 
 model PersonalDetails {
@@ -1125,3 +1126,10 @@ model Timetable {
 }
 
 // ------------------- for time table ------------------- //
+model EmailContent {
+  id           Int      @id @default(autoincrement())
+  studentId    Int
+  student      Student  @relation(fields: [studentId], references: [id])
+  emailcontent String
+  sendDate     DateTime
+}
