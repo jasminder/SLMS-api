@@ -94,14 +94,149 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
                         mode: 'insensitive'
                     }
                 },
-                // {
-                //     feeTemplate: {
-                //         invoiceName: {
-                //             contains: search,
-                //             mode: 'insensitive'
-                //         }
-                //     }
-                // }
+                {
+                    feeTemplate: {
+                        notes: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                {
+                    studentTermFee: {
+                        student: {
+                            personalDetails: {
+                                OR: [
+                                    {
+                                        firstName: {
+                                            contains: search,
+                                            mode: 'insensitive'
+                                        }
+                                    },
+                                    {
+                                        lastName: {
+                                            contains: search,
+                                            mode: 'insensitive'
+                                        }
+                                    },
+                                    {
+                                        email: {
+                                            contains: search,
+                                            mode: 'insensitive'
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            ],
+            status: paymentStatus === 'PAID' ? PaymentStatus.PAID : paymentStatus === 'PENDING' ? PaymentStatus.PENDING : paymentStatus === 'OVERDUE' ? PaymentStatus.OVERDUE : undefined
+        }
+    });
+
+    return { feePayments, count };
+}
+export async function selectAllFeePayments(search = '', page: number, termId: number, paymentStatus = '', dueAmountSort = 'asc', invoiceName = '') {
+    const feePayments = await db.feePayment.findMany({
+        where: {
+            feeTemplate: {
+                termId,
+                invoiceName: invoiceName ? invoiceName : undefined
+            },
+            OR: [
+                {
+                    invoiceId: {
+                        contains: search,
+                        mode: 'insensitive'
+                    }
+                },
+                {
+                    feeTemplate: {
+                        notes: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                {
+                    studentTermFee: {
+                        student: {
+                            personalDetails: {
+                                OR: [
+                                    {
+                                        firstName: {
+                                            contains: search,
+                                            mode: 'insensitive'
+                                        }
+                                    },
+                                    {
+                                        lastName: {
+                                            contains: search,
+                                            mode: 'insensitive'
+                                        }
+                                    },
+                                    {
+                                        email: {
+                                            contains: search,
+                                            mode: 'insensitive'
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            ],
+            status: paymentStatus === 'PAID' ? PaymentStatus.PAID : paymentStatus === 'PENDING' ? PaymentStatus.PENDING : paymentStatus === 'OVERDUE' ? PaymentStatus.OVERDUE : undefined
+        },
+
+        orderBy: [
+            { createdAt: 'asc' },
+            { id: 'asc' },
+            {
+                dueAmount: dueAmountSort == 'desc' ? 'desc' : 'asc'
+            }
+        ],
+        select: {
+            studentTermFee: {
+                select: {
+                    student: {
+                        select: {
+                            id: true,
+                            akaalId: true,
+                            personalDetails: {
+                                select: {
+                                    email: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+    const count = await db.feePayment.count({
+        where: {
+            feeTemplate: {
+                termId,
+                invoiceName: invoiceName ? invoiceName : undefined
+            },
+            OR: [
+                {
+                    invoiceId: {
+                        contains: search,
+                        mode: 'insensitive'
+                    }
+                },
+                {
+                    feeTemplate: {
+                        notes: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
                 {
                     studentTermFee: {
                         student: {
