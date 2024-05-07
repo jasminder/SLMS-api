@@ -115,7 +115,7 @@ export async function createGroupHomework(
 export async function findAssignedHomeworks(teacherId: string, termSubjectLevelId: string, sectionId: string) {
     return await db.groupHomework.findMany({
         where: {
-            teacherId: parseInt(teacherId),
+            // teacherId: parseInt(teacherId),
             termSubjectLevelId: parseInt(termSubjectLevelId),
             sectionId: parseInt(sectionId)
             // createdAt: {
