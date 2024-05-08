@@ -25,6 +25,7 @@ import {
     markPresentByEditSchoolCheckInAttendanceForStudentSchema,
     searchActiveStudentsSchema,
     selectActiveStudentsSchema,
+    updateAmountFeeDueSchema,
     updateAmountPaidSchema,
     updateLeaveApplicationSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
@@ -59,6 +60,7 @@ import {
     searchActiveStudentsWithNoSubjectsHandler,
     selectActiveStudentsHandler,
     selectActiveStudentsWithNoSubjectsHandler,
+    updateAmountFeeDueHandler,
     updateAmountPaidHandler,
     updateLeaveApplicationHandler
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
@@ -121,6 +123,8 @@ adminActiveStudentRoute
 adminActiveStudentRoute.route('/fee-payment-detail/:id').get(validate(findUniqueFeePaymentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findFeePaymentByIdHandler));
 /*update fee - amount paid made by the admin*/
 adminActiveStudentRoute.route('/fee-payment-update-amountPaid/:id').patch(validate(updateAmountPaidSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountPaidHandler));
+
+adminActiveStudentRoute.route('/update-amount-due').patch(validate(updateAmountFeeDueSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountFeeDueHandler));
 
 /*find enrolled subject for late enrollments*/
 adminActiveStudentRoute

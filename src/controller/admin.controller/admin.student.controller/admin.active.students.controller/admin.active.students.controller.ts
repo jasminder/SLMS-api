@@ -31,6 +31,7 @@ import {
     searchActiveStudentsWithNoSubjects,
     selectActiveStudents,
     selectActiveStudentsWithNoSubjects,
+    updateAmountFeeDue,
     updateAmountPaid,
     updateLeaveApplication
 } from '../../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
@@ -57,6 +58,7 @@ import {
     MarkPresentByEditSchoolCheckInAttendanceForStudentSchema,
     SearchActiveStudentsSchema,
     SelectActiveStudentsSchema,
+    UpdateAmountFeeDueSchema,
     UpdateAmountPaidSchema,
     UpdateLeaveApplicationSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
@@ -189,6 +191,11 @@ export const updateAmountPaidHandler = async (
     const { remarks } = req.body;
     const student = await updateAmountPaid(id, amountPaid, remarks);
     res.status(200).json(student);
+};
+export const updateAmountFeeDueHandler = async (req: Request<{}, {}, UpdateAmountFeeDueSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { feePaymentId, newDueAmount, discountReason,status } = req.body;
+    const result = await updateAmountFeeDue(feePaymentId, +newDueAmount, discountReason,status);
+    res.status(200).json(result);
 };
 
 /* find enrolled subjects for active students*/

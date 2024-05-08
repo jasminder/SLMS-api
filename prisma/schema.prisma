@@ -394,6 +394,8 @@ model FeeTemplate {
   termSubjectGroup   TermSubjectGroup? @relation(fields: [termSubjectGroupId], references: [id])
   updatedAt          DateTime          @updatedAt
   createdAt          DateTime          @default(now())
+
+  @@unique([invoiceName, dueDate, groupName, interval])
 }
 
 model FeeDashboard {

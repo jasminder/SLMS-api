@@ -172,12 +172,39 @@ import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
 import { PaymentType } from '@prisma/client';
+import format from 'date-fns/format';
+import parseISO from 'date-fns/parseISO';
 
 export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
-    const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes,invoiceName } = feeTemplateData;
+    const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
 
     // Execute all operations in a transaction
     return db.$transaction(async (prisma) => {
+        // Parse the dueDate and set it to the start of the day for comparison
+        const startDate = new Date(dueDate);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(startDate);
+        endDate.setHours(23, 59, 59, 999);
+        // Check if a FeeTemplate with the same dueDate, termSubjectGroupId, and interval already exists
+        const existingFeeTemplate = await prisma.feeTemplate.findFirst({
+            where: {
+                termSubjectGroupId: +termSubjectGroupId,
+                dueDate: {
+                    gte: startDate,
+                    lte: endDate
+                },
+                invoiceName,
+                interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM
+            }
+        });
+        if (existingFeeTemplate) {
+            throw customError(
+                `A FeeTemplate with the specified criteria already exists.- same invoice name- ${invoiceName} , due date-${dueDate}  and feeTemplate-${termSubjectGroupName}`,
+                'fail',
+                400,
+                true
+            );
+        }
         // Create FeeTemplate inside the transaction
         const feeTemplate = await prisma.feeTemplate.create({
             data: {

@@ -1,6 +1,7 @@
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 import { ActiveStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
+import { PaymentStatus } from '@prisma/client';
 
 type AttendanceFilter = {
     attendancePercentageValue?: number;
@@ -1769,6 +1770,8 @@ export async function findTermSubjectGroupIdEnrolledSubjects(id: string, termSub
 
     return enrolledSubjects;
 }
+
+/*-----------------fee-----------------------*/
 /*find fee details by id*/
 export async function findFeePaymentById(id: string) {
     const feePaymentById = await db.feePayment.findUnique({
@@ -1802,7 +1805,7 @@ export async function updateAmountPaid(id: string, newAmountPaid: string, remark
     const updatedFeePayment = await db.feePayment.update({
         where: { id: +id },
         data: {
-            amountPaid: (currentFeePayment?.amountPaid??0) + amountPaid,
+            amountPaid: (currentFeePayment?.amountPaid ?? 0) + amountPaid,
             dueAmount: remainingDueAmount,
             creditAmount: newCreditAmount,
             status: remainingDueAmount > 0 ? 'PENDING' : 'NODUES',
@@ -1813,7 +1816,43 @@ export async function updateAmountPaid(id: string, newAmountPaid: string, remark
     });
     return updatedFeePayment;
 }
+/*update fee - amount paid made by the admin*/
+export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: number, discountReason: string, status: string) {
+    return db.$transaction(async (prisma) => {
+        const feePayment = await prisma.feePayment.findUnique({
+            where: { id: +feePaymentId }
+        });
 
+        if (!feePayment) throw customError('Fee payment record not found.', 'fail', 404, true);
+
+        // Enforce the business rule: If status is 'PAID', newDueAmount must be zero, and vice versa
+        if (status === 'PAID' && newDueAmount !== 0) {
+            throw customError('When status is PAID, due amount must be zero.', 'fail', 400, true);
+        }
+        if (newDueAmount === 0 && status !== 'PAID') {
+            throw customError('Due amount can only be zero if the status is PAID.', 'fail', 400, true);
+        }
+
+        const oldDueAmount = feePayment.dueAmount;
+        const discountAmount = oldDueAmount - newDueAmount;
+
+        const updatedFeePayment = await prisma.feePayment.update({
+            where: { id: feePayment.id },
+            data: {
+                dueAmount: newDueAmount,
+                hasDiscount: true,
+                discountAmount: discountAmount,
+                adjustedFeeAmount: newDueAmount,
+                discountReason: discountReason,
+                status: status === 'PAID' ? PaymentStatus.PAID : status === 'PENDING' ? PaymentStatus.PENDING : PaymentStatus.OVERDUE
+            }
+        });
+
+        return updatedFeePayment;
+    });
+}
+
+/*-----------------fee-----------------------*/
 export async function findActiveStudentEnrolledSubjects(studentId: string, termId: string) {
     // Fetch all enrollments for the student
     const enrollments = await db.enrollment.findMany({

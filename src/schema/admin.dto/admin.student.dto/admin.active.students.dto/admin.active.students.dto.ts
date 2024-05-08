@@ -111,6 +111,15 @@ export const updateAmountPaidSchema = z.object({
 });
 export type UpdateAmountPaidSchema = z.infer<typeof updateAmountPaidSchema>;
 
+export const updateAmountFeeDueSchema = z.object({
+    body: z.object({
+        feePaymentId: z.string(),
+        newDueAmount: z.string(),
+        discountReason: z.string(),
+        status:z.string(),
+    })
+});
+export type UpdateAmountFeeDueSchema = z.infer<typeof updateAmountFeeDueSchema>;
 /* find active subjects for active students*/
 export const findActiveStudentEnrolledSubjectsSchema = z.object({
     params: z.object({
