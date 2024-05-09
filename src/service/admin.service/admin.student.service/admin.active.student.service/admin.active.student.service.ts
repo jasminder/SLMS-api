@@ -1,7 +1,7 @@
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 import { ActiveStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
-import { PaymentStatus } from '@prisma/client';
+import { PaymentMethod, PaymentStatus } from '@prisma/client';
 
 type AttendanceFilter = {
     attendancePercentageValue?: number;
@@ -1777,46 +1777,132 @@ export async function findFeePaymentById(id: string) {
     const feePaymentById = await db.feePayment.findUnique({
         where: {
             id: +id
+        },
+        include: {
+            studentTermFee: {
+                select: {
+                    student: {
+                        select: {
+                            creditBalance: true
+                        }
+                    }
+                }
+            }
         }
     });
     return feePaymentById;
 }
 /*update fee - amount paid made by the admin*/
-export async function updateAmountPaid(id: string, newAmountPaid: string, remarks: string) {
-    const amountPaid = parseInt(newAmountPaid);
-    const currentFeePayment = await db.feePayment.findUnique({
-        where: { id: +id },
-        select: { dueAmount: true, amountPaid: true, creditAmount: true }
-    });
-    if (!currentFeePayment) {
-        throw customError('Fee payment record not found', 'fail', 400, true);
-    }
-    // Apply existing credit to reduce due amount
-    let remainingDueAmount = currentFeePayment.dueAmount - currentFeePayment.creditAmount;
-    // Apply payment to remaining due amount
-    remainingDueAmount -= amountPaid;
-    // Calculate new credit amount
-    let newCreditAmount = 0;
-    if (remainingDueAmount < 0) {
-        newCreditAmount = Math.max(amountPaid - currentFeePayment.dueAmount, 0);
-        remainingDueAmount = 0;
-    }
-    // Update the fee payment record
-    const updatedFeePayment = await db.feePayment.update({
-        where: { id: +id },
-        data: {
-            amountPaid: (currentFeePayment?.amountPaid ?? 0) + amountPaid,
-            dueAmount: remainingDueAmount,
-            creditAmount: newCreditAmount,
-            status: remainingDueAmount > 0 ? 'PENDING' : 'NODUES',
-            method: 'DISCOUNT',
-            paidDate: new Date(),
-            remarks
-        }
-    });
-    return updatedFeePayment;
-}
+// export async function updateAmountPaid(id: string, newAmountPaid: string, remarks: string) {
+//     const amountPaid = parseInt(newAmountPaid);
+//     const currentFeePayment = await db.feePayment.findUnique({
+//         where: { id: +id },
+//         select: { dueAmount: true, amountPaid: true, creditAmount: true }
+//     });
+//     if (!currentFeePayment) {
+//         throw customError('Fee payment record not found', 'fail', 400, true);
+//     }
+//     // Apply existing credit to reduce due amount
+//     let remainingDueAmount = currentFeePayment.dueAmount - currentFeePayment.creditAmount;
+//     // Apply payment to remaining due amount
+//     remainingDueAmount -= amountPaid;
+//     // Calculate new credit amount
+//     let newCreditAmount = 0;
+//     if (remainingDueAmount < 0) {
+//         newCreditAmount = Math.max(amountPaid - currentFeePayment.dueAmount, 0);
+//         remainingDueAmount = 0;
+//     }
+//     // Update the fee payment record
+//     const updatedFeePayment = await db.feePayment.update({
+//         where: { id: +id },
+//         data: {
+//             amountPaid: (currentFeePayment?.amountPaid ?? 0) + amountPaid,
+//             dueAmount: remainingDueAmount,
+//             creditAmount: newCreditAmount,
+//             status: remainingDueAmount > 0 ? 'PENDING' : 'PAID',
+//             method: 'DISCOUNT',
+//             paidDate: new Date(),
+//             remarks
+//         }
+//     });
+//     return updatedFeePayment;
+// }
 /*update fee - amount paid made by the admin*/
+export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount: string, paidDate: string, paymentMethod: string, paymentStatus: string, remarks: string, receivedBy: string) {
+    return db.$transaction(async (transaction) => {
+        const feePayment = await transaction.feePayment.findUnique({
+            where: { id: +feePaymentId },
+            include: { studentTermFee: { include: { student: true } } }
+        });
+
+        if (!feePayment) {
+            throw customError('Fee payment record not found', 'fail', 400, true);
+        }
+        const newDueAmount = feePayment.dueAmount - parseInt(paidAmount);
+        let updateStatus: PaymentStatus;
+        let overDue = false;
+        if (newDueAmount > 0 && new Date() > new Date(feePayment.dueDate)) {
+            overDue = true;
+            updateStatus = PaymentStatus.OVERDUE;
+        } else {
+            updateStatus = PaymentStatus.PENDING;
+        }
+        if (newDueAmount <= 0) {
+            updateStatus = PaymentStatus.PAID; // Update status to PAID only if due amount is zero or less
+        }
+        // Validate client-provided paymentStatus
+        if (paymentStatus === 'PAID' && newDueAmount !== 0) {
+            throw customError('Invalid payment status: "PAID" cannot be applied unless the due amount is zero.', 'fail', 400, true);
+        }
+        if (paymentStatus === 'PENDING' && newDueAmount === 0) {
+            throw customError('Invalid payment status: "PENDING" cannot be applied if the due amount is zero.', 'fail', 400, true);
+        }
+        if (paymentStatus === 'OVERDUE') {
+            if (newDueAmount <= 0 || new Date() <= new Date(feePayment.dueDate)) {
+                throw customError('Invalid payment status: "OVERDUE" cannot be applied unless the due amount is more than zero and the current date is past the due date.', 'fail', 400, true);
+            }
+            updateStatus = PaymentStatus.OVERDUE; // Explicitly setting to OVERDUE as provided and validated
+        }
+        const paymentInstallment = await transaction.paymentInstallment.create({
+            data: {
+                feePaymentId: +feePaymentId,
+                paidAmount: +paidAmount,
+                paidDate: paidDate ? new Date(paidDate) : new Date(),
+                paymentMethod: paymentMethod === 'CREDIT_CARD' ? PaymentMethod.CREDIT_CARD : paymentMethod === 'CASH' ? PaymentMethod.CASH : PaymentMethod.OTHER,
+                paymentStatus: updateStatus,
+                remarks,
+                receivedBy
+            }
+        });
+        await transaction.feePayment.update({
+            where: { id: +feePaymentId },
+            data: {
+                dueAmount: newDueAmount > 0 ? newDueAmount : 0,
+                hasOverDue: overDue,
+                status: updateStatus
+            }
+        });
+
+        const extraAmount = newDueAmount < 0 ? -newDueAmount : 0;
+        if (extraAmount > 0) {
+            await transaction.student.update({
+                where: { id: feePayment.studentTermFee?.student.id },
+                data: {
+                    creditBalance: {
+                        increment: extraAmount
+                    },
+                    hasOverDue: overDue
+                }
+            });
+        }
+
+        return {
+            paymentInstallment,
+            newDueAmount,
+            extraAmount
+        };
+    });
+}
 export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: number, discountReason: string, status: string) {
     return db.$transaction(async (prisma) => {
         const feePayment = await prisma.feePayment.findUnique({

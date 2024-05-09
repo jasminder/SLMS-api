@@ -32,7 +32,7 @@ import {
     selectActiveStudents,
     selectActiveStudentsWithNoSubjects,
     updateAmountFeeDue,
-    updateAmountPaid,
+    updateAmountPaidAtSchool,
     updateLeaveApplication
 } from '../../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
 import {
@@ -59,7 +59,7 @@ import {
     SearchActiveStudentsSchema,
     SelectActiveStudentsSchema,
     UpdateAmountFeeDueSchema,
-    UpdateAmountPaidSchema,
+    UpdateAmountPaidAtSchoolSchema,
     UpdateLeaveApplicationSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 
@@ -181,20 +181,16 @@ export const findFeePaymentByIdHandler = async (req: Request<FindUniqueFeePaymen
 };
 
 /*update fee - amount paid made by the admin*/
-export const updateAmountPaidHandler = async (
-    req: Request<UpdateAmountPaidSchema['params'], {}, UpdateAmountPaidSchema['body'], UpdateAmountPaidSchema['query']>,
-    res: Response,
-    next: NextFunction
-) => {
-    const { id } = req.params;
-    const { amountPaid } = req.query;
-    const { remarks } = req.body;
-    const student = await updateAmountPaid(id, amountPaid, remarks);
-    res.status(200).json(student);
+export const updateAmountPaidAtSchoolHandler = async (req: Request<{}, {}, UpdateAmountPaidAtSchoolSchema['body'], {}>, res: Response, next: NextFunction) => {
+    // const { id } = req.params;
+    // const { amountPaid } = req.query;
+    const { feePaymentId, paidAmount, paidDate, paymentMethod, paymentStatus, remarks, receivedBy } = req.body;
+    const result = await updateAmountPaidAtSchool(feePaymentId, paidAmount, paidDate, paymentMethod, paymentStatus, remarks, receivedBy );
+    res.status(200).json(result);
 };
 export const updateAmountFeeDueHandler = async (req: Request<{}, {}, UpdateAmountFeeDueSchema['body'], {}>, res: Response, next: NextFunction) => {
-    const { feePaymentId, newDueAmount, discountReason,status } = req.body;
-    const result = await updateAmountFeeDue(feePaymentId, +newDueAmount, discountReason,status);
+    const { feePaymentId, newDueAmount, discountReason, status } = req.body;
+    const result = await updateAmountFeeDue(feePaymentId, +newDueAmount, discountReason, status);
     res.status(200).json(result);
 };
 

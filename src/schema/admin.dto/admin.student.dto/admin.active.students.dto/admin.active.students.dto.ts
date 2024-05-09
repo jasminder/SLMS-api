@@ -98,25 +98,25 @@ export const findUniqueFeePaymentSchema = z.object({
 export type FindUniqueFeePaymentSchema = z.infer<typeof findUniqueFeePaymentSchema>;
 
 /*update fee - amount paid made by the admin*/
-export const updateAmountPaidSchema = z.object({
-    params: z.object({
-        id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
-    }),
-    query: z.object({
-        amountPaid: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
-    }),
+export const updateAmountPaidAtSchoolSchema = z.object({
     body: z.object({
-        remarks: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+        feePaymentId: z.string(),
+        paidAmount: z.string(),
+        paidDate: z.string(),
+        paymentMethod: z.string(),
+        paymentStatus: z.string(),
+        remarks: z.string(),
+        receivedBy: z.string()
     })
 });
-export type UpdateAmountPaidSchema = z.infer<typeof updateAmountPaidSchema>;
+export type UpdateAmountPaidAtSchoolSchema = z.infer<typeof updateAmountPaidAtSchoolSchema>;
 
 export const updateAmountFeeDueSchema = z.object({
     body: z.object({
         feePaymentId: z.string(),
         newDueAmount: z.string(),
         discountReason: z.string(),
-        status:z.string(),
+        status: z.string()
     })
 });
 export type UpdateAmountFeeDueSchema = z.infer<typeof updateAmountFeeDueSchema>;

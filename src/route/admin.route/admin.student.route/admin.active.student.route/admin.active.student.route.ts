@@ -26,7 +26,7 @@ import {
     searchActiveStudentsSchema,
     selectActiveStudentsSchema,
     updateAmountFeeDueSchema,
-    updateAmountPaidSchema,
+    updateAmountPaidAtSchoolSchema,
     updateLeaveApplicationSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 import {
@@ -61,7 +61,7 @@ import {
     selectActiveStudentsHandler,
     selectActiveStudentsWithNoSubjectsHandler,
     updateAmountFeeDueHandler,
-    updateAmountPaidHandler,
+    updateAmountPaidAtSchoolHandler,
     updateLeaveApplicationHandler
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
 import { restrict } from '../../../../middleware/restrict';
@@ -122,7 +122,7 @@ adminActiveStudentRoute
 /*find unqiue feePaymentById*/
 adminActiveStudentRoute.route('/fee-payment-detail/:id').get(validate(findUniqueFeePaymentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findFeePaymentByIdHandler));
 /*update fee - amount paid made by the admin*/
-adminActiveStudentRoute.route('/fee-payment-update-amountPaid/:id').patch(validate(updateAmountPaidSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountPaidHandler));
+adminActiveStudentRoute.route('/fee-payment-update-amountPaid-at-school').patch(validate(updateAmountPaidAtSchoolSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountPaidAtSchoolHandler));
 
 adminActiveStudentRoute.route('/update-amount-due').patch(validate(updateAmountFeeDueSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountFeeDueHandler));
 

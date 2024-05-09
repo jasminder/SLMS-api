@@ -88,42 +88,92 @@ study the context clearly and be ready for my next questions. You are a senior d
 
 ---
 
-ok , using that schema the way i create logic is by using route, controller , schema and service where route is
-adminEnrollmentRoute.route('/enroll-applicant-to-student/:id').post(validate(findUniqueApplicantSchema), protectRoute, restrict('ADMIN'),asyncErrorHandler(enrollApplicantToStudentHandler));
+ok , using that schema the way i create logic is by using route, controller , schema and service where route is adminFeeRoute.route('/create-fee-template-and-feePayments-records-for-active-students-by-subject-group').post(validate(feeTemplateSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createFeeTemplateHandler));  and controller is export const createFeeTemplateHandler = async (req: Request<{}, {}, FeeTemplateDataSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const feeTemplateData = req.body;
+    const result = await createFeeTemplateAndPayments(feeTemplateData);
+    res.status(201).json(result);
+};
+ and schema is export const feeTemplateSchema = z.object({
+    body: z.object({
+        studentIds: z.array(z.string()),
+        interval: z.string(),
+        invoiceName: z.string(),
+        notes: z.string(),
+        month: z.string(),
+        year: z.string(),
+        termName: z.string(),
+        termId: z.string(),
+        termSubjectGroupName: z.string(),
+        termSubjectGroupId: z.string(),
+        dueDate: z.string(),
+        amount: z.string()
+    })
+});
+export type FeeTemplateDataSchema = z.infer<typeof feeTemplateSchema>; and service logic is export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
+    const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes,invoiceName } = feeTemplateData;
 
-and controller is export const enrollApplicantToStudentHandler = async (req: Request<FindUniqueApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => { const { id } =
-req.params; const enrolledSubjects = await enrollApplicantToStudent(+id); res.status(200).json(enrolledSubjects); }; and schema is export const findUniqueApplicantSchema = z.object({ params:
-z.object({ id: z.string().min(1, { message: 'Atleast one param string value required @ksm' }) }) });
+    // Execute all operations in a transaction
+    return db.$transaction(async (prisma) => {
+        // Create FeeTemplate inside the transaction
+        const feeTemplate = await prisma.feeTemplate.create({
+            data: {
+                groupName: termSubjectGroupName,
+                month,
+                year,
+                termName,
+                termId: +termId,
+                termSubjectGroupId: +termSubjectGroupId,
+                amount: +amount,
+                dueDate: new Date(dueDate),
+                interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM,
+                invoiceName,
+                notes
+            }
+        });
 
-export type FindUniqueApplicantSchema = z.infer<typeof findUniqueApplicantSchema>; and service is export async function enrollApplicantToStudent(id: number) { // Fetch the student record const student
-= await db.student.findUnique({ where: { id } });
+        // Create FeePayment records for each student also inside the transaction
+        const feePayments = await Promise.all(
+            studentIds
+                .map(async (studentId) => {
+                    const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
+                    if (!student) return null; // Continue if no student is found
 
-    // Check if student record exists
-    if (!student) {
-        throw customError(`No student found with ID ${id}`, 'fail', 404, true);
-    }
-    const enrollments = await db.enrollment.findMany({
-        where: { studentId: id }
+                    const studentTermFee = await prisma.studentTermFee.findFirst({
+                        where: { studentId: +studentId, termId: +termId, termSubjectGroupId: +termSubjectGroupId }
+                    });
+
+                    if (!studentTermFee) {
+                        // Throw an error if the student is not enrolled in the specified term subject group
+                        throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
+                    }
+
+                    const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
+                    const invoiceId = `${student.akaalId}_${termSubjectGroupId}_${monthNumber}`;
+
+                    return prisma.feePayment.create({
+                        data: {
+                            invoiceId,
+                            studentTermFeeId: studentTermFee.id,
+                            feeTemplateId: feeTemplate.id,
+                            dueDate: new Date(dueDate),
+                            dueAmount: +amount,
+                            status: 'PENDING',
+                            feeAmount: +amount,
+                            adjustedFeeAmount: +amount
+                        }
+                    });
+                })
+                .filter((task) => task !== null)
+        ); // Filter out null tasks
+
+        return {
+            message: 'FeeTemplate and FeePayments created successfully.',
+            feeTemplate,
+            feePayments
+        };
     });
-
-    if (enrollments.length === 0) {
-        throw customError(`No enrollments found for the applicant. Please enroll a subject at the subject & classes tab.`, 'fail', 404, true);
-    }
-
-    // Check if the student's role is already 'STUDENT'
-    if (student.role === 'STUDENT') {
-        throw customError(`The applicant is already a student`, 'fail', 404, true);
-    }
-
-    // Update the student's role to 'STUDENT'
-    await db.student.update({
-        where: { id },
-        data: { role: 'STUDENT' }
-    });
-
-    return { message: `The applicant enrolled to Student successfully` };
-
 }
+
 
 study my schema as you are a senior database and backend engineer. Wait for my questions and do not reply
 
