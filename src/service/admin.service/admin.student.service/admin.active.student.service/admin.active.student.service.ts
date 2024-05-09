@@ -1725,7 +1725,16 @@ export async function findStudentFeeDetails(studentId: number, termId: number) {
         },
 
         include: {
-            feeTemplate: true
+            feeTemplate: true,
+            studentTermFee: {
+                select: {
+                    student: {
+                        select: {
+                            creditBalance: true
+                        }
+                    }
+                }
+            }
         }
     });
     console.log(studentTermFees);
