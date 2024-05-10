@@ -120,6 +120,17 @@ export const updateAmountFeeDueSchema = z.object({
     })
 });
 export type UpdateAmountFeeDueSchema = z.infer<typeof updateAmountFeeDueSchema>;
+
+export const applyCreditSchema = z.object({
+    body: z.object({
+        feePaymentId: z.string(),
+        creditToApply: z.string(),
+remarks: z.string(),
+    })
+});
+
+export type ApplyCreditDataSchema = z.infer<typeof applyCreditSchema>;
+
 /* find active subjects for active students*/
 export const findActiveStudentEnrolledSubjectsSchema = z.object({
     params: z.object({

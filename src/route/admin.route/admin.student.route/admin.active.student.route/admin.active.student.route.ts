@@ -5,6 +5,7 @@ import validate from '../../../../middleware/validateResource';
 import {
     activeStudentEnrollDataSchema,
     alumniStudentByIdSchema,
+    applyCreditSchema,
     assignClassToStudentSchema,
     createLeaveApplicationSchema,
     defaultSelectActiveStudentsSchema,
@@ -31,6 +32,7 @@ import {
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 import {
     alumniStudentByIdHandler,
+    applyCreditHandler,
     assignClassToStudentHandler,
     createLeaveApplicationHandler,
     deEnrollActiveStudentHandler,
@@ -125,6 +127,11 @@ adminActiveStudentRoute.route('/fee-payment-detail/:id').get(validate(findUnique
 adminActiveStudentRoute.route('/fee-payment-update-amountPaid-at-school').patch(validate(updateAmountPaidAtSchoolSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountPaidAtSchoolHandler));
 
 adminActiveStudentRoute.route('/update-amount-due').patch(validate(updateAmountFeeDueSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountFeeDueHandler));
+
+// Assuming you are using Express and the route is defined in a specific router file
+adminActiveStudentRoute.patch('/apply-credit-balance-to-student-feePayment-by-id', validate(applyCreditSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(applyCreditHandler));
+
+
 
 /*find enrolled subject for late enrollments*/
 adminActiveStudentRoute

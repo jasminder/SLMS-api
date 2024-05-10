@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 
 import {
     alumniStudentById,
+    applyStudentCredit,
     assignClassToStudent,
     createLeaveApplication,
     deEnrollActiveStudent,
@@ -38,6 +39,7 @@ import {
 import {
     ActiveStudentEnrollDataSchema,
     AlumniStudentByIdSchema,
+    ApplyCreditDataSchema,
     AssignClassToStudentSchema,
     CreateLeaveApplicationSchema,
     DefaultSelectActiveStudentsSchema,
@@ -185,12 +187,18 @@ export const updateAmountPaidAtSchoolHandler = async (req: Request<{}, {}, Updat
     // const { id } = req.params;
     // const { amountPaid } = req.query;
     const { feePaymentId, paidAmount, paidDate, paymentMethod, paymentStatus, remarks, receivedBy } = req.body;
-    const result = await updateAmountPaidAtSchool(feePaymentId, paidAmount, paidDate, paymentMethod, paymentStatus, remarks, receivedBy );
+    const result = await updateAmountPaidAtSchool(feePaymentId, paidAmount, paidDate, paymentMethod, paymentStatus, remarks, receivedBy);
     res.status(200).json(result);
 };
 export const updateAmountFeeDueHandler = async (req: Request<{}, {}, UpdateAmountFeeDueSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { feePaymentId, newDueAmount, discountReason, status } = req.body;
     const result = await updateAmountFeeDue(feePaymentId, +newDueAmount, discountReason, status);
+    res.status(200).json(result);
+};
+
+export const applyCreditHandler = async (req: Request<{}, {}, ApplyCreditDataSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { feePaymentId, creditToApply ,remarks} = req.body;
+    const result = await applyStudentCredit(feePaymentId, +creditToApply, remarks);
     res.status(200).json(result);
 };
 
