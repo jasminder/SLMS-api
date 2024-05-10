@@ -1930,8 +1930,8 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
         return updatedFeePayment;
     });
 }
-/*apply credit balanc in student table*/
 
+/*apply credit balanc in student table*/
 export async function applyStudentCredit(feePaymentId: string, creditToApply: number, remarks: string) {
     if (creditToApply < 0) {
         throw customError('Invalid credit amount specified.', 'fail', 400, true);
@@ -2021,7 +2021,30 @@ export async function getPaymentsByFeePaymentId(feePaymentId: string) {
 
     return payments;
 }
-/*apply credit balanc in student table*/
+/*get invoice data for generating invoice*/
+
+export async function fetchFeePaymentByIdForInvoice(feePaymentId: string) {
+    const feePayment = await db.feePayment.findUnique({
+        where: { id: parseInt(feePaymentId) },
+        include: {
+            feeTemplate: true, // Assuming you might want to include related data like feeTemplate
+            studentTermFee: {
+                include: {
+                    student: true,
+                    term: true
+                }
+            },
+            paymentInstallment: true // Include details about payment installments if needed
+        }
+    });
+
+    if (!feePayment) {
+        throw new Error(`FeePayment with ID ${feePaymentId} not found.`);
+    }
+
+    return feePayment;
+}
+
 /*-----------------fee-----------------------*/
 export async function findActiveStudentEnrolledSubjects(studentId: string, termId: string) {
     // Fetch all enrollments for the student

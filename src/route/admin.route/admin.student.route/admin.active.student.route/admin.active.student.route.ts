@@ -11,6 +11,7 @@ import {
     defaultSelectActiveStudentsSchema,
     deleteClassAssignmentSchema,
     deleteLeaveApplicationSchema,
+    fetchFeePaymentByIdForInvoiceSchema,
     fetchLeavesForStudentSchema,
     fetchRecentSchoolAttendanceSchema,
     findActiveStudentEnrolledSubjectsSchema,
@@ -42,6 +43,7 @@ import {
     deleteClassAssignmentHandler,
     deleteLeaveApplicationHandler,
     enrollActiveStudentHandler,
+    fetchFeePaymentByIdForInvoiceHandler,
     fetchLeavesForStudentHandler,
     fetchRecentSchoolAttendanceForStudentHandler,
     findActiveStudentByIdHandler,
@@ -129,6 +131,8 @@ adminActiveStudentRoute.route('/fee-payment-detail/:id').get(validate(findUnique
 adminActiveStudentRoute.route('/fee-payment-update-amountPaid-at-school').patch(validate(updateAmountPaidAtSchoolSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountPaidAtSchoolHandler));
 
 adminActiveStudentRoute.route('/update-amount-due').patch(validate(updateAmountFeeDueSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountFeeDueHandler));
+
+adminActiveStudentRoute.route('/fee-payment-for-invoice-generation/:feePaymentId').get(validate(fetchFeePaymentByIdForInvoiceSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchFeePaymentByIdForInvoiceHandler));
 
 // Assuming you are using Express and the route is defined in a specific router file
 adminActiveStudentRoute.patch('/apply-credit-balance-to-student-feePayment-by-id', validate(applyCreditSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(applyCreditHandler));

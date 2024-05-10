@@ -11,6 +11,7 @@ import {
     deleteClassAssignment,
     deleteLeaveApplication,
     enrollActiveStudent,
+    fetchFeePaymentByIdForInvoice,
     fetchLeavesForStudent,
     fetchRecentSchoolAttendanceForStudent,
     findActiveStudentById,
@@ -202,6 +203,12 @@ export const applyCreditHandler = async (req: Request<{}, {}, ApplyCreditDataSch
     const { feePaymentId, creditToApply, remarks } = req.body;
     const result = await applyStudentCredit(feePaymentId, +creditToApply, remarks);
     res.status(200).json(result);
+};
+
+export const fetchFeePaymentByIdForInvoiceHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const { feePaymentId } = req.params;
+        const feePayment = await fetchFeePaymentByIdForInvoice(feePaymentId);
+        res.status(200).json(feePayment);
 };
 
 export const getPaymentsByFeePaymentIdHandler = async (req: Request<GetPaymentsByFeePaymentIdSchema['params'],{},{},{}>, res: Response, next: NextFunction) => {

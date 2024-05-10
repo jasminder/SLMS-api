@@ -137,6 +137,14 @@ export const getPaymentsByFeePaymentIdSchema = z.object({
     })
 });
 export type GetPaymentsByFeePaymentIdSchema = z.infer<typeof getPaymentsByFeePaymentIdSchema>;
+
+export const fetchFeePaymentByIdForInvoiceSchema = z.object({
+    params: z.object({
+        feePaymentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type FetchFeePaymentByIdForInvoiceSchema = z.infer<typeof fetchFeePaymentByIdForInvoiceSchema>;
+
 /* find active subjects for active students*/
 export const findActiveStudentEnrolledSubjectsSchema = z.object({
     params: z.object({
