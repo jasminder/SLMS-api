@@ -1796,6 +1796,11 @@ export async function findFeePaymentById(id: string) {
                         }
                     }
                 }
+            },
+            feeTemplate: {
+                select: {
+                    invoiceName: true
+                }
             }
         }
     });
@@ -1827,7 +1832,7 @@ export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount:
             updateStatus = PaymentStatus.PAID; // Update status to PAID only if due amount is zero or less
         }
         // Validate client-provided paymentStatus
-        if (paymentStatus === 'PAID' && newDueAmount >= 0) {
+        if (paymentStatus === 'PAID' && newDueAmount > 0) {
             throw customError('Invalid payment status: "PAID" cannot be applied unless the due amount is zero.', 'fail', 400, true);
         }
         if (paymentStatus === 'PENDING' && newDueAmount === 0) {
@@ -2003,7 +2008,19 @@ export async function applyStudentCredit(feePaymentId: string, creditToApply: nu
         };
     });
 }
+/*get all payment installments*/
+export async function getPaymentsByFeePaymentId(feePaymentId: string) {
+    const payments = await db.paymentInstallment.findMany({
+        where: {
+            feePaymentId: parseInt(feePaymentId)
+        },
+        include: {
+            feePayment: true
+        }
+    });
 
+    return payments;
+}
 /*apply credit balanc in student table*/
 /*-----------------fee-----------------------*/
 export async function findActiveStudentEnrolledSubjects(studentId: string, termId: string) {

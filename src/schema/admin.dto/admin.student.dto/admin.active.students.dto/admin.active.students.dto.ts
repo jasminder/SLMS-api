@@ -125,12 +125,18 @@ export const applyCreditSchema = z.object({
     body: z.object({
         feePaymentId: z.string(),
         creditToApply: z.string(),
-remarks: z.string(),
+        remarks: z.string()
     })
 });
 
 export type ApplyCreditDataSchema = z.infer<typeof applyCreditSchema>;
 
+export const getPaymentsByFeePaymentIdSchema = z.object({
+    params: z.object({
+        feePaymentId: z.string().min(1)
+    })
+});
+export type GetPaymentsByFeePaymentIdSchema = z.infer<typeof getPaymentsByFeePaymentIdSchema>;
 /* find active subjects for active students*/
 export const findActiveStudentEnrolledSubjectsSchema = z.object({
     params: z.object({

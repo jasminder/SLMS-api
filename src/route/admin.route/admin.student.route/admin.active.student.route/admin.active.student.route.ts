@@ -21,6 +21,7 @@ import {
     findTermSubjectGroupIdEnrolledSubjectsSchema,
     findUniqueActiveStudentSchema,
     findUniqueFeePaymentSchema,
+    getPaymentsByFeePaymentIdSchema,
     manageClassSchema,
     markAbsentByEditSchoolCheckInAttendanceForStudentSchema,
     markPresentByEditSchoolCheckInAttendanceForStudentSchema,
@@ -54,6 +55,7 @@ import {
     findTermSubjectGroupIdEnrolledSubjectsHandler,
     findTermToEnrollActiveStudentHandler,
     findUniqueStudentClassDetailsHandler,
+    getPaymentsByFeePaymentIdHandler,
     getStudentAttendanceByIdHandler,
     manageClassesHandler,
     markAbsentByEditSchoolCheckInAttendanceForStudentHandler,
@@ -130,6 +132,7 @@ adminActiveStudentRoute.route('/update-amount-due').patch(validate(updateAmountF
 
 // Assuming you are using Express and the route is defined in a specific router file
 adminActiveStudentRoute.patch('/apply-credit-balance-to-student-feePayment-by-id', validate(applyCreditSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(applyCreditHandler));
+adminActiveStudentRoute.get('/payment-installments-details-by-feepayment-Id/:feePaymentId', validate(getPaymentsByFeePaymentIdSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(getPaymentsByFeePaymentIdHandler));
 
 
 

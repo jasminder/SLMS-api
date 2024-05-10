@@ -25,6 +25,7 @@ import {
     findTermSubjectGroupIdEnrolledSubjects,
     findTermToEnrollActiveStudent,
     findUniqueStudentClassDetails,
+    getPaymentsByFeePaymentId,
     manageClasses,
     markAbsentByEditSchoolCheckInAttendanceForStudent,
     markPresentByEditSchoolCheckInAttendanceForStudent,
@@ -55,6 +56,7 @@ import {
     FindTermSubjectGroupIdEnrolledSubjectsSchema,
     FindUniqueActiveStudentSchema,
     FindUniqueFeePaymentSchema,
+    GetPaymentsByFeePaymentIdSchema,
     ManageClassSchema,
     MarkAbsentByEditSchoolCheckInAttendanceForStudentSchema,
     MarkPresentByEditSchoolCheckInAttendanceForStudentSchema,
@@ -197,11 +199,16 @@ export const updateAmountFeeDueHandler = async (req: Request<{}, {}, UpdateAmoun
 };
 
 export const applyCreditHandler = async (req: Request<{}, {}, ApplyCreditDataSchema['body'], {}>, res: Response, next: NextFunction) => {
-    const { feePaymentId, creditToApply ,remarks} = req.body;
+    const { feePaymentId, creditToApply, remarks } = req.body;
     const result = await applyStudentCredit(feePaymentId, +creditToApply, remarks);
     res.status(200).json(result);
 };
 
+export const getPaymentsByFeePaymentIdHandler = async (req: Request<GetPaymentsByFeePaymentIdSchema['params'],{},{},{}>, res: Response, next: NextFunction) => {
+    const feePaymentId = req.params.feePaymentId;
+    const payments = await getPaymentsByFeePaymentId(feePaymentId);
+    res.status(200).json(payments);
+};
 /* find enrolled subjects for active students*/
 
 export const findActiveStudentEnrolledSubjectsHandler = async (req: Request<FindActiveStudentEnrolledSubjectsSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
