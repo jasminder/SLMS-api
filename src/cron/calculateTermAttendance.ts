@@ -1,6 +1,5 @@
-import { Student } from '@prisma/client';
-import { db } from '../utils/db.server';
 
+import { db } from '../utils/db.server';
 const cron = require('node-cron');
 
 // Schedule the task to run at the end of each term or another suitable interval
