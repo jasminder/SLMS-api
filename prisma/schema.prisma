@@ -401,6 +401,7 @@ model FeeTemplate {
   amount             Int
   dueDate            DateTime
   notes              String
+  lastCronJobRun     DateTime?
   interval           PaymentType
   feePayments        FeePayment[]
   termId             Int? // Optional link to Term
