@@ -41,6 +41,7 @@ import feedbackRoute from './src/route/teacher.route/teacher.feedback.route/teac
 import './src/cron/sendFeedBackEmails';
 import './src/cron/sendConsolidatedEmailForParents';
 import './src/cron/calculateTermAttendance';
+import './src/cron/checkAndMarkOverduePayments';
 import commentRoute from './src/route/admin.route/admin.comment.route/admin.comment.route';
 import interactionRoute from './src/route/admin.route/admin.interactions.route/admin.interactions.route';
 import adminInstitutionRoute from './src/route/admin.route/admin.institution.route/admin.institution.route';
