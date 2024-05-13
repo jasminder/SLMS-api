@@ -1,4 +1,4 @@
-import { PaymentStatus } from '@prisma/client';
+import { PaymentMethod, PaymentStatus } from '@prisma/client';
 import { db } from '../../../utils/db.server';
 
 export async function getAllFeePayments(search = '', page: number, termId: number, paymentStatus = '', dueAmountSort = 'asc', invoiceName = '') {
@@ -392,8 +392,10 @@ export async function feeDashboardQuery() {
             feePayment: {
                 feeTemplate: {
                     termId: currentTerm?.id
-                },
-                hasDiscount: false
+                }
+            },
+            NOT: {
+                paymentMethod: PaymentMethod.DISCOUNT
             }
         }
     });
@@ -408,8 +410,10 @@ export async function feeDashboardQuery() {
                     termId: {
                         not: currentTerm?.id
                     }
-                },
-                hasDiscount: false
+                }
+            },
+            NOT: {
+                paymentMethod: PaymentMethod.DISCOUNT
             }
         }
     });

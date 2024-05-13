@@ -2021,6 +2021,9 @@ export async function getPaymentsByFeePaymentId(feePaymentId: string) {
         },
         include: {
             feePayment: true
+        },
+        orderBy: {
+            createdAt: 'desc'
         }
     });
 
