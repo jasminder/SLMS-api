@@ -2,14 +2,18 @@ import { NextFunction, Request, Response } from 'express';
 import {
     createFeeTemplateAndPayments,
     defaultSelectActiveStudentsForFeeCreation,
+    fetchFeeTemplatesByTerm,
     findActiveStudentsForFeeCreation,
     findAllCurrentTermSubjectGroups,
     searchActiveStudentsForFeeCreation,
-    selectActiveStudentsForFeeCreation
+    selectActiveStudentsForFeeCreation,
+    undoCreateFeeTemplateAndPayments
 } from '../../../service/admin.service/admin.fee.service/admin.fee.service';
 import {
     DefaultSelectActiveStudentsForFeeCreationSchema,
     FeeTemplateDataSchema,
+    FeeTemplateQueryByTermIdSchema,
+    FeeTemplateUndoSchema,
     FindAllActiveStudentsForFeeCreationSchema,
     SearchActiveStudentsForfeeCreationSchema,
     SelectActiveStudentsForFeeCreationSchema
@@ -24,7 +28,11 @@ export const createFeeTemplateHandler = async (req: Request<{}, {}, FeeTemplateD
     const result = await createFeeTemplateAndPayments(feeTemplateData);
     res.status(201).json(result);
 };
-
+export const undoCreateFeeTemplateHandler = async (req: Request<FeeTemplateUndoSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const {feeTemplateId} = req.params;
+    const result = await undoCreateFeeTemplateAndPayments(+feeTemplateId);
+    res.status(200).json(result);
+};
 export const getCurrentTermSubjectGroupsHandler = async (req: Request, res: Response, next: NextFunction) => {
     const termSubjectGroups = await findAllCurrentTermSubjectGroups();
     res.status(200).json(termSubjectGroups);
@@ -64,4 +72,9 @@ export const selectActiveStudentsForFeeCreationHandler = async (req: Request<{},
         const searchResult = await selectActiveStudentsForFeeCreation(search, +page, +termId, +termSubjectGroupId);
         res.status(200).json(searchResult);
     }
+};
+export const fetchFeeTemplatesByTermHandler = async (req: Request<{}, {}, {}, FeeTemplateQueryByTermIdSchema['query']>, res: Response, next: NextFunction) => {
+    const {termId} = req.query;
+    const feeTemplates = await fetchFeeTemplatesByTerm(+termId);
+    res.status(200).json({ feeTemplates });
 };

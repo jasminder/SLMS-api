@@ -1737,7 +1737,7 @@ export async function findStudentFeeDetails(studentId: number, termId: number) {
             }
         }
     });
-    console.log(studentTermFees);
+
     return studentTermFees;
 }
 
@@ -1819,7 +1819,7 @@ export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount:
             throw customError('Fee payment record not found', 'fail', 400, true);
         }
         const newDueAmount = feePayment.dueAmount - parseInt(paidAmount);
-        console.log(newDueAmount);
+
         let updateStatus: PaymentStatus;
         let overDue = false;
         if (newDueAmount > 0 && new Date() > new Date(feePayment.dueDate)) {
@@ -1969,9 +1969,10 @@ export async function applyStudentCredit(feePaymentId: string, creditToApply: nu
         let newDueAmount = feePayment.dueAmount - creditToApply;
         let remainingCredit = student.creditBalance - creditToApply;
 
-        if (newDueAmount < 0) {
+        if (newDueAmount <= 0) {
             newDueAmount = 0;
             updateStatus = PaymentStatus.PAID;
+            console.log(updateStatus);
             overDue = false;
         }
 
@@ -2030,7 +2031,11 @@ export async function fetchFeePaymentByIdForInvoice(feePaymentId: string) {
             feeTemplate: true, // Assuming you might want to include related data like feeTemplate
             studentTermFee: {
                 include: {
-                    student: true,
+                    student: {
+                        include: {
+                            personalDetails: true
+                        }
+                    },
                     term: true
                 }
             },

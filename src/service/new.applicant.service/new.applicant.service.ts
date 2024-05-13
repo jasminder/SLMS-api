@@ -19,8 +19,6 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
             firstName,
             lastName,
             DOB: new Date(DOB),
-
-            email
         },
         include: {
             student: {
@@ -34,7 +32,7 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
         if (existingStudent.student.role == 'APPLICANT') {
             throw customError(`The name, DOB and email given is already used for submitting an application. `, 'fail', 404, true);
         } else if (existingStudent.student.role == 'STUDENT') {
-            throw customError(`TThe name, DOB and email given belongs to an existing student. `, 'fail', 404, true);
+            throw customError(`The name, DOB and email given belongs to an existing student. `, 'fail', 404, true);
         } else if (existingStudent.student.role == 'ALUMNI') {
             throw customError(`The name, DOB and email given belongs to an alumni. please contact the school. `, 'fail', 404, true);
         }

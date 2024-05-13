@@ -356,6 +356,7 @@ model PaymentInstallment {
   paymentStatus PaymentStatus @default(PENDING)
   remarks       String        @default("No remarks")
   receivedBy    String?
+  transactionId String?
   feePayment    FeePayment    @relation(fields: [feePaymentId], references: [id])
 
   @@index([feePaymentId])

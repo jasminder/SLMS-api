@@ -173,7 +173,6 @@ import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
 import { PaymentType } from '@prisma/client';
 
-
 export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
     const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
 
@@ -185,7 +184,7 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
         const endDate = new Date(dueDate);
         endDate.setHours(23, 59, 59, 999);
         // Check if a FeeTemplate with the same dueDate, termSubjectGroupId, and interval already exists
-        const existingFeeTemplate = await prisma.feeTemplate.findFirst({
+        let feeTemplate = await prisma.feeTemplate.findFirst({
             where: {
                 termSubjectGroupId: +termSubjectGroupId,
                 dueDate: {
@@ -196,32 +195,58 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                 interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM
             }
         });
-        if (existingFeeTemplate) {
-            throw customError(
-                `A FeeTemplate with the specified criteria already exists.- same invoice name- ${invoiceName} , due date-${dueDate}  and feeTemplate-${termSubjectGroupName}`,
-                'fail',
-                400,
-                true
-            );
-        }
-        // Create FeeTemplate inside the transaction
-        const feeTemplate = await prisma.feeTemplate.create({
-            data: {
-                groupName: termSubjectGroupName,
-                month,
-                year,
-                termName,
-                termId: +termId,
-                termSubjectGroupId: +termSubjectGroupId,
-                amount: +amount,
-                dueDate: new Date(dueDate),
-                interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM,
-                invoiceName,
-                notes
+        if (feeTemplate) {
+            // Check for existing FeePayment records for the provided studentIds
+            const existingFeePayments = await prisma.feePayment.findMany({
+                where: {
+                    feeTemplateId: feeTemplate.id,
+                    studentTermFee: {
+                        studentId: {
+                            in: studentIds.map((id) => parseInt(id))
+                        }
+                    }
+                },
+                select: {
+                    studentTermFee: {
+                        select: {
+                            studentId: true
+                        }
+                    }
+                }
+            });
+            if (existingFeePayments.length > 0) {
+                // Extract studentIds from existing payments
+                const existingStudentIds = existingFeePayments.map((fp) => fp.studentTermFee?.studentId);
+                throw customError(`Fee payments already exist for these student IDs under the specified fee template: ${existingStudentIds.join(', ')}`, 'fail', 400, true);
             }
-        });
+        }
 
-        // Create FeePayment records for each student also inside the transaction
+        if (!feeTemplate) {
+            const existingInvoice = await prisma.feeTemplate.findFirst({
+                where: {
+                    invoiceName: invoiceName
+                }
+            });
+
+            if (existingInvoice) {
+                throw customError(`A FeeTemplate with invoice name '${invoiceName}' already exists`, 'fail', 400, true);
+            }
+            feeTemplate = await prisma.feeTemplate.create({
+                data: {
+                    groupName: termSubjectGroupName,
+                    month,
+                    year,
+                    termName,
+                    termId: +termId,
+                    termSubjectGroupId: +termSubjectGroupId,
+                    amount: +amount,
+                    dueDate: new Date(dueDate),
+                    interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM,
+                    invoiceName,
+                    notes
+                }
+            });
+        }
         const feePayments = await Promise.all(
             studentIds
                 .map(async (studentId) => {
@@ -238,13 +263,13 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     }
 
                     const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
-                    const invoiceId = `${student.akaalId}_${termSubjectGroupId}_${monthNumber}`;
+                    const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
 
                     return prisma.feePayment.create({
                         data: {
                             invoiceId,
                             studentTermFeeId: studentTermFee.id,
-                            feeTemplateId: feeTemplate.id,
+                            feeTemplateId: feeTemplate?.id,
                             dueDate: new Date(dueDate),
                             dueAmount: +amount,
                             status: 'PENDING',
@@ -255,12 +280,41 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                 })
                 .filter((task) => task !== null)
         ); // Filter out null tasks
-
         return {
             message: 'FeeTemplate and FeePayments created successfully.',
             feeTemplate,
             feePayments
         };
+    });
+}
+// undoCreateFeeTemplateAndPayments(7)
+
+export async function undoCreateFeeTemplateAndPayments(feeTemplateId: number) {
+    return db.$transaction(async (prisma) => {
+        // First, find all FeePayments associated with the FeeTemplate
+        const feePayments = await prisma.feePayment.findMany({
+            where: { feeTemplateId: feeTemplateId },
+            include: { paymentInstallment: true } // Include PaymentInstallments to check and delete them
+        });
+
+        // Delete PaymentInstallments for each FeePayment
+        for (const feePayment of feePayments) {
+            await prisma.paymentInstallment.deleteMany({
+                where: { feePaymentId: feePayment.id }
+            });
+        }
+
+        // Now, delete FeePayments after all related PaymentInstallments are removed
+        await prisma.feePayment.deleteMany({
+            where: { feeTemplateId: feeTemplateId }
+        });
+
+        // Finally, delete the FeeTemplate itself
+        await prisma.feeTemplate.delete({
+            where: { id: feeTemplateId }
+        });
+
+        return { message: 'FeeTemplate and related FeePayments and PaymentInstallments successfully deleted.' };
     });
 }
 
@@ -1079,4 +1133,15 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
         });
         return { activeStudents, count };
     }
+}
+
+export async function fetchFeeTemplatesByTerm(termId: number) {
+    return db.feeTemplate.findMany({
+        where: {
+            termId: termId
+        },
+        include: {
+            feePayments: true // Optionally include related feePayments if needed
+        }
+    });
 }

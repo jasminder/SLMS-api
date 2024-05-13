@@ -53,3 +53,19 @@ export const selectActiveStudentsForFeeCreationSchema = z.object({
     })
 });
 export type SelectActiveStudentsForFeeCreationSchema = z.infer<typeof selectActiveStudentsForFeeCreationSchema>;
+
+export const feeTemplateUndoSchema = z.object({
+    params: z.object({
+        feeTemplateId: z.string()
+    })
+});
+
+export type FeeTemplateUndoSchema = z.infer<typeof feeTemplateUndoSchema>;
+
+export const feeTemplateQueryByTermIdSchema = z.object({
+    query: z.object({
+        termId: z.string().min(1, 'Term ID is required')
+    })
+});
+
+export type FeeTemplateQueryByTermIdSchema = z.infer<typeof feeTemplateQueryByTermIdSchema>;
