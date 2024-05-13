@@ -27,6 +27,14 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
                     }
                 },
                 {
+                    feeTemplate: {
+                        invoiceName: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                {
                     studentTermFee: {
                         student: {
                             personalDetails: {
@@ -103,6 +111,14 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
                     }
                 },
                 {
+                    feeTemplate: {
+                        invoiceName: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                {
                     studentTermFee: {
                         student: {
                             personalDetails: {
@@ -154,6 +170,14 @@ export async function selectAllFeePayments(search = '', page: number, termId: nu
                 {
                     feeTemplate: {
                         notes: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                {
+                    feeTemplate: {
+                        invoiceName: {
                             contains: search,
                             mode: 'insensitive'
                         }
@@ -238,6 +262,14 @@ export async function selectAllFeePayments(search = '', page: number, termId: nu
                     }
                 },
                 {
+                    feeTemplate: {
+                        invoiceName: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                {
                     studentTermFee: {
                         student: {
                             personalDetails: {
@@ -295,4 +327,125 @@ export async function getAllTerms() {
             currentTerm: true
         }
     });
+}
+
+// export async function calculateFeeDetails(termId: string) {
+//     const termIdInt = termId; // Ensure the termId is an integer
+//     const feeTemplates = await db.feeTemplate.findMany({
+//         where: { termId: +termIdInt },
+//         include: {
+//             feePayments: true // Include fee payments related to the fee template
+//         }
+//     });
+
+//     let totalInvoiced = 0;
+//     let totalDue = 0;
+//     let totalDiscount = 0;
+//     let totalOverdue = 0; // Initialize total overdue amount
+
+//     feeTemplates.forEach((template) => {
+//         template.feePayments.forEach((payment) => {
+//             if (payment.isActive) {
+//                 totalInvoiced += payment.feeAmount || 0;
+//                 totalDue += payment.dueAmount || 0;
+//                 totalDiscount += payment.discountAmount || 0;
+
+//                 // Check if the payment is overdue and add to the total overdue amount
+//                 if (payment.hasOverDue) {
+//                     totalOverdue += payment.dueAmount || 0;
+//                 }
+//             }
+//         });
+//     });
+
+//     return {
+//         totalInvoiced,
+//         totalDue,
+//         totalDiscount,
+//         totalOverdue // Return total overdue amount along with other totals
+//     };
+// }
+
+export async function feeDashboardQuery() {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    const aggregation = await db.feePayment.aggregate({
+        _sum: {
+            feeAmount: true,
+            dueAmount: true,
+            discountAmount: true
+        },
+        where: {
+            feeTemplate: {
+                termId: currentTerm?.id
+            }
+        }
+    });
+    const paidAmountCurrentTerm = await db.paymentInstallment.aggregate({
+        _sum: {
+            paidAmount: true
+        },
+        where: {
+            feePayment: {
+                feeTemplate: {
+                    termId: currentTerm?.id
+                },
+                hasDiscount: false
+            }
+        }
+    });
+
+    const paidAmountPastTerms = await db.paymentInstallment.aggregate({
+        _sum: {
+            paidAmount: true
+        },
+        where: {
+            feePayment: {
+                feeTemplate: {
+                    termId: {
+                        not: currentTerm?.id
+                    }
+                },
+                hasDiscount: false
+            }
+        }
+    });
+    // Calculate total overdue amount where hasOverDue is true
+    const overdueAggregation = await db.feePayment.aggregate({
+        _sum: {
+            dueAmount: true // Only sum dueAmount where hasOverDue is true
+        },
+        where: {
+            feeTemplate: {
+                termId: currentTerm?.id
+            },
+            hasOverDue: true
+        }
+    });
+    const overduePastTermsAggregation = await db.feePayment.aggregate({
+        _sum: {
+            dueAmount: true // Sum dueAmount where hasOverDue is true for all past terms
+        },
+        where: {
+            feeTemplate: {
+                termId: {
+                    not: currentTerm?.id
+                }
+            },
+            hasOverDue: true
+        }
+    });
+
+    return {
+        totalInvoiced: aggregation._sum.feeAmount || 0,
+        totalDue: aggregation._sum.dueAmount || 0,
+        totalDiscount: aggregation._sum.discountAmount || 0,
+        totalOverdue: overdueAggregation._sum.dueAmount || 0,
+        totalOverduePastTerms: overduePastTermsAggregation._sum.dueAmount || 0,
+        totalPaidCurrentTerm: paidAmountCurrentTerm._sum.paidAmount || 0,
+        totalPaidPastTerms: paidAmountPastTerms._sum.paidAmount || 0
+    };
 }

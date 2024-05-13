@@ -3,7 +3,7 @@ import { db } from '../../../utils/db.server';
 export const checkAndMarkOverduePayments = async () => {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0); // Normalize current date to remove time
-    const tempdate=currentDate
+    const tempdate = currentDate;
 
     // Fetch templates that are due on or before today and have not been checked after the due date was last set or updated
     const templates = await db.feeTemplate.findMany({
@@ -27,13 +27,13 @@ export const checkAndMarkOverduePayments = async () => {
                     const paymentUpdates = overduePayments.map((payment) =>
                         prisma.feePayment.update({
                             where: { id: payment.id },
-                            data: { status: 'OVERDUE' }
+                            data: { status: 'OVERDUE', isActive: false }
                         })
                     );
 
                     const templateUpdate = prisma.feeTemplate.update({
                         where: { id: template.id },
-                        data: { lastCronJobRun: tempdate} // Updating the last run time
+                        data: { lastCronJobRun: tempdate } // Updating the last run time
                     });
 
                     // Await all updates within the transaction

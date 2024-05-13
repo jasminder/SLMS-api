@@ -88,50 +88,97 @@ study the context clearly and be ready for my next questions. You are a senior d
 
 ---
 
-ok , using that schema the way i create logic is by using route, controller , schema and service where route is adminFeeRoute.route('/create-fee-template-and-feePayments-records-for-active-students-by-subject-group').post(validate(feeTemplateSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createFeeTemplateHandler));  and controller is export const createFeeTemplateHandler = async (req: Request<{}, {}, FeeTemplateDataSchema['body'], {}>, res: Response, next: NextFunction) => {
-    const feeTemplateData = req.body;
-    const result = await createFeeTemplateAndPayments(feeTemplateData);
-    res.status(201).json(result);
-};
- and schema is export const feeTemplateSchema = z.object({
-    body: z.object({
-        studentIds: z.array(z.string()),
-        interval: z.string(),
-        invoiceName: z.string(),
-        notes: z.string(),
-        month: z.string(),
-        year: z.string(),
-        termName: z.string(),
-        termId: z.string(),
-        termSubjectGroupName: z.string(),
-        termSubjectGroupId: z.string(),
-        dueDate: z.string(),
-        amount: z.string()
-    })
-});
-export type FeeTemplateDataSchema = z.infer<typeof feeTemplateSchema>; and service logic is export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
-    const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes,invoiceName } = feeTemplateData;
+ok , using that schema the way i create logic is by using route, controller , schema and service where route is import express from 'express'; import validate from
+'../../../middleware/validateResource'; import { asyncErrorHandler } from '../../../utils/asyncErrorHandler'; import { protectRoute } from '../../../middleware/protectRoutes'; import { restrict } from
+'../../../middleware/restrict'; import { defaultSelectActiveStudentsForFeeCreationSchema, feeTemplateQueryByTermIdSchema, feeTemplateSchema, feeTemplateUndoSchema,
+findAllActiveStudentsForFeeCreationSchema, searchActiveStudentsForfeeCreationSchema, selectActiveStudentsForFeeCreationSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto'; import {
+createFeeTemplateHandler, defaultSelectActiveStudentsForFeeCreationHandler, fetchFeeTemplatesByTermHandler, findActiveStudentsForFeeCreationHandler, getCurrentTermSubjectGroupsHandler,
+searchActiveStudentsForFeeCreationHandler, selectActiveStudentsForFeeCreationHandler, undoCreateFeeTemplateHandler } from
+'../../../controller/admin.controller/admin.fee.controller/admin.fee.controller';
+
+const adminFeeRoute = express.Router();
+
+// routes/feeTemplateRoutes.js adminFeeRoute .route('/create-fee-template-and-feePayments-records-for-active-students-by-subject-group') .post(validate(feeTemplateSchema), protectRoute,
+restrict('ADMIN'), asyncErrorHandler(createFeeTemplateHandler)); controller is export const createFeeTemplateHandler = async (req: Request<{}, {}, FeeTemplateDataSchema['body'], {}>, res: Response,
+next: NextFunction) => { const feeTemplateData = req.body; const result = await createFeeTemplateAndPayments(feeTemplateData); res.status(201).json(result); }; schema is // schema/feeTemplateSchema.js
+import { z } from 'zod';
+
+export const feeTemplateSchema = z.object({ body: z.object({ studentIds: z.array(z.string()), interval: z.string(), invoiceName: z.string(), notes: z.string(), month: z.string(), year: z.string(),
+termName: z.string(), termId: z.string(), termSubjectGroupName: z.string(), termSubjectGroupId: z.string(), dueDate: z.string(), amount: z.string() }) }); export type FeeTemplateDataSchema =
+z.infer<typeof feeTemplateSchema>; and service logic is export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) { const { studentIds, month, year, termId,
+termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
 
     // Execute all operations in a transaction
     return db.$transaction(async (prisma) => {
-        // Create FeeTemplate inside the transaction
-        const feeTemplate = await prisma.feeTemplate.create({
-            data: {
-                groupName: termSubjectGroupName,
-                month,
-                year,
-                termName,
-                termId: +termId,
+        // Parse the dueDate and set it to the start of the day for comparison
+        const startDate = new Date(dueDate);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(dueDate);
+        endDate.setHours(23, 59, 59, 999);
+        // Check if a FeeTemplate with the same dueDate, termSubjectGroupId, and interval already exists
+        let feeTemplate = await prisma.feeTemplate.findFirst({
+            where: {
                 termSubjectGroupId: +termSubjectGroupId,
-                amount: +amount,
-                dueDate: new Date(dueDate),
-                interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM,
+                dueDate: {
+                    gte: startDate,
+                    lte: endDate
+                },
                 invoiceName,
-                notes
+                interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM
             }
         });
+        if (feeTemplate) {
+            // Check for existing FeePayment records for the provided studentIds
+            const existingFeePayments = await prisma.feePayment.findMany({
+                where: {
+                    feeTemplateId: feeTemplate.id,
+                    studentTermFee: {
+                        studentId: {
+                            in: studentIds.map((id) => parseInt(id))
+                        }
+                    }
+                },
+                select: {
+                    studentTermFee: {
+                        select: {
+                            studentId: true
+                        }
+                    }
+                }
+            });
+            if (existingFeePayments.length > 0) {
+                // Extract studentIds from existing payments
+                const existingStudentIds = existingFeePayments.map((fp) => fp.studentTermFee?.studentId);
+                throw customError(`Fee payments already exist for these student IDs under the specified fee template: ${existingStudentIds.join(', ')}`, 'fail', 400, true);
+            }
+        }
 
-        // Create FeePayment records for each student also inside the transaction
+        if (!feeTemplate) {
+            const existingInvoice = await prisma.feeTemplate.findFirst({
+                where: {
+                    invoiceName: invoiceName
+                }
+            });
+
+            if (existingInvoice) {
+                throw customError(`A FeeTemplate with invoice name '${invoiceName}' already exists`, 'fail', 400, true);
+            }
+            feeTemplate = await prisma.feeTemplate.create({
+                data: {
+                    groupName: termSubjectGroupName,
+                    month,
+                    year,
+                    termName,
+                    termId: +termId,
+                    termSubjectGroupId: +termSubjectGroupId,
+                    amount: +amount,
+                    dueDate: new Date(dueDate),
+                    interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM,
+                    invoiceName,
+                    notes
+                }
+            });
+        }
         const feePayments = await Promise.all(
             studentIds
                 .map(async (studentId) => {
@@ -148,13 +195,13 @@ export type FeeTemplateDataSchema = z.infer<typeof feeTemplateSchema>; and servi
                     }
 
                     const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
-                    const invoiceId = `${student.akaalId}_${termSubjectGroupId}_${monthNumber}`;
+                    const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
 
                     return prisma.feePayment.create({
                         data: {
                             invoiceId,
                             studentTermFeeId: studentTermFee.id,
-                            feeTemplateId: feeTemplate.id,
+                            feeTemplateId: feeTemplate?.id,
                             dueDate: new Date(dueDate),
                             dueAmount: +amount,
                             status: 'PENDING',
@@ -165,15 +212,14 @@ export type FeeTemplateDataSchema = z.infer<typeof feeTemplateSchema>; and servi
                 })
                 .filter((task) => task !== null)
         ); // Filter out null tasks
-
         return {
             message: 'FeeTemplate and FeePayments created successfully.',
             feeTemplate,
             feePayments
         };
     });
-}
 
+} study my pattern as you are a senior database and backend engineer. Wait for my questions and do not reply
 
 study my schema as you are a senior database and backend engineer. Wait for my questions and do not reply
 

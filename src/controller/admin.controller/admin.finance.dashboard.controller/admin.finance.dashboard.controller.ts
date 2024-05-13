@@ -1,6 +1,17 @@
 import { NextFunction, Request, Response } from 'express';
-import { getAllFeePayments, getAllInvoiceNamesByTermId, getAllTerms, selectAllFeePayments } from '../../../service/admin.service/admin.finance.dashboard.service/admin.finance.dashboard.service';
-import { FindAllFeePaymentRecordsSchema, GetAllInvoiceNamesByTermIdSchema, SelectAllFeePaymentsSchema } from '../../../schema/admin.dto/admin.finance.dashboard.dto/admin.finance.dashboard.dto';
+import {
+    feeDashboardQuery,
+    getAllFeePayments,
+    getAllInvoiceNamesByTermId,
+    getAllTerms,
+    selectAllFeePayments
+} from '../../../service/admin.service/admin.finance.dashboard.service/admin.finance.dashboard.service';
+import {
+
+    FindAllFeePaymentRecordsSchema,
+    GetAllInvoiceNamesByTermIdSchema,
+    SelectAllFeePaymentsSchema
+} from '../../../schema/admin.dto/admin.finance.dashboard.dto/admin.finance.dashboard.dto';
 
 export const getAllFeePaymentsHandler = async (req: Request<{}, {}, {}, FindAllFeePaymentRecordsSchema['query']>, res: Response, next: NextFunction) => {
     const { page, termId, dueAmountSort, paymentStatus, search, invoiceName } = req.query;
@@ -34,4 +45,10 @@ export const getAllInvoiceNamesByTermIdHandler = async (req: Request<{}, {}, {},
 export const getAllTermsHandler = async (req: Request, res: Response, next: NextFunction) => {
     const terms = await getAllTerms();
     res.status(200).json(terms);
+};
+
+export const feeDashboardQueryHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const { termId } = req.params;
+    const FeeDashbordDetails = await feeDashboardQuery();
+    res.json({ FeeDashbordDetails });
 };

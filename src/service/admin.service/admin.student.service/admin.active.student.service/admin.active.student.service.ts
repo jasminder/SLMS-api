@@ -1899,7 +1899,11 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
         if (newDueAmount === 0 && status !== 'PAID') {
             throw customError('Due amount can only be zero if the status is PAID.', 'fail', 400, true);
         }
-
+        if (newDueAmount === 0 && status === 'OVERDUE') {
+            throw customError('Due amount cannot be zero if the status is OVERDUE.', 'fail', 400, true);
+        }
+        const originalFeeAmount = feePayment.feeAmount || 0; // Assume feeAmount holds the initial total fee before any discounts
+        const newDiscountAmount = originalFeeAmount - newDueAmount;
         const oldDueAmount = feePayment.dueAmount;
         const discountAmount = oldDueAmount - newDueAmount;
 
@@ -1907,8 +1911,8 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
             where: { id: feePayment.id },
             data: {
                 dueAmount: newDueAmount,
-                hasDiscount: true,
-                discountAmount: discountAmount,
+                hasDiscount: newDiscountAmount > 0,
+                discountAmount: newDiscountAmount,
                 adjustedFeeAmount: newDueAmount,
                 discountReason: discountReason,
                 status: status === 'PAID' ? PaymentStatus.PAID : status === 'PENDING' ? PaymentStatus.PENDING : PaymentStatus.OVERDUE
@@ -1918,7 +1922,7 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
         const paymentInstallment = await prisma.paymentInstallment.create({
             data: {
                 feePaymentId: +feePaymentId,
-                paidAmount: discountAmount,
+                paidAmount: newDiscountAmount,
                 paidDate: new Date(),
                 paymentMethod: 'DISCOUNT',
                 paymentStatus: status === 'PAID' ? PaymentStatus.PAID : status === 'PENDING' ? PaymentStatus.PENDING : PaymentStatus.OVERDUE,

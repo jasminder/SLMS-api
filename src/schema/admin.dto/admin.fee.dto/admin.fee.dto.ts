@@ -1,4 +1,3 @@
-// schema/feeTemplateSchema.js
 import { z } from 'zod';
 
 export const feeTemplateSchema = z.object({

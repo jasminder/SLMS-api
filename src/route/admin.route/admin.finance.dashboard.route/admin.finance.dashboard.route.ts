@@ -4,6 +4,7 @@ import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
 import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
 import {
+    feeDashboardQueryHandler,
     getAllFeePaymentsHandler,
     getAllInvoiceNamesByTermIdHandler,
     getAllTermsHandler,
@@ -19,5 +20,7 @@ adminFinanceDashboardRoute.route('/select-all-fee-payments-records').get(validat
 adminFinanceDashboardRoute.route('/all-invoice-names-by-termId').get(validate(getAllInvoiceNamesByTermIdSchema), protectRoute, restrict('ADMIN'), getAllInvoiceNamesByTermIdHandler);
 
 adminFinanceDashboardRoute.route('/all-term-for-finance-dashboard').get(protectRoute, restrict('ADMIN'), getAllTermsHandler);
+
+adminFinanceDashboardRoute.get('/fee-dashboard-details', protectRoute, asyncErrorHandler(feeDashboardQueryHandler));
 
 export default adminFinanceDashboardRoute;
