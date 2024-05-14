@@ -73,3 +73,14 @@ export const getStudentportalNoticesSchema = z.object({
 });
 
 export type GetStudentportalNoticesSchema = z.infer<typeof getStudentportalNoticesSchema>;
+export const createNoticeForStudentsSchema = z.object({
+    body: z.object({
+        title: z.string().min(1, 'Title is required'),
+        content: z.string().min(1, 'Content is required')
+    }),
+    params: z.object({
+        adminId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+
+export type CreateNoticeForStudentsSchema = z.infer<typeof createNoticeForStudentsSchema>;

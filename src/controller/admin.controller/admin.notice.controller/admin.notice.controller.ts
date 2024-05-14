@@ -16,9 +16,11 @@ import {
 } from '../../../service/admin.service/admin.notice.service/admin.notice.service';
 import {
     AcknowledgeNoticeSchema,
+    CreateNoticeForStudentsSchema,
     CreateNoticeSchema,
     DeleteNoticeSchema,
     GetNoticeSchema,
+    GetStudentportalNoticesSchema,
     GetUnseenNoticesSchema,
     ResetNoticeViewsSchema,
     UpdateNoticeSchema
@@ -80,7 +82,7 @@ export const acknowledgeNoticeHandler = async (req: Request<AcknowledgeNoticeSch
     res.status(200).json({ message: 'Notice acknowledged successfully' });
 };
 // ---------------------------------------student notice---------------------------------------//
-export const createStudentNoticeHandler = async (req: Request<CreateNoticeSchema['params'], {}, CreateNoticeSchema['body'], {}>, res: Response, next: NextFunction) => {
+export const createStudentNoticeHandler = async (req: Request<CreateNoticeForStudentsSchema['params'], {}, CreateNoticeForStudentsSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { title, content } = req.body;
     const { adminId } = req.params; // Assuming admin ID is in the request user object
     const notice = await createStudentNotice(adminId, title, content);
