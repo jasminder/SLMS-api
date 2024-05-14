@@ -128,17 +128,25 @@ adminActiveStudentRoute
 /*find unqiue feePaymentById*/
 adminActiveStudentRoute.route('/fee-payment-detail/:id').get(validate(findUniqueFeePaymentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findFeePaymentByIdHandler));
 /*update fee - amount paid made by the admin*/
-adminActiveStudentRoute.route('/fee-payment-update-amountPaid-at-school').patch(validate(updateAmountPaidAtSchoolSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountPaidAtSchoolHandler));
+adminActiveStudentRoute
+    .route('/fee-payment-update-amountPaid-at-school')
+    .patch(validate(updateAmountPaidAtSchoolSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountPaidAtSchoolHandler));
 
 adminActiveStudentRoute.route('/update-amount-due').patch(validate(updateAmountFeeDueSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateAmountFeeDueHandler));
 
-adminActiveStudentRoute.route('/fee-payment-for-invoice-generation/:feePaymentId').get(validate(fetchFeePaymentByIdForInvoiceSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchFeePaymentByIdForInvoiceHandler));
+adminActiveStudentRoute
+    .route('/fee-payment-for-invoice-generation/:feePaymentId')
+    .get(validate(fetchFeePaymentByIdForInvoiceSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchFeePaymentByIdForInvoiceHandler));
 
 // Assuming you are using Express and the route is defined in a specific router file
 adminActiveStudentRoute.patch('/apply-credit-balance-to-student-feePayment-by-id', validate(applyCreditSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(applyCreditHandler));
-adminActiveStudentRoute.get('/payment-installments-details-by-feepayment-Id/:feePaymentId', validate(getPaymentsByFeePaymentIdSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(getPaymentsByFeePaymentIdHandler));
-
-
+adminActiveStudentRoute.get(
+    '/payment-installments-details-by-feepayment-Id/:feePaymentId',
+    validate(getPaymentsByFeePaymentIdSchema),
+    protectRoute,
+    restrict('ADMIN'),
+    asyncErrorHandler(getPaymentsByFeePaymentIdHandler)
+);
 
 /*find enrolled subject for late enrollments*/
 adminActiveStudentRoute
@@ -192,11 +200,13 @@ adminActiveStudentRoute
     .route('/attendance-detail/:studentId')
     .get(validate(findStudentAttendanceByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(getStudentAttendanceByIdHandler));
 
-
 adminActiveStudentRoute.route('/make-alumni/:studentId').patch(validate(alumniStudentByIdSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(alumniStudentByIdHandler));
 
-adminActiveStudentRoute.route('/mark-present-by-edit-attendance/:studentId').patch(validate(markPresentByEditSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markPresentByEditSchoolCheckInAttendanceForStudentHandler));
-adminActiveStudentRoute.route('/mark-absent-by-edit-attendance/:studentId').patch(validate(markAbsentByEditSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markAbsentByEditSchoolCheckInAttendanceForStudentHandler));
+adminActiveStudentRoute
+    .route('/mark-present-by-edit-attendance/:studentId')
+    .patch(validate(markPresentByEditSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markPresentByEditSchoolCheckInAttendanceForStudentHandler));
+adminActiveStudentRoute
+    .route('/mark-absent-by-edit-attendance/:studentId')
+    .patch(validate(markAbsentByEditSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markAbsentByEditSchoolCheckInAttendanceForStudentHandler));
 
 export default adminActiveStudentRoute;
-//makeAlumniToActiveByIdHandler

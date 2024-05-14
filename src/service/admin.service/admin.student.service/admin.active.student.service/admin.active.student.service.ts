@@ -1905,7 +1905,7 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
         const originalFeeAmount = feePayment.feeAmount || 0; // Assume feeAmount holds the initial total fee before any discounts
         const newDiscountAmount = originalFeeAmount - newDueAmount;
         const oldDueAmount = feePayment.dueAmount;
-        const discountAmount = oldDueAmount - newDueAmount;
+
 
         const updatedFeePayment = await prisma.feePayment.update({
             where: { id: feePayment.id },
