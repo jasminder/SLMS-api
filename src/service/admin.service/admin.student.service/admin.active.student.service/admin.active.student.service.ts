@@ -2049,12 +2049,35 @@ export async function fetchFeePaymentByIdForInvoice(feePaymentId: string) {
             paymentInstallment: true // Include details about payment installments if needed
         }
     });
+    const overDueFeePayments = await db.feePayment.findMany({
+        where: {
+            status: 'OVERDUE',
+            id: {
+                lte: +feePaymentId
+            },
+            studentTermFee: {
+                student: {
+                    id: feePayment?.studentTermFee?.student.id
+                }
+            }
+        },
+        include: {
+            feeTemplate: true, // Assuming you might want to include related data like feeTemplate
+            studentTermFee: {
+                include: {
+                    student: {
+                        include: {
+                            personalDetails: true
+                        }
+                    },
+                    term: true
+                }
+            },
+            paymentInstallment: true // Include details about payment installments if needed
+        }
+    });
 
-    if (!feePayment) {
-        throw new Error(`FeePayment with ID ${feePaymentId} not found.`);
-    }
-
-    return feePayment;
+    return { feePayment, overDueFeePayments };
 }
 
 /*-----------------fee-----------------------*/

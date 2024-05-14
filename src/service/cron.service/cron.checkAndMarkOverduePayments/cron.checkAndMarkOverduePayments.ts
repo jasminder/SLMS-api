@@ -27,7 +27,7 @@ export const checkAndMarkOverduePayments = async () => {
                     const paymentUpdates = overduePayments.map((payment) =>
                         prisma.feePayment.update({
                             where: { id: payment.id },
-                            data: { status: 'OVERDUE', isActive: false }
+                            data: { status: 'OVERDUE', isActive: false, hasOverDue: true }
                         })
                     );
 
