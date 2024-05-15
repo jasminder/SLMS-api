@@ -13,3 +13,10 @@ export const feePaymentIdParamSchema = z.object({
     })
 });
 export type FeePaymentIdParamSchema = z.infer<typeof feePaymentIdParamSchema>;
+
+export const getPaymentsByFeePaymentIdStudentSchema = z.object({
+    params: z.object({
+        feePaymentId: z.string().min(1)
+    })
+});
+export type GetPaymentsByFeePaymentIdStudentSchema = z.infer<typeof getPaymentsByFeePaymentIdStudentSchema>;

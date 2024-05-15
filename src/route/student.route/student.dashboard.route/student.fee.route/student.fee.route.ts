@@ -2,12 +2,17 @@ import express from 'express';
 
 import { asyncErrorHandler } from '../../../../utils/asyncErrorHandler';
 import validate from '../../../../middleware/validateResource';
-import { feePaymentIdParamSchema, fetchFeePaymentsForCurrentTermByStudentIdSchema } from '../../../../schema/student.dto/student.dashboard.dto/student.fee.dto/student.fee.dto';
+import {
+    feePaymentIdParamSchema,
+    fetchFeePaymentsForCurrentTermByStudentIdSchema,
+    getPaymentsByFeePaymentIdStudentSchema
+} from '../../../../schema/student.dto/student.dashboard.dto/student.fee.dto/student.fee.dto';
 import { protectRoute } from '../../../../middleware/protectRoutes';
 import { restrict } from '../../../../middleware/restrict';
 import {
     fetchCurrentTermFeePaymentsHandler,
-    fetchFeePaymentByIdForStudentPortalInvoiceHandler
+    feePaymentByIdForStudentPortaleHandler,
+    getPaymentsByFeePaymentIdStudentHandler
 } from '../../../../controller/student.controller/student.dashboard.controller/student.fee.controller/student.fee.controller';
 
 const studentFeeRoute = express.Router();
@@ -15,6 +20,18 @@ const studentFeeRoute = express.Router();
 studentFeeRoute
     .route('/fetch-current-term-fee-payments-list/:studentId')
     .get(validate(fetchFeePaymentsForCurrentTermByStudentIdSchema), protectRoute, restrict('STUDENT', 'ADMIN'), asyncErrorHandler(fetchCurrentTermFeePaymentsHandler));
-studentFeeRoute.route('/fetch-fee-payment-details/:feePaymentId').get(validate(feePaymentIdParamSchema), protectRoute, restrict('STUDENT', 'ADMIN'), asyncErrorHandler(fetchFeePaymentByIdForStudentPortalInvoiceHandler));
+
+
+studentFeeRoute
+    .route('/fetch-fee-payment-details/:feePaymentId')
+    .get(validate(feePaymentIdParamSchema), protectRoute, restrict('STUDENT', 'ADMIN'), asyncErrorHandler(feePaymentByIdForStudentPortaleHandler));
+//payment-installments-details-by-feepayment-Id
+studentFeeRoute.get(
+    '/payment-installments-details-by-feepayment-Id/:feePaymentId',
+    validate(getPaymentsByFeePaymentIdStudentSchema),
+    protectRoute,
+    restrict('ADMIN', 'STUDENT'),
+    asyncErrorHandler(getPaymentsByFeePaymentIdStudentHandler)
+);
 
 export default studentFeeRoute;

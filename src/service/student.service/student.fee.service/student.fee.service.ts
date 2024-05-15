@@ -33,51 +33,43 @@ export async function fetchFeePaymentsForCurrentTermByStudentId(studentId: strin
         }
     });
 }
-export async function feePaymentByIdForStudentPortalInvoice(feePaymentId: string) {
-    const feePayment = await db.feePayment.findUnique({
-        where: { id: parseInt(feePaymentId) },
-        include: {
-            feeTemplate: true, // Assuming you might want to include related data like feeTemplate
-            studentTermFee: {
-                include: {
-                    student: {
-                        include: {
-                            personalDetails: true
-                        }
-                    },
-                    term: true
-                }
-            },
-            paymentInstallment: true // Include details about payment installments if needed
-        }
-    });
-    const overDueFeePayments = await db.feePayment.findMany({
+export async function feePaymentByIdForStudentPortal(feePaymentId: string) {
+    const feePaymentById = await db.feePayment.findUnique({
         where: {
-            status: 'OVERDUE',
-            id: {
-                lte: +feePaymentId
-            },
-            studentTermFee: {
-                student: {
-                    id: feePayment?.studentTermFee?.student.id
-                }
-            }
+            id: +feePaymentId
         },
         include: {
-            feeTemplate: true, // Assuming you might want to include related data like feeTemplate
             studentTermFee: {
-                include: {
+                select: {
                     student: {
-                        include: {
-                            personalDetails: true
+                        select: {
+                            creditBalance: true
                         }
-                    },
-                    term: true
+                    }
                 }
             },
-            paymentInstallment: true // Include details about payment installments if needed
+            feeTemplate: {
+                select: {
+                    invoiceName: true
+                }
+            }
+        }
+    });
+    return feePaymentById;
+}
+/*get all payment installments*/
+export async function getPaymentsByFeePaymentIdStudentPortal(feePaymentId: string) {
+    const payments = await db.paymentInstallment.findMany({
+        where: {
+            feePaymentId: parseInt(feePaymentId)
+        },
+        include: {
+            feePayment: true
+        },
+        orderBy: {
+            createdAt: 'desc'
         }
     });
 
-    return { feePayment, overDueFeePayments };
+    return payments;
 }
