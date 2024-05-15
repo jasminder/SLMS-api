@@ -64,6 +64,7 @@ import adminCSVRouter from './src/route/admin.route/admin.csv.route/admin.csv.ro
 import { initSocket } from './src/sockets/socket';
 import adminFeeRoute from './src/route/admin.route/admin.fee.route/admin.fee.route';
 import adminFinanceDashboardRoute from './src/route/admin.route/admin.finance.dashboard.route/admin.finance.dashboard.route';
+import studentFeeRoute from './src/route/student.route/student.dashboard.route/student.fee.route/student.fee.route';
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -164,7 +165,10 @@ app.use('/api/v1/download-home-work', homeWorkDownloadRoute);
 
 app.use('/api/v1/send-mail', sendMailHomeWorkRouter);
 app.use('/api/v1/automated-mail', sendConsolidatedEmailsRouter);
+
+// student portal
 app.use('/api/v1/student-portal', studentDashboardRoute);
+app.use('/api/v1/student-portal-fee', studentFeeRoute);
 
 // Server frontend static assets and handle catch-all route
 // if (process.env.NODE_ENV === 'production') {

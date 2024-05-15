@@ -11,5 +11,5 @@ import validate from '../../../middleware/validateResource';
 const adminInstitutionRoute = express.Router();
 
 adminInstitutionRoute.route('/create-institution').post(validate(createInstitutionSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createInstitutionHandler));
-adminInstitutionRoute.route('/get-institution').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(getInstitutionHandler));
+adminInstitutionRoute.route('/get-institution').get(protectRoute, restrict('ADMIN','STUDENT'), asyncErrorHandler(getInstitutionHandler));
 export default adminInstitutionRoute;

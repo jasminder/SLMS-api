@@ -136,7 +136,7 @@ adminActiveStudentRoute.route('/update-amount-due').patch(validate(updateAmountF
 
 adminActiveStudentRoute
     .route('/fee-payment-for-invoice-generation/:feePaymentId')
-    .get(validate(fetchFeePaymentByIdForInvoiceSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchFeePaymentByIdForInvoiceHandler));
+    .get(validate(fetchFeePaymentByIdForInvoiceSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchFeePaymentByIdForInvoiceHandler));
 
 // Assuming you are using Express and the route is defined in a specific router file
 adminActiveStudentRoute.patch('/apply-credit-balance-to-student-feePayment-by-id', validate(applyCreditSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(applyCreditHandler));

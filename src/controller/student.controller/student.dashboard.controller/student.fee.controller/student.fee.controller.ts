@@ -10,7 +10,7 @@ export const fetchCurrentTermFeePaymentsHandler = async (req: Request<FetchFeePa
 
 
 
-export const fetchFeePaymentDetailsHandler = async (req: Request<FeePaymentIdParamSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+export const fetchFeePaymentByIdForStudentPortalInvoiceHandler = async (req: Request<FeePaymentIdParamSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { feePaymentId } = req.params;
     const result = await feePaymentByIdForStudentPortalInvoice(feePaymentId);
     res.json(result);
