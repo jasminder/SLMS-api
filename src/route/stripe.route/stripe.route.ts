@@ -8,7 +8,7 @@ import { createCheckoutSessionSchema } from '../../schema/stripe.dto/stripe.dto'
 
 const stripeRoute = express.Router();
 
-stripeRoute.route('/checkout-session').get(validate(createCheckoutSessionSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(createCheckoutSessionHandler));
+stripeRoute.route('/checkout-session').post(validate(createCheckoutSessionSchema), protectRoute, asyncErrorHandler(createCheckoutSessionHandler));
 stripeRoute.route('/get-config-SPK').get(protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getStripePublishableKeyHandler));
 
 export default stripeRoute;

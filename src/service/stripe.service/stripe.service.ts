@@ -13,7 +13,7 @@ export const createCheckoutSession = async (feePaymentId: string, amount: number
         payment_method_types: ['card'],
         mode: 'payment',
         success_url: `${process.env.CLIENT_URL}/payment-success`,
-        cancel_url: `${process.env.CLIENT_URL}/payment-cancelled`,
+        cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
         customer_email: email,
         client_reference_id: invoiceId,
         line_items: [
@@ -29,5 +29,6 @@ export const createCheckoutSession = async (feePaymentId: string, amount: number
             }
         ]
     });
+    console.log(session);
     return session;
 };
