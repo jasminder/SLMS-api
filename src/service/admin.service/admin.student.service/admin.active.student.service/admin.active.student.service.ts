@@ -1902,10 +1902,9 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
         if (newDueAmount === 0 && status === 'OVERDUE') {
             throw customError('Due amount cannot be zero if the status is OVERDUE.', 'fail', 400, true);
         }
-        const originalFeeAmount = feePayment.dueAmount || 0; // Assume feeAmount holds the initial total fee before any discounts
+        const originalFeeAmount = feePayment.feeAmount || 0; // Assume feeAmount holds the initial total fee before any discounts
         const newDiscountAmount = originalFeeAmount - newDueAmount;
         const oldDueAmount = feePayment.dueAmount;
-
 
         const updatedFeePayment = await prisma.feePayment.update({
             where: { id: feePayment.id },
