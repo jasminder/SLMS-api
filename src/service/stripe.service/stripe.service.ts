@@ -45,7 +45,7 @@ export const createCheckoutSession = async (feePaymentId: string, amount: number
 
     return session;
 };
-export const handlePaymentSuccess = async (paymentIntent: any) => {
+export const handlePaymentSuccess = async (paymentIntent: Stripe.PaymentIntent) => {
 
     const feePaymentId = paymentIntent.metadata.feePaymentId;
     const transactionId = paymentIntent.id; // Stripe's payment intent ID
