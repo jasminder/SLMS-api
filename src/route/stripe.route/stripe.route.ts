@@ -10,5 +10,6 @@ const stripeRoute = express.Router();
 
 stripeRoute.route('/checkout-session').post(validate(createCheckoutSessionSchema), protectRoute, asyncErrorHandler(createCheckoutSessionHandler));
 stripeRoute.route('/get-config-SPK').get(protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getStripePublishableKeyHandler));
+stripeRoute.route('/webhook').get();
 
 export default stripeRoute;

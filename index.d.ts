@@ -1,6 +1,11 @@
-
 // Define types for the related entities if needed
+import { Stripe } from 'stripe';
 
+declare module 'express-serve-static-core' {
+    interface Request {
+        event?: Stripe.Event;
+    }
+}
 type Admin = {
     id: number | undefined;
     // Add other fields from Admin if needed
