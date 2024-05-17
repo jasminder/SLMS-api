@@ -67,6 +67,7 @@ import studentFeeRoute from './src/route/student.route/student.dashboard.route/s
 import stripeRoute from './src/route/stripe.route/stripe.route';
 import stripeWebhookRoute from './src/route/stripe.webhook.route/stripe.webhook.route';
 import { handlePaymentFailure, handlePaymentSuccess } from './src/service/stripe.service/stripe.service';
+import Stripe from 'stripe';
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -94,7 +95,8 @@ app.use(
 // }));
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY as string);
 app.post('/api/v1/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response, next: NextFunction) => {
-    let event = req.body;
+    let event: Stripe.Event;
+    event = req.body;
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
     if (endpointSecret) {
         const signature = req.headers['stripe-signature'];

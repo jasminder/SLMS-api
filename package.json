@@ -40,6 +40,7 @@
         "@types/node": "^20.5.0",
         "@types/node-cron": "^3.0.11",
         "@types/nodemailer": "^6.4.14",
+        "@types/stripe": "^8.0.417",
         "aws-sdk": "^2.1539.0",
         "axios": "^1.6.5",
         "bcrypt": "^5.1.1",

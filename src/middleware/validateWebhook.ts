@@ -16,7 +16,7 @@ const validateStripeWebhook = async (req: Request, res: Response, next: NextFunc
     }
     try {
         req.event = stripeInstance.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET as string);
-        console.log(req.event);
+        console.log(req.event)
         next();
     } catch (err: any) {
         console.error(`Webhook Error: ${err.message}`);
