@@ -88,25 +88,12 @@ study the context clearly and be ready for my next questions. You are a senior d
 
 ---
 
-ok , using that schema the way i create logic is by using route, controller , schema and service where route is import express from 'express'; import validate from
-'../../../middleware/validateResource'; import { asyncErrorHandler } from '../../../utils/asyncErrorHandler'; import { protectRoute } from '../../../middleware/protectRoutes'; import { restrict } from
-'../../../middleware/restrict'; import { defaultSelectActiveStudentsForFeeCreationSchema, feeTemplateQueryByTermIdSchema, feeTemplateSchema, feeTemplateUndoSchema,
-findAllActiveStudentsForFeeCreationSchema, searchActiveStudentsForfeeCreationSchema, selectActiveStudentsForFeeCreationSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto'; import {
-createFeeTemplateHandler, defaultSelectActiveStudentsForFeeCreationHandler, fetchFeeTemplatesByTermHandler, findActiveStudentsForFeeCreationHandler, getCurrentTermSubjectGroupsHandler,
-searchActiveStudentsForFeeCreationHandler, selectActiveStudentsForFeeCreationHandler, undoCreateFeeTemplateHandler } from
-'../../../controller/admin.controller/admin.fee.controller/admin.fee.controller';
-
-const adminFeeRoute = express.Router();
-
-// routes/feeTemplateRoutes.js adminFeeRoute .route('/create-fee-template-and-feePayments-records-for-active-students-by-subject-group') .post(validate(feeTemplateSchema), protectRoute,
-restrict('ADMIN'), asyncErrorHandler(createFeeTemplateHandler)); controller is export const createFeeTemplateHandler = async (req: Request<{}, {}, FeeTemplateDataSchema['body'], {}>, res: Response,
-next: NextFunction) => { const feeTemplateData = req.body; const result = await createFeeTemplateAndPayments(feeTemplateData); res.status(201).json(result); }; schema is // schema/feeTemplateSchema.js
-import { z } from 'zod';
-
-export const feeTemplateSchema = z.object({ body: z.object({ studentIds: z.array(z.string()), interval: z.string(), invoiceName: z.string(), notes: z.string(), month: z.string(), year: z.string(),
-termName: z.string(), termId: z.string(), termSubjectGroupName: z.string(), termSubjectGroupId: z.string(), dueDate: z.string(), amount: z.string() }) }); export type FeeTemplateDataSchema =
-z.infer<typeof feeTemplateSchema>; and service logic is export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) { const { studentIds, month, year, termId,
-termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
+ok , using that schema the way i create logic is by using route, controller , schema and service where route is the way create a logic is by usinga pattern of routes , controllers and services like
+routes is adminFeeRoute .route('/create-fee-template-and-feePayments-records-for-active-students-by-subject-group') .post(validate(feeTemplateSchema), protectRoute, restrict('ADMIN'),
+asyncErrorHandler(createFeeTemplateHandler)); controller is export const createFeeTemplateHandler = async (req: Request<{}, {}, FeeTemplateDataSchema['body'], {}>, res: Response, next: NextFunction)
+=> { const feeTemplateData = req.body; const result = await createFeeTemplateAndPayments(feeTemplateData); res.status(201).json(result); }; and service is export async function
+createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) { const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval,
+notes, invoiceName } = feeTemplateData;
 
     // Execute all operations in a transaction
     return db.$transaction(async (prisma) => {
@@ -219,7 +206,10 @@ termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, n
         };
     });
 
-} study my pattern as you are a senior database and backend engineer. Wait for my questions and do not reply
+}
+
+study my pattern as you are a senior database and backend engineer. Wait for my questions and do not reply study my pattern as you are a senior database and backend engineer. Wait for my questions and
+do not reply
 
 study my schema as you are a senior database and backend engineer. Wait for my questions and do not reply
 

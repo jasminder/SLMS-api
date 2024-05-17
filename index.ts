@@ -1,5 +1,4 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
-import { Server as SocketIOServer } from 'socket.io';
 import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -66,6 +65,8 @@ import adminFeeRoute from './src/route/admin.route/admin.fee.route/admin.fee.rou
 import adminFinanceDashboardRoute from './src/route/admin.route/admin.finance.dashboard.route/admin.finance.dashboard.route';
 import studentFeeRoute from './src/route/student.route/student.dashboard.route/student.fee.route/student.fee.route';
 import stripeRoute from './src/route/stripe.route/stripe.route';
+import stripeWebhookRoute from './src/route/stripe.webhook.route/stripe.webhook.route';
+import { handlePaymentFailure, handlePaymentSuccess } from './src/service/stripe.service/stripe.service';
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -91,6 +92,34 @@ app.use(
 //     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
 //     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 // }));
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY as string);
+app.post('/api/v1/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response, next: NextFunction) => {
+    let event = req.body;
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
+    if (endpointSecret) {
+        const signature = req.headers['stripe-signature'];
+        try {
+            event = stripe.webhooks.constructEvent(req.body, signature, endpointSecret);
+        } catch (err: any) {
+            console.log(`⚠️  Webhook signature verification failed.`, err.message);
+            return res.sendStatus(400);
+        }
+    }
+    console.log("event.data.object",event.data.object);
+    switch (event?.type) {
+        case 'payment_intent.succeeded':
+            const paymentIntent = event?.data.object;
+            handlePaymentSuccess(paymentIntent);
+            break;
+        case 'payment_intent.payment_failed':
+            const failedIntent = event?.data.object;
+            handlePaymentFailure(failedIntent);
+            break;
+        default:
+            console.log(`Unhandled event type ${event?.type}`);
+    }
+    res.json({ received: true });
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());

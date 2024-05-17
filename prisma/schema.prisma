@@ -357,9 +357,11 @@ model PaymentInstallment {
   remarks       String        @default("No remarks")
   receivedBy    String?
   transactionId String?
+  errorDetails  String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime?     @updatedAt
   feePayment    FeePayment    @relation(fields: [feePaymentId], references: [id])
+  isTransactionSucess Boolean @default(true)
 
   @@index([feePaymentId])
 }
