@@ -160,7 +160,7 @@ export async function markSelectedStudentsAsCheckedOut(studentIds: string[]) {
         }
     });
     const alreadyCheckedOut = attendanceRecords.filter((record) => !record.isCheckedOut);
-    console.log(alreadyCheckedOut, 'alreadyCheckedOut');
+
     if (alreadyCheckedOut.length == 0) {
         throw new Error('All students are already checked out below.');
     }

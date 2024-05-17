@@ -13,7 +13,7 @@ export async function downloadStudentsCsvService() {
     });
 
     if (!students.length) {
-        console.log('No data available to generate CSV.');
+
         return ''; // Return an empty CSV or handle it as needed
     }
 

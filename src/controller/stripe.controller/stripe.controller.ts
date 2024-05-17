@@ -30,7 +30,7 @@ export const stripeWebhookHandlerHandler = async (req: Request, res: Response, n
             handlePaymentFailure(failedIntent);
             break;
         default:
-            console.log(event?.type);
+
             console.log(`Unhandled event type ${event?.type}`);
     }
 

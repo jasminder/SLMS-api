@@ -118,7 +118,7 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
         };
     });
 }
-// undoCreateFeeTemplateAndPayments(16)
+// undoCreateFeeTemplateAndPayments(18)
 
 export async function undoCreateFeeTemplateAndPayments(feeTemplateId: number) {
     return db.$transaction(async (prisma) => {

@@ -125,7 +125,7 @@ export async function createWeekdaySchoolCheckInAttendanceForStudent(date: strin
                         }
                     }
                 });
-                console.log(existingAttendance, 'existing');
+
                 if (!existingAttendance) {
                     const leaveRecord = await db.leave.findFirst({
                         where: {

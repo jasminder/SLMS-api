@@ -105,7 +105,7 @@ app.post('/api/v1/webhook', express.raw({ type: 'application/json' }), async (re
             return res.sendStatus(400);
         }
     }
-    console.log("event.data.object",event.data.object);
+
     switch (event?.type) {
         case 'payment_intent.succeeded':
             const paymentIntent = event?.data.object;

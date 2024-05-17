@@ -42,15 +42,14 @@ export const createCheckoutSession = async (feePaymentId: string, amount: number
             }
         ]
     });
-    console.log(session);
+
     return session;
 };
 export const handlePaymentSuccess = async (paymentIntent: any) => {
-    console.log('paymentIntent.metadata', paymentIntent.metadata);
+
     const feePaymentId = paymentIntent.metadata.feePaymentId;
     const transactionId = paymentIntent.id; // Stripe's payment intent ID
     const paidAmount = paymentIntent.amount_received;
-    console.log(feePaymentId, transactionId, paidAmount);
     const feePayment = await db.feePayment.findUnique({
         where: {
             id: +feePaymentId

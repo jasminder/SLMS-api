@@ -277,7 +277,7 @@ export async function consolidateStudentDataForEmail() {
                             sendDate // Current date as the send date
                         }
                     });
-                    console.log(sentHw);
+
                 }
             }
 
@@ -303,7 +303,7 @@ export async function consolidateStudentDataForEmail() {
                             sendDate // Current date as the send date
                         }
                     });
-                    console.log(sentCw);
+
                 }
             }
 
