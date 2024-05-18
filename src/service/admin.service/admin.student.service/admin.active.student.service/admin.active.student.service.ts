@@ -2828,7 +2828,8 @@ export async function deleteLeaveApplication(leaveId: string) {
 
 export async function fetchLeavesForStudent(studentId: number) {
     const leaveApplications = await db.leave.findMany({
-        where: { studentId: studentId }
+        where: { studentId: studentId },
+        orderBy: { createdAt: 'desc' }
     });
 
     return leaveApplications;
