@@ -68,6 +68,7 @@ import stripeRoute from './src/route/stripe.route/stripe.route';
 import stripeWebhookRoute from './src/route/stripe.webhook.route/stripe.webhook.route';
 import { handlePaymentFailure, handlePaymentSuccess } from './src/service/stripe.service/stripe.service';
 import Stripe from 'stripe';
+import studentCommunicationRoute from './src/route/student.route/student.communication.route/student.communication.route';
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -201,6 +202,7 @@ app.use('/api/v1/automated-mail', sendConsolidatedEmailsRouter);
 // student portal
 app.use('/api/v1/student-portal', studentDashboardRoute);
 app.use('/api/v1/student-portal-fee', studentFeeRoute);
+app.use('/api/v1/student-portal-communication', studentCommunicationRoute);
 
 //stripe route
 app.use('/api/v1/stripe', stripeRoute);
