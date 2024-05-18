@@ -31,7 +31,9 @@ export async function createSkipReportByStudent(studentId: string,  reason: stri
 export async function getSkipReportsByStudent(studentId: string) {
     const skipReports = await db.skipReport.findMany({
         where: {
-            studentId: +studentId
+            studentId: +studentId,
+            teacherId:null,
+            adminId:null
         },
 
         include: {
@@ -40,16 +42,7 @@ export async function getSkipReportsByStudent(studentId: string) {
                     personalDetails: true
                 }
             }, // Include student details
-            teacher: {
-                include: {
-                    teacherPersonalDetails: true
-                }
-            },
-            admin: {
-                include: {
-                    adminPersonalDetails: true
-                }
-            }
+       
 
             // Include teacher details
         },
