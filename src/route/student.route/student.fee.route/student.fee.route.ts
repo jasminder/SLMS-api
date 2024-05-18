@@ -1,19 +1,19 @@
 import express from 'express';
 
-import { asyncErrorHandler } from '../../../../utils/asyncErrorHandler';
-import validate from '../../../../middleware/validateResource';
+import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
+import validate from '../../../middleware/validateResource';
 import {
     feePaymentIdParamSchema,
     fetchFeePaymentsForCurrentTermByStudentIdSchema,
     getPaymentsByFeePaymentIdStudentSchema
-} from '../../../../schema/student.dto/student.dashboard.dto/student.fee.dto/student.fee.dto';
-import { protectRoute } from '../../../../middleware/protectRoutes';
-import { restrict } from '../../../../middleware/restrict';
+} from '../../../schema/student.dto/student.dashboard.dto/student.fee.dto/student.fee.dto';
+import { protectRoute } from '../../../middleware/protectRoutes';
+import { restrict } from '../../../middleware/restrict';
 import {
     fetchCurrentTermFeePaymentsHandler,
     feePaymentByIdForStudentPortaleHandler,
     getPaymentsByFeePaymentIdStudentHandler
-} from '../../../../controller/student.controller/student.dashboard.controller/student.fee.controller/student.fee.controller';
+} from '../../../controller/student.controller/student.dashboard.controller/student.fee.controller/student.fee.controller';
 
 const studentFeeRoute = express.Router();
 

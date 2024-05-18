@@ -2,6 +2,8 @@ import express from 'express';
 
 import { asyncErrorHandler } from '../../../../utils/asyncErrorHandler';
 import validate from '../../../../middleware/validateResource';
+import { restrict } from '../../../../middleware/restrict';
+import { protectRoute } from '../../../../middleware/protectRoutes';
 import {
     activeStudentEnrollDataSchema,
     alumniStudentByIdSchema,
@@ -70,8 +72,7 @@ import {
     updateAmountPaidAtSchoolHandler,
     updateLeaveApplicationHandler
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
-import { restrict } from '../../../../middleware/restrict';
-import { protectRoute } from '../../../../middleware/protectRoutes';
+
 import {
     findActiveStudentsWithoutPaginationHandler,
     searchActiveStudentsWithoutPaginationHandler
@@ -198,7 +199,7 @@ adminActiveStudentRoute.route('/get-leave-by-id/:leaveId').get(validate(findLeav
 
 adminActiveStudentRoute
     .route('/attendance-detail/:studentId')
-    .get(validate(findStudentAttendanceByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(getStudentAttendanceByIdHandler));
+    .get(validate(findStudentAttendanceByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER','STUDENT'), asyncErrorHandler(getStudentAttendanceByIdHandler));
 
 adminActiveStudentRoute.route('/make-alumni/:studentId').patch(validate(alumniStudentByIdSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(alumniStudentByIdHandler));
 

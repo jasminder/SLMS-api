@@ -63,12 +63,14 @@ import adminCSVRouter from './src/route/admin.route/admin.csv.route/admin.csv.ro
 import { initSocket } from './src/sockets/socket';
 import adminFeeRoute from './src/route/admin.route/admin.fee.route/admin.fee.route';
 import adminFinanceDashboardRoute from './src/route/admin.route/admin.finance.dashboard.route/admin.finance.dashboard.route';
-import studentFeeRoute from './src/route/student.route/student.dashboard.route/student.fee.route/student.fee.route';
+
 import stripeRoute from './src/route/stripe.route/stripe.route';
 import stripeWebhookRoute from './src/route/stripe.webhook.route/stripe.webhook.route';
 import { handlePaymentFailure, handlePaymentSuccess } from './src/service/stripe.service/stripe.service';
 import Stripe from 'stripe';
 import studentCommunicationRoute from './src/route/student.route/student.communication.route/student.communication.route';
+import studentFeeRoute from './src/route/student.route/student.fee.route/student.fee.route';
+import studentLeaveRoute from './src/route/student.route/student.leave.route/student.leave.route';
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -203,6 +205,7 @@ app.use('/api/v1/automated-mail', sendConsolidatedEmailsRouter);
 app.use('/api/v1/student-portal', studentDashboardRoute);
 app.use('/api/v1/student-portal-fee', studentFeeRoute);
 app.use('/api/v1/student-portal-communication', studentCommunicationRoute);
+app.use('/api/v1/student-portal-leave', studentLeaveRoute);
 
 //stripe route
 app.use('/api/v1/stripe', stripeRoute);
