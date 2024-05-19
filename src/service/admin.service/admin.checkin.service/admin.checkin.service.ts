@@ -16,7 +16,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                 });
                 const startDate = new Date(date);
                 startDate.setHours(0, 0, 0, 0);
-                const some = new Date();
                 const endDate = new Date(date);
                 endDate.setHours(23, 59, 59, 999);
 
