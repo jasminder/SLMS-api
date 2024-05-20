@@ -193,3 +193,22 @@ export async function acknowledgeStudentNotice(studentId: string, studentNoticeI
         });
     });
 }
+// Service to fetch student assignments
+export async function fetchStudentAssignments(studentId: number) {
+    console.log(studentId);
+    const studentAssignments = await db.studentClassAssignment.findMany({
+        where: {
+            studentId: 5258
+        },
+        include: {
+            termSubjectLevel: {
+                include: {
+                    level: true,
+                    subject: true
+                }
+            },
+            section: true
+        }
+    });
+    return studentAssignments;
+}

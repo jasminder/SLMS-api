@@ -6,12 +6,14 @@ import validate from '../../../middleware/validateResource';
 import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
 import {
     acknowledgeStudentNoticeSchema,
+    fetchStudentAssignmentsSchema,
     findActiveStudentDetailsSchema,
     findStudentsByEmailSchema,
     getStudentNoticeSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
     acknowledgeStudentNoticeHandler,
+    fetchStudentAssignmentsHandler,
     findStudentDetailsByIdHandler,
     findStudentsByEmailHandler,
     getAllStudentPortalNoticesHandler,
@@ -30,5 +32,10 @@ studentDashboardRoute
 studentDashboardRoute
     .route('/acknowledge-student-portal-notice/:studentId/:studentNoticeId')
     .patch(validate(acknowledgeStudentNoticeSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(acknowledgeStudentNoticeHandler));
+
+// Assuming Express.js routing
+studentDashboardRoute
+    .route('/fetch-student-assignments/:studentId')
+    .get(validate(fetchStudentAssignmentsSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchStudentAssignmentsHandler));
 
 export default studentDashboardRoute;

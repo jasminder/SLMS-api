@@ -11,9 +11,22 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
             }
         },
         include: {
-            homework: true // Include details of the homework assignments
+            homework: {
+                include: {
+                    subject: {
+                        select: {
+                            name: true
+                        }
+                    }
+                }
+            }
+        },
+        orderBy: {
+            homework: {
+                createdAt: 'desc'
+            }
         }
     });
-
+    console.log(studentHomeworks);
     return studentHomeworks;
 }

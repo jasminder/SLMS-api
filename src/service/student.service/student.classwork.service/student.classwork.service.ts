@@ -10,7 +10,20 @@ export async function fetchStudentClasswork(studentId: number, termSubjectLevelI
             }
         },
         include: {
-            classwork: true // Include details of the classwork assignments
+            classwork: {
+                include: {
+                    subject: {
+                        select: {
+                            name: true
+                        }
+                    }
+                }
+            }
+        },
+        orderBy: {
+            classwork: {
+                createdAt: 'desc'
+            }
         }
     });
 

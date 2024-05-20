@@ -38,3 +38,10 @@ export const acknowledgeStudentNoticeSchema = z.object({
 });
 
 export type AcknowledgeStudentNoticeSchema = z.infer<typeof acknowledgeStudentNoticeSchema>;
+
+export const fetchStudentAssignmentsSchema = z.object({
+    params: z.object({
+        studentId: z.string()
+    })
+});
+export type FetchStudentAssignmentsSchema = z.infer<typeof fetchStudentAssignmentsSchema>;

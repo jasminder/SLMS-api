@@ -6,8 +6,5 @@ export const fetchStudentClassworkHandler = async (req: Request<FetchStudentClas
     const { studentId, termSubjectLevelId, sectionId } = req.params;
     const classworks = await fetchStudentClasswork(+studentId, +termSubjectLevelId, +sectionId);
 
-    res.status(200).json({
-        success: true,
-        data: classworks
-    });
+    res.status(200).json(classworks);
 };

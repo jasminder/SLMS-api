@@ -11,6 +11,6 @@ import { fileDownloadHomeWorkSchema } from '../../schema/aws.dto/aws.homework.fi
 
 const homeWorkDownloadRoute = express.Router();
 
-homeWorkDownloadRoute.route('/presignedUrl').get(validate(fileDownloadHomeWorkSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(getHomeWorkDownloadPresignedUrlHandler));
+homeWorkDownloadRoute.route('/presignedUrl').get(validate(fileDownloadHomeWorkSchema), protectRoute, restrict('ADMIN', 'TEACHER','STUDENT'), asyncErrorHandler(getHomeWorkDownloadPresignedUrlHandler));
 
 export default homeWorkDownloadRoute;
