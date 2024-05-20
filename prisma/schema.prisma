@@ -100,6 +100,8 @@ model Student {
   currentInvoiceDue            Int? //to indicate total current invoice due                   @default(0)
   EmailContent                 EmailContent[]
   creditBalance                Int                            @default(0)
+  StudentHomework              StudentHomework[]
+  StudentClasswork             StudentClasswork[]
 }
 
 model PersonalDetails {
@@ -348,20 +350,20 @@ model StudentTermFee {
 }
 
 model PaymentInstallment {
-  id            Int           @id @default(autoincrement())
-  feePaymentId  Int
-  paidAmount    Int           @default(0)
-  paidDate      DateTime?
-  paymentMethod PaymentMethod @default(NA)
-  paymentStatus PaymentStatus @default(PENDING)
-  remarks       String        @default("No remarks")
-  receivedBy    String?
-  transactionId String?
-  errorDetails  String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime?     @updatedAt
-  feePayment    FeePayment    @relation(fields: [feePaymentId], references: [id])
-  isTransactionSucess Boolean @default(true)
+  id                  Int           @id @default(autoincrement())
+  feePaymentId        Int
+  paidAmount          Int           @default(0)
+  paidDate            DateTime?
+  paymentMethod       PaymentMethod @default(NA)
+  paymentStatus       PaymentStatus @default(PENDING)
+  remarks             String        @default("No remarks")
+  receivedBy          String?
+  transactionId       String?
+  errorDetails        String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime?     @updatedAt
+  feePayment          FeePayment    @relation(fields: [feePaymentId], references: [id])
+  isTransactionSucess Boolean       @default(true)
 
   @@index([feePaymentId])
 }
@@ -767,6 +769,23 @@ model Homework {
   // @@unique([subjectId, title])
   HomeworkSnapshot     HomeworkSnapshot[]
   SentHomeworkSnapshot SentHomeworkSnapshot[]
+  StudentHomework      StudentHomework[]
+}
+
+model StudentHomework {
+  id             Int       @id @default(autoincrement())
+  studentId      Int
+  homeworkId     Int
+  submissionDate DateTime? // Optional, if students can submit their homework late
+  grade          String? // Optional, if homework is graded
+  feedback       String? // Teacher's feedback for the submitted homework
+  submitted      Boolean   @default(false) // Tracks whether homework has been submitted
+  attachments    String[] // Attachments that the student submits
+
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  homework Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, homeworkId]) // Ensure unique combinations to prevent duplicate entries
 }
 
 model Feedback {
@@ -863,6 +882,23 @@ model Classwork {
   // @@unique([subjectId, title])
   ClassworkSnapshot     ClassworkSnapshot[]
   SentClassworkSnapshot SentClassworkSnapshot[]
+  StudentClasswork      StudentClasswork[]
+}
+
+model StudentClasswork {
+  id             Int       @id @default(autoincrement())
+  studentId      Int
+  classworkId    Int
+  submissionDate DateTime? 
+  grade          String? 
+  feedback       String? 
+  submitted      Boolean   @default(false)
+  attachments    String[] 
+
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classwork Classwork @relation(fields: [classworkId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, classworkId]) // Ensure unique combinations to prevent duplicate entries
 }
 
 model GroupClasswork {

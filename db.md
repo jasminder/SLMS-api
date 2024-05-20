@@ -88,126 +88,94 @@ study the context clearly and be ready for my next questions. You are a senior d
 
 ---
 
-ok , using that schema the way i create logic is by using route, controller , schema and service where route is the way create a logic is by usinga pattern of routes , controllers and services like
-routes is adminFeeRoute .route('/create-fee-template-and-feePayments-records-for-active-students-by-subject-group') .post(validate(feeTemplateSchema), protectRoute, restrict('ADMIN'),
-asyncErrorHandler(createFeeTemplateHandler)); controller is export const createFeeTemplateHandler = async (req: Request<{}, {}, FeeTemplateDataSchema['body'], {}>, res: Response, next: NextFunction)
-=> { const feeTemplateData = req.body; const result = await createFeeTemplateAndPayments(feeTemplateData); res.status(201).json(result); }; and service is export async function
-createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) { const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval,
-notes, invoiceName } = feeTemplateData;
+ok , using that schema the way i create logic is by using route, controller , schema and service where route is the way create a logic is by usinga pattern of routes , controllers and services likeok , using that schema the way i create logic is by using route, controller , schema and service where route is the way create a logic is by usinga pattern of routes , controllers and services like homeworkRoute.route('/create/:termSubjectLevelId/:sectionId/:uploaderId').post(validate(createHomeworkSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(createHomeworkHandler));
 
-    // Execute all operations in a transaction
-    return db.$transaction(async (prisma) => {
-        // Parse the dueDate and set it to the start of the day for comparison
-        const startDate = new Date(dueDate);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(dueDate);
-        endDate.setHours(23, 59, 59, 999);
-        // Check if a FeeTemplate with the same dueDate, termSubjectGroupId, and interval already exists
-        let feeTemplate = await prisma.feeTemplate.findFirst({
-            where: {
-                termSubjectGroupId: +termSubjectGroupId,
-                dueDate: {
-                    gte: startDate,
-                    lte: endDate
-                },
-                invoiceName,
-                interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM
-            }
-        });
-        if (feeTemplate) {
-            // Check for existing FeePayment records for the provided studentIds
-            const existingFeePayments = await prisma.feePayment.findMany({
-                where: {
-                    feeTemplateId: feeTemplate.id,
-                    studentTermFee: {
-                        studentId: {
-                            in: studentIds.map((id) => parseInt(id))
-                        }
-                    }
-                },
-                select: {
-                    studentTermFee: {
-                        select: {
-                            studentId: true
-                        }
-                    }
-                }
-            });
-            if (existingFeePayments.length > 0) {
-                // Extract studentIds from existing payments
-                const existingStudentIds = existingFeePayments.map((fp) => fp.studentTermFee?.studentId);
-                throw customError(`Fee payments already exist for these student IDs under the specified fee template: ${existingStudentIds.join(', ')}`, 'fail', 400, true);
-            }
-        }
+controller like export const createHomeworkHandler = async (req: Request<CreateHomeworkSchema['params'], {}, CreateHomeworkSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { attachments, description, title, uploadedUserRole } = req.body;
+    const { termSubjectLevelId, sectionId, uploaderId } = req.params;
+    const newHomework = await createHomework(termSubjectLevelId, sectionId, uploaderId, uploadedUserRole, title, description, attachments);
 
-        if (!feeTemplate) {
-            const existingInvoice = await prisma.feeTemplate.findFirst({
-                where: {
-                    invoiceName: invoiceName
-                }
-            });
+    res.status(200).json(newHomework);
+};
+schema like import { z } from 'zod';
 
-            if (existingInvoice) {
-                throw customError(`A FeeTemplate with invoice name '${invoiceName}' already exists`, 'fail', 400, true);
-            }
-            feeTemplate = await prisma.feeTemplate.create({
-                data: {
-                    groupName: termSubjectGroupName,
-                    month,
-                    year,
-                    termName,
-                    termId: +termId,
-                    termSubjectGroupId: +termSubjectGroupId,
-                    amount: +amount,
-                    dueDate: new Date(dueDate),
-                    interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM,
-                    invoiceName,
-                    notes
-                }
-            });
-        }
-        const feePayments = await Promise.all(
-            studentIds
-                .map(async (studentId) => {
-                    const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
-                    if (!student) return null; // Continue if no student is found
+export const createHomeworkSchema = z.object({
+    body: z.object({
+        attachments: z.array(z.string()),
+        uploadedUserRole: z.string(),
+        title: z.string().default('No title'),
+        description: z.string()
+    }),
+    params: z.object({
+        termSubjectLevelId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
+        sectionId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
+        uploaderId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type CreateHomeworkSchema = z.infer<typeof createHomeworkSchema>;
+and service logic like export async function createHomework(
+    termSubjectLevelId: string,
+    sectionId: string,
+    uploaderId: string,
+    uploadedUserRole: string,
+    title: string,
+    description = 'No description',
+    attachments: string[]
+) {
+    const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
 
-                    const studentTermFee = await prisma.studentTermFee.findFirst({
-                        where: { studentId: +studentId, termId: +termId, termSubjectGroupId: +termSubjectGroupId }
-                    });
-
-                    if (!studentTermFee) {
-                        // Throw an error if the student is not enrolled in the specified term subject group
-                        throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
-                    }
-
-                    const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
-                    const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
-
-                    return prisma.feePayment.create({
-                        data: {
-                            invoiceId,
-                            studentTermFeeId: studentTermFee.id,
-                            feeTemplateId: feeTemplate?.id,
-                            dueDate: new Date(dueDate),
-                            dueAmount: +amount,
-                            status: 'PENDING',
-                            feeAmount: +amount,
-                            adjustedFeeAmount: +amount
-                        }
-                    });
-                })
-                .filter((task) => task !== null)
-        ); // Filter out null tasks
-        return {
-            message: 'FeeTemplate and FeePayments created successfully.',
-            feeTemplate,
-            feePayments
+    let uploader;
+    if (uploadedUserRole === 'TEACHER') {
+        uploader = await db.teacher.findUnique({ where: { id: +uploaderId } });
+    } else if (uploadedUserRole === 'ADMIN') {
+        uploader = await db.admin.findUnique({ where: { id: +uploaderId } });
+    } else {
+        throw customError('Invalid role', 'fail', 400, true);
+    }
+    if (!uploader) {
+        throw customError('Uploader not found', 'fail', 404, true);
+    }
+    if (uploadedUserRole === 'TEACHER') {
+        const data = {
+            subjectId: 1,
+            sectionId: +sectionId,
+            teacherId: +uploaderId,
+            adminId: null,
+            uploadedUserRole,
+            title,
+            description,
+            attachments,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            termSubjectLevelId: +termSubjectLevelId
         };
-    });
+        const newHomework = await db.homework.create({ data });
+        if (!newHomework) {
+            throw customError('Failed to create homework', 'fail', 400, true);
+        }
 
+        return newHomework;
+    } else if (uploadedUserRole === 'ADMIN') {
+        const data = {
+            subjectId: 1,
+            sectionId: +sectionId,
+            teacherId: null,
+            adminId: +uploaderId,
+            uploadedUserRole,
+            title,
+            description,
+            attachments,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            termSubjectLevelId: +termSubjectLevelId
+        };
+        const newHomework = await db.homework.create({ data });
+        if (!newHomework) {
+            throw customError('Failed to create homework', 'fail', 400, true);
+        }
+        return newHomework;
+    }
 }
-
 study my pattern as you are a senior database and backend engineer. Wait for my questions and do not reply study my pattern as you are a senior database and backend engineer. Wait for my questions and
 do not reply
 

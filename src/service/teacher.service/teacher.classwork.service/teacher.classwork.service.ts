@@ -20,6 +20,15 @@ export async function createGroupClasswork(
     const numericStudentIds = studentIds.map(Number);
 
     let groupClasswork;
+    const transactions = studentIds.map(studentId => {
+        return db.studentHomework.create({
+            data: {
+                studentId:+studentId,
+                homeworkId:+classworkIds[0],
+                // Initialize other fields as necessary
+            }
+        });
+    });
     for (const studentId of numericStudentIds) {
         const existingAutomatedMail = await db.automatedMailForParents.findFirst({
             where: {

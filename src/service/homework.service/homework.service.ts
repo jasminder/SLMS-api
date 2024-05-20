@@ -67,7 +67,7 @@ export async function createHomework(
     }
 }
 
-/* Find all homework records for a list of termsubjectlevels */
+/* Find all homework records for a list of termsubjectlevels not used*/
 export async function findAllHomeworksBySubjectsList(termSubjectLevelIdsArray: string[], teacherId: string) {
     // const subjectIds = subjectIdsArray;
     const numerictermSubjectLevelIds = termSubjectLevelIdsArray.map(Number);

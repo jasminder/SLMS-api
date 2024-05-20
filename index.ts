@@ -71,6 +71,8 @@ import Stripe from 'stripe';
 import studentCommunicationRoute from './src/route/student.route/student.communication.route/student.communication.route';
 import studentFeeRoute from './src/route/student.route/student.fee.route/student.fee.route';
 import studentLeaveRoute from './src/route/student.route/student.leave.route/student.leave.route';
+import studentHomeworkRoute from './src/route/student.route/student.homework.route/student.homework.route';
+import studentClassworkRoute from './src/route/student.route/student.classwork.route/student.classwork.route';
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -206,6 +208,8 @@ app.use('/api/v1/student-portal', studentDashboardRoute);
 app.use('/api/v1/student-portal-fee', studentFeeRoute);
 app.use('/api/v1/student-portal-communication', studentCommunicationRoute);
 app.use('/api/v1/student-portal-leave', studentLeaveRoute);
+app.use('/api/v1/student-portal-homework', studentHomeworkRoute);
+app.use('/api/v1/student-portal-classwork', studentClassworkRoute);
 
 //stripe route
 app.use('/api/v1/stripe', stripeRoute);
