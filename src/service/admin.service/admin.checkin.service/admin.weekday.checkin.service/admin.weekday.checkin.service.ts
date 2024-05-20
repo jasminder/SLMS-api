@@ -1,3 +1,4 @@
+import { getIo } from '../../../../sockets/socket';
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
 
@@ -315,6 +316,12 @@ export async function createWeekdaySchoolCheckInAttendanceForStudent(date: strin
                         }
                     }
                 }
+                const io = getIo();
+                io.emit('attendanceRecords-created-kirtan', {
+                    attendanceRecords: attendanceRecords,
+                    status: 'attendanceRecords-created-kirtan',
+                    date: new Date()
+                });
                 return attendanceRecords;
             },
             { timeout: 30000 }

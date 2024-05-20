@@ -636,7 +636,12 @@ export async function undoCheckIn(studentId: string) {
             // Update other fields if necessary
         }
     });
-
+    const io = getIo();
+    io.emit('markSchoolCheckInAttendanceForStudent', {
+        studentId: studentId,
+        status: 'CheckedIn',
+        date: new Date()
+    });
     return updatedRecord;
 }
 
