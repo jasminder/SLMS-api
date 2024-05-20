@@ -214,3 +214,6 @@ do not reply
 study my schema as you are a senior database and backend engineer. Wait for my questions and do not reply
 
 ---
+
+. i asked you to only implement promise.all instead of the for loop. I did not ask you to refactor or make any helper code or functions. So just implement promise.all and maintain my code as it is.
+Also do not comment out any piece of code. Give every line of code in full.
