@@ -73,6 +73,7 @@ import studentFeeRoute from './src/route/student.route/student.fee.route/student
 import studentLeaveRoute from './src/route/student.route/student.leave.route/student.leave.route';
 import studentHomeworkRoute from './src/route/student.route/student.homework.route/student.homework.route';
 import studentClassworkRoute from './src/route/student.route/student.classwork.route/student.classwork.route';
+import studentFeedbackRoute from './src/route/student.route/student.feedback.route/student.feedback.route';
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -210,6 +211,7 @@ app.use('/api/v1/student-portal-communication', studentCommunicationRoute);
 app.use('/api/v1/student-portal-leave', studentLeaveRoute);
 app.use('/api/v1/student-portal-homework', studentHomeworkRoute);
 app.use('/api/v1/student-portal-classwork', studentClassworkRoute);
+app.use('/api/v1/student-portal-feedback', studentFeedbackRoute);
 
 //stripe route
 app.use('/api/v1/stripe', stripeRoute);
