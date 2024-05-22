@@ -119,7 +119,7 @@ adminActiveStudentRoute
 
 // Without Pagination
 /*find unqiue student*/
-adminActiveStudentRoute.route('/active-student-detail/:id').get(validate(findUniqueActiveStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentByIdHandler));
+adminActiveStudentRoute.route('/active-student-detail/:id').get(validate(findUniqueActiveStudentSchema), protectRoute, restrict('ADMIN','STUDENT'), asyncErrorHandler(findActiveStudentByIdHandler));
 /*find unqiue active student fee details*/
 adminActiveStudentRoute.route('/active-student-fee-detail/:studentId').get(validate(findStudentFeeDetailsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findStudentFeeDetailsHandler));
 /* find subjects enrolled in a termSubject group*/
