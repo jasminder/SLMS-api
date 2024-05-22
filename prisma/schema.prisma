@@ -781,9 +781,10 @@ model StudentHomework {
   feedback       String? // Teacher's feedback for the submitted homework
   submitted      Boolean   @default(false) // Tracks whether homework has been submitted
   attachments    String[] // Attachments that the student submits
-
-  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  homework Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  student        Student?  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  homework       Homework? @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, homeworkId]) // Ensure unique combinations to prevent duplicate entries
 }
@@ -889,14 +890,15 @@ model StudentClasswork {
   id             Int       @id @default(autoincrement())
   studentId      Int
   classworkId    Int
-  submissionDate DateTime? 
-  grade          String? 
-  feedback       String? 
+  submissionDate DateTime?
+  grade          String?
+  feedback       String?
   submitted      Boolean   @default(false)
-  attachments    String[] 
-
-  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  classwork Classwork @relation(fields: [classworkId], references: [id], onDelete: Cascade)
+  attachments    String[]
+  createdAt      DateTime? @default(now())
+  updatedAt      DateTime? @updatedAt
+  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classwork      Classwork @relation(fields: [classworkId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, classworkId]) // Ensure unique combinations to prevent duplicate entries
 }

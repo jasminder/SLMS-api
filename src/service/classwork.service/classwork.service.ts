@@ -11,7 +11,16 @@ export async function createClasswork(
     description = 'No description',
     attachments: string[]
 ) {
-    const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
+    const termSubjectLevel = await db.termSubjectLevel.findUnique({
+        where: { id: +termSubjectLevelId },
+        include: {
+            subject: {
+                select: {
+                    id: true
+                }
+            }
+        }
+    });
 
     let uploader;
     if (uploadedUserRole === 'TEACHER') {
@@ -29,7 +38,7 @@ export async function createClasswork(
 
     if (uploadedUserRole === 'TEACHER') {
         const data = {
-            subjectId: 1,
+            subjectId: termSubjectLevel?.subject.id as number,
             sectionId: +sectionId,
             termSubjectLevelId: +termSubjectLevelId,
             teacherId: +uploaderId,
@@ -45,7 +54,7 @@ export async function createClasswork(
         newClasswork = await db.classwork.create({ data });
     } else if (uploadedUserRole === 'ADMIN') {
         const data = {
-            subjectId: 1,
+            subjectId: termSubjectLevel?.subject.id as number,
             sectionId: +sectionId,
             termSubjectLevelId: +termSubjectLevelId,
             teacherId: null,

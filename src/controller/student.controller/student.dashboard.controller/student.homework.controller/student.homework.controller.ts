@@ -5,6 +5,7 @@ import { fetchStudentHomework } from '../../../../service/student.service/studen
 
 export const fetchStudentHomeworkHandler = async (req: Request<FetchStudentHomeworkSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { studentId, termSubjectLevelId, sectionId } = req.params;
+    console.log(studentId, termSubjectLevelId, sectionId)
     const homeworks = await fetchStudentHomework(+studentId, +termSubjectLevelId, +sectionId);
 
     res.status(200).json(homeworks);

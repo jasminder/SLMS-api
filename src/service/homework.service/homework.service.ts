@@ -12,7 +12,16 @@ export async function createHomework(
     description = 'No description',
     attachments: string[]
 ) {
-    const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
+    const termSubjectLevel = await db.termSubjectLevel.findUnique({
+        where: { id: +termSubjectLevelId },
+        include: {
+            subject: {
+                select: {
+                    id: true
+                }
+            }
+        }
+    });
 
     let uploader;
     if (uploadedUserRole === 'TEACHER') {
@@ -27,7 +36,7 @@ export async function createHomework(
     }
     if (uploadedUserRole === 'TEACHER') {
         const data = {
-            subjectId: 1,
+            subjectId: termSubjectLevel?.subject.id as number,
             sectionId: +sectionId,
             teacherId: +uploaderId,
             adminId: null,
@@ -47,7 +56,7 @@ export async function createHomework(
         return newHomework;
     } else if (uploadedUserRole === 'ADMIN') {
         const data = {
-            subjectId: 1,
+            subjectId: termSubjectLevel?.subject.id as number,
             sectionId: +sectionId,
             teacherId: null,
             adminId: +uploaderId,
