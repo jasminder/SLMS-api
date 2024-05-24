@@ -301,8 +301,142 @@ export async function selectAllFeePayments(search = '', page: number, termId: nu
             status: paymentStatus === 'PAID' ? PaymentStatus.PAID : paymentStatus === 'PENDING' ? PaymentStatus.PENDING : paymentStatus === 'OVERDUE' ? PaymentStatus.OVERDUE : undefined
         }
     });
+    const totalDueAmount = await db.feePayment.aggregate({
+        where: {
+            feeTemplate: {
+                termId,
+                invoiceName: invoiceName ? invoiceName : undefined
+            },
+            OR: [
+                {
+                    invoiceId: {
+                        contains: search,
+                        mode: 'insensitive'
+                    }
+                },
+                {
+                    feeTemplate: {
+                        notes: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                {
+                    feeTemplate: {
+                        invoiceName: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                },
+                {
+                    studentTermFee: {
+                        student: {
+                            personalDetails: {
+                                OR: [
+                                    {
+                                        firstName: {
+                                            contains: search,
+                                            mode: 'insensitive'
+                                        }
+                                    },
+                                    {
+                                        lastName: {
+                                            contains: search,
+                                            mode: 'insensitive'
+                                        }
+                                    },
+                                    {
+                                        email: {
+                                            contains: search,
+                                            mode: 'insensitive'
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            ],
+            status: paymentStatus === 'PAID' ? PaymentStatus.PAID : paymentStatus === 'PENDING' ? PaymentStatus.PENDING : paymentStatus === 'OVERDUE' ? PaymentStatus.OVERDUE : undefined
+        },
+        _sum: {
+            dueAmount: true
+        }
+    });
+    const totalPaidAmount = await db.paymentInstallment.aggregate({
+        where: {
+            feePayment: {
+                AND: [
+                    { status: PaymentStatus.PAID },
+                    {
+                        feeTemplate: {
+                            termId,
+                            invoiceName: invoiceName ? invoiceName : undefined
+                        },
+                        OR: [
+                            {
+                                invoiceId: {
+                                    contains: search,
+                                    mode: 'insensitive'
+                                }
+                            },
+                            {
+                                feeTemplate: {
+                                    notes: {
+                                        contains: search,
+                                        mode: 'insensitive'
+                                    }
+                                }
+                            },
+                            {
+                                feeTemplate: {
+                                    invoiceName: {
+                                        contains: search,
+                                        mode: 'insensitive'
+                                    }
+                                }
+                            },
+                            {
+                                studentTermFee: {
+                                    student: {
+                                        personalDetails: {
+                                            OR: [
+                                                {
+                                                    firstName: {
+                                                        contains: search,
+                                                        mode: 'insensitive'
+                                                    }
+                                                },
+                                                {
+                                                    lastName: {
+                                                        contains: search,
+                                                        mode: 'insensitive'
+                                                    }
+                                                },
+                                                {
+                                                    email: {
+                                                        contains: search,
+                                                        mode: 'insensitive'
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        _sum: {
+            paidAmount: true
+        }
+    });
 
-    return { feePayments, count };
+    return { feePayments, count, totalDue: totalDueAmount._sum.dueAmount || 0, status: paymentStatus, totalPaid: totalPaidAmount._sum.paidAmount || 0 };
 }
 
 export async function getAllInvoiceNamesByTermId(termId: string) {
@@ -426,7 +560,8 @@ export async function feeDashboardQuery() {
             feeTemplate: {
                 termId: currentTerm?.id
             },
-            hasOverDue: true
+            hasOverDue: true,
+            status: 'OVERDUE'
         }
     });
     const overduePastTermsAggregation = await db.feePayment.aggregate({
