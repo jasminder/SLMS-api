@@ -102,6 +102,7 @@ model Student {
   creditBalance                Int                            @default(0)
   StudentHomework              StudentHomework[]
   StudentClasswork             StudentClasswork[]
+  StudentAdminMessage          StudentAdminMessage[]
 }
 
 model PersonalDetails {
@@ -610,6 +611,7 @@ model Admin {
   EmailTemplate             EmailTemplate[]
   Notice                    Notice[]
   StudentNotice             StudentNotice[]
+  StudentAdminMessage       StudentAdminMessage[]
 }
 
 model AdminPersonalDetails {
@@ -1184,3 +1186,34 @@ model EmailContent {
   emailcontent String
   sendDate     DateTime
 }
+
+// ------------------- for message------------------- //
+
+model Message {
+  id                  Int                   @id @default(autoincrement())
+  content             String
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  senderId            Int
+  messageType         MessageType // Enum to distinguish between Student and Admin
+  StudentAdminMessage StudentAdminMessage[]
+}
+
+model StudentAdminMessage {
+  id        Int     @id @default(autoincrement())
+  studentId Int
+  adminId   Int
+  messageId Int
+  student   Student @relation(fields: [studentId], references: [id])
+  admin     Admin   @relation(fields: [adminId], references: [id])
+  message   Message @relation(fields: [messageId], references: [id])
+
+  @@unique([studentId, adminId, messageId])
+}
+
+enum MessageType {
+  STUDENT
+  ADMIN
+}
+
+// ------------------- for message ------------------- //

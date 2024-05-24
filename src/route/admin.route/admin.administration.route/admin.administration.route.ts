@@ -36,7 +36,6 @@ import {
 } from '../../../schema/admin.dto/admin.administration.dto/admin.administration.dto';
 import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
-
 const adminAdministrationRoute = express.Router();
 
 /*Term CRUD*/
