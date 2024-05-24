@@ -133,7 +133,7 @@ export async function acknowledgeNotice(noticeId: string, teacherId: string) {
 }
 
 // ---------------------------student notice---------------------------
-export async function createStudentNotice(adminId: string, title: string, content: string) {
+export async function createStudentNotice(adminId: string, title: string, content: string, studentIds:string[]) {
     return db.$transaction(async (prisma) => {
         const newNotice = await prisma.studentNotice.create({
             data: {
@@ -154,11 +154,11 @@ export async function createStudentNotice(adminId: string, title: string, conten
         });
 
         // Prepare acknowledgements for each student
-        const acknowledgementPromises = activeStudents.map((student) => {
+        const acknowledgementPromises = studentIds.map((studentId) => {
             return prisma.studentNoticeAcknowledgement.create({
                 data: {
                     studentNoticeId: newNotice.id,
-                    studentId: student.id,
+                    studentId: +studentId,
                     isSeen: false
                 }
             });

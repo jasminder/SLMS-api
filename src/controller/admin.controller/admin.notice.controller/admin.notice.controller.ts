@@ -83,9 +83,9 @@ export const acknowledgeNoticeHandler = async (req: Request<AcknowledgeNoticeSch
 };
 // ---------------------------------------student notice---------------------------------------//
 export const createStudentNoticeHandler = async (req: Request<CreateNoticeForStudentsSchema['params'], {}, CreateNoticeForStudentsSchema['body'], {}>, res: Response, next: NextFunction) => {
-    const { title, content } = req.body;
+    const { title, content , studentIds} = req.body;
     const { adminId } = req.params; // Assuming admin ID is in the request user object
-    const notice = await createStudentNotice(adminId, title, content);
+    const notice = await createStudentNotice(adminId, title, content, studentIds);
     res.status(201).json({ message: 'Notice created successfully', notice });
 };
 export const getAllStudentNoticesHandler = async (req: Request, res: Response, next: NextFunction) => {

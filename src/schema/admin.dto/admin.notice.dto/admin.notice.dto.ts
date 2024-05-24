@@ -4,7 +4,7 @@ export const createNoticeSchema = z.object({
     body: z.object({
         title: z.string().min(1, 'Title is required'),
         content: z.string().min(1, 'Content is required'),
-        teacherIds: z.array(z.string().min(1, 'Content is required'))
+        teacherIds: z.array(z.string().min(1, 'teachers id string array is required'))
     }),
     params: z.object({
         adminId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
@@ -68,7 +68,7 @@ export type AcknowledgeNoticeSchema = z.infer<typeof acknowledgeNoticeSchema>;
 
 export const getStudentportalNoticesSchema = z.object({
     params: z.object({
-        studentId: z.string().min(1, { message: 'Teacher ID is required' }).regex(/^\d+$/, 'Teacher ID must be a number')
+        studentId: z.string().min(1, { message: 'student ID is required' }).regex(/^\d+$/, 'Teacher ID must be a number')
     })
 });
 
@@ -76,7 +76,8 @@ export type GetStudentportalNoticesSchema = z.infer<typeof getStudentportalNotic
 export const createNoticeForStudentsSchema = z.object({
     body: z.object({
         title: z.string().min(1, 'Title is required'),
-        content: z.string().min(1, 'Content is required')
+        content: z.string().min(1, 'Content is required'),
+        studentIds: z.array(z.string())
     }),
     params: z.object({
         adminId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
