@@ -852,3 +852,17 @@ export async function fetchWeekdayActiveCheckedInStudents(dateString: string) {
     });
     return { activeStudents, lastFiveSchoolDay };
 }
+export async function fetchPendingLeaves() {
+    return await db.leave.findMany({
+        where: {
+            status: 'PENDING'
+        },
+        include: {
+            student: {
+                include: {
+                    personalDetails: true
+                }
+            } // Assuming you want to include student details
+        }
+    });
+}

@@ -92,7 +92,10 @@ export async function createLeaveApplicationByStudent(
 
 export async function fetchLeavesForStudentPortal(studentId: number) {
     const leaveApplications = await db.leave.findMany({
-        where: { studentId: studentId }
+        where: { studentId: studentId },
+        orderBy:{
+            createdAt:"desc"
+        }
     });
 
     return leaveApplications;

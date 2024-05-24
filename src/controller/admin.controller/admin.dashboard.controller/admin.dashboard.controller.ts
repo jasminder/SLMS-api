@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import {
     fetchActiveCheckedInStudents,
     fetchCheckedOutStudents,
+    fetchPendingLeaves,
     fetchStudentsOnAbsent,
     fetchStudentsOnAttendance,
     fetchStudentsOnLeave,
@@ -71,4 +72,8 @@ export const fetchWeekdayActiveCheckedInStudentsHandler = async (req: Request<{}
     const { dateString } = req.query;
     const students = await fetchWeekdayActiveCheckedInStudents(dateString);
     res.status(200).json(students);
+};
+export const fetchPendingLeavesHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const pendingLeaves = await fetchPendingLeaves();
+    res.status(200).json(pendingLeaves);
 };

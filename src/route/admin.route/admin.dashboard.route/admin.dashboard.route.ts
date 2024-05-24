@@ -15,6 +15,7 @@ import {
 import {
     fetchActiveCheckedInStudentsHandler,
     fetchCheckedOutStudentsHandler,
+    fetchPendingLeavesHandler,
     fetchStudentsOnAbsentHandler,
     fetchStudentsOnAttendanceHandler,
     fetchStudentsOnLeaveHandler,
@@ -41,4 +42,6 @@ adminDashboardRoute
 adminDashboardRoute
     .route('/fetch-weekday-active-checked-in-students')
     .get(validate(fetchActiveCheckedInStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchWeekdayActiveCheckedInStudentsHandler));
+adminDashboardRoute.route('/new-students-leaves/pending').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchPendingLeavesHandler));
+
 export default adminDashboardRoute;
