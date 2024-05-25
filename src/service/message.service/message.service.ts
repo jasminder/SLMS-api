@@ -1,5 +1,6 @@
-import { MessageType } from '@prisma/client';
+import { MessageStatus, MessageType } from '@prisma/client';
 import { db } from '../../utils/db.server';
+import { getIo } from '../../sockets/socket';
 
 export async function sendMessage(content: string, senderId: string, receiverId: string, userType: string) {
     // First, create the message entry
@@ -32,8 +33,29 @@ export async function sendMessage(content: string, senderId: string, receiverId:
     } else {
         throw new Error('User type must be either ADMIN or STUDENT');
     }
-
+    const io = getIo();
+    io.emit('messageStudentAdmin', {
+        status: 'MessageSent',
+        date: new Date()
+    });
     return studentAdminMessage;
+}
+export async function updateMessageStatus(messageIds: string[], status: string) {
+    const numMessageIds = messageIds.map((m) => Number(m));
+    const message = await db.message.updateMany({
+        where: {
+            id: {
+                in: numMessageIds
+            }
+        },
+        data: { status: status === 'SENT' ? MessageStatus.SENT : status === 'DELIVERED' ? MessageStatus.DELIVERED : status === 'READ' ? MessageStatus.READ : MessageStatus.ERROR }
+    });
+    const io = getIo();
+    io.emit('updateMessageStudentAdmin', {
+        status: 'updateMessageSent',
+        date: new Date()
+    });
+    return message;
 }
 
 export async function fetchMessagesForStudent(studentId: string) {

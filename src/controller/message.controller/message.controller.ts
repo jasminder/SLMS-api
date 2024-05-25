@@ -1,12 +1,17 @@
 import { NextFunction, Request, Response } from 'express';
-import { fetchMessagesForAdmin, fetchMessagesForStudent, sendMessage } from '../../service/message.service/message.service';
-import { CreateMessageSchema, FetchAdminMessageSchema, FetchMessageSchema } from '../../schema/message.dto/message.dto';
+import { fetchMessagesForAdmin, fetchMessagesForStudent, sendMessage, updateMessageStatus } from '../../service/message.service/message.service';
+import { CreateMessageSchema, FetchAdminMessageSchema, FetchMessageSchema, UpdateMessageStatusSchema } from '../../schema/message.dto/message.dto';
 
 export const sendMessageHandler = async (req: Request<{}, {}, CreateMessageSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { content, senderId, receiverId, userType } = req.body;
     //content: string, senderId: string, receiverId: string, userType: string
     const newMessage = await sendMessage(content, senderId, receiverId, userType);
     res.status(201).json(newMessage);
+};
+export const updateMessageStatusHandler = async (req: Request<{}, {}, UpdateMessageStatusSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { status, messageIds } = req.body;
+    const updatedMessage = await updateMessageStatus(messageIds, status);
+    res.status(200).json(updatedMessage);
 };
 
 export const getMessagesForStudentHandler = async (req: Request<FetchMessageSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {

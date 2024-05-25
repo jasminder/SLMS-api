@@ -1195,6 +1195,7 @@ model Message {
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   senderId            Int
+  status              MessageStatus         @default(SENT)
   messageType         MessageType // Enum to distinguish between Student and Admin
   StudentAdminMessage StudentAdminMessage[]
 }
@@ -1214,6 +1215,13 @@ model StudentAdminMessage {
 enum MessageType {
   STUDENT
   ADMIN
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  ERROR
 }
 
 // ------------------- for message ------------------- //
