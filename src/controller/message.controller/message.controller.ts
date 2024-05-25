@@ -19,8 +19,7 @@ export const getMessagesForStudentHandler = async (req: Request<FetchMessageSche
     const messages = await fetchMessagesForStudent(studentId);
     res.status(200).json(messages);
 };
-export const getMessagesForAdminHandler = async (req: Request<FetchAdminMessageSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
-    const { adminId } = req.params;
-    const messages = await fetchMessagesForAdmin(adminId);
+export const getMessagesForAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const messages = await fetchMessagesForAdmin();
     res.status(200).json(messages);
 };

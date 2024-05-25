@@ -68,12 +68,27 @@ export async function fetchMessagesForStudent(studentId: string) {
     });
 }
 
-export async function fetchMessagesForAdmin(adminId: string) {
+export async function fetchMessagesForAdmin() {
     return await db.studentAdminMessage.findMany({
-        where: { adminId: +adminId },
+        where: {
+            message: {
+                status: 'SENT', messageType:"STUDENT"
+            }
+        },
         include: {
-            message: true, // Fetch the details of the message
-            student: true // Fetch details about the user involved in the message
+            message: true,
+
+            student: {
+                select: {
+                    id: true,
+                    personalDetails: {
+                        select: {
+                            firstName: true,
+                            lastName: true
+                        }
+                    }
+                }
+            } // Fetch details about the user involved in the message
         }
     });
 }

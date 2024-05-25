@@ -13,6 +13,6 @@ messageAdminStudentRoute.route('/send').post(validate(createMessageSchema), prot
 messageAdminStudentRoute.route('/update-status').patch(validate(updateMessageStatusSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(updateMessageStatusHandler));
 
 messageAdminStudentRoute.route('/messages-student/:studentId').get(validate(fetchMessageSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getMessagesForStudentHandler));
-messageAdminStudentRoute.route('/messages-admin/:adminId').get(validate(fetchAdminMessageSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getMessagesForAdminHandler));
+messageAdminStudentRoute.route('/messages-admin').get(protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getMessagesForAdminHandler));
 
 export default messageAdminStudentRoute;
