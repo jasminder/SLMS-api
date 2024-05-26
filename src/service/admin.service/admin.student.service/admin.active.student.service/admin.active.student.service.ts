@@ -2,6 +2,7 @@ import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 import { ActiveStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 import { PaymentMethod, PaymentStatus } from '@prisma/client';
+import { getIo } from '../../../../sockets/socket';
 
 type AttendanceFilter = {
     attendancePercentageValue?: number;
@@ -2651,7 +2652,12 @@ export async function createLeaveApplication(studentId: string, appliedById: str
             });
         });
     }
-
+    const io = getIo();
+    io.emit('LeaveMarked', {
+        studentId: studentId,
+        status: 'onLeave',
+        date: new Date()
+    });
     return leaveApplication;
 }
 

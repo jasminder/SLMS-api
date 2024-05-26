@@ -38,6 +38,7 @@ export async function createHomework(
         const data = {
             subjectId: termSubjectLevel?.subject.id as number,
             sectionId: +sectionId,
+            termSubjectLevelId: +termSubjectLevelId,
             teacherId: +uploaderId,
             adminId: null,
             uploadedUserRole,
@@ -46,7 +47,6 @@ export async function createHomework(
             attachments,
             createdAt: new Date(),
             updatedAt: new Date(),
-            termSubjectLevelId: +termSubjectLevelId
         };
         const newHomework = await db.homework.create({ data });
         if (!newHomework) {
