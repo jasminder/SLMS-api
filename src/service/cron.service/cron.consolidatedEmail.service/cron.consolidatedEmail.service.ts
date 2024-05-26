@@ -349,6 +349,7 @@ export async function consolidateStudentDataForEmail() {
         }
     }
 }
+// consolidateStudentDataForEmail()
 function extractOriginalFileNameFromS3Url(url: string) {
     if (typeof url !== 'string') {
         console.error('Invalid URL: ', url);
