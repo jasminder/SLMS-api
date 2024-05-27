@@ -53,7 +53,19 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
             }
         },
         select: {
-            date: true
+            date: true,
+            classAttendance: {
+                where: {
+                    studentClassAssignment: {
+                        termSubjectLevelId,
+                        sectionId
+                    }
+                },
+                select: {
+                    date: true,
+                    attendanceStatus: true
+                }
+            }
         }
     });
 
