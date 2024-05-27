@@ -9,7 +9,8 @@ import {
     fetchStudentAssignmentsSchema,
     findActiveStudentDetailsSchema,
     findStudentsByEmailSchema,
-    getStudentNoticeSchema
+    getStudentNoticeSchema,
+    teacherAssignmentSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
     acknowledgeStudentNoticeHandler,
@@ -17,7 +18,8 @@ import {
     findStudentDetailsByIdHandler,
     findStudentsByEmailHandler,
     getAllStudentPortalNoticesHandler,
-    getStudentNoticePortalHandler
+    getStudentNoticePortalHandler,
+    getTeacherAssignmentHandler
 } from '../../../controller/student.controller/student.dashboard.controller/student.dashboard.controller';
 
 const studentDashboardRoute = express.Router();
@@ -37,5 +39,7 @@ studentDashboardRoute
 studentDashboardRoute
     .route('/fetch-student-assignments/:studentId')
     .get(validate(fetchStudentAssignmentsSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchStudentAssignmentsHandler));
+
+studentDashboardRoute.route('/find-teacher').post(validate(teacherAssignmentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), getTeacherAssignmentHandler);
 
 export default studentDashboardRoute;

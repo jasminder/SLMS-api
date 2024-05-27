@@ -193,7 +193,7 @@ export async function acknowledgeStudentNotice(studentId: string, studentNoticeI
         });
     });
 }
-// Service to fetch student assignments
+
 export async function fetchStudentAssignments(studentId: number) {
     console.log(studentId);
     const studentAssignments = await db.studentClassAssignment.findMany({
@@ -213,76 +213,26 @@ export async function fetchStudentAssignments(studentId: number) {
     return studentAssignments;
 }
 
-export async function fetchStudentReport(studentId: number, termSubjectLevelId: number, sectionId: number) {
-    const studentCourseDetails = await db.student.findUnique({
+export async function findTeacherByAssignment(termSubjectLevelId: string, sectionId: string) {
+    const assignment = await db.teacherClassAssignment.findFirst({
         where: {
-            id: studentId
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId
         },
         include: {
-            studentHomework: {
-                where: {
-                    homework: {
-                        termSubjectLevelId: termSubjectLevelId,
-                        sectionId: sectionId
-                    }
-                },
-                include: {
-                    homework: {
-                        select: {
-                            description: true,
-                            attachments: true
-                        }
-                    }
-                }
-            },
-            studentClasswork: {
-                where: {
-                    classwork: {
-                        termSubjectLevelId: termSubjectLevelId,
-                        sectionId: sectionId
-                    }
-                },
-                include: {
-                    classwork: {
-                        select: {
-                            description: true,
-                            attachments: true
-                        }
-                    }
-                }
-            },
-            feedback: {
-                where: {
-                    termSubjectLevelId: termSubjectLevelId,
-                    sectionId: sectionId
-                },
+            teacher: {
                 select: {
-                    content: true,
-                    title: true
+                    id: true,
+                    teacherPersonalDetails: {
+                        select: {
+                            firstName: true,
+                            lastName: true
+                        }
+                    }
                 }
             }
-        }
-    });
-    const specificDate = new Date('2024-05-20T00:00:00Z');
-    const allAutomatedEmails = await db.automatedMailForParents.findMany({
-        where: {
-            studentId,
-            sendDate: {
-                gt: specificDate
-            }
-        }
-    });
-    const schoolCA = await db.schoolCheckInAttendance.findMany({
-        where: {
-            studentId,
-            date: {
-                gt: specificDate
-            }
-        },
-        select: {
-            date: true,
         }
     });
 
-    return { studentCourseDetails, allAutomatedEmails, schoolCA };
+    return assignment;
 }

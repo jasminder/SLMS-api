@@ -4,13 +4,15 @@ import {
     FetchStudentAssignmentsSchema,
     FindActiveStudentDetailsSchema,
     FindStudentsByEmailSchema,
-    GetStudentNoticeSchema
+    GetStudentNoticeSchema,
+    TeacherAssignmentSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
     acknowledgeStudentNotice,
     fetchStudentAssignments,
     findStudentDetailsById,
     findStudentsByEmail,
+    findTeacherByAssignment,
     getAllStudentPortalNotices,
     getStudentPortalNotice
 } from '../../../service/student.service/student.dashboard.service/student.dashboard.service';
@@ -56,4 +58,10 @@ export const fetchStudentAssignmentsHandler = async (req: Request<FetchStudentAs
     const assignments = await fetchStudentAssignments(+studentId);
 
     res.status(200).json(assignments);
+};
+
+export const getTeacherAssignmentHandler = async (req: Request<TeacherAssignmentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { termSubjectLevelId, sectionId } = req.params;
+    const teacherInfo = await findTeacherByAssignment(termSubjectLevelId, sectionId);
+    res.status(200).json(teacherInfo);
 };

@@ -45,3 +45,11 @@ export const fetchStudentAssignmentsSchema = z.object({
     })
 });
 export type FetchStudentAssignmentsSchema = z.infer<typeof fetchStudentAssignmentsSchema>;
+
+export const teacherAssignmentSchema = z.object({
+    params: z.object({
+        termSubjectLevelId: z.string(),
+        sectionId: z.string()
+    })
+});
+export type TeacherAssignmentSchema = z.infer<typeof teacherAssignmentSchema>;
