@@ -40,6 +40,6 @@ studentDashboardRoute
     .route('/fetch-student-assignments/:studentId')
     .get(validate(fetchStudentAssignmentsSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchStudentAssignmentsHandler));
 
-studentDashboardRoute.route('/find-teacher').post(validate(teacherAssignmentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), getTeacherAssignmentHandler);
+studentDashboardRoute.route('/find-teacher/:termSubjectLevelId/:sectionId').get(validate(teacherAssignmentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), getTeacherAssignmentHandler);
 
 export default studentDashboardRoute;
