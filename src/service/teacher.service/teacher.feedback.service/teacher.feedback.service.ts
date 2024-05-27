@@ -41,9 +41,9 @@ export async function createFeedback(
                 sectionId: +sectionId, // Assuming sectionId is part of your feedback model or derived somehow
                 className,
                 roomName,
+                classTime,
                 sendDate,
-                isSent: false,
-                classTime
+                isSent: false
             }
         });
     } else if (existingAutomatedMail?.isSent) {
@@ -60,9 +60,13 @@ export async function createFeedback(
             termSubjectLevel: {
                 connect: { id: +termSubjectLevelId }
             },
+            sectionId: +sectionId,
             content,
             title,
             sendDate,
+            className,
+            roomName,
+            classTime,
             isSent: false
         }
     });

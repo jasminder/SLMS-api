@@ -2751,7 +2751,12 @@ export async function updateLeaveApplication(leaveId: string, updatedById: strin
             }
         });
     }
-
+    const io = getIo();
+    io.emit('LeaveMarked', {
+        leaveId: leaveId,
+        status: 'onLeave',
+        date: new Date()
+    });
     return updatedLeaveApplication;
 }
 

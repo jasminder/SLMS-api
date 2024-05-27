@@ -100,9 +100,9 @@ model Student {
   currentInvoiceDue            Int? //to indicate total current invoice due                   @default(0)
   EmailContent                 EmailContent[]
   creditBalance                Int                            @default(0)
-  StudentHomework              StudentHomework[]
-  StudentClasswork             StudentClasswork[]
-  StudentAdminMessage          StudentAdminMessage[]
+  studentHomework              StudentHomework[]
+  studentClasswork             StudentClasswork[]
+  studentAdminMessage          StudentAdminMessage[]
 }
 
 model PersonalDetails {
@@ -783,6 +783,10 @@ model StudentHomework {
   feedback       String? // Teacher's feedback for the submitted homework
   submitted      Boolean   @default(false) // Tracks whether homework has been submitted
   attachments    String[] // Attachments that the student submits
+  sendDate       DateTime?
+  classTime      String?
+  roomName       String?
+  className      String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   student        Student?  @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -796,10 +800,14 @@ model Feedback {
   studentId          Int
   teacherId          Int
   termSubjectLevelId Int
+  sectionId          Int?
   title              String
   content            String
   isSent             Boolean  @default(false)
   sendDate           DateTime @default(now())
+  classTime          String?
+  roomName           String?
+  className          String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -897,6 +905,10 @@ model StudentClasswork {
   feedback       String?
   submitted      Boolean   @default(false)
   attachments    String[]
+  sendDate       DateTime?
+  classTime      String?
+  roomName       String?
+  className      String?
   createdAt      DateTime? @default(now())
   updatedAt      DateTime? @updatedAt
   student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)

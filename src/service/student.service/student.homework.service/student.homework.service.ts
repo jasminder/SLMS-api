@@ -1,33 +1,61 @@
 import { db } from '../../../utils/db.server';
 
-// Service to fetch student homework
 export async function fetchStudentHomework(studentId: number, termSubjectLevelId: number, sectionId: number) {
-    console.log(studentId, termSubjectLevelId, sectionId)
-    const studentHomeworks = await db.studentHomework.findMany({
+    const studentCourseDetails = await db.student.findUnique({
         where: {
-            studentId,
-            homework: {
-                termSubjectLevelId,
-                sectionId
-            }
+            id: studentId
         },
         include: {
-            homework: {
-                include: {
-                    subject: {
-                        select: {
-                            name: true
-                        }
+            studentHomework: {
+                where: {
+                    homework: {
+                        termSubjectLevelId: termSubjectLevelId,
+                        sectionId: sectionId
                     }
+                },
+                include: {
+                    homework: true
                 }
-            }
-        },
-        orderBy: {
-            homework: {
-                createdAt: 'desc'
+            },
+            studentClasswork: {
+                where: {
+                    classwork: {
+                        termSubjectLevelId: termSubjectLevelId,
+                        sectionId: sectionId
+                    }
+                },
+                include: {
+                    classwork: true
+                }
+            },
+            feedback: {
+                where: {
+                    termSubjectLevelId: termSubjectLevelId,
+                    sectionId: sectionId
+                }
             }
         }
     });
-    console.log(studentHomeworks);
-    return studentHomeworks;
+    const specificDate = new Date('2024-05-20T00:00:00Z');
+    const allAutomatedEmails = await db.automatedMailForParents.findMany({
+        where: {
+            studentId,
+            sendDate: {
+                gt: specificDate
+            }
+        }
+    });
+    const schoolCA = await db.schoolCheckInAttendance.findMany({
+        where: {
+            studentId,
+            date: {
+                gt: specificDate
+            }
+        },
+        select: {
+            date: true
+        }
+    });
+
+    return { studentCourseDetails, allAutomatedEmails, schoolCA };
 }

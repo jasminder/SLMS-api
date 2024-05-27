@@ -24,8 +24,11 @@ export async function createGroupHomework(
             return db.studentHomework.create({
                 data: {
                     studentId: +studentId,
-                    homeworkId: +homeworkIds[0]
-
+                    homeworkId: +homeworkIds[0],
+                    sendDate,
+                    roomName,
+                    className,
+                    classTime
                 }
             });
         });

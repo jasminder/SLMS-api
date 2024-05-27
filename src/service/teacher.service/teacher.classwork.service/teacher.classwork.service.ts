@@ -25,8 +25,11 @@ export async function createGroupClasswork(
             return db.studentClasswork.create({
                 data: {
                     studentId: +studentId,
-                    classworkId: +classworkIds[0]
-                    // Initialize other fields as necessary
+                    classworkId: +classworkIds[0],
+                    sendDate,
+                    roomName,
+                    className,
+                    classTime
                 }
             });
         });

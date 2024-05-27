@@ -88,41 +88,23 @@ study the context clearly and be ready for my next questions. You are a senior d
 
 ---
 
-ok , using that schema the way i create logic is by using route, controller , schema and service where route is the way create a logic is by usinga pattern of routes , controllers and services likeok , using that schema the way i create logic is by using route, controller , schema and service where route is the way create a logic is by usinga pattern of routes , controllers and services like homeworkRoute.route('/create/:termSubjectLevelId/:sectionId/:uploaderId').post(validate(createHomeworkSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(createHomeworkHandler));
+ok , using that schema the way i create logic is by using route, controller , schema and service where route is the way create a logic is by usinga pattern of routes , controllers and services likeok
+, using that schema the way i create logic is by using route, controller , schema and service where route is the way create a logic is by usinga pattern of routes , controllers and services like
+homeworkRoute.route('/create/:termSubjectLevelId/:sectionId/:uploaderId').post(validate(createHomeworkSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(createHomeworkHandler));
 
-controller like export const createHomeworkHandler = async (req: Request<CreateHomeworkSchema['params'], {}, CreateHomeworkSchema['body'], {}>, res: Response, next: NextFunction) => {
-    const { attachments, description, title, uploadedUserRole } = req.body;
-    const { termSubjectLevelId, sectionId, uploaderId } = req.params;
-    const newHomework = await createHomework(termSubjectLevelId, sectionId, uploaderId, uploadedUserRole, title, description, attachments);
+controller like export const createHomeworkHandler = async (req: Request<CreateHomeworkSchema['params'], {}, CreateHomeworkSchema['body'], {}>, res: Response, next: NextFunction) => { const {
+attachments, description, title, uploadedUserRole } = req.body; const { termSubjectLevelId, sectionId, uploaderId } = req.params; const newHomework = await createHomework(termSubjectLevelId,
+sectionId, uploaderId, uploadedUserRole, title, description, attachments);
 
     res.status(200).json(newHomework);
-};
-schema like import { z } from 'zod';
 
-export const createHomeworkSchema = z.object({
-    body: z.object({
-        attachments: z.array(z.string()),
-        uploadedUserRole: z.string(),
-        title: z.string().default('No title'),
-        description: z.string()
-    }),
-    params: z.object({
-        termSubjectLevelId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
-        sectionId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
-        uploaderId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
-    })
-});
-export type CreateHomeworkSchema = z.infer<typeof createHomeworkSchema>;
-and service logic like export async function createHomework(
-    termSubjectLevelId: string,
-    sectionId: string,
-    uploaderId: string,
-    uploadedUserRole: string,
-    title: string,
-    description = 'No description',
-    attachments: string[]
-) {
-    const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
+}; schema like import { z } from 'zod';
+
+export const createHomeworkSchema = z.object({ body: z.object({ attachments: z.array(z.string()), uploadedUserRole: z.string(), title: z.string().default('No title'), description: z.string() }),
+params: z.object({ termSubjectLevelId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }), sectionId: z.string().min(1, { message: 'Atleast one param string value required
+@ksm' }), uploaderId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }) }) }); export type CreateHomeworkSchema = z.infer<typeof createHomeworkSchema>; and service logic
+like export async function createHomework( termSubjectLevelId: string, sectionId: string, uploaderId: string, uploadedUserRole: string, title: string, description = 'No description', attachments:
+string[] ) { const subject = await db.subject.findUnique({ where: { id: +termSubjectLevelId } });
 
     let uploader;
     if (uploadedUserRole === 'TEACHER') {
@@ -175,9 +157,9 @@ and service logic like export async function createHomework(
         }
         return newHomework;
     }
-}
-study my pattern as you are a senior database and backend engineer. Wait for my questions and do not reply study my pattern as you are a senior database and backend engineer. Wait for my questions and
-do not reply
+
+} study my pattern as you are a senior database and backend engineer. Wait for my questions and do not reply study my pattern as you are a senior database and backend engineer. Wait for my questions
+and do not reply
 
 study my schema as you are a senior database and backend engineer. Wait for my questions and do not reply
 
@@ -185,3 +167,6 @@ study my schema as you are a senior database and backend engineer. Wait for my q
 
 . i asked you to only implement promise.all instead of the for loop. I did not ask you to refactor or make any helper code or functions. So just implement promise.all and maintain my code as it is.
 Also do not comment out any piece of code. Give every line of code in full.
+
+Now what i want is to know is that, I want to fetch all studentHomework , studentclasswork and feedback based on the schoolscheckinatttendnxce table. is it possible? this means that I can
+studentHomework , studentclasswork and feedback records for a specific school checkinattendance.

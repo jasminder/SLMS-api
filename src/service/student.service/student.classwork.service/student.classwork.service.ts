@@ -7,7 +7,10 @@ export async function fetchStudentClasswork(studentId: number, termSubjectLevelI
             classwork: {
                 termSubjectLevelId,
                 sectionId
-            }
+            },
+            // sendDate: {
+            //     lte: new Date()
+            // }
         },
         include: {
             classwork: {

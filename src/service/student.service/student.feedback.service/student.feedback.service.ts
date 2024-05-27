@@ -4,7 +4,10 @@ export async function getFeedbackForStudent(studentId: string, termSubjectLevelI
     const feedback = await db.feedback.findMany({
         where: {
             studentId: +studentId,
-            termSubjectLevelId: +termSubjectLevelId
+            termSubjectLevelId: +termSubjectLevelId,
+            // sendDate: {
+            //     lte: new Date()
+            // }
         }
     });
 
