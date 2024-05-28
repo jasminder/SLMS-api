@@ -136,22 +136,25 @@ export async function getPresentAttendances() {
         where: {
             checkedIn: true,
             isMarked: true,
-
-            classAttendance: {
-                some: {
-                    studentClassAssignment: {
-                        termSubjectLevel: {
-                            subject: {
-                                termSubject: {
-                                    some: {
-                                        isOnSunday: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            SchoolDay: {
+                isOnSunday: true
             }
+
+            // classAttendance: {
+            //     some: {
+            //         studentClassAssignment: {
+            //             termSubjectLevel: {
+            //                 subject: {
+            //                     termSubject: {
+            //                         some: {
+            //                             isOnSunday: true
+            //                         }
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
         },
         include: {
             SchoolDay: true
@@ -162,20 +165,8 @@ export async function getWeekdayPresentAttendances() {
     const attendances = await db.schoolCheckInAttendance.findMany({
         where: {
             checkedIn: true,
-            classAttendance: {
-                some: {
-                    studentClassAssignment: {
-                        termSubjectLevel: {
-                            subject: {
-                                termSubject: {
-                                    some: {
-                                        isOnWeekday: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            SchoolDay: {
+               isOnWeekday: true
             }
         },
         select: {
