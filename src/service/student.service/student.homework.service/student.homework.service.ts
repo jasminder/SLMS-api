@@ -36,7 +36,7 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
             }
         }
     });
-    const specificDate = new Date('2024-05-20T00:00:00Z');
+    const specificDate = new Date('2024-05-25T00:00:00Z');
     const allAutomatedEmails = await db.automatedMailForParents.findMany({
         where: {
             studentId,
@@ -64,6 +64,52 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
                 select: {
                     date: true,
                     attendanceStatus: true
+                }
+            }
+        }
+    });
+
+    return { studentCourseDetails, allAutomatedEmails, schoolCA };
+}
+export async function fetchStudentReport(studentId: number) {
+    const studentCourseDetails = await db.student.findUnique({
+        where: {
+            id: studentId
+        },
+        include: {
+            studentHomework: {
+                include: {
+                    homework: true
+                }
+            },
+            studentClasswork: {
+                include: {
+                    classwork: true
+                }
+            },
+            feedback: true
+        }
+    });
+    const specificDate = new Date('2024-05-25T00:00:00Z');
+    const allAutomatedEmails = await db.automatedMailForParents.findMany({
+        where: {
+            studentId,
+            sendDate: {
+                gt: specificDate
+            }
+        }
+    });
+    const schoolCA = await db.schoolCheckInAttendance.findMany({
+        where: {
+            studentId,
+            date: {
+                gt: specificDate
+            }
+        },
+        include: {
+            classAttendance: {
+                include: {
+                    studentClassAssignment: true
                 }
             }
         }

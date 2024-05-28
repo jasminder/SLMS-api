@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export const fetchStudentHomeworkSchema = z.object({
@@ -9,3 +8,9 @@ export const fetchStudentHomeworkSchema = z.object({
     })
 });
 export type FetchStudentHomeworkSchema = z.infer<typeof fetchStudentHomeworkSchema>;
+export const fetchStudentReportSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Student ID is required' })
+    })
+});
+export type FetchStudentReportSchema = z.infer<typeof fetchStudentReportSchema>;

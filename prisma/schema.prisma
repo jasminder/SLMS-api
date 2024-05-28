@@ -393,7 +393,7 @@ model FeePayment {
   remarks            String? ////moved to  PaymentInstallment
   fee                Fee?                 @relation(fields: [feeId], references: [id])
   studentTermFee     StudentTermFee?      @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
-  createdAt          DateTime             @default(now())
+  createdAt          DateTime?             @default(now())
   updatedAt          DateTime?            @updatedAt
   paymentInstallment PaymentInstallment[]
   feeTemplate        FeeTemplate?         @relation(fields: [feeTemplateId], references: [id], onDelete: Cascade)

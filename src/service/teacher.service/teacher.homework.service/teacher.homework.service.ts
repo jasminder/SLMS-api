@@ -16,7 +16,7 @@ export async function createGroupHomework(
     homeworkIds: string[]
 ) {
     const sendDate = await calculateSendDate(termSubjectLevelId);
-
+    console.log(sendDate);
     const numericStudentIds = studentIds.map(Number);
     let groupHomework;
     if (homeworkIds.length > 0) {

@@ -138,7 +138,7 @@ export async function getPresentAttendances() {
             isMarked: true,
 
             classAttendance: {
-                every: {
+                some: {
                     studentClassAssignment: {
                         termSubjectLevel: {
                             subject: {
@@ -162,8 +162,20 @@ export async function getWeekdayPresentAttendances() {
     const attendances = await db.schoolCheckInAttendance.findMany({
         where: {
             checkedIn: true,
-            SchoolDay: {
-                isOnWeekday: true
+            classAttendance: {
+                some: {
+                    studentClassAssignment: {
+                        termSubjectLevel: {
+                            subject: {
+                                termSubject: {
+                                    some: {
+                                        isOnWeekday: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         select: {
