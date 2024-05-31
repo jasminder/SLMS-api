@@ -8,6 +8,36 @@ type AttendanceFilter = {
     attendancePercentageValue?: number;
 };
 
+/*-----------------Temp-----------------------*/
+
+async function updateEmailsToLowercase() {
+    const personalDetails = await db.personalDetails.findMany({
+        where: {},
+        select: {
+            id: true, // Select only id and email for updating
+            email: true
+        }
+    });
+    const updatePromises = personalDetails.map((details) => {
+        return db.personalDetails.update({
+            where: {
+                id: details.id // Use the id to specify which record to update
+            },
+            data: {
+                email: details.email.toLowerCase() // Convert email to lowercase in JavaScript
+            }
+        });
+    });
+
+    // Execute all update operations concurrently
+    await Promise.all(updatePromises);
+    console.log(`Updated ${updatePromises.length} records.`);
+}
+
+// updateEmailsToLowercase();
+
+/*-----------------Temp-----------------------*/
+
 // Find all active student for the admin
 export async function findActiveStudents(page: number, termId: number) {
     const take = 10;
