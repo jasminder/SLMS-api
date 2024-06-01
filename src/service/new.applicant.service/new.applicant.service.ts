@@ -46,7 +46,7 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
                         lastName,
                         DOB: new Date(DOB),
                         gender,
-                        email,
+                        email:email.toLowerCase(),
                         contact,
                         address,
                         suburb,

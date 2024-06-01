@@ -41,7 +41,7 @@ export async function createTeacherApplicant(data: TeacherApplicantSchema['body'
                         lastName,
                         DOB: new Date(DOB),
                         gender,
-                        email,
+                        email:email.toLowerCase(),
                         contact,
                         address,
                         suburb,
