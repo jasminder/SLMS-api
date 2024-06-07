@@ -2888,7 +2888,7 @@ export async function findLeaveById(leaveId: number) {
 }
 
 // services/studentService.js
-export async function findStudentAttendanceById(studentId: string) {
+export async function findStudentAttendanceById1(studentId: string) {
     const attendance = await db.student.findUnique({
         where: { id: +studentId },
 
@@ -2900,6 +2900,41 @@ export async function findStudentAttendanceById(studentId: string) {
                 }
             },
             personalDetails: true
+        }
+    });
+
+    if (!attendance) {
+        throw new Error(`No attendance records found for student with ID ${studentId}`);
+    }
+
+    return attendance;
+}
+export async function findStudentAttendanceById(studentId: string) {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    if (!currentTerm) return [];
+    const attendance = await db.schoolCheckInAttendance.findMany({
+        where: {
+            student: {
+                id: +studentId
+            },
+            date: {
+                gte: currentTerm.startDate
+            }
+        },
+
+        include: {
+            student: {
+                include: {
+                    personalDetails: true
+                }
+            }
+        },
+        orderBy: {
+            date: 'desc'
         }
     });
 

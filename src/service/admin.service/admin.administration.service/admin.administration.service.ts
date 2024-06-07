@@ -1,3 +1,4 @@
+import { promise } from 'zod';
 import { ChangeCurrentTermNameSchema, CreateNewTermSetupSchema, ExtendCurrentTermSchema, FindUniqueTermSchema } from '../../../schema/admin.dto/admin.administration.dto/admin.administration.dto';
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
@@ -498,6 +499,13 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
             },
             select: { id: true }
         });
+        const studentsToUpdateAttendance = await db.student.findMany({
+            where: {
+                role: 'STUDENT',
+                isActive: true
+            },
+            select: { id: true }
+        });
 
         // Update all students with role STUDENT and isActive false to be active again
         // await db.student.updateMany({
@@ -520,8 +528,21 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
             );
             await Promise.all(updates);
         }
-
-        // Return the updated term
+        for (let i = 0; i < studentsToUpdateAttendance.length; i++) {
+            const batch = studentsToUpdateAttendance.slice(i, i + batchSize);
+            const updates = batch.map((student) =>
+                db.student.updateMany({
+                    where: {
+                        id: student.id
+                    },
+                    data: {
+                        termAttendance: 0,
+                        attendancePercentageValue: 0
+                    }
+                })
+            );
+            Promise.all(updates);
+        }
         return updatedTerm;
     });
 }
