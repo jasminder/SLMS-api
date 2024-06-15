@@ -76,6 +76,7 @@ enum MessageStatus {
   ERROR
 }
 
+//parent table to PersonalDetails.. etc
 model Student {
   id                           Int                            @id @default(autoincrement())
   akaalId                      Int?
@@ -117,22 +118,23 @@ model Student {
   studentAdminMessage          StudentAdminMessage[]
 }
 
+// child table to Student table. connection is established through FK studentID
 model PersonalDetails {
-  id        Int      @id @default(autoincrement())
-  studentId Int      @unique
+  id        Int      @id @default(autoincrement()) // entity integrity PK
+  studentId Int      @unique // referential integrity is maintained used @unique with  FK
   firstName String
   lastName  String
-  DOB       DateTime
+  DOB       DateTime // this has to be a date type , -> domain integrtity \
   gender    String
   email     String
   contact   String
-  address   String
+  address   String // house + street address || atomicity for breaking up whole address
   suburb    String
   state     String
   country   String   @default("Australia")
   postcode  String
   image     String?
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade) // relates to onDelete: Cascade FK constraint
 }
 
 model ParentsDetails {
@@ -173,8 +175,8 @@ model OtherInformation {
 }
 
 model Subject {
-  id                      Int                       @id @default(autoincrement())
-  name                    String                    @unique
+  id                      Int                       @id @default(autoincrement()) //// entity integrity
+  name                    String                    @unique // entity integrity a row which is unique
   isActive                Boolean                   @default(true)
   termSubject             TermSubject[]
   termSubjectGroupSubject TermSubjectGroupSubject[]
@@ -390,7 +392,7 @@ model FeePayment {
   dueAmount          Int // Amount still due (if any)
   creditAmount       Int                  @default(0) /// not required- moved to student model
   feeAmount          Int?
-  studentTermFeeId   Int?
+  studentTermFeeId   Int? // modality. FK is optional or NOT non nullable
   hasDiscount        Boolean?             @default(false)
   hasOverDue         Boolean?             @default(false)
   hasDue             Boolean?             @default(true)

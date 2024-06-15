@@ -2915,14 +2915,15 @@ export async function findStudentAttendanceById(studentId: string) {
             currentTerm: true
         }
     });
-    if (!currentTerm) return [];
+
+    // if (!currentTerm) return [];
     const attendance = await db.schoolCheckInAttendance.findMany({
         where: {
             student: {
                 id: +studentId
             },
             date: {
-                gte: currentTerm.startDate
+                gte: currentTerm?.startDate
             }
         },
 
