@@ -17,14 +17,16 @@ import { consolidateStudentDataForEmail } from '../service/cron.service/cron.con
 //     console.log('Running cron job: Send Feedback Emails');
 //     await consolidateStudentDataForEmail();
 // });
-cron.schedule('30 20 * * 0-6', async () => {
-    try {
-        // Attempt to run the consolidation function
 
-        await consolidateStudentDataForEmail();
-        console.log('Cron job executed successfully: consolidateStudentDataForEmail');
-    } catch (error) {
-        // Log any errors that occur
-        console.error('Error occurred in cron job: consolidateStudentDataForEmail', error);
-    }
-});
+//not required
+// cron.schedule('30 20 * * 0-6', async () => {
+//     try {
+//         // Attempt to run the consolidation function
+
+//         await consolidateStudentDataForEmail();
+//         console.log('Cron job executed successfully: consolidateStudentDataForEmail');
+//     } catch (error) {
+//         // Log any errors that occur
+//         console.error('Error occurred in cron job: consolidateStudentDataForEmail', error);
+//     }
+// });
