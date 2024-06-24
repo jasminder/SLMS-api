@@ -2,7 +2,7 @@
 
 import { db } from '../../../utils/db.server';
 
-export async function createInstitution(data: { name: string; address: string; logo: string; contact: string; contactSecondary: string; contactTertiary: string; email: string }) {
+export async function createInstitution(data: { name: string; address: string; logo: string; contact: string; contactSecondary: string; contactTertiary: string; email: string, accountName:string, BSB:string,accountNumber:string }) {
     return await db.institution.create({
         data
     });
