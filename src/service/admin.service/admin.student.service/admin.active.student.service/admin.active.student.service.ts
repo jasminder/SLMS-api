@@ -1956,7 +1956,7 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
                 paidDate: new Date(),
                 paymentMethod: 'DISCOUNT',
                 paymentStatus: status === 'PAID' ? PaymentStatus.PAID : status === 'PENDING' ? PaymentStatus.PENDING : PaymentStatus.OVERDUE,
-                remarks: `Discount applied: ${discountReason}`,
+                remarks: `${discountReason}`,
                 receivedBy: 'ADMIN'
             }
         });
