@@ -120,21 +120,22 @@ model Student {
 
 // child table to Student table. connection is established through FK studentID
 model PersonalDetails {
-  id        Int      @id @default(autoincrement()) // entity integrity PK
-  studentId Int      @unique // referential integrity is maintained used @unique with  FK
-  firstName String
-  lastName  String
-  DOB       DateTime // this has to be a date type , -> domain integrtity \
-  gender    String
-  email     String
-  contact   String
-  address   String // house + street address || atomicity for breaking up whole address
-  suburb    String
-  state     String
-  country   String   @default("Australia")
-  postcode  String
-  image     String?
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade) // relates to onDelete: Cascade FK constraint
+  id          Int      @id @default(autoincrement()) // entity integrity PK
+  studentId   Int      @unique // referential integrity is maintained used @unique with  FK
+  firstName   String
+  lastName    String
+  punjabiName String?
+  DOB         DateTime // this has to be a date type , -> domain integrtity \
+  gender      String
+  email       String
+  contact     String
+  address     String // house + street address || atomicity for breaking up whole address
+  suburb      String
+  state       String
+  country     String   @default("Australia")
+  postcode    String
+  image       String?
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade) // relates to onDelete: Cascade FK constraint
 }
 
 model ParentsDetails {

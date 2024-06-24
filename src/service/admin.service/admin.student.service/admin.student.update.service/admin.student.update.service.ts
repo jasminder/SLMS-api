@@ -10,7 +10,7 @@ import {
 
 // update student personal details service
 export async function updateStudentPersonalDetail(id: string, data: UpdateStudentPersonalDetailSchema['body']['data']) {
-    const { firstName, lastName, DOB, gender, email, contact, address, suburb, state, country, postcode, image } = data;
+    const { firstName, lastName, punjabiName, DOB, gender, email, contact, address, suburb, state, country, postcode, image } = data;
     const existingStudent = await db.student.findUnique({
         where: {
             id: +id
@@ -36,6 +36,7 @@ export async function updateStudentPersonalDetail(id: string, data: UpdateStuden
                     update: {
                         firstName,
                         lastName,
+                        punjabiName,
                         DOB,
                         gender,
                         email,

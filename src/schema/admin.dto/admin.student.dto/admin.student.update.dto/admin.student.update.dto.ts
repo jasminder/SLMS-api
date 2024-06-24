@@ -15,6 +15,7 @@ export const PersonalSchema = z.object({
     id: z.string(),
     firstName: z.string(),
     lastName: z.string(),
+    punjabiName: z.string(),
     DOB: z.string(),
     gender: z.string(),
     email: z.string().email(),

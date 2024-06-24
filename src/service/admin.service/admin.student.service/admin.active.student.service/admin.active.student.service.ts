@@ -1611,6 +1611,7 @@ export async function findActiveStudentById(id: string) {
                     id: true,
                     firstName: true,
                     lastName: true,
+                    punjabiName: true,
                     DOB: true,
                     gender: true,
                     email: true,
