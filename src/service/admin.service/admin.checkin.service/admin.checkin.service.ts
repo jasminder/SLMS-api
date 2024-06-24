@@ -2,7 +2,6 @@ import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { getIo } from '../../../sockets/socket';
 
-
 export async function createSchoolCheckInAttendanceForStudent(date: string) {
     if (!date) {
         throw customError('You need to provide a date to create School Check In Attendance record.', 'fail', 404, true);
@@ -364,35 +363,35 @@ export async function undoSchoolCheckInAttendanceForStudentById(studentId: strin
             orderBy: { date: 'desc' }
         });
 
-        if (attendanceRecords.length > 0) {
-            const totalCheckedIn = attendanceRecords.filter((att) => att.checkedIn).length;
-            const termAttendance = ((totalCheckedIn / attendanceRecords.length) * 100).toFixed(2); // Calculate percentage
+        // if (attendanceRecords.length > 0) {
+        //     const totalCheckedIn = attendanceRecords.filter((att) => att.checkedIn).length;
+        //     const termAttendance = ((totalCheckedIn / attendanceRecords.length) * 100).toFixed(2); // Calculate percentage
 
-            // Update student record with new values
-            const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
-                where: { studentId: +studentId },
-                orderBy: { date: 'desc' },
-                take: 2
-            });
-            let newAttendanceValue = 0;
-            const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
+        //     // Update student record with new values
+        //     const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
+        //         where: { studentId: +studentId },
+        //         orderBy: { date: 'desc' },
+        //         take: 2
+        //     });
+        //     let newAttendanceValue = 0;
+        //     const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
 
-            if (countMarkedAndCheckedIn === 2) {
-                newAttendanceValue = 2; // Both records have isMarked and checkedIn true
-            } else if (countMarkedAndCheckedIn === 1) {
-                newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
-            }
+        //     if (countMarkedAndCheckedIn === 2) {
+        //         newAttendanceValue = 2; // Both records have isMarked and checkedIn true
+        //     } else if (countMarkedAndCheckedIn === 1) {
+        //         newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
+        //     }
 
-            await db.student.update({
-                where: { id: +studentId },
-                data: { termAttendance: parseFloat(termAttendance), attendancePercentageValue: newAttendanceValue }
-            });
-        } else {
-            await db.student.update({
-                where: { id: +studentId },
-                data: { termAttendance: 0, attendancePercentageValue: 0 }
-            });
-        }
+        //     await db.student.update({
+        //         where: { id: +studentId },
+        //         data: { termAttendance: parseFloat(termAttendance), attendancePercentageValue: newAttendanceValue }
+        //     });
+        // } else {
+        //     await db.student.update({
+        //         where: { id: +studentId },
+        //         data: { termAttendance: 0, attendancePercentageValue: 0 }
+        //     });
+        // }
 
         // 3. Recalculate new attendance value for other students
         const remainingAttendances = await db.schoolCheckInAttendance.count({
@@ -882,309 +881,3 @@ export async function undoFalseCheckin(studentId: string) {
 
     return updatedRecord;
 }
-
-/*
-old schol check in creation with for loops
-
-export async function createSchoolCheckInAttendanceForStudent(date: string) {
-    if (!date) {
-        throw customError('You need to provide a date to create School CheckIn Attendance record.', 'fail', 404, true);
-    }
-    try {
-        const transaction = await db.$transaction(
-            async (db) => {
-                const currentTerm = await db.term.findFirst({
-                    where: {
-                        currentTerm: true
-                    }
-                });
-                const startDate = new Date(date);
-                startDate.setHours(0, 0, 0, 0);
-                const endDate = new Date(date);
-                endDate.setHours(23, 59, 59, 999);
-
-                let schoolDayRecord = await db.schoolDay.findFirst({
-                    where: { schoolOperatedDate: startDate }
-                });
-
-                if (!schoolDayRecord) {
-                    schoolDayRecord = await db.schoolDay.create({
-                        data: {
-                            schoolOperatedDate: startDate
-
-                            // other fields if necessary
-                        }
-                    });
-                } else {
-                    // If the record exists but isOnSunday is not set
-                    if (!schoolDayRecord.isOnSunday) {
-                        schoolDayRecord = await db.schoolDay.update({
-                            where: { id: schoolDayRecord.id },
-                            data: { isOnSunday: true }
-                        });
-                    }
-                }
-
-                // Find all active students in the current term
-                const activeStudents = await db.student.findMany({
-                    where: {
-                        role: 'STUDENT',
-                        isActive: true,
-                        studentTermFee: {
-                            some: {
-                                termId: currentTerm?.id
-                            }
-                        },
-                        enrollments: {
-                            some: {
-                                subjectEnrollment: {
-                                    termSubject: {
-                                        isOnSunday: true
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    include: {
-                        studentClassAssignment: true,
-                        personalDetails: true,
-                        enrollments: {
-                            include: {
-                                subjectEnrollment: {
-                                    include: {
-                                        termSubject: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                if (activeStudents.length == 0) {
-                    throw customError('No students are enrolled for today. Nothing to generate. Check isWeekDay/isSunday.', 'fail', 400, true);
-                }
-                const existingRecords = await db.schoolCheckInAttendance.findMany({
-                    where: {
-                        date: {
-                            gte: startDate,
-                            lte: endDate
-                        },
-                        classAttendance: {
-                            every: {
-                                studentClassAssignment: {
-                                    termSubjectLevel: {
-                                        subject: {
-                                            termSubject: {
-                                                every: {
-                                                    isOnSunday: true
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-
-                if (existingRecords.length > 0) {
-                    throw customError('Attendance already created for today.', 'fail', 400, true);
-                }
-
-                // Create SchoolCheckInAttendance records for all active students
-                const attendanceRecords: any = [];
-
-                for (const student of activeStudents) {
-                    const existingAttendance = await db.schoolCheckInAttendance.findFirst({
-                        where: {
-                            studentId: student.id,
-                            date: {
-                                gte: startDate,
-                                lte: endDate
-                            }
-                        }
-                    });
-
-                    if (!existingAttendance) {
-                        const leaveRecord = await db.leave.findFirst({
-                            where: {
-                                studentId: student.id,
-                                startDate: { lte: new Date(date) },
-                                endDate: { gte: new Date(date) },
-                                status: 'APPROVED'
-                            }
-                        });
-                        let isOnLeave = false;
-                        if (leaveRecord) {
-                            isOnLeave = true;
-                        }
-                        const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
-                        const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
-                            where: { studentId: student.id, isOnLeave: false },
-                            orderBy: { date: 'desc' },
-                            take: 2
-                        });
-                        let newAttendanceValue = 0;
-                        const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
-
-                        if (countMarkedAndCheckedIn === 2) {
-                            newAttendanceValue = 2; // Both records have isMarked and checkedIn true
-                        } else if (countMarkedAndCheckedIn === 1) {
-                            newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
-                        }
-
-                        const newAttendanceRecord = await db.schoolCheckInAttendance.create({
-                            data: {
-                                studentId: student.id,
-                                date: new Date(date),
-                                schoolDayId: schoolDayRecord?.id,
-                                attendanceValue: newAttendanceValue,
-                                isOnLeave: isOnLeave
-                            }
-                        });
-
-                        attendanceRecords.push(newAttendanceRecord);
-
-                        // Find all current studentClassAssignments for the student
-                        const studentClassAssignments = await db.studentClassAssignment.findMany({
-                            where: {
-                                studentId: student.id,
-                                isCurrentlyAssigned: true,
-                                termSubjectLevel: {
-                                    subject: {
-                                        termSubject: {
-                                            every: {
-                                                isOnSunday: true
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            include: {
-                                enrollment: {
-                                    include: {
-                                        subjectEnrollment: {
-                                            where: {
-                                                termSubject: {
-                                                    isOnSunday: true,
-                                                    isOnWeekday: true
-                                                }
-                                            },
-                                            include: {
-                                                termSubject: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        });
-
-                        for (const assignment of studentClassAssignments) {
-                            // Check if a ClassAttendance record already exists for the assignment and date
-                            const existingClassAttendance = await db.classAttendance.findUnique({
-                                where: {
-                                    studentClassAssignmentId_date: {
-                                        studentClassAssignmentId: assignment.id,
-                                        date: startDate
-                                    }
-                                }
-                            });
-
-                            // If a record exists, update it, otherwise create a new one
-                            if (!existingClassAttendance) {
-                                const newClasses = await db.classAttendance.create({
-                                    data: {
-                                        studentClassAssignmentId: assignment.id,
-                                        date: startDate,
-                                        schoolCheckInAttendanceId: newAttendanceRecord.id,
-                                        attendanceStatus: attendanceStatus,
-                                        schoolDayId: schoolDayRecord?.id
-                                        // other fields if necessary
-                                    }
-                                });
-                            }
-                        }
-                    } else {
-                        const leaveRecord = await db.leave.findFirst({
-                            where: {
-                                studentId: student.id,
-                                startDate: { lte: new Date(date) },
-                                endDate: { gte: new Date(date) },
-                                status: 'APPROVED'
-                            }
-                        });
-                        let isOnLeave = false;
-                        if (leaveRecord) {
-                            isOnLeave = true;
-                        }
-                        const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
-                        const studentClassAssignments = await db.studentClassAssignment.findMany({
-                            where: {
-                                studentId: student.id,
-                                isCurrentlyAssigned: true,
-                                termSubjectLevel: {
-                                    subject: {
-                                        termSubject: {
-                                            every: {
-                                                isOnSunday: true
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            include: {
-                                enrollment: {
-                                    include: {
-                                        subjectEnrollment: {
-                                            where: {
-                                                termSubject: {
-                                                    isOnSunday: true
-                                                }
-                                            },
-                                            include: {
-                                                termSubject: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        });
-
-                        for (const assignment of studentClassAssignments) {
-                            // Check if a ClassAttendance record already exists for the assignment and date
-                            const existingClassAttendance = await db.classAttendance.findUnique({
-                                where: {
-                                    studentClassAssignmentId_date: {
-                                        studentClassAssignmentId: assignment.id,
-                                        date: startDate
-                                    }
-                                }
-                            });
-
-                            // If a record exists, update it, otherwise create a new one
-                            if (!existingClassAttendance) {
-                                const newClasses = await db.classAttendance.create({
-                                    data: {
-                                        studentClassAssignmentId: assignment.id,
-                                        date: startDate,
-                                        schoolCheckInAttendanceId: existingAttendance.id,
-                                        attendanceStatus: attendanceStatus,
-                                        schoolDayId: schoolDayRecord?.id
-                                        // other fields if necessary
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }
-
-                return attendanceRecords;
-            },
-            { timeout: 60000 }
-        );
-
-        return transaction;
-    } catch (error) {
-        console.error('Error during creating School CheckIn Attendance:', error);
-        throw customError('Generating report cannot be completed. Please check your network and try again after one minute.', 'error', 500, true);
-    }
-}*/

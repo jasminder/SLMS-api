@@ -1,4 +1,3 @@
-
 import { db } from '../utils/db.server';
 const cron = require('node-cron');
 
@@ -15,62 +14,76 @@ cron.schedule('0 17 * * *', () => {
 });
 
 async function calculateTermAttendance() {
-    try {
-        const students = await db.student.findMany({
-            where: {
-                role: 'STUDENT',
-                isActive: true
-            },
-            include: {
-                schoolCheckInAttendance: {
-                    // Optionally filter by specific terms if applicable
-                    // where: { term: {id: specificTermId} }
-                }
-            }
-        });
-
-        await Promise.all(
-            students.map(async (student) => {
-                if (student.schoolCheckInAttendance) {
-                    const totalRecords = student.schoolCheckInAttendance.length;
-                    const totalCheckedIn = student.schoolCheckInAttendance.filter((attendance) => attendance.checkedIn).length;
-
-                    if (totalRecords > 0) {
-                        const termAttendance = ((totalCheckedIn / totalRecords) * 100).toFixed(4);
-
-                        const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
-                            where: { studentId: student.id ,isOnLeave: false },
-                            orderBy: { date: 'desc' },
-                            take: 2
-                        });
-                        const lastSchoolCheckinAttendance = await db.schoolCheckInAttendance.findFirst({
-                            where: { studentId: student.id ,},
-                            orderBy: { date: 'desc' },
-                            take: 1
-                        });
-                        let newAttendanceValue = 0;
-                        const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
-
-                        if (countMarkedAndCheckedIn === 2) {
-                            newAttendanceValue = 2; // Both records have isMarked and checkedIn true
-                        } else if (countMarkedAndCheckedIn === 1) {
-                            newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    if (!currentTerm?.id) {
+        console.log('No current term found.');
+        return;
+    }
+    if (currentTerm?.id) {
+        try {
+            const students = await db.student.findMany({
+                where: {
+                    role: 'STUDENT',
+                    isActive: true
+                },
+                include: {
+                    schoolCheckInAttendance: {
+                        where: {
+                            date: {
+                                gte: currentTerm?.startDate
+                            }
                         }
-                        await db.schoolCheckInAttendance.update({ where: { id: lastSchoolCheckinAttendance?.id }, data: { attendanceValue: newAttendanceValue } });
-                        await db.student.update({
-                            where: { id: student.id },
-                            data: { termAttendance: parseFloat(termAttendance), attendancePercentageValue: newAttendanceValue }
-                        });
                     }
                 }
-            })
-        );
+            });
 
-        console.log('Term attendance percentages updated successfully.');
-    } catch (error) {
-        console.error('Error updating term attendance percentages:', error);
-    } finally {
-        await db.$disconnect();
+            await Promise.all(
+                students.map(async (student) => {
+                    if (student.schoolCheckInAttendance) {
+                        const totalRecords = student.schoolCheckInAttendance.length;
+                        const totalCheckedIn = student.schoolCheckInAttendance.filter((attendance) => attendance.checkedIn).length;
+
+                        if (totalRecords > 0) {
+                            const termAttendance = ((totalCheckedIn / totalRecords) * 100).toFixed(4);
+
+                            const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
+                                where: { studentId: student.id, isOnLeave: false },
+                                orderBy: { date: 'desc' },
+                                take: 2
+                            });
+                            const lastSchoolCheckinAttendance = await db.schoolCheckInAttendance.findFirst({
+                                where: { studentId: student.id },
+                                orderBy: { date: 'desc' },
+                                take: 1
+                            });
+                            let newAttendanceValue = 0;
+                            const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
+
+                            if (countMarkedAndCheckedIn === 2) {
+                                newAttendanceValue = 2; // Both records have isMarked and checkedIn true
+                            } else if (countMarkedAndCheckedIn === 1) {
+                                newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
+                            }
+                            await db.schoolCheckInAttendance.update({ where: { id: lastSchoolCheckinAttendance?.id }, data: { attendanceValue: newAttendanceValue } });
+                            await db.student.update({
+                                where: { id: student.id },
+                                data: { termAttendance: parseFloat(termAttendance), attendancePercentageValue: newAttendanceValue }
+                            });
+                        }
+                    }
+                })
+            );
+
+            console.log('Term attendance percentages updated successfully.');
+        } catch (error) {
+            console.error('Error updating term attendance percentages:', error);
+        } finally {
+            await db.$disconnect();
+        }
     }
 }
 
