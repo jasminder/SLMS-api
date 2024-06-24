@@ -172,3 +172,22 @@ export const findCurrentTermClasses = async () => {
 
     return currentTermClasses;
 };
+
+export async function fetchStudentCountInClass(termSubjectLevelId: string, sectionId: string) {
+    const numericTermSubjectLevelId = parseInt(termSubjectLevelId);
+    const numericSectionId = parseInt(sectionId);
+
+    const studentCount = await db.studentClassAssignment.count({
+        where: {
+            termSubjectLevelId: numericTermSubjectLevelId,
+            sectionId: numericSectionId,
+            isCurrentlyAssigned: true,
+            student: {
+                isActive: true,
+                role: 'STUDENT'
+            }
+        }
+    });
+
+    return studentCount;
+}
