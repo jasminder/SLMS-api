@@ -119,7 +119,7 @@ adminActiveStudentRoute
 
 // Without Pagination
 /*find unqiue student*/
-adminActiveStudentRoute.route('/active-student-detail/:id').get(validate(findUniqueActiveStudentSchema), protectRoute, restrict('ADMIN','STUDENT'), asyncErrorHandler(findActiveStudentByIdHandler));
+adminActiveStudentRoute.route('/active-student-detail/:id').get(validate(findUniqueActiveStudentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findActiveStudentByIdHandler));
 /*find unqiue active student fee details*/
 adminActiveStudentRoute.route('/active-student-fee-detail/:studentId').get(validate(findStudentFeeDetailsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findStudentFeeDetailsHandler));
 /* find subjects enrolled in a termSubject group*/
@@ -199,7 +199,7 @@ adminActiveStudentRoute.route('/get-leave-by-id/:leaveId').get(validate(findLeav
 
 adminActiveStudentRoute
     .route('/attendance-detail/:studentId')
-    .get(validate(findStudentAttendanceByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER','STUDENT'), asyncErrorHandler(getStudentAttendanceByIdHandler));
+    .get(validate(findStudentAttendanceByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER', 'STUDENT'), asyncErrorHandler(getStudentAttendanceByIdHandler));
 
 adminActiveStudentRoute.route('/make-alumni/:studentId').patch(validate(alumniStudentByIdSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(alumniStudentByIdHandler));
 

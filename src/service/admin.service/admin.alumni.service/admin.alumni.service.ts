@@ -286,7 +286,12 @@ export async function findAlumniById(alumniId: string) {
             enrollments: true,
             comment: true,
             interaction: true,
-            feedback: true
+            feedback: true,
+            AlumniRemarks: {
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            }
         }
     });
     const siblings = await db.student.findMany({
@@ -480,7 +485,7 @@ export async function enrollAlumniToSubjects(enrollData: AlumniEnrollDataSchema[
         const newEnrollment = await db.enrollment.create({
             data: {
                 studentId: enrollData.alumniId,
-                termSubjectGroupId: enrollmentItem.termSubjectGroupId,
+                termSubjectGroupId: enrollmentItem.termSubjectGroupId
                 // dueDate: dueDate
             },
             select: { id: true }
