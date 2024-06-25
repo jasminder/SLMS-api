@@ -2947,9 +2947,9 @@ export async function findStudentAttendanceById(studentId: string) {
     return attendance;
 }
 
-export async function alumniStudentById(studentId: string) {
+export async function alumniStudentById(studentId: string, remarks: string) {
     const student = await db.student.update({
-        where: { id: +studentId },
+        where: { id: parseInt(studentId) },
         data: {
             role: 'ALUMNI',
             isActive: false,
@@ -2960,6 +2960,12 @@ export async function alumniStudentById(studentId: string) {
     if (!student) {
         throw customError(`No student found with ID ${studentId}`, 'fail', 400, true);
     }
+    await db.alumniRemarks.create({
+        data: {
+            studentId: parseInt(studentId),
+            remarks
+        }
+    });
 
     return student;
 }

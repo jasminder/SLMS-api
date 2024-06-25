@@ -322,9 +322,10 @@ export const getStudentAttendanceByIdHandler = async (req: Request<FindStudentAt
     res.status(200).json(attendanceRecords);
 };
 
-export const alumniStudentByIdHandler = async (req: Request<AlumniStudentByIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+export const alumniStudentByIdHandler = async (req: Request<AlumniStudentByIdSchema['params'], {}, AlumniStudentByIdSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { studentId } = req.params;
-    const updatedStudent = await alumniStudentById(studentId);
+    const { remarks } = req.body;
+    const updatedStudent = await alumniStudentById(studentId, remarks);
     res.status(200).json(updatedStudent);
 };
 

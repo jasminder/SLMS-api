@@ -116,6 +116,7 @@ model Student {
   studentHomework              StudentHomework[]
   studentClasswork             StudentClasswork[]
   studentAdminMessage          StudentAdminMessage[]
+  AlumniRemarks                AlumniRemarks[]
 }
 
 // child table to Student table. connection is established through FK studentID
@@ -1243,3 +1244,12 @@ model StudentAdminMessage {
 }
 
 // ------------------- for message ------------------- //
+model AlumniRemarks {
+  id        Int      @id @default(autoincrement())
+  studentId Int // Foreign key reference to Student
+  remarks   String // Remarks for the alumni
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}

@@ -253,7 +253,10 @@ export type FindStudentAttendanceByIdSchema = z.infer<typeof findStudentAttendan
 
 export const alumniStudentByIdSchema = z.object({
     params: z.object({
-        studentId: z.string().regex(/^\d+$/, { message: 'Invalid student ID format' })
+        studentId: z.string()
+    }),
+    body: z.object({
+        remarks: z.string().min(1, { message: 'Remarks cannot be empty' })
     })
 });
 
