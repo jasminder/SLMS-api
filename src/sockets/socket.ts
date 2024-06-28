@@ -6,7 +6,7 @@ let io: SocketIOServer | null = null;
 export function initSocket(server: HttpServer): void {
     const origin = process.env.NODE_ENV === 'development'
         ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8080', 'https://slms-client-2aam.vercel.app']
-        : ['https://SLMS.com', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://slms-client-2aam.vercel.app', 'https://akaalshaouni.org'];
+        : ['https://SLMS.com', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://slms-client-2aam.vercel.app', 'https://akaalshaouni.org','https://stg.akaalshaouni.org'];
 
     io = new SocketIOServer(server, {
         cors: {
