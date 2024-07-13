@@ -497,7 +497,7 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
                 role: 'STUDENT',
                 isActive: false
             },
-            select: { id: true }
+            select: { id: true, akaalId: true }
         });
         const studentsToUpdateAttendance = await db.student.findMany({
             where: {
@@ -520,12 +520,17 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
         const batchSize = 100; // Adjust the batch size as needed
         for (let i = 0; i < studentsToUpdate.length; i += batchSize) {
             const batch = studentsToUpdate.slice(i, i + batchSize);
-            const updates = batch.map((student) =>
-                db.student.update({
+            const updates = batch.map((student) => {
+                let updateData: any = { isActive: true };
+                if (!student.akaalId) {
+                    // Only assign a new akaalId if it's null
+                    updateData.akaalId = nextAkaalId++;
+                }
+                return db.student.update({
                     where: { id: student.id, isActive: false, role: 'STUDENT' },
-                    data: { isActive: true, akaalId: nextAkaalId++ }
-                })
-            );
+                    data: { ...updateData }
+                });
+            });
             await Promise.all(updates);
         }
         for (let i = 0; i < studentsToUpdateAttendance.length; i++) {
