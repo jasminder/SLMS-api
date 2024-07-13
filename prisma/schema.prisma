@@ -766,7 +766,7 @@ model SkipReport {
   updatedAt           DateTime? @updatedAt
 }
 
-model Homework {
+model Homework {ƒ
   id                 Int               @id @default(autoincrement())
   subjectId          Int
   teacherId          Int? // Optional: ID of the teacher who uploaded the homework

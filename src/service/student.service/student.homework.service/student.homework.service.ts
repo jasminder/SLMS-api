@@ -1,6 +1,16 @@
 import { db } from '../../../utils/db.server';
 
 export async function fetchStudentHomework(studentId: number, termSubjectLevelId: number, sectionId: number) {
+    const currentTerm = await db.term.findFirst({
+        where: { currentTerm: true },
+        select: { startDate: true }
+    });
+
+    if (!currentTerm) {
+        throw new Error('No current term found');
+    }
+
+    const startDate = currentTerm.startDate;
     const studentCourseDetails = await db.student.findUnique({
         where: {
             id: studentId
@@ -10,7 +20,13 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
                 where: {
                     homework: {
                         termSubjectLevelId: termSubjectLevelId,
-                        sectionId: sectionId
+                        sectionId: sectionId,
+                        createdAt: {
+                            gt: startDate
+                        }
+                    },
+                    createdAt: {
+                        gt: startDate
                     }
                 },
                 include: {
@@ -21,7 +37,13 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
                 where: {
                     classwork: {
                         termSubjectLevelId: termSubjectLevelId,
-                        sectionId: sectionId
+                        sectionId: sectionId,
+                        createdAt: {
+                            gt: startDate
+                        }
+                    },
+                    createdAt: {
+                        gt: startDate
                     }
                 },
                 include: {
@@ -31,7 +53,10 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
             feedback: {
                 where: {
                     termSubjectLevelId: termSubjectLevelId,
-                    sectionId: sectionId
+                    sectionId: sectionId,
+                    createdAt: {
+                        gt: startDate
+                    }
                 }
             }
         }
@@ -49,7 +74,7 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
         where: {
             studentId,
             date: {
-                gt: specificDate
+                gt: startDate
             }
         },
         select: {
@@ -72,22 +97,58 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
     return { studentCourseDetails, allAutomatedEmails, schoolCA };
 }
 export async function fetchStudentReport(studentId: number) {
+    const currentTerm = await db.term.findFirst({
+        where: { currentTerm: true },
+        select: { startDate: true }
+    });
+
+    if (!currentTerm) {
+        throw new Error('No current term found');
+    }
+
+    const startDate = currentTerm.startDate;
     const studentCourseDetails = await db.student.findUnique({
         where: {
             id: studentId
         },
         include: {
             studentHomework: {
+                where: {
+                    homework: {
+                        createdAt: {
+                            gt: startDate
+                        }
+                    },
+                    createdAt: {
+                        gt: startDate
+                    }
+                },
                 include: {
                     homework: true
                 }
             },
             studentClasswork: {
+                where: {
+                    classwork: {
+                        createdAt: {
+                            gt: startDate
+                        }
+                    },
+                    createdAt: {
+                        gt: startDate
+                    }
+                },
                 include: {
                     classwork: true
                 }
             },
-            feedback: true
+            feedback: {
+                where: {
+                    createdAt: {
+                        gt: startDate
+                    }
+                }
+            }
         }
     });
     const specificDate = new Date('2024-05-25T00:00:00Z');
@@ -103,13 +164,18 @@ export async function fetchStudentReport(studentId: number) {
         where: {
             studentId,
             date: {
-                gt: specificDate
+                gt: startDate
             }
         },
         include: {
             classAttendance: {
                 include: {
                     studentClassAssignment: true
+                },
+                where: {
+                    date: {
+                        gte: startDate
+                    }
                 }
             }
         }
