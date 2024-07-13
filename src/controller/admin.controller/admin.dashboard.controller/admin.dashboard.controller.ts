@@ -7,6 +7,7 @@ import {
     fetchStudentsOnAbsent,
     fetchStudentsOnAttendance,
     fetchStudentsOnLeave,
+    fetchUnviewedApplicants,
     fetchWeekdayActiveCheckedInStudents,
     findActiveStudentsWithFlags,
     searchActiveStudentsWithFlags
@@ -76,4 +77,12 @@ export const fetchWeekdayActiveCheckedInStudentsHandler = async (req: Request<{}
 export const fetchPendingLeavesHandler = async (req: Request, res: Response, next: NextFunction) => {
     const pendingLeaves = await fetchPendingLeaves();
     res.status(200).json(pendingLeaves);
+};
+export const fetchUnviewedApplicantsHandler = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const unviewedApplicants = await fetchUnviewedApplicants();
+        res.status(200).json(unviewedApplicants);
+    } catch (error) {
+        next(error);
+    }
 };

@@ -117,6 +117,7 @@ model Student {
   studentClasswork             StudentClasswork[]
   studentAdminMessage          StudentAdminMessage[]
   AlumniRemarks                AlumniRemarks[]
+  hasSeenNewApplication        Boolean                        @default(false)
 }
 
 // child table to Student table. connection is established through FK studentID
@@ -1018,7 +1019,7 @@ model Interaction {
   createdBy       Int // ID of the staff member who recorded the interaction
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  student         Student         @relation(fields: [studentId], references: [id])
+  student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
   // Optionally include a relation to the staff or teacher who created the interaction
   // staff         Staff           @relation(fields: [createdBy], references: [id])
 }
@@ -1031,7 +1032,7 @@ model Comment {
   createdBy       Int // ID of the admin who created the comment
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  student         Student         @relation(fields: [studentId], references: [id])
+  student         Student         @relation(fields: [studentId], references: [id],onDelete: Cascade)
   admin           Admin           @relation(fields: [createdBy], references: [id])
 }
 
@@ -1080,7 +1081,7 @@ model Leave {
   approverId    Int? // ID of the admin/teacher who approved the leave, nullable for pending leaves
   comments      String? // Optional comments about the leave request
 
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id],onDelete: Cascade)
   approver  Admin?   @relation(fields: [approverId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1143,7 +1144,7 @@ model StudentNoticeAcknowledgement {
   seenAt          DateTime? // Set this to the current time when the notice is seen
   studentNotice   StudentNotice @relation(fields: [studentNoticeId], references: [id], onDelete: Cascade)
 
-  student Student @relation(fields: [studentId], references: [id])
+  student Student @relation(fields: [studentId], references: [id],onDelete: Cascade)
 
   @@unique([studentNoticeId, studentId]) // Ensuring a unique record per notice per teacher
 }
@@ -1213,7 +1214,7 @@ model Timetable {
 model EmailContent {
   id           Int      @id @default(autoincrement())
   studentId    Int
-  student      Student  @relation(fields: [studentId], references: [id])
+  student      Student  @relation(fields: [studentId], references: [id],onDelete: Cascade)
   emailcontent String
   sendDate     DateTime
 }
@@ -1236,7 +1237,7 @@ model StudentAdminMessage {
   studentId Int
   adminId   Int
   messageId Int
-  student   Student @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id],onDelete: Cascade)
   admin     Admin   @relation(fields: [adminId], references: [id])
   message   Message @relation(fields: [messageId], references: [id])
 

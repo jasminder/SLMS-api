@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-
 export const findAllApplicantSchema = z.object({
     query: z.object({
         page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
@@ -40,3 +39,17 @@ export const applicantEnrollDataSchema = z.object({
     })
 });
 export type ApplicantEnrollDataSchema = z.infer<typeof applicantEnrollDataSchema>;
+export const findUnseenApplicantSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+
+export type FindUnseenApplicantSchema = z.infer<typeof findUnseenApplicantSchema>;
+export const findStudentToDeleteSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'A valid student ID is required' })
+    })
+});
+
+export type FindStudentToDeleteSchema = z.infer<typeof findStudentToDeleteSchema>;

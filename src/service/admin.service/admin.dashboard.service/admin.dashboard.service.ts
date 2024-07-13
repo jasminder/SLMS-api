@@ -27,29 +27,7 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
             }
         }
     });
-    /**
-      const activeStudents = await db.student.findMany({
-        where: {
-            isActive: true,
-            role: 'STUDENT',
-            enrollments: {
-                some: {
-                    termSubjectLevel: {
-                        termId: currentTerm?.id,
-                        subject: {
-                            termSubject: {
-                                some: {
-                                    isOnSunday: true
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    });
 
-     */
     const recentSchoolDay = await db.schoolDay.findFirst({
         where: {
             schoolOperatedDate: {
@@ -862,7 +840,22 @@ export async function fetchPendingLeaves() {
                 include: {
                     personalDetails: true
                 }
-            } // Assuming you want to include student details
+            }
+        }
+    });
+}
+export async function fetchUnviewedApplicants() {
+    return await db.student.findMany({
+        where: {
+            role: 'APPLICANT',
+            isActive: false,
+            hasSeenNewApplication: false
+        },
+        include: {
+            personalDetails: true
+        },
+        orderBy: {
+            createdAt: 'desc'
         }
     });
 }

@@ -93,7 +93,6 @@ export async function searchApplicants(search: string, page: number) {
 
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
 
-
     const pageNum: number = page ?? 0;
     const skip = pageNum * take;
     const applicants = await db.student.findMany({
@@ -390,7 +389,7 @@ export async function enrollApplicant(enrollData: ApplicantEnrollDataSchema['bod
         const newEnrollment = await db.enrollment.create({
             data: {
                 studentId: enrollData.applicantId,
-                termSubjectGroupId: enrollmentItem.termSubjectGroupId,
+                termSubjectGroupId: enrollmentItem.termSubjectGroupId
                 // dueDate: dueDate
             },
             select: { id: true }
@@ -596,4 +595,23 @@ export async function enrollApplicantToStudent(id: number) {
     });
 
     return { message: `The applicant enrolled to Student successfully` };
+}
+export async function markApplicantAsSeen(studentId: string) {
+    const id = parseInt(studentId, 10); // Ensure the ID is an integer
+    return await db.student.update({
+        where: { id },
+        data: {
+            hasSeenNewApplication: true
+        }
+    });
+}
+export async function deleteApplication(studentId: string) {
+    console.log(studentId);
+    const id = parseInt(studentId, 10); // Ensure the ID is an integer
+    if (isNaN(id)) {
+        throw new Error('Invalid student ID');
+    }
+    return await db.student.delete({
+        where: { id }
+    });
 }

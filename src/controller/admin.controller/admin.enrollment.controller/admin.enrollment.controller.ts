@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { FindAllEnrolledStudentsSchema } from '../../../schema/admin.dto/admin.student.dto/admin.enrolledstudent/admin.enrolled.student.dto';
 import {
     deEnrollApplicant,
+    deleteApplication,
     enrollApplicant,
     enrollApplicantToStudent,
     findAllApplicants,
@@ -10,9 +11,16 @@ import {
     findApplicantEnrolledSubjects,
     findCurrentTermToEnroll,
     findPublishedTermToEnroll,
+    markApplicantAsSeen,
     searchApplicants
 } from '../../../service/admin.service/admin.enrollment.service/admin.enrollment.service';
-import { ApplicantEnrollDataSchema, FindUniqueApplicantSchema, SearchApplicantSchema } from '../../../schema/admin.dto/admin.enrollment.dto/admin.enrollment.dto';
+import {
+    ApplicantEnrollDataSchema,
+    FindStudentToDeleteSchema,
+    FindUniqueApplicantSchema,
+    FindUnseenApplicantSchema,
+    SearchApplicantSchema
+} from '../../../schema/admin.dto/admin.enrollment.dto/admin.enrollment.dto';
 
 export type FindAllApplicantSchema = FindAllEnrolledStudentsSchema;
 
@@ -75,4 +83,15 @@ export const enrollApplicantToStudentHandler = async (req: Request<FindUniqueApp
     const { id } = req.params;
     const enrolledSubjects = await enrollApplicantToStudent(+id);
     res.status(200).json(enrolledSubjects);
+};
+export const markApplicantAsSeenHandler = async (req: Request<FindUnseenApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const updatedStudent = await markApplicantAsSeen(studentId);
+    res.status(200).json(updatedStudent);
+};
+
+export const deleteApplicationHandler = async (req: Request<FindStudentToDeleteSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const result = await deleteApplication(studentId);
+    res.status(200).json(result);
 };

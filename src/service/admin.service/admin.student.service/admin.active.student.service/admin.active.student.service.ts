@@ -2441,7 +2441,10 @@ export async function enrollActiveStudent(enrollData: ActiveStudentEnrollDataSch
                 },
                 select: { id: true }
             });
-
+            await db.student.update({
+                where: { id: enrollData.activeStudentId },
+                data: { isAllowedLogin: true }
+            });
             // const existingFeePayment = await db.feePayment.findFirst({
             //     where: {
             //         studentTermFeeId: studentTermFee.id,
