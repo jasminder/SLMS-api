@@ -2007,7 +2007,7 @@ export async function applyStudentCredit(feePaymentId: string, creditToApply: nu
         if (newDueAmount <= 0) {
             newDueAmount = 0;
             updateStatus = PaymentStatus.PAID;
-            console.log(updateStatus);
+            // console.log(updateStatus);
             overDue = false;
         }
 

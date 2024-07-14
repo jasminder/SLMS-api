@@ -54,7 +54,6 @@ export const acknowledgeStudentNoticeHandler = async (req: Request<AcknowledgeSt
 // Student assignments fetching handler
 export const fetchStudentAssignmentsHandler = async (req: Request<FetchStudentAssignmentsSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { studentId } = req.params;
-    console.log(studentId);
     const assignments = await fetchStudentAssignments(+studentId);
 
     res.status(200).json(assignments);

@@ -287,7 +287,7 @@ export async function createWeekdaySchoolCheckInAttendanceForStudent(date: strin
                                 }
                             }
                         });
-                        console.log(studentClassAssignments, 'studentClassAssignments ');
+                        // console.log(studentClassAssignments, 'studentClassAssignments ');
                         for (const assignment of studentClassAssignments) {
                             // Check if a ClassAttendance record already exists for the assignment and date
                             const existingClassAttendance = await db.classAttendance.findUnique({
