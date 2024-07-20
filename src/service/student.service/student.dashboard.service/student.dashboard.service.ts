@@ -6,7 +6,8 @@ export async function findStudentsByEmail(email: string) {
         where: {
             personalDetails: {
                 email: email
-            }
+            },
+            role: 'STUDENT'
         },
         include: {
             personalDetails: true
@@ -31,7 +32,8 @@ export async function findStudentDetailsById(studentId: string) {
     });
     const activeStudent = await db.student.findUnique({
         where: {
-            id: +studentId
+            id: +studentId,
+            role: 'STUDENT'
         },
         include: {
             personalDetails: {
