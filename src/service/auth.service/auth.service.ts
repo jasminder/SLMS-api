@@ -188,7 +188,7 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
 
     /******RE CONSIDER THIS IF ADMIN SHOULD NOT REGISTER*******/
     if (!isAllowedLogin) {
-        throw customError('User is not allowed to sign up. Contact School', 'fail', 400, true);
+        throw customError('User is not allowed to sign up. Contact School  ', 'fail', 400, true);
     }
     // Ensure a valid role is found, otherwise throw an error
     if (!userRole) {
