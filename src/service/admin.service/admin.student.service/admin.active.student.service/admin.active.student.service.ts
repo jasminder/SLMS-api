@@ -2321,7 +2321,12 @@ export async function deleteClassAssignment(id: string) {
 export async function findUniqueStudentClassDetails(studentId: string) {
     const studentClassAssignmentRecords = await db.studentClassAssignment.findMany({
         where: {
-            studentId: +studentId
+            studentId: +studentId,
+            termSubjectLevel: {
+                term: {
+                    currentTerm: true
+                }
+            }
         },
         include: {
             termSubjectLevel: {
