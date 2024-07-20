@@ -2961,7 +2961,9 @@ export async function alumniStudentById(studentId: string, remarks: string) {
         data: {
             role: 'ALUMNI',
             isActive: false,
-            isAllowedLogin: false
+            isAllowedLogin: false,
+            attendancePercentageValue: 0,
+            termAttendance: 0
         }
     });
 

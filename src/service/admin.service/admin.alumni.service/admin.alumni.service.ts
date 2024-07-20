@@ -644,7 +644,9 @@ export async function makeAlumniToActiveById(alumniId: string) {
         data: {
             role: 'STUDENT',
             isActive: true,
-            isAllowedLogin: true
+            isAllowedLogin: true,
+            attendancePercentageValue: 0,
+            termAttendance: 0
         }
     });
 
