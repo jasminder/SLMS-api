@@ -14,11 +14,12 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
         subjectInterest: { subjectsChosen, subjectRelated }
     } = data;
 
+    const DOBDate = new Date(DOB).setHours(0, 0, 0, 0);
     const existingStudent = await db.personalDetails.findFirst({
         where: {
             firstName,
             lastName,
-            DOB: new Date(DOB),
+            DOB: new Date(DOBDate)
         },
         include: {
             student: {
@@ -46,7 +47,7 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
                         lastName,
                         DOB: new Date(DOB),
                         gender,
-                        email:email.toLowerCase(),
+                        email: email.toLowerCase(),
                         contact,
                         address,
                         suburb,
