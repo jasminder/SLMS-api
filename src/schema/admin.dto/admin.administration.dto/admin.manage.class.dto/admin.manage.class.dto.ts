@@ -21,3 +21,10 @@ export const fetchStudentCountInClassSchema = z.object({
 });
 
 export type FetchStudentCountInClass = z.infer<typeof fetchStudentCountInClassSchema>;
+export const deleteSectionSchema = z.object({
+    params: z.object({
+        sectionId: z.string().min(1, { message: 'Section ID is required' }).regex(/^\d+$/, 'Section ID must be a numeric value')
+    })
+});
+
+export type DeleteSectionSchema = z.infer<typeof deleteSectionSchema>;

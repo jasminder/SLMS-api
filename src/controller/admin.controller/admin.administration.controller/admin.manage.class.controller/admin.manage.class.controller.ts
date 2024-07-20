@@ -1,13 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
 import {
     createClassWithSections,
+    deleteSection,
     fetchStudentCountInClass,
     findCurrentTermClasses,
     findCurrentTermForManageClass,
     findPublishTermForManageClass,
-    findSectionsForManageClass
+    findSectionsForManageClass,
+    getAllSections
 } from '../../../../service/admin.service/admin.administration.service/admin.manage.class.service/admin.manage.class.service';
-import { CreateClassWithSectionsSchema, FetchStudentCountInClass } from '../../../../schema/admin.dto/admin.administration.dto/admin.manage.class.dto/admin.manage.class.dto';
+import { CreateClassWithSectionsSchema, DeleteSectionSchema, FetchStudentCountInClass } from '../../../../schema/admin.dto/admin.administration.dto/admin.manage.class.dto/admin.manage.class.dto';
 
 export const findPublishTermForManageClassHandler = async (req: Request<{}, {}, {}, {}>, res: Response, next: NextFunction) => {
     const currentTerm = await findPublishTermForManageClass();
@@ -29,6 +31,20 @@ export const createClassWithSectionsHandler = async (req: Request<{}, {}, Create
     const createClassData = req.body;
     const sections = await createClassWithSections(createClassData);
     res.status(200).json(sections);
+};
+export const getAllSectionsHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const sections = await getAllSections();
+    res.status(200).json(sections);
+};
+
+export const deleteSectionHandler = async (req: Request<DeleteSectionSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { sectionId } = req.params;
+
+    await deleteSection(sectionId);
+    res.status(204).json({
+        status: 'success',
+        message: 'Section deleted successfully'
+    });
 };
 
 export const fetchStudentCountInClassHandler = async (req: Request<{}, {}, {}, FetchStudentCountInClass['query']>, res: Response, next: NextFunction) => {

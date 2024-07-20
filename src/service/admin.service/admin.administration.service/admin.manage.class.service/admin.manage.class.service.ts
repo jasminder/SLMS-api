@@ -51,6 +51,54 @@ export const createClassWithSections = async (createClassData: CreateClassWithSe
     return { message: 'Successfully created class' };
 };
 
+export const getAllSections = async () => {
+    const sections = await db.section.findMany({
+        include: {
+            termSubjectLevel: {
+                select: {
+                    term: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            },
+            StudentClassAssignment: {
+                select: {
+                    id: true
+                }
+            },
+            TeacherClassAssignment: {
+                select: {
+                    id: true
+                }
+            }
+        }
+    });
+
+    // Transform the sections to include boolean flags for assignments instead of the full details
+    const transformedSections = sections.map((section) => ({
+        ...section,
+        hasStudentClassAssignments: section.StudentClassAssignment.length > 0,
+        hasTeacherClassAssignments: section.TeacherClassAssignment.length > 0,
+        StudentClassAssignment: undefined,
+        TeacherClassAssignment: undefined
+    }));
+
+    return transformedSections;
+};
+
+export const deleteSection = async (sectionId: string) => {
+ 
+
+    await db.section.delete({
+        where: {
+            id: +sectionId
+        }
+    });
+};
+
 export const findPublishTermForManageClass = async () => {
     const publishTerm = await db.term.findFirst({
         where: {
