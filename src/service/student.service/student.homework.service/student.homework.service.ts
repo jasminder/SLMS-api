@@ -22,11 +22,11 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
                         termSubjectLevelId: termSubjectLevelId,
                         sectionId: sectionId,
                         createdAt: {
-                            gt: startDate
+                            gte: startDate
                         }
                     },
                     createdAt: {
-                        gt: startDate
+                        gte: startDate
                     }
                 },
                 include: {
@@ -39,11 +39,11 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
                         termSubjectLevelId: termSubjectLevelId,
                         sectionId: sectionId,
                         createdAt: {
-                            gt: startDate
+                            gte: startDate
                         }
                     },
                     createdAt: {
-                        gt: startDate
+                        gte: startDate
                     }
                 },
                 include: {
@@ -116,11 +116,11 @@ export async function fetchStudentReport(studentId: number) {
                 where: {
                     homework: {
                         createdAt: {
-                            gt: startDate
+                            gte: startDate
                         }
                     },
                     createdAt: {
-                        gt: startDate
+                        gte: startDate
                     }
                 },
                 include: {
@@ -131,11 +131,11 @@ export async function fetchStudentReport(studentId: number) {
                 where: {
                     classwork: {
                         createdAt: {
-                            gt: startDate
+                            gte: startDate
                         }
                     },
                     createdAt: {
-                        gt: startDate
+                        gte: startDate
                     }
                 },
                 include: {
@@ -145,7 +145,7 @@ export async function fetchStudentReport(studentId: number) {
             feedback: {
                 where: {
                     createdAt: {
-                        gt: startDate
+                        gte: startDate
                     }
                 }
             }
