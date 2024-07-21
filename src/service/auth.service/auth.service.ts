@@ -158,7 +158,18 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
             isAllowedLogin = existingTeacher.isAllowedLogin;
         }
     }
-
+    const studentDetail = await db.student.findFirst({
+        where: {
+            role: 'STUDENT',
+            isActive: true,
+            personalDetails: {
+                email: {
+                    equals: email,
+                    mode: 'insensitive'
+                }
+            }
+        }
+    });
     // Check in PersonalDetails for Student
     const studentDetails = await db.personalDetails.findFirst({
         where: {
@@ -169,9 +180,9 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
         }
     });
 
-    if (studentDetails) {
+    if (studentDetail) {
         const existingStudent = await db.student.findUnique({
-            where: { id: studentDetails.studentId }
+            where: { id: studentDetail.id }
         });
 
         if (existingStudent && existingStudent.isAllowedLogin) {
