@@ -85,3 +85,11 @@ export const createNoticeForStudentsSchema = z.object({
 });
 
 export type CreateNoticeForStudentsSchema = z.infer<typeof createNoticeForStudentsSchema>;
+
+export const getStudentNoticeAcknowledgementSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, 'Student ID is required')
+    })
+});
+
+export type GetStudentNoticeAcknowledgementSchema = z.infer<typeof getStudentNoticeAcknowledgementSchema>;

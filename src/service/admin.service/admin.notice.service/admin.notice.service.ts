@@ -133,7 +133,7 @@ export async function acknowledgeNotice(noticeId: string, teacherId: string) {
 }
 
 // ---------------------------student notice---------------------------
-export async function createStudentNotice(adminId: string, title: string, content: string, studentIds:string[]) {
+export async function createStudentNotice(adminId: string, title: string, content: string, studentIds: string[]) {
     return db.$transaction(async (prisma) => {
         const newNotice = await prisma.studentNotice.create({
             data: {
@@ -170,6 +170,17 @@ export async function createStudentNotice(adminId: string, title: string, conten
         return newNotice;
     });
 }
+
+export async function getStudentNoticeAcknowledgement(studentId: string) {
+    const studentNotices = await db.studentNoticeAcknowledgement.findMany({
+        where: { studentId: +studentId },
+        include: {
+            studentNotice: true
+        }
+    });
+    return studentNotices;
+}
+
 export async function getAllStudentNotices() {
     const notices = await db.studentNotice.findMany({
         include: {

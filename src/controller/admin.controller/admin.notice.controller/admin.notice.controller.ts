@@ -9,6 +9,7 @@ import {
     getAllStudentNotices,
     getNotice,
     getStudentNotice,
+    getStudentNoticeAcknowledgement,
     getUnseenNotices,
     resetNoticeViews,
     updateNotice,
@@ -20,6 +21,7 @@ import {
     CreateNoticeSchema,
     DeleteNoticeSchema,
     GetNoticeSchema,
+    GetStudentNoticeAcknowledgementSchema,
     GetStudentportalNoticesSchema,
     GetUnseenNoticesSchema,
     ResetNoticeViewsSchema,
@@ -87,6 +89,11 @@ export const createStudentNoticeHandler = async (req: Request<CreateNoticeForStu
     const { adminId } = req.params; // Assuming admin ID is in the request user object
     const notice = await createStudentNotice(adminId, title, content, studentIds);
     res.status(201).json({ message: 'Notice created successfully', notice });
+};
+export const getStudentNoticeAcknowledgementHandler = async (req: Request<GetStudentNoticeAcknowledgementSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const acknowledgements = await getStudentNoticeAcknowledgement(studentId);
+    res.status(200).json({ acknowledgements });
 };
 export const getAllStudentNoticesHandler = async (req: Request, res: Response, next: NextFunction) => {
     const notices = await getAllStudentNotices();

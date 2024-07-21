@@ -9,6 +9,7 @@ import {
     createNoticeSchema,
     deleteNoticeSchema,
     getNoticeSchema,
+    getStudentNoticeAcknowledgementSchema,
     getUnseenNoticesSchema,
     resetNoticeViewsSchema,
     updateNoticeSchema
@@ -22,6 +23,7 @@ import {
     getAllNoticesHandler,
     getAllStudentNoticesHandler,
     getNoticeHandler,
+    getStudentNoticeAcknowledgementHandler,
     getStudentNoticeHandler,
     getUnseenNoticesHandler,
     resetNoticeViewsHandler,
@@ -42,6 +44,9 @@ adminNoticeRoute.route('/update-notice/:noticeId').patch(validate(updateNoticeSc
 adminNoticeRoute.route('/reset-notice-views/:noticeId').patch(validate(resetNoticeViewsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(resetNoticeViewsHandler));
 // Student notice
 adminNoticeRoute.route('/create/student/:adminId').post(validate(createNoticeForStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createStudentNoticeHandler));
+adminNoticeRoute
+    .route('/get-student-notice-by-id/:studentId')
+    .get(validate(getStudentNoticeAcknowledgementSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getStudentNoticeAcknowledgementHandler));
 adminNoticeRoute.route('/get-all-student-notices').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(getAllStudentNoticesHandler));
 adminNoticeRoute.route('/delete-student-notice/:noticeId').delete(validate(deleteNoticeSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteStudentNoticeHandler));
 adminNoticeRoute.route('/student-notice-detail/:noticeId').get(validate(getNoticeSchema), protectRoute, restrict('TEACHER', 'ADMIN'), asyncErrorHandler(getStudentNoticeHandler));
