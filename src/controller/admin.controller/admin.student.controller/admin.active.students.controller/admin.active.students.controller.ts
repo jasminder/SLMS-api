@@ -95,7 +95,7 @@ export const findActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {
 };
 
 export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, attSort } = req.query;
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, attSort,dobSort } = req.query;
 
     if (termId) {
         const searchResult = await searchActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption, attSort);
