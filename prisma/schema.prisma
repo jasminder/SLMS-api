@@ -57,6 +57,7 @@ enum PaymentStatus {
   NODUES
   DUE
   OVERDUE
+  FAILED
 }
 
 enum PaymentType {

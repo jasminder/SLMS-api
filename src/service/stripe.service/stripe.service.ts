@@ -120,7 +120,7 @@ export const handlePaymentFailure = async (failedIntent: Stripe.PaymentIntent) =
             feePaymentId: parseInt(feePaymentId),
             paidAmount: 0,
             paymentMethod: PaymentMethod.ONLINE,
-            paymentStatus: feePayment.status as PaymentStatus,
+            paymentStatus: 'FAILED' as PaymentStatus,
             remarks: failedIntent.last_payment_error?.message,
             receivedBy: 'NA',
             transactionId: transactionId,
