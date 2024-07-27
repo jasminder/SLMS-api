@@ -275,9 +275,6 @@ export async function searchActiveStudents(
 ) {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
-    let orderBy: any = []; // Using 'any' to bypass TypeScript checks, better to define exact type
-    orderBy = [sort === 'dob' ? { 'personalDetails.DOB': sort_dir } : { termAttendance: sort_dir }, { id: 'asc' }];
-    orderBy.push({ id: 'asc' });
     if (searchAsNumber) {
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
@@ -285,7 +282,16 @@ export async function searchActiveStudents(
         const activeStudents = await db.student.findMany({
             skip,
             take,
-            orderBy: sort === 'dob' ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }] : [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }],
+            orderBy: [
+                sort === 'dob'
+                    ? { personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }
+                    : sort === 'termAttendance'
+                    ? { termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }
+                    : sort === 'akaalId'
+                    ? { akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }
+                    : { personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } },
+                { id: sort_dir === 'asc' ? 'asc' : 'desc' }
+            ],
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -458,7 +464,16 @@ export async function searchActiveStudents(
         const activeStudents = await db.student.findMany({
             skip,
             take,
-            orderBy: sort === 'dob' ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }] : [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }],
+            orderBy: [
+                sort === 'dob'
+                    ? { personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }
+                    : sort === 'termAttendance'
+                    ? { termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }
+                    : sort === 'akaalId'
+                    ? { akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }
+                    : { personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } },
+                { id: sort_dir === 'asc' ? 'asc' : 'desc' }
+            ],
             where: {
                 role: 'STUDENT',
                 isActive: true,
