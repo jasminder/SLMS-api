@@ -262,7 +262,17 @@ export async function findActiveStudentsWithNoSubjects(page: number, termId: num
 }
 
 // search active student for the admin
-export async function searchActiveStudents(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '', attSort = 'desc',dobSort = 'asc') {
+export async function searchActiveStudents(
+    search = '',
+    page: number,
+    termId: number,
+    subjectOption = '',
+    levelOption = '',
+    sectionOption = '',
+    attendanceOption = '',
+    attSort = 'desc',
+    dobSort = 'asc'
+) {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     if (searchAsNumber) {
@@ -272,9 +282,7 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
         const activeStudents = await db.student.findMany({
             skip,
             take,
-            orderBy: {
-                termAttendance: attSort == 'desc' ? 'desc' : 'asc'
-            },
+
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -390,8 +398,11 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                     },
                     take: 3
                 }
-            }
+            },
+            orderBy: [{ termAttendance: attSort === 'asc' ? 'asc' : 'desc' }, { id: 'asc' }]
         });
+        const seenIds = new Set();
+
         const count = await db.student.count({
             where: {
                 role: 'STUDENT',
@@ -446,9 +457,6 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
         const activeStudents = await db.student.findMany({
             skip,
             take,
-            orderBy: {
-                termAttendance: attSort == 'desc' ? 'desc' : 'asc'
-            },
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -563,8 +571,10 @@ export async function searchActiveStudents(search = '', page: number, termId: nu
                     },
                     take: 3
                 }
-            }
+            },
+            orderBy: [{ termAttendance: attSort === 'asc' ? 'asc' : 'desc' }, { id: 'asc' }]
         });
+
         const count = await db.student.count({
             where: {
                 role: 'STUDENT',
