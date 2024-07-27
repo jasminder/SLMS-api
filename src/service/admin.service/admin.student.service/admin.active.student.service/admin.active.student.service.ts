@@ -282,16 +282,14 @@ export async function searchActiveStudents(
         const activeStudents = await db.student.findMany({
             skip,
             take,
-            orderBy: [
+            orderBy:
                 sort === 'dob'
-                    ? { personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }
+                    ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }]
                     : sort === 'termAttendance'
-                    ? { termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }
+                    ? [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
                     : sort === 'akaalId'
-                    ? { akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }
-                    : { personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } },
-                { id: sort_dir === 'asc' ? 'asc' : 'desc' }
-            ],
+                    ? [{ akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : [{ personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }],
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -464,16 +462,14 @@ export async function searchActiveStudents(
         const activeStudents = await db.student.findMany({
             skip,
             take,
-            orderBy: [
+            orderBy:
                 sort === 'dob'
-                    ? { personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }
+                    ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }]
                     : sort === 'termAttendance'
-                    ? { termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }
+                    ? [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
                     : sort === 'akaalId'
-                    ? { akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }
-                    : { personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } },
-                { id: sort_dir === 'asc' ? 'asc' : 'desc' }
-            ],
+                    ? [{ akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : [{ personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }],
             where: {
                 role: 'STUDENT',
                 isActive: true,
