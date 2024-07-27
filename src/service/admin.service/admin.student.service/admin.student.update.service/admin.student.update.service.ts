@@ -39,7 +39,7 @@ export async function updateStudentPersonalDetail(id: string, data: UpdateStuden
                         punjabiName,
                         DOB,
                         gender,
-                        email,
+                        email: email.toLowerCase(),
                         contact,
                         address,
                         suburb,
