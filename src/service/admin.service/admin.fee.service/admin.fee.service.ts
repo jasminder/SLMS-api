@@ -1,4 +1,3 @@
-
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
@@ -385,8 +384,19 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 isActive: true,
                 studentTermFee: {
                     some: {
-                        termId: +termId,
+                        term: {
+                            currentTerm: true
+                        },
                         termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
+                    }
+                },
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            term: {
+                                currentTerm: true
+                            }
+                        }
                     }
                 },
 
@@ -488,6 +498,11 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                     take: 3
                 },
                 studentTermFee: {
+                    where: {
+                        term: {
+                            currentTerm: true
+                        }
+                    },
                     select: {
                         termSubjectGroup: {
                             select: {
@@ -505,6 +520,13 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                     }
                 },
                 enrollments: {
+                    where: {
+                        termSubjectLevel: {
+                            term: {
+                                currentTerm: true
+                            }
+                        }
+                    },
                     select: {
                         subjectEnrollment: {
                             select: {
@@ -530,8 +552,19 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 isActive: true,
                 studentTermFee: {
                     some: {
-                        termId: +termId,
+                        term: {
+                            currentTerm: true
+                        },
                         termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
+                    }
+                },
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            term: {
+                                currentTerm: true
+                            }
+                        }
                     }
                 },
 
@@ -576,8 +609,19 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 isActive: true,
                 studentTermFee: {
                     some: {
-                        termId: +termId,
+                        term: {
+                            currentTerm: true
+                        },
                         termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
+                    }
+                },
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            term: {
+                                currentTerm: true
+                            }
+                        }
                     }
                 },
 
@@ -678,6 +722,11 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                     take: 3
                 },
                 studentTermFee: {
+                    where: {
+                        term: {
+                            currentTerm: true
+                        }
+                    },
                     select: {
                         termSubjectGroup: {
                             select: {
@@ -695,6 +744,13 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                     }
                 },
                 enrollments: {
+                    where: {
+                        termSubjectLevel: {
+                            term: {
+                                currentTerm: true
+                            }
+                        }
+                    },
                     select: {
                         subjectEnrollment: {
                             select: {
@@ -720,8 +776,19 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 isActive: true,
                 studentTermFee: {
                     some: {
-                        termId: +termId,
+                        term: {
+                            currentTerm: true
+                        },
                         termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
+                    }
+                },
+                enrollments: {
+                    some: {
+                        termSubjectLevel: {
+                            term: {
+                                currentTerm: true
+                            }
+                        }
                     }
                 },
 
