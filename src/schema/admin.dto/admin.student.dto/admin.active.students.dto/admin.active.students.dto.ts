@@ -42,8 +42,8 @@ export const searchActiveStudentsSchema = z.object({
         levelOption: z.string().optional(),
         sectionOption: z.string().optional(),
         attendanceOption: z.string().optional(),
-        dobSort: z.string().optional(),
-        attSort: z.string().optional(),
+        sort: z.string().optional().default('termAttendance'),
+        sort_dir: z.string().optional().default('asc'),
         page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
         termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
     })

@@ -270,11 +270,14 @@ export async function searchActiveStudents(
     levelOption = '',
     sectionOption = '',
     attendanceOption = '',
-    attSort = 'desc',
-    dobSort = 'asc'
+    sort = 'termAttendance',
+    sort_dir = 'asc'
 ) {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+    let orderBy: any = []; // Using 'any' to bypass TypeScript checks, better to define exact type
+    orderBy = [sort === 'dob' ? { 'personalDetails.DOB': sort_dir } : { termAttendance: sort_dir }, { id: 'asc' }];
+    orderBy.push({ id: 'asc' });
     if (searchAsNumber) {
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
@@ -282,7 +285,7 @@ export async function searchActiveStudents(
         const activeStudents = await db.student.findMany({
             skip,
             take,
-
+            orderBy: sort === 'dob' ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }] : [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }],
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -398,10 +401,8 @@ export async function searchActiveStudents(
                     },
                     take: 3
                 }
-            },
-            orderBy: [{ termAttendance: attSort === 'asc' ? 'asc' : 'desc' }, { id: 'asc' }]
+            }
         });
-        const seenIds = new Set();
 
         const count = await db.student.count({
             where: {
@@ -457,6 +458,7 @@ export async function searchActiveStudents(
         const activeStudents = await db.student.findMany({
             skip,
             take,
+            orderBy: sort === 'dob' ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }] : [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }],
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -571,8 +573,7 @@ export async function searchActiveStudents(
                     },
                     take: 3
                 }
-            },
-            orderBy: [{ termAttendance: attSort === 'asc' ? 'asc' : 'desc' }, { id: 'asc' }]
+            }
         });
 
         const count = await db.student.count({
@@ -622,6 +623,8 @@ export async function searchActiveStudents(
         return { activeStudents, count };
     }
 }
+
+//***************************** */
 export async function searchActiveStudents1(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '', attSort = 'desc') {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);

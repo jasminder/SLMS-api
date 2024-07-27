@@ -95,10 +95,10 @@ export const findActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {
 };
 
 export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, attSort,dobSort } = req.query;
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, sort, sort_dir } = req.query;
 
     if (termId) {
-        const searchResult = await searchActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption, attSort);
+        const searchResult = await searchActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption, sort, sort_dir);
         res.status(200).json(searchResult);
     }
 };
@@ -207,11 +207,11 @@ export const applyCreditHandler = async (req: Request<{}, {}, ApplyCreditDataSch
 
 export const fetchFeePaymentByIdForInvoiceHandler = async (req: Request, res: Response, next: NextFunction) => {
     const { feePaymentId } = req.params;
-        const feePayment = await fetchFeePaymentByIdForInvoice(feePaymentId);
-        res.status(200).json(feePayment);
+    const feePayment = await fetchFeePaymentByIdForInvoice(feePaymentId);
+    res.status(200).json(feePayment);
 };
 
-export const getPaymentsByFeePaymentIdHandler = async (req: Request<GetPaymentsByFeePaymentIdSchema['params'],{},{},{}>, res: Response, next: NextFunction) => {
+export const getPaymentsByFeePaymentIdHandler = async (req: Request<GetPaymentsByFeePaymentIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const feePaymentId = req.params.feePaymentId;
     const payments = await getPaymentsByFeePaymentId(feePaymentId);
     res.status(200).json(payments);
