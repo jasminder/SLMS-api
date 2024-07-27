@@ -17,10 +17,10 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
         let feeTemplate = await prisma.feeTemplate.findFirst({
             where: {
                 termSubjectGroupId: +termSubjectGroupId,
-                dueDate: {
-                    gte: startDate,
-                    lte: endDate
-                },
+                // dueDate: {
+                //     gte: startDate,
+                //     lte: endDate
+                // },
                 invoiceName,
                 interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM
             }
@@ -49,6 +49,44 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                 const existingStudentIds = existingFeePayments.map((fp) => fp.studentTermFee?.studentId);
                 throw customError(`Fee payments already exist for these student IDs under the specified fee template: ${existingStudentIds.join(', ')}`, 'fail', 400, true);
             }
+            const feePayments = await Promise.all(
+                studentIds
+                    .map(async (studentId) => {
+                        const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
+                        if (!student) return null; // Continue if no student is found
+
+                        const studentTermFee = await prisma.studentTermFee.findFirst({
+                            where: { studentId: +studentId, termId: +termId, termSubjectGroupId: +termSubjectGroupId }
+                        });
+
+                        if (!studentTermFee) {
+                            // Throw an error if the student is not enrolled in the specified term subject group
+                            throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
+                        }
+
+                        const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
+                        const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
+
+                        return prisma.feePayment.create({
+                            data: {
+                                invoiceId,
+                                studentTermFeeId: studentTermFee.id,
+                                feeTemplateId: feeTemplate?.id,
+                                dueDate: new Date(dueDate),
+                                dueAmount: +amount,
+                                status: 'PENDING',
+                                feeAmount: +amount,
+                                adjustedFeeAmount: +amount
+                            }
+                        });
+                    })
+                    .filter((task) => task !== null)
+            ); // Filter out null tasks
+            return {
+                message: 'FeeTemplate and FeePayments created successfully.',
+                feeTemplate,
+                feePayments
+            };
         }
 
         if (!feeTemplate) {
@@ -76,45 +114,45 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     notes
                 }
             });
-        }
-        const feePayments = await Promise.all(
-            studentIds
-                .map(async (studentId) => {
-                    const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
-                    if (!student) return null; // Continue if no student is found
+            const feePayments = await Promise.all(
+                studentIds
+                    .map(async (studentId) => {
+                        const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
+                        if (!student) return null; // Continue if no student is found
 
-                    const studentTermFee = await prisma.studentTermFee.findFirst({
-                        where: { studentId: +studentId, termId: +termId, termSubjectGroupId: +termSubjectGroupId }
-                    });
+                        const studentTermFee = await prisma.studentTermFee.findFirst({
+                            where: { studentId: +studentId, termId: +termId, termSubjectGroupId: +termSubjectGroupId }
+                        });
 
-                    if (!studentTermFee) {
-                        // Throw an error if the student is not enrolled in the specified term subject group
-                        throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
-                    }
-
-                    const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
-                    const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
-
-                    return prisma.feePayment.create({
-                        data: {
-                            invoiceId,
-                            studentTermFeeId: studentTermFee.id,
-                            feeTemplateId: feeTemplate?.id,
-                            dueDate: new Date(dueDate),
-                            dueAmount: +amount,
-                            status: 'PENDING',
-                            feeAmount: +amount,
-                            adjustedFeeAmount: +amount
+                        if (!studentTermFee) {
+                            // Throw an error if the student is not enrolled in the specified term subject group
+                            throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
                         }
-                    });
-                })
-                .filter((task) => task !== null)
-        ); // Filter out null tasks
-        return {
-            message: 'FeeTemplate and FeePayments created successfully.',
-            feeTemplate,
-            feePayments
-        };
+
+                        const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
+                        const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
+
+                        return prisma.feePayment.create({
+                            data: {
+                                invoiceId,
+                                studentTermFeeId: studentTermFee.id,
+                                feeTemplateId: feeTemplate?.id,
+                                dueDate: new Date(dueDate),
+                                dueAmount: +amount,
+                                status: 'PENDING',
+                                feeAmount: +amount,
+                                adjustedFeeAmount: +amount
+                            }
+                        });
+                    })
+                    .filter((task) => task !== null)
+            ); // Filter out null tasks
+            return {
+                message: 'FeeTemplate and FeePayments created successfully.',
+                feeTemplate,
+                feePayments
+            };
+        }
     });
 }
 // undoCreateFeeTemplateAndPayments(18)
