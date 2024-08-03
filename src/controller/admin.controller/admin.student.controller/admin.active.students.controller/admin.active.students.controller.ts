@@ -135,10 +135,10 @@ export const defaultSelectActiveStudentsWIthNoSubjectsHandler = async (req: Requ
     }
 };
 export const selectActiveStudentsHandler = async (req: Request<{}, {}, {}, SelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption,sort, sort_dir  } = req.query;
 
     if (termId) {
-        const searchResult = await selectActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption);
+        const searchResult = await selectActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption,sort, sort_dir );
         res.status(200).json(searchResult);
     }
 };

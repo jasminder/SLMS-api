@@ -1,7 +1,7 @@
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 import { ActiveStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
-import { PaymentMethod, PaymentStatus } from '@prisma/client';
+import { PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import { getIo } from '../../../../sockets/socket';
 
 type AttendanceFilter = {
@@ -263,6 +263,372 @@ export async function findActiveStudentsWithNoSubjects(page: number, termId: num
 
 // search active student for the admin
 export async function searchActiveStudents(
+    search = '',
+    page: number,
+    termId: number,
+    subjectOption = '',
+    levelOption = '',
+    sectionOption = '',
+    attendanceOption = '',
+    sort = 'termAttendance',
+    sort_dir = 'asc'
+) {
+    const take = 10;
+    const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+
+    let classAssignmentFilters: Prisma.StudentClassAssignmentWhereInput[] = [];
+
+    if (subjectOption) {
+        classAssignmentFilters.push({
+            termSubjectLevel: {
+                subject: {
+                    id: +subjectOption
+                }
+            }
+        });
+    }
+
+    if (levelOption) {
+        classAssignmentFilters.push({
+            termSubjectLevel: {
+                level: {
+                    id: +levelOption
+                }
+            }
+        });
+    }
+    if (sectionOption) {
+        classAssignmentFilters.push({
+            sectionId: +sectionOption
+        });
+    }
+
+    if (searchAsNumber) {
+        const pageNum: number = page ?? 0;
+        const skip = pageNum * take;
+
+        const activeStudents = await db.student.findMany({
+            skip,
+            take,
+            orderBy:
+                sort === 'dob'
+                    ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }]
+                    : sort === 'termAttendance'
+                    ? [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : sort === 'akaalId'
+                    ? [{ akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : [{ personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }],
+            where: {
+                role: 'STUDENT',
+                isActive: true,
+                attendancePercentageValue: attendanceOption ? +attendanceOption : undefined,
+                studentClassAssignment: {
+                    some: {
+                        AND: classAssignmentFilters
+                    }
+                },
+
+                OR: [
+                    { akaalId: searchAsNumber },
+                    {
+                        personalDetails: {
+                            OR: [
+                                { firstName: { contains: search, mode: 'insensitive' } },
+                                { lastName: { contains: search, mode: 'insensitive' } },
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { contact: { contains: search, mode: 'insensitive' } },
+                                { postcode: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    },
+                    {
+                        parentsDetails: {
+                            OR: [
+                                { fatherName: { contains: search, mode: 'insensitive' } },
+                                { motherName: { contains: search, mode: 'insensitive' } },
+                                { parentEmail: { contains: search, mode: 'insensitive' } },
+                                { parentContact: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    }
+                ]
+            },
+            select: {
+                id: true,
+                akaalId: true,
+                role: true,
+                isActive: true,
+                updatedAt: true,
+                createdAt: true,
+                termAttendance: true,
+                attendancePercentageValue: true,
+                personalDetails: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        DOB: true,
+                        gender: true,
+                        email: true,
+                        contact: true,
+                        address: true,
+                        suburb: true,
+                        state: true,
+                        country: true,
+                        postcode: true,
+                        image: true
+                    }
+                },
+                parentsDetails: {
+                    select: {
+                        id: true,
+                        fatherName: true,
+                        motherName: true,
+                        parentEmail: true,
+                        parentContact: true
+                    }
+                },
+                emergencyContact: {
+                    select: {
+                        id: true,
+                        contactPerson: true,
+                        contactNumber: true,
+                        relationship: true
+                    }
+                },
+                healthInformation: {
+                    select: {
+                        id: true,
+                        medicareNumber: true,
+                        ambulanceMembershipNumber: true,
+                        medicalCondition: true,
+                        allergy: true
+                    }
+                },
+                subjectRelated: true,
+                subjectsChosen: true,
+                otherInformation: {
+                    select: {
+                        id: true,
+                        otherInfo: true,
+                        declaration: true
+                    }
+                },
+                skipReport: {
+                    select: {
+                        isClosed: true
+                    }
+                },
+                schoolCheckInAttendance: {
+                    orderBy: {
+                        date: 'desc'
+                    },
+                    take: 3
+                }
+            }
+        });
+
+        const count = await db.student.count({
+            where: {
+                role: 'STUDENT',
+                isActive: true,
+                attendancePercentageValue: attendanceOption ? +attendanceOption : undefined,
+                studentClassAssignment: {
+                    some: {
+                        AND: classAssignmentFilters
+                    }
+                },
+
+                OR: [
+                    { akaalId: searchAsNumber },
+                    {
+                        personalDetails: {
+                            OR: [
+                                { firstName: { contains: search, mode: 'insensitive' } },
+                                { lastName: { contains: search, mode: 'insensitive' } },
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { contact: { contains: search, mode: 'insensitive' } },
+                                { postcode: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    },
+                    {
+                        parentsDetails: {
+                            OR: [
+                                { fatherName: { contains: search, mode: 'insensitive' } },
+                                { motherName: { contains: search, mode: 'insensitive' } },
+                                { parentEmail: { contains: search, mode: 'insensitive' } },
+                                { parentContact: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    }
+                ]
+            }
+        });
+        return { activeStudents, count };
+    }
+    if (!searchAsNumber) {
+        const pageNum: number = page ?? 0;
+        const skip = pageNum * take;
+
+        const activeStudents = await db.student.findMany({
+            skip,
+            take,
+            orderBy:
+                sort === 'dob'
+                    ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }]
+                    : sort === 'termAttendance'
+                    ? [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : sort === 'akaalId'
+                    ? [{ akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : [{ personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }],
+            where: {
+                role: 'STUDENT',
+                isActive: true,
+                attendancePercentageValue: attendanceOption ? +attendanceOption : undefined,
+                studentClassAssignment: {
+                    some: {
+                        AND: classAssignmentFilters
+                    }
+                },
+                OR: [
+                    {
+                        personalDetails: {
+                            OR: [
+                                { firstName: { contains: search, mode: 'insensitive' } },
+                                { lastName: { contains: search, mode: 'insensitive' } },
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { contact: { contains: search, mode: 'insensitive' } },
+                                { postcode: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    },
+                    {
+                        parentsDetails: {
+                            OR: [
+                                { fatherName: { contains: search, mode: 'insensitive' } },
+                                { motherName: { contains: search, mode: 'insensitive' } },
+                                { parentEmail: { contains: search, mode: 'insensitive' } },
+                                { parentContact: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    }
+                ]
+            },
+            select: {
+                id: true,
+                akaalId: true,
+                role: true,
+                isActive: true,
+                updatedAt: true,
+                createdAt: true,
+                termAttendance: true,
+                attendancePercentageValue: true,
+                personalDetails: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        DOB: true,
+                        gender: true,
+                        email: true,
+                        contact: true,
+                        address: true,
+                        suburb: true,
+                        state: true,
+                        country: true,
+                        postcode: true,
+                        image: true
+                    }
+                },
+                parentsDetails: {
+                    select: {
+                        id: true,
+                        fatherName: true,
+                        motherName: true,
+                        parentEmail: true,
+                        parentContact: true
+                    }
+                },
+                emergencyContact: {
+                    select: {
+                        id: true,
+                        contactPerson: true,
+                        contactNumber: true,
+                        relationship: true
+                    }
+                },
+                healthInformation: {
+                    select: {
+                        id: true,
+                        medicareNumber: true,
+                        ambulanceMembershipNumber: true,
+                        medicalCondition: true,
+                        allergy: true
+                    }
+                },
+                subjectRelated: true,
+                subjectsChosen: true,
+                otherInformation: {
+                    select: {
+                        id: true,
+                        otherInfo: true,
+                        declaration: true
+                    }
+                },
+                skipReport: {
+                    select: {
+                        isClosed: true
+                    }
+                },
+                schoolCheckInAttendance: {
+                    orderBy: {
+                        date: 'desc'
+                    },
+                    take: 3
+                }
+            }
+        });
+
+        const count = await db.student.count({
+            where: {
+                role: 'STUDENT',
+                isActive: true,
+                attendancePercentageValue: attendanceOption ? +attendanceOption : undefined,
+                studentClassAssignment: {
+                    some: {
+                        AND: classAssignmentFilters
+                    }
+                },
+                OR: [
+                    {
+                        personalDetails: {
+                            OR: [
+                                { firstName: { contains: search, mode: 'insensitive' } },
+                                { lastName: { contains: search, mode: 'insensitive' } },
+                                { email: { contains: search, mode: 'insensitive' } },
+                                { contact: { contains: search, mode: 'insensitive' } },
+                                { postcode: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    },
+                    {
+                        parentsDetails: {
+                            OR: [
+                                { fatherName: { contains: search, mode: 'insensitive' } },
+                                { motherName: { contains: search, mode: 'insensitive' } },
+                                { parentEmail: { contains: search, mode: 'insensitive' } },
+                                { parentContact: { contains: search, mode: 'insensitive' } }
+                            ]
+                        }
+                    }
+                ]
+            }
+        });
+        return { activeStudents, count };
+    }
+}
+export async function searchActiveStudents1(
     search = '',
     page: number,
     termId: number,
@@ -636,379 +1002,7 @@ export async function searchActiveStudents(
 }
 
 //***************************** */
-export async function searchActiveStudents1(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '', attSort = 'desc') {
-    const take = 10;
-    const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
-    const attendanceFilter: AttendanceFilter = {};
-    if (attendanceOption !== '') {
-        attendanceFilter.attendancePercentageValue = +attendanceOption;
-    }
-    if (searchAsNumber) {
-        const pageNum: number = page ?? 0;
-        const skip = pageNum * take;
 
-        const activeStudents = await db.student.findMany({
-            skip,
-            take,
-            orderBy: {
-                termAttendance: attSort == 'desc' ? 'desc' : 'asc'
-            },
-            where: {
-                role: 'STUDENT',
-                isActive: true,
-                ...attendanceFilter,
-                studentTermFee: {
-                    some: {
-                        termId: +termId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            ...(subjectOption && { subjectId: +subjectOption }),
-                            ...(levelOption && { levelId: +levelOption })
-                        },
-                        ...(sectionOption && {
-                            studentClassAssignment: {
-                                some: { sectionId: +sectionOption }
-                            }
-                        })
-                    }
-                },
-
-                OR: [
-                    { akaalId: searchAsNumber },
-                    {
-                        personalDetails: {
-                            OR: [
-                                { firstName: { contains: search, mode: 'insensitive' } },
-                                { lastName: { contains: search, mode: 'insensitive' } },
-                                { email: { contains: search, mode: 'insensitive' } },
-                                { contact: { contains: search, mode: 'insensitive' } },
-                                { postcode: { contains: search, mode: 'insensitive' } }
-                            ]
-                        }
-                    },
-                    {
-                        parentsDetails: {
-                            OR: [
-                                { fatherName: { contains: search, mode: 'insensitive' } },
-                                { motherName: { contains: search, mode: 'insensitive' } },
-                                { parentEmail: { contains: search, mode: 'insensitive' } },
-                                { parentContact: { contains: search, mode: 'insensitive' } }
-                            ]
-                        }
-                    }
-                ]
-            },
-            select: {
-                id: true,
-                akaalId: true,
-                role: true,
-                isActive: true,
-                updatedAt: true,
-                createdAt: true,
-                termAttendance: true,
-                attendancePercentageValue: true,
-                personalDetails: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        DOB: true,
-                        gender: true,
-                        email: true,
-                        contact: true,
-                        address: true,
-                        suburb: true,
-                        state: true,
-                        country: true,
-                        postcode: true,
-                        image: true
-                    }
-                },
-                parentsDetails: {
-                    select: {
-                        id: true,
-                        fatherName: true,
-                        motherName: true,
-                        parentEmail: true,
-                        parentContact: true
-                    }
-                },
-                emergencyContact: {
-                    select: {
-                        id: true,
-                        contactPerson: true,
-                        contactNumber: true,
-                        relationship: true
-                    }
-                },
-                healthInformation: {
-                    select: {
-                        id: true,
-                        medicareNumber: true,
-                        ambulanceMembershipNumber: true,
-                        medicalCondition: true,
-                        allergy: true
-                    }
-                },
-                subjectRelated: true,
-                subjectsChosen: true,
-                otherInformation: {
-                    select: {
-                        id: true,
-                        otherInfo: true,
-                        declaration: true
-                    }
-                },
-                skipReport: {
-                    select: {
-                        isClosed: true
-                    }
-                },
-                schoolCheckInAttendance: {
-                    orderBy: {
-                        date: 'desc'
-                    },
-                    take: 3
-                }
-            }
-        });
-        const count = await db.student.count({
-            where: {
-                role: 'STUDENT',
-                isActive: true,
-                ...attendanceFilter,
-                studentTermFee: {
-                    some: {
-                        termId: +termId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            ...(subjectOption && { subjectId: +subjectOption }),
-                            ...(levelOption && { levelId: +levelOption })
-                        },
-                        ...(sectionOption && {
-                            studentClassAssignment: {
-                                some: { sectionId: +sectionOption }
-                            }
-                        })
-                    }
-                },
-
-                OR: [
-                    { akaalId: searchAsNumber },
-                    {
-                        personalDetails: {
-                            OR: [
-                                { firstName: { contains: search, mode: 'insensitive' } },
-                                { lastName: { contains: search, mode: 'insensitive' } },
-                                { email: { contains: search, mode: 'insensitive' } },
-                                { contact: { contains: search, mode: 'insensitive' } },
-                                { postcode: { contains: search, mode: 'insensitive' } }
-                            ]
-                        }
-                    },
-                    {
-                        parentsDetails: {
-                            OR: [
-                                { fatherName: { contains: search, mode: 'insensitive' } },
-                                { motherName: { contains: search, mode: 'insensitive' } },
-                                { parentEmail: { contains: search, mode: 'insensitive' } },
-                                { parentContact: { contains: search, mode: 'insensitive' } }
-                            ]
-                        }
-                    }
-                ]
-            }
-        });
-        return { activeStudents, count };
-    } else if (!searchAsNumber) {
-        const pageNum: number = page ?? 0;
-        const skip = pageNum * take;
-
-        const activeStudents = await db.student.findMany({
-            skip,
-            take,
-            orderBy: {
-                termAttendance: attSort == 'desc' ? 'desc' : 'asc'
-            },
-            where: {
-                role: 'STUDENT',
-                isActive: true,
-                ...attendanceFilter,
-                studentTermFee: {
-                    some: {
-                        termId: +termId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            ...(subjectOption && { subjectId: +subjectOption }),
-                            ...(levelOption && { levelId: +levelOption })
-                        },
-                        ...(sectionOption && {
-                            studentClassAssignment: {
-                                some: { sectionId: +sectionOption }
-                            }
-                        })
-                    }
-                },
-
-                OR: [
-                    {
-                        personalDetails: {
-                            OR: [
-                                { firstName: { contains: search, mode: 'insensitive' } },
-                                { lastName: { contains: search, mode: 'insensitive' } },
-                                { email: { contains: search, mode: 'insensitive' } },
-                                { contact: { contains: search, mode: 'insensitive' } },
-                                { postcode: { contains: search, mode: 'insensitive' } }
-                            ]
-                        }
-                    },
-                    {
-                        parentsDetails: {
-                            OR: [
-                                { fatherName: { contains: search, mode: 'insensitive' } },
-                                { motherName: { contains: search, mode: 'insensitive' } },
-                                { parentEmail: { contains: search, mode: 'insensitive' } },
-                                { parentContact: { contains: search, mode: 'insensitive' } }
-                            ]
-                        }
-                    }
-                ]
-            },
-            select: {
-                id: true,
-                akaalId: true,
-                role: true,
-                isActive: true,
-                updatedAt: true,
-                createdAt: true,
-                termAttendance: true,
-                attendancePercentageValue: true,
-                personalDetails: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        DOB: true,
-                        gender: true,
-                        email: true,
-                        contact: true,
-                        address: true,
-                        suburb: true,
-                        state: true,
-                        country: true,
-                        postcode: true,
-                        image: true
-                    }
-                },
-                parentsDetails: {
-                    select: {
-                        id: true,
-                        fatherName: true,
-                        motherName: true,
-                        parentEmail: true,
-                        parentContact: true
-                    }
-                },
-                emergencyContact: {
-                    select: {
-                        id: true,
-                        contactPerson: true,
-                        contactNumber: true,
-                        relationship: true
-                    }
-                },
-                healthInformation: {
-                    select: {
-                        id: true,
-                        medicareNumber: true,
-                        ambulanceMembershipNumber: true,
-                        medicalCondition: true,
-                        allergy: true
-                    }
-                },
-                subjectRelated: true,
-                subjectsChosen: true,
-                otherInformation: {
-                    select: {
-                        id: true,
-                        otherInfo: true,
-                        declaration: true
-                    }
-                },
-                skipReport: {
-                    select: {
-                        isClosed: true
-                    }
-                },
-                schoolCheckInAttendance: {
-                    orderBy: {
-                        date: 'desc'
-                    },
-                    take: 3
-                }
-            }
-        });
-        const count = await db.student.count({
-            where: {
-                role: 'STUDENT',
-                isActive: true,
-                ...attendanceFilter,
-                studentTermFee: {
-                    some: {
-                        termId: +termId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            ...(subjectOption && { subjectId: +subjectOption }),
-                            ...(levelOption && { levelId: +levelOption })
-                        },
-                        ...(sectionOption && {
-                            studentClassAssignment: {
-                                some: { sectionId: +sectionOption }
-                            }
-                        })
-                    }
-                },
-
-                OR: [
-                    {
-                        personalDetails: {
-                            OR: [
-                                { firstName: { contains: search, mode: 'insensitive' } },
-                                { lastName: { contains: search, mode: 'insensitive' } },
-                                { email: { contains: search, mode: 'insensitive' } },
-                                { contact: { contains: search, mode: 'insensitive' } },
-                                { postcode: { contains: search, mode: 'insensitive' } }
-                            ]
-                        }
-                    },
-                    {
-                        parentsDetails: {
-                            OR: [
-                                { fatherName: { contains: search, mode: 'insensitive' } },
-                                { motherName: { contains: search, mode: 'insensitive' } },
-                                { parentEmail: { contains: search, mode: 'insensitive' } },
-                                { parentContact: { contains: search, mode: 'insensitive' } }
-                            ]
-                        }
-                    }
-                ]
-            }
-        });
-        return { activeStudents, count };
-    }
-}
 export async function searchActiveStudentsWithNoSubjects(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '') {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
@@ -1465,37 +1459,66 @@ export async function defaultSelectActiveStudentsWIthNoSubjects(page: number, te
 
     return { activeStudents, count };
 }
-export async function selectActiveStudents(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '', attSort = 'desc') {
+export async function selectActiveStudents(
+    search = '',
+    page: number,
+    termId: number,
+    subjectOption = '',
+    levelOption = '',
+    sectionOption = '',
+    attendanceOption = '',
+    sort = 'termAttendance',
+    sort_dir = 'asc'
+) {
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+
+    let classAssignmentFilters: Prisma.StudentClassAssignmentWhereInput[] = [];
+
+    if (subjectOption) {
+        classAssignmentFilters.push({
+            termSubjectLevel: {
+                subject: {
+                    id: +subjectOption
+                }
+            }
+        });
+    }
+
+    if (levelOption) {
+        classAssignmentFilters.push({
+            termSubjectLevel: {
+                level: {
+                    id: +levelOption
+                }
+            }
+        });
+    }
+    if (sectionOption) {
+        classAssignmentFilters.push({
+            sectionId: +sectionOption
+        });
+    }
     const attendanceFilter: AttendanceFilter = {};
     if (attendanceOption !== '') {
         attendanceFilter.attendancePercentageValue = +attendanceOption;
     }
     if (searchAsNumber) {
         const activeStudents = await db.student.findMany({
-            orderBy: {
-                termAttendance: attSort == 'desc' ? 'desc' : 'asc'
-            },
+            orderBy:
+                sort === 'dob'
+                    ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }]
+                    : sort === 'termAttendance'
+                    ? [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : sort === 'akaalId'
+                    ? [{ akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : [{ personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }],
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                ...attendanceFilter,
-                studentTermFee: {
+                attendancePercentageValue: attendanceOption ? +attendanceOption : undefined,
+                studentClassAssignment: {
                     some: {
-                        termId: +termId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            ...(subjectOption && { subjectId: +subjectOption }),
-                            ...(levelOption && { levelId: +levelOption })
-                        },
-                        ...(sectionOption && {
-                            studentClassAssignment: {
-                                some: { sectionId: +sectionOption }
-                            }
-                        })
+                        AND: classAssignmentFilters
                     }
                 },
 
@@ -1553,23 +1576,10 @@ export async function selectActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                ...attendanceFilter,
-                studentTermFee: {
+                attendancePercentageValue: attendanceOption ? +attendanceOption : undefined,
+                studentClassAssignment: {
                     some: {
-                        termId: +termId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            ...(subjectOption && { subjectId: +subjectOption }),
-                            ...(levelOption && { levelId: +levelOption })
-                        },
-                        ...(sectionOption && {
-                            studentClassAssignment: {
-                                some: { sectionId: +sectionOption }
-                            }
-                        })
+                        AND: classAssignmentFilters
                     }
                 },
 
@@ -1602,29 +1612,21 @@ export async function selectActiveStudents(search = '', page: number, termId: nu
         return { activeStudents, count };
     } else if (!searchAsNumber) {
         const activeStudents = await db.student.findMany({
-            orderBy: {
-                termAttendance: attSort == 'desc' ? 'desc' : 'asc'
-            },
+            orderBy:
+                sort === 'dob'
+                    ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }]
+                    : sort === 'termAttendance'
+                    ? [{ termAttendance: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : sort === 'akaalId'
+                    ? [{ akaalId: sort_dir == 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                    : [{ personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }],
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                ...attendanceFilter,
-                studentTermFee: {
+                attendancePercentageValue: attendanceOption ? +attendanceOption : undefined,
+                studentClassAssignment: {
                     some: {
-                        termId: +termId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            ...(subjectOption && { subjectId: +subjectOption }),
-                            ...(levelOption && { levelId: +levelOption })
-                        },
-                        ...(sectionOption && {
-                            studentClassAssignment: {
-                                some: { sectionId: +sectionOption }
-                            }
-                        })
+                        AND: classAssignmentFilters
                     }
                 },
 
@@ -1681,23 +1683,10 @@ export async function selectActiveStudents(search = '', page: number, termId: nu
             where: {
                 role: 'STUDENT',
                 isActive: true,
-                ...attendanceFilter,
-                studentTermFee: {
+                attendancePercentageValue: attendanceOption ? +attendanceOption : undefined,
+                studentClassAssignment: {
                     some: {
-                        termId: +termId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            ...(subjectOption && { subjectId: +subjectOption }),
-                            ...(levelOption && { levelId: +levelOption })
-                        },
-                        ...(sectionOption && {
-                            studentClassAssignment: {
-                                some: { sectionId: +sectionOption }
-                            }
-                        })
+                        AND: classAssignmentFilters
                     }
                 },
 
