@@ -78,3 +78,66 @@ export async function fetchEmailContentByDate(date: string) {
     });
     return emailContents;
 }
+// sending enrollment confirmation mail
+export async function createEnrollmentConfirmationEmailTemplate(adminId: string, name: string, description: string | undefined, subject: string, text: string) {
+    return await db.$transaction(async (prisma) => {
+        // Delete all existing enrollment confirmation email templates
+        await prisma.enrollmentConfirmationEmailTemplate.deleteMany();
+
+        // Create the new template
+        const newTemplate = await prisma.enrollmentConfirmationEmailTemplate.create({
+            data: {
+                name,
+                description,
+                subject,
+                text,
+                adminId: +adminId
+            }
+        });
+
+        return newTemplate;
+    });
+}
+export async function updateEnrollmentConfirmationEmailTemplate(templateId: string, name: string, description: string | undefined, subject: string, text: string) {
+    const templateToUpdate = await db.enrollmentConfirmationEmailTemplate.findUnique({
+        where: { id: +templateId }
+    });
+
+    if (!templateToUpdate) {
+        throw customError('Enrollment Confirmation Email Template not found', 'fail', 404, true);
+    }
+
+    const updatedTemplate = await db.enrollmentConfirmationEmailTemplate.update({
+        where: { id: +templateId },
+        data: {
+            name,
+            description,
+            subject,
+            text
+        }
+    });
+
+    return updatedTemplate;
+}
+export async function deleteEnrollmentConfirmationEmailTemplate(templateId: string) {
+    const template = await db.enrollmentConfirmationEmailTemplate.findUnique({
+        where: { id: +templateId }
+    });
+
+    if (!template) {
+        throw customError('Enrollment Confirmation Email Template not found', 'fail', 404, true);
+    }
+
+    await db.enrollmentConfirmationEmailTemplate.delete({
+        where: { id: template.id }
+    });
+}
+export async function findFirstEnrollmentConfirmationEmailTemplate() {
+    const template = await db.enrollmentConfirmationEmailTemplate.findMany({
+        orderBy: {
+            createdAt: 'desc'
+        }
+    });
+
+    return template;
+}

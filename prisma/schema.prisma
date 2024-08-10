@@ -608,28 +608,29 @@ model TeacherClassAssignment {
 }
 
 model Admin {
-  id                        Int                        @id @default(autoincrement())
-  role                      Role                       @default(ADMIN)
-  isActive                  Boolean                    @default(true)
-  isAllowedLogin            Boolean                    @default(true)
-  adminPersonalDetails      AdminPersonalDetails?
-  adminEmergencyContact     AdminEmergencyContact?
-  adminWWCHealthInformation AdminWWCHealthInformation?
-  adminWorkRights           AdminWorkRights?
-  adminBankDetails          AdminBankDetails?
-  adminOtherInformation     AdminOtherInformation?
-  createdAt                 DateTime                   @default(now())
-  updatedAt                 DateTime                   @updatedAt
-  user                      User?
-  Homework                  Homework[]
-  comment                   Comment[]
-  Classwork                 Classwork[]
-  SkipReport                SkipReport[]
-  Leave                     Leave[]
-  EmailTemplate             EmailTemplate[]
-  Notice                    Notice[]
-  StudentNotice             StudentNotice[]
-  StudentAdminMessage       StudentAdminMessage[]
+  id                                  Int                                   @id @default(autoincrement())
+  role                                Role                                  @default(ADMIN)
+  isActive                            Boolean                               @default(true)
+  isAllowedLogin                      Boolean                               @default(true)
+  adminPersonalDetails                AdminPersonalDetails?
+  adminEmergencyContact               AdminEmergencyContact?
+  adminWWCHealthInformation           AdminWWCHealthInformation?
+  adminWorkRights                     AdminWorkRights?
+  adminBankDetails                    AdminBankDetails?
+  adminOtherInformation               AdminOtherInformation?
+  createdAt                           DateTime                              @default(now())
+  updatedAt                           DateTime                              @updatedAt
+  user                                User?
+  Homework                            Homework[]
+  comment                             Comment[]
+  Classwork                           Classwork[]
+  SkipReport                          SkipReport[]
+  Leave                               Leave[]
+  EmailTemplate                       EmailTemplate[]
+  Notice                              Notice[]
+  StudentNotice                       StudentNotice[]
+  StudentAdminMessage                 StudentAdminMessage[]
+  EnrollmentConfirmationEmailTemplate EnrollmentConfirmationEmailTemplate[]
 }
 
 model AdminPersonalDetails {
@@ -767,7 +768,7 @@ model SkipReport {
   updatedAt           DateTime? @updatedAt
 }
 
-model Homework {ƒ
+model Homework {
   id                 Int               @id @default(autoincrement())
   subjectId          Int
   teacherId          Int? // Optional: ID of the teacher who uploaded the homework
@@ -1033,7 +1034,7 @@ model Comment {
   createdBy       Int // ID of the admin who created the comment
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  student         Student         @relation(fields: [studentId], references: [id],onDelete: Cascade)
+  student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
   admin           Admin           @relation(fields: [createdBy], references: [id])
 }
 
@@ -1082,7 +1083,7 @@ model Leave {
   approverId    Int? // ID of the admin/teacher who approved the leave, nullable for pending leaves
   comments      String? // Optional comments about the leave request
 
-  student   Student  @relation(fields: [studentId], references: [id],onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   approver  Admin?   @relation(fields: [approverId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1090,7 +1091,21 @@ model Leave {
   @@unique([studentId, startDate, endDate]) // Ensuring a student doesn't have overlapping leaves
 }
 
+//This template is used while sending application submission-confirmation mail
 model EmailTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String // A unique name for identifying the template
+  description String? // An optional description of the template
+  subject     String // The subject line of the email
+  text        String // The body text of the email template
+  adminId     Int // Foreign key to reference the admin who created the template
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  admin       Admin    @relation(fields: [adminId], references: [id]) // Relation to the Admin model
+}
+
+//This template is used while sending enrollment confirmation mail
+model EnrollmentConfirmationEmailTemplate {
   id          Int      @id @default(autoincrement())
   name        String // A unique name for identifying the template
   description String? // An optional description of the template
@@ -1145,7 +1160,7 @@ model StudentNoticeAcknowledgement {
   seenAt          DateTime? // Set this to the current time when the notice is seen
   studentNotice   StudentNotice @relation(fields: [studentNoticeId], references: [id], onDelete: Cascade)
 
-  student Student @relation(fields: [studentId], references: [id],onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentNoticeId, studentId]) // Ensuring a unique record per notice per teacher
 }
@@ -1215,7 +1230,7 @@ model Timetable {
 model EmailContent {
   id           Int      @id @default(autoincrement())
   studentId    Int
-  student      Student  @relation(fields: [studentId], references: [id],onDelete: Cascade)
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   emailcontent String
   sendDate     DateTime
 }
@@ -1238,7 +1253,7 @@ model StudentAdminMessage {
   studentId Int
   adminId   Int
   messageId Int
-  student   Student @relation(fields: [studentId], references: [id],onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   admin     Admin   @relation(fields: [adminId], references: [id])
   message   Message @relation(fields: [messageId], references: [id])
 
