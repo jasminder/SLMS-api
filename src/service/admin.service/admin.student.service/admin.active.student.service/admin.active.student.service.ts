@@ -1641,7 +1641,133 @@ export async function defaultSelectActiveStudentsWIthNoSubjects(page: number, te
 
     return { activeStudents, count };
 }
+
 export async function selectActiveStudents(
+    search = '',
+    page: number,
+    termId: number,
+    subjectOption = '',
+    levelOption = '',
+    sectionOption = '',
+    attendanceOption = '',
+    sort = 'termAttendance',
+    sort_dir = 'asc'
+) {
+    const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+
+    let classAssignmentFilters: Prisma.StudentClassAssignmentWhereInput[] = [];
+
+    if (subjectOption) {
+        classAssignmentFilters.push({
+            termSubjectLevel: {
+                subject: {
+                    id: +subjectOption
+                }
+            }
+        });
+    }
+
+    if (levelOption) {
+        classAssignmentFilters.push({
+            termSubjectLevel: {
+                level: {
+                    id: +levelOption
+                }
+            }
+        });
+    }
+    if (sectionOption) {
+        classAssignmentFilters.push({
+            sectionId: +sectionOption
+        });
+    }
+
+    // Base where condition
+    let whereCondition: Prisma.StudentWhereInput = {
+        role: 'STUDENT',
+        isActive: true,
+        attendancePercentageValue: attendanceOption ? +attendanceOption : undefined
+    };
+
+    // Only add studentClassAssignment condition if there are filters
+    if (classAssignmentFilters.length > 0) {
+        whereCondition.studentClassAssignment = {
+            some: {
+                AND: classAssignmentFilters
+            }
+        };
+    }
+
+    // Add search conditions
+    if (search) {
+        whereCondition.OR = [
+            ...(searchAsNumber ? [{ akaalId: searchAsNumber }] : []),
+            {
+                personalDetails: {
+                    OR: [
+                        { firstName: { contains: search, mode: 'insensitive' } },
+                        { lastName: { contains: search, mode: 'insensitive' } },
+                        { email: { contains: search, mode: 'insensitive' } },
+                        { contact: { contains: search, mode: 'insensitive' } },
+                        { postcode: { contains: search, mode: 'insensitive' } }
+                    ]
+                }
+            },
+            {
+                parentsDetails: {
+                    OR: [
+                        { fatherName: { contains: search, mode: 'insensitive' } },
+                        { motherName: { contains: search, mode: 'insensitive' } },
+                        { parentEmail: { contains: search, mode: 'insensitive' } },
+                        { parentContact: { contains: search, mode: 'insensitive' } }
+                    ]
+                }
+            }
+        ];
+    }
+
+    const activeStudents = await db.student.findMany({
+        orderBy:
+            sort === 'dob'
+                ? [{ personalDetails: { DOB: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }]
+                : sort === 'termAttendance'
+                ? [{ termAttendance: sort_dir === 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                : sort === 'akaalId'
+                ? [{ akaalId: sort_dir === 'desc' ? 'desc' : 'asc' }, { id: 'asc' }]
+                : [{ personalDetails: { firstName: sort_dir === 'asc' ? 'asc' : 'desc' } }, { id: 'asc' }],
+        where: whereCondition,
+        select: {
+            id: true,
+            akaalId: true,
+            role: true,
+            isActive: true,
+            personalDetails: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    DOB: true,
+                    gender: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    state: true,
+                    country: true,
+                    postcode: true,
+                    image: true
+                }
+            }
+        }
+    });
+
+    const count = await db.student.count({
+        where: whereCondition
+    });
+
+    return { activeStudents, count };
+}
+export async function selectActiveStudents1(
     search = '',
     page: number,
     termId: number,
