@@ -3,6 +3,7 @@ import { ChangeCurrentTermNameSchema, CreateNewTermSetupSchema, ExtendCurrentTer
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
 import { startOfDay, endOfDay } from 'date-fns';
+import { sendEmail } from '../../../utils/email';
 
 /* ORGANISTAION SET UP*/
 
@@ -450,18 +451,7 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
                 currentTerm: false
             }
         });
-        ///READ THIS--> school doesnt want batch student -> alumni/
-        // Set all currently active students to alumni
-        // await db.student.updateMany({
-        //     where: {
-        //         role: 'STUDENT',
-        //         isActive: true
-        //     },
-        //     data: {
-        //         role: 'ALUMNI',
-        //         isActive: false
-        //     }
-        // });
+
         const lastActiveStudent = await db.student.findFirst({
             where: { isActive: true, role: 'STUDENT' },
             orderBy: { akaalId: 'desc' }
@@ -507,16 +497,6 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
             select: { id: true }
         });
 
-        // Update all students with role STUDENT and isActive false to be active again
-        // await db.student.updateMany({
-        //     where: {
-        //         role: 'STUDENT',
-        //         isActive: false
-        //     },
-        //     data: {
-        //         isActive: true
-        //     }
-        // });
         const batchSize = 100; // Adjust the batch size as needed
         for (let i = 0; i < studentsToUpdate.length; i += batchSize) {
             const batch = studentsToUpdate.slice(i, i + batchSize);
@@ -552,6 +532,154 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
     });
 }
 
+export async function makeCurrentTerm1(id: FindUniqueTermSchema['params']['id']) {
+    let emailTasks: { email: string; subject: string; text: string }[] = [];
+
+    // Start a transaction
+    const updatedTerm = await db.$transaction(async (prisma) => {
+        // Find the currently active term
+        const currentTerm = await prisma.term.findFirst({
+            where: {
+                currentTerm: true
+            }
+        });
+
+        // If there is a current term, deactivate the associated timetables
+        if (currentTerm) {
+            await prisma.timeTable.updateMany({
+                where: {
+                    isActive: true,
+                    termId: currentTerm.id
+                },
+                data: {
+                    isActive: false
+                }
+            });
+        }
+
+        // Set all terms to not be the current term
+        await prisma.term.updateMany({
+            data: {
+                currentTerm: false
+            }
+        });
+
+        const lastActiveStudent = await prisma.student.findFirst({
+            where: { isActive: true, role: 'STUDENT' },
+            orderBy: { akaalId: 'desc' }
+        });
+        let nextAkaalId = lastActiveStudent ? (lastActiveStudent.akaalId ?? 0) + 1 : 1;
+
+        // Find the term to be set as the current term
+        const newCurrentTerm = await prisma.term.findUnique({
+            where: {
+                id: +id
+            }
+        });
+
+        if (!newCurrentTerm) {
+            throw customError(`Term not found or could not be updated. Please try again later`, 'fail', 404, true);
+        }
+
+        // Update the term to be the current term
+        const updatedTerm = await prisma.term.update({
+            where: {
+                id: +id
+            },
+            data: {
+                currentTerm: true
+            }
+        });
+
+        // Retrieve IDs of students to update
+        const studentsToUpdate = await prisma.student.findMany({
+            where: {
+                role: 'STUDENT',
+                isActive: false
+            },
+            select: { id: true, akaalId: true }
+        });
+
+        const studentsToUpdateAttendance = await prisma.student.findMany({
+            where: {
+                role: 'STUDENT',
+                isActive: true
+            },
+            select: { id: true }
+        });
+
+        const template = await prisma.enrollmentConfirmationEmailTemplate.findFirst({
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (!template) {
+            console.log('No enrollment confirmation email template found');
+        }
+
+        const batchSize = 100; // Adjust the batch size as needed
+        for (let i = 0; i < studentsToUpdate.length; i += batchSize) {
+            const batch = studentsToUpdate.slice(i, i + batchSize);
+            const updates = batch.map(async (student) => {
+                let updateData: any = { isActive: true };
+                if (!student.akaalId) {
+                    // Only assign a new akaalId if it's null
+                    updateData.akaalId = nextAkaalId++;
+                }
+                const updatedStudent = await prisma.student.update({
+                    where: { id: student.id, isActive: false, role: 'STUDENT' },
+                    data: { ...updateData },
+                    include: { personalDetails: true } // Include personal details to get the email
+                });
+
+                // Collect email tasks instead of sending immediately
+                if (updatedStudent.personalDetails?.email && template) {
+                    emailTasks.push({
+                        email: updatedStudent.personalDetails.email,
+                        subject: template.subject,
+                        text: template.text
+                    });
+                }
+
+                return updatedStudent;
+            });
+            await Promise.all(updates);
+        }
+
+        for (let i = 0; i < studentsToUpdateAttendance.length; i += batchSize) {
+            const batch = studentsToUpdateAttendance.slice(i, i + batchSize);
+            const updates = batch.map((student) =>
+                prisma.student.update({
+                    where: {
+                        id: student.id
+                    },
+                    data: {
+                        termAttendance: 0,
+                        attendancePercentageValue: 0
+                    }
+                })
+            );
+            await Promise.all(updates);
+        }
+
+        return updatedTerm;
+    });
+
+    // After successful transaction, send all emails
+    if (emailTasks.length > 0) {
+        for (const task of emailTasks) {
+            try {
+                await sendEmail(task);
+            } catch (error) {
+                console.error(`Failed to send email to ${task.email}:`, error);
+                // You might want to implement a retry mechanism or log this for manual follow-up
+            }
+        }
+    } else {
+        console.log('No enrollment confirmation emails to send.');
+    }
+
+    return updatedTerm;
+}
 // change Current Term Name
 export async function changeCurrentTermName(id: ChangeCurrentTermNameSchema['params']['id'], termData: ChangeCurrentTermNameSchema['body']['updatedTerm']) {
     const { name } = termData;
@@ -999,4 +1127,22 @@ export async function changeIsOnWeekday(termSubjectId: string, isOnWeekday: bool
     });
 
     return updatedTermSubject;
+}
+
+//helper for sending mail for confirmation on enrollment email
+async function sendEnrollmentConfirmationEmail(studentEmail: string) {
+    const template = await db.enrollmentConfirmationEmailTemplate.findFirst({
+        orderBy: { createdAt: 'desc' }
+    });
+
+    if (!template) {
+        console.log('No enrollment confirmation email template found');
+        return;
+    }
+
+    await sendEmail({
+        email: studentEmail,
+        subject: template.subject,
+        text: template.text
+    });
 }
