@@ -422,7 +422,7 @@ export async function unPublishTerm(id: FindUniqueTermSchema['params']['id']) {
         return updatedTerm;
     });
 }
-export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) {
+export async function makeCurrentTerm1Temp(id: FindUniqueTermSchema['params']['id']) {
     // Find the currently active term
     const currentTerm = await db.term.findFirst({
         where: {
@@ -532,7 +532,7 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
     });
 }
 
-export async function makeCurrentTerm1(id: FindUniqueTermSchema['params']['id']) {
+export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) {
     let emailTasks: { email: string; subject: string; text: string }[] = [];
 
     // Start a transaction

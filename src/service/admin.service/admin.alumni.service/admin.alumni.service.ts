@@ -1,6 +1,15 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { AlumniEnrollDataSchema } from '../../../schema/admin.dto/admin.alumni.dto/admin.alumni.dto';
+import { sendEmail } from '../../../utils/email';
+
+
+interface EmailTask {
+    email: string;
+    subject: string;
+    text: string;
+}
+
 
 export async function findAllAlumni(page: number) {
     const take = 10;
@@ -655,4 +664,61 @@ export async function makeAlumniToActiveById(alumniId: string) {
     }
 
     return student;
+}
+
+
+
+
+export async function makeAlumniToActiveById1(alumniId: string) {
+    let emailTask: EmailTask | null = null;
+
+    const result = await db.$transaction(async (prisma) => {
+        // Update the student record
+        const student = await prisma.student.update({
+            where: { id: +alumniId },
+            data: {
+                role: 'STUDENT',
+                isActive: true,
+                isAllowedLogin: true,
+                attendancePercentageValue: 0,
+                termAttendance: 0
+            },
+            include: { personalDetails: true } // Include personal details to get the email
+        });
+
+        if (!student) {
+            throw customError(`No student found with ID ${alumniId}`, 'fail', 400, true);
+        }
+
+        // Fetch the email template
+        const template = await prisma.enrollmentConfirmationEmailTemplate.findFirst({
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (template && student.personalDetails?.email) {
+            emailTask = {
+                email: student.personalDetails.email,
+                subject: template.subject,
+                text: template.text
+            };
+        }
+
+        return student;
+    });
+
+    // After successful transaction, send the email if task exists
+    if (emailTask !== null) {
+        const { email, subject, text } = emailTask;
+        try {
+            await sendEmail({ email, subject, text });
+            console.log(`Alumni reactivation email sent to ${email}`);
+        } catch (error) {
+            console.error(`Failed to send alumni reactivation email to ${email}:`, error);
+            // You might want to implement a retry mechanism or log this for manual follow-up
+        }
+    } else {
+        console.log('No alumni reactivation email to send.');
+    }
+
+    return result;
 }

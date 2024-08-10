@@ -1,6 +1,12 @@
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 import { EnrolledStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.enrolledstudent/admin.enrolled.student.dto';
+import { sendEmail } from '../../../../utils/email';
+interface EmailTask {
+    email: string;
+    subject: string;
+    text: string;
+}
 
 // Find all late enrollment - student for the admin
 export async function findLateEnrolledStudents(page: number, termId: number) {
@@ -576,7 +582,8 @@ export async function deEnrollStudentEnrolledToSubjects(deEnrollData: EnrolledSt
     };
 }
 
-export async function lateEnrolledActiveStudent(id: number, termId: string) {
+export async function lateEnrolledActiveStudent1(id: number, termId: string) {
+    let emailTask: { email: string; subject: string; text: string } | null = null;
     // Fetch the student record
     const student = await db.student.findUnique({
         where: { id, role: 'STUDENT' }
@@ -613,4 +620,78 @@ export async function lateEnrolledActiveStudent(id: number, termId: string) {
     });
 
     return { message: `The applicant enrolled to Student successfully` };
+}
+
+export async function lateEnrolledActiveStudent(id: number, termId: string) {
+    let emailTask: EmailTask | null = null;
+
+    const result = await db.$transaction(async (prisma) => {
+        // Fetch the student record
+        const student = await prisma.student.findUnique({
+            where: { id, role: 'STUDENT' },
+            include: { personalDetails: true } // Include personal details to get the email
+        });
+
+        // Check if student record exists
+        if (!student) {
+            throw customError(`No student found with ID ${id}`, 'fail', 404, true);
+        }
+
+        const enrollments = await prisma.enrollment.findMany({
+            where: {
+                studentId: id,
+                termSubjectGroup: {
+                    termId: +termId
+                }
+            }
+        });
+
+        if (enrollments.length === 0) {
+            throw customError(`No enrollments found for the applicant. Please enroll a subject at the subject & classes tab.`, 'fail', 404, true);
+        }
+
+        const lastActiveStudent = await prisma.student.findFirst({
+            where: { isActive: true, role: 'STUDENT' },
+            orderBy: { akaalId: 'desc' }
+        });
+
+        let nextAkaalId = lastActiveStudent ? (lastActiveStudent.akaalId ?? 0) + 1 : 1;
+
+        // Update the student's role to 'STUDENT'
+        const updatedStudent = await prisma.student.update({
+            where: { id },
+            data: { isActive: true, isAllowedLogin: true, akaalId: nextAkaalId }
+        });
+
+        // Fetch the email template
+        const template = await prisma.enrollmentConfirmationEmailTemplate.findFirst({
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (template && student.personalDetails?.email) {
+            emailTask = {
+                email: student.personalDetails.email,
+                subject: template.subject,
+                text: template.text
+            };
+        }
+
+        return { message: `The applicant enrolled to Student successfully`, updatedStudent };
+    });
+
+    // After successful transaction, send the email if task exists
+    if (emailTask !== null) {
+        const { email, subject, text } = emailTask;
+        try {
+            await sendEmail({email, subject, text });
+            console.log(`Enrollment confirmation email sent to ${email}`);
+        } catch (error) {
+            console.error(`Failed to send enrollment confirmation email to ${email}:`, error);
+            // You might want to implement a retry mechanism or log this for manual follow-up
+        }
+    } else {
+        console.log('No enrollment confirmation email to send.');
+    }
+
+    return result;
 }
