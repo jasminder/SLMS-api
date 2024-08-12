@@ -2,6 +2,8 @@ import { NewApplicantSchema } from '../../schema/new.applicant.dto/new.applicant
 import { customError } from '../../utils/customError';
 import { db } from '../../utils/db.server';
 import { sendEmail } from '../../utils/email';
+import { parseISO, startOfDay } from 'date-fns';
+import { toZonedTime, format } from 'date-fns-tz';
 
 //  create new application
 export async function createApplicant(data: NewApplicantSchema['body']) {
@@ -13,13 +15,27 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
         personalDetails: { email, address, contact, country, firstName, gender, lastName, postcode, state, suburb, DOB, image },
         subjectInterest: { subjectsChosen, subjectRelated }
     } = data;
-
-    const DOBDate = new Date(DOB).setHours(0, 0, 0, 0);
+    const melbourneTimeZone = 'Australia/Melbourne';
+    const parsedDOB = parseISO(DOB);
+    const melbourneDOB = toZonedTime(parsedDOB, melbourneTimeZone);
+    const normalizedDOB = startOfDay(melbourneDOB);
+    const formattedDOB = format(normalizedDOB, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", { timeZone: melbourneTimeZone });
+    const DOBDate = formattedDOB;
+    const dobDateOnly = format(normalizedDOB, 'yyyy-MM-dd', { timeZone: melbourneTimeZone });
     const existingStudent = await db.personalDetails.findFirst({
         where: {
-            firstName,
-            lastName,
-            DOB: new Date(DOBDate)
+            firstName: {
+                equals: firstName,
+                mode: 'insensitive'
+            },
+            lastName: {
+                equals: lastName,
+                mode: 'insensitive'
+            },
+            DOB: {
+                gte: new Date(`${dobDateOnly}T00:00:00.000Z`),
+                lte: new Date(`${dobDateOnly}T23:59:59.999Z`)
+            }
         },
         include: {
             student: {
@@ -43,11 +59,11 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
             data: {
                 personalDetails: {
                     create: {
-                        firstName,
-                        lastName,
-                        DOB: new Date(DOB),
+                        firstName: firstName.trim(),
+                        lastName:lastName.trim(),
+                        DOB: DOBDate,
                         gender,
-                        email: email.toLowerCase(),
+                        email: email.toLowerCase().trim(),
                         contact,
                         address,
                         suburb,
