@@ -1,4 +1,4 @@
-import { MessageStatus, MessageType } from '@prisma/client';
+import { MessageStatus, MessageType, NotificationType } from '@prisma/client';
 import { db } from '../../utils/db.server';
 import { getIo } from '../../sockets/socket';
 
@@ -20,6 +20,15 @@ export async function sendMessage(content: string, senderId: string, receiverId:
                 studentId: +receiverId,
                 adminId: +senderId,
                 messageId: message.id
+            }
+        });
+        await db.notification.create({
+            data: {
+                studentId: +receiverId,
+                type: NotificationType.MESSAGE,
+                title: 'New Message from Admin',
+                content: 'You have received a new message from an admin.',
+                actionUrl: `/student/communication?studentId=${receiverId}` // Adjust this URL as needed
             }
         });
     } else if (userType === 'STUDENT') {
@@ -72,7 +81,8 @@ export async function fetchMessagesForAdmin() {
     return await db.studentAdminMessage.findMany({
         where: {
             message: {
-                status: 'SENT', messageType:"STUDENT"
+                status: 'SENT',
+                messageType: 'STUDENT'
             }
         },
         include: {
