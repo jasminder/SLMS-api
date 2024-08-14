@@ -1,5 +1,6 @@
 //admin.events.service
 
+import { NotificationType } from '@prisma/client';
 import { CreateNewEventSchema, UpdateEventSchema } from '../../../schema/admin.dto/admin.event.dto/admin.event.dto';
 import { customError } from '../../../utils/customError';
 
@@ -20,6 +21,30 @@ export async function createEvent(start: string, end: string, data: CreateNewEve
             data: true
         }
     });
+
+    const activeStudents = await db.student.findMany({
+        where: {
+            role: 'STUDENT',
+            isActive: true
+        },
+        select: {
+            id: true
+        }
+    });
+    const notificationPromises = activeStudents.map((student) =>
+        db.notification.create({
+            data: {
+                studentId: student.id,
+                type: NotificationType.EVENT,
+                title: 'New Event',
+                content: `A new event "${data.appointment.title}" has been scheduled from ${start} to ${end}.`,
+                actionUrl: `/student?studentId=${student.id}`
+            }
+        })
+    );
+
+    // Execute all notification creations
+    await Promise.all(notificationPromises);
 
     return event;
 }

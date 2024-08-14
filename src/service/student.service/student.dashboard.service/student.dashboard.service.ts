@@ -253,3 +253,11 @@ export async function getAllUnreadStudentNotifications(studentId: string, limit?
 
     return notifications;
 }
+export async function markNotificationAsRead(notificationId: string) {
+    const updatedNotification = await db.notification.update({
+        where: { id: parseInt(notificationId) },
+        data: { isRead: true }
+    });
+
+    return updatedNotification;
+}

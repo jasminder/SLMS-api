@@ -11,7 +11,8 @@ import {
     findStudentsByEmailSchema,
     getStudentNoticeSchema,
     getStudentNotificationsSchema,
-    teacherAssignmentSchema
+    teacherAssignmentSchema,
+    updateNotificationSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
     acknowledgeStudentNoticeHandler,
@@ -21,7 +22,8 @@ import {
     getAllStudentPortalNoticesHandler,
     getAllUnreadStudentNotificationsHandler,
     getStudentNoticePortalHandler,
-    getTeacherAssignmentHandler
+    getTeacherAssignmentHandler,
+    markNotificationAsReadHandler
 } from '../../../controller/student.controller/student.dashboard.controller/student.dashboard.controller';
 
 const studentDashboardRoute = express.Router();
@@ -47,5 +49,8 @@ studentDashboardRoute.route('/find-teacher/:termSubjectLevelId/:sectionId').get(
 studentDashboardRoute
     .route('/student-notifications/:studentId')
     .get(validate(getStudentNotificationsSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getAllUnreadStudentNotificationsHandler));
+studentDashboardRoute
+    .route('/notifications/read/:notificationId')
+    .patch(validate(updateNotificationSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(markNotificationAsReadHandler));
 
 export default studentDashboardRoute;

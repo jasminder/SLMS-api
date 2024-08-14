@@ -65,3 +65,10 @@ export const getStudentNotificationsSchema = z.object({
 });
 
 export type GetStudentNotificationsSchema = z.infer<typeof getStudentNotificationsSchema>;
+export const updateNotificationSchema = z.object({
+    params: z.object({
+        notificationId: z.string().min(1).regex(/^\d+$/, 'Notification ID must be a number')
+    })
+});
+
+export type UpdateNotificationSchema = z.infer<typeof updateNotificationSchema>;

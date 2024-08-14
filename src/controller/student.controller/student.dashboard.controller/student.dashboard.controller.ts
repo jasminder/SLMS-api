@@ -6,7 +6,8 @@ import {
     FindStudentsByEmailSchema,
     GetStudentNoticeSchema,
     GetStudentNotificationsSchema,
-    TeacherAssignmentSchema
+    TeacherAssignmentSchema,
+    UpdateNotificationSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
     acknowledgeStudentNotice,
@@ -16,7 +17,8 @@ import {
     findTeacherByAssignment,
     getAllStudentPortalNotices,
     getAllUnreadStudentNotifications,
-    getStudentPortalNotice
+    getStudentPortalNotice,
+    markNotificationAsRead
 } from '../../../service/student.service/student.dashboard.service/student.dashboard.service';
 import { GetStudentportalNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
 
@@ -75,4 +77,9 @@ export const getAllUnreadStudentNotificationsHandler = async (
     // const { limit, offset } = req.query;
     const notifications = await getAllUnreadStudentNotifications(studentId);
     res.status(200).json(notifications);
+};
+export const markNotificationAsReadHandler = async (req: Request<UpdateNotificationSchema['params']>, res: Response, next: NextFunction) => {
+    const { notificationId } = req.params;
+    const updatedNotification = await markNotificationAsRead(notificationId);
+    res.status(200).json(updatedNotification);
 };
