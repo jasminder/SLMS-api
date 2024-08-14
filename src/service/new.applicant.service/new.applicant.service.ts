@@ -22,6 +22,9 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
     const formattedDOB = format(normalizedDOB, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", { timeZone: melbourneTimeZone });
     const DOBDate = formattedDOB;
     const dobDateOnly = format(normalizedDOB, 'yyyy-MM-dd', { timeZone: melbourneTimeZone });
+    const startOfDayUTC = new Date(Date.UTC(normalizedDOB.getUTCFullYear(), normalizedDOB.getUTCMonth(), normalizedDOB.getUTCDate()));
+    const endOfDayUTC = new Date(Date.UTC(normalizedDOB.getUTCFullYear(), normalizedDOB.getUTCMonth(), normalizedDOB.getUTCDate(), 23, 59, 59, 999));
+
     const existingStudent = await db.personalDetails.findFirst({
         where: {
             firstName: {
@@ -32,10 +35,20 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
                 equals: lastName,
                 mode: 'insensitive'
             },
-            DOB: {
-                gte: new Date(`${dobDateOnly}T00:00:00.000Z`),
-                lte: new Date(`${dobDateOnly}T23:59:59.999Z`)
-            }
+            OR: [
+                {
+                    DOB: {
+                        gte: new Date(`${dobDateOnly}T00:00:00.000Z`),
+                        lte: new Date(`${dobDateOnly}T23:59:59.999Z`)
+                    }
+                },
+                {
+                    DOB: {
+                        gte: startOfDayUTC,
+                        lte: endOfDayUTC
+                    }
+                }
+            ]
         },
         include: {
             student: {
@@ -60,7 +73,7 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
                 personalDetails: {
                     create: {
                         firstName: firstName.trim(),
-                        lastName:lastName.trim(),
+                        lastName: lastName.trim(),
                         DOB: DOBDate,
                         gender,
                         email: email.toLowerCase().trim(),
