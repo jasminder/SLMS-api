@@ -5,6 +5,7 @@ import {
     FindActiveStudentDetailsSchema,
     FindStudentsByEmailSchema,
     GetStudentNoticeSchema,
+    GetStudentNotificationsSchema,
     TeacherAssignmentSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
@@ -14,6 +15,7 @@ import {
     findStudentsByEmail,
     findTeacherByAssignment,
     getAllStudentPortalNotices,
+    getAllUnreadStudentNotifications,
     getStudentPortalNotice
 } from '../../../service/student.service/student.dashboard.service/student.dashboard.service';
 import { GetStudentportalNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
@@ -63,4 +65,14 @@ export const getTeacherAssignmentHandler = async (req: Request<TeacherAssignment
     const { termSubjectLevelId, sectionId } = req.params;
     const teacherInfo = await findTeacherByAssignment(termSubjectLevelId, sectionId);
     res.status(200).json(teacherInfo);
+};
+export const getAllUnreadStudentNotificationsHandler = async (
+    req: Request<GetStudentNotificationsSchema['params'], {}, {}, GetStudentNotificationsSchema['query']>,
+    res: Response,
+    next: NextFunction
+) => {
+    const { studentId } = req.params;
+    // const { limit, offset } = req.query;
+    const notifications = await getAllUnreadStudentNotifications(studentId);
+    res.status(200).json(notifications);
 };

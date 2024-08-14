@@ -463,43 +463,6 @@ export async function getAllTerms() {
     });
 }
 
-// export async function calculateFeeDetails(termId: string) {
-//     const termIdInt = termId; // Ensure the termId is an integer
-//     const feeTemplates = await db.feeTemplate.findMany({
-//         where: { termId: +termIdInt },
-//         include: {
-//             feePayments: true // Include fee payments related to the fee template
-//         }
-//     });
-
-//     let totalInvoiced = 0;
-//     let totalDue = 0;
-//     let totalDiscount = 0;
-//     let totalOverdue = 0; // Initialize total overdue amount
-
-//     feeTemplates.forEach((template) => {
-//         template.feePayments.forEach((payment) => {
-//             if (payment.isActive) {
-//                 totalInvoiced += payment.feeAmount || 0;
-//                 totalDue += payment.dueAmount || 0;
-//                 totalDiscount += payment.discountAmount || 0;
-
-//                 // Check if the payment is overdue and add to the total overdue amount
-//                 if (payment.hasOverDue) {
-//                     totalOverdue += payment.dueAmount || 0;
-//                 }
-//             }
-//         });
-//     });
-
-//     return {
-//         totalInvoiced,
-//         totalDue,
-//         totalDiscount,
-//         totalOverdue // Return total overdue amount along with other totals
-//     };
-// }
-
 export async function feeDashboardQuery() {
     const currentTerm = await db.term.findFirst({
         where: {

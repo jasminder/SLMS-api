@@ -119,6 +119,7 @@ model Student {
   studentAdminMessage          StudentAdminMessage[]
   AlumniRemarks                AlumniRemarks[]
   hasSeenNewApplication        Boolean                        @default(false)
+  Notification                 Notification[]
 }
 
 // child table to Student table. connection is established through FK studentID
@@ -1269,4 +1270,30 @@ model AlumniRemarks {
   updatedAt DateTime @updatedAt
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// ------------------- for message ------------------- //
+enum NotificationType {
+  FEE
+  FEEOVERDUE
+  MESSAGE
+  EVENT
+  ATTENDANCE
+  CLASSWORK
+  HOMEWORK
+  FEEDBACK
+}
+
+model Notification {
+  id         Int              @id @default(autoincrement())
+  studentId  Int
+  type       NotificationType
+  title      String?
+  content    String
+  isRead     Boolean          @default(false)
+  actionUrl  String? // URL to the relevant page or resource
+  expiresAt  DateTime? // Optional expiration date for time-sensitive notifications
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }

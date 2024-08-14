@@ -1,3 +1,4 @@
+import { NotificationType } from '@prisma/client';
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
 import { calculateSendDate } from '../../../utils/setSendDate';
@@ -68,6 +69,14 @@ export async function createFeedback(
             roomName,
             classTime,
             isSent: false
+        }
+    });
+    return db.notification.create({
+        data: {
+            studentId: +studentId,
+            type: NotificationType.FEEDBACK,
+            content: `There is a new feedback.`,
+            actionUrl: `/student/homework-classwork?studentId=${studentId}`
         }
     });
     return feedback;

@@ -1,3 +1,4 @@
+import { NotificationType } from '@prisma/client';
 import { customError } from '../../../utils/customError';
 
 import { db } from '../../../utils/db.server';
@@ -33,7 +34,17 @@ export async function createGroupClasswork(
                 }
             });
         });
-        await db.$transaction(transactions);
+        const notificationTransactions = studentIds.map((studentId) => {
+            return db.notification.create({
+                data: {
+                    studentId: +studentId,
+                    type: NotificationType.CLASSWORK,
+                    content: `A new classwork has been posted.`,
+                    actionUrl: `/student/homework-classwork?studentId=${studentId}`
+                }
+            });
+        });
+        await db.$transaction([...transactions, ...notificationTransactions]);
     }
     for (const studentId of numericStudentIds) {
         const existingAutomatedMail = await db.automatedMailForParents.findFirst({

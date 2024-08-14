@@ -1,7 +1,7 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
-import { PaymentType } from '@prisma/client';
+import { NotificationType, PaymentType } from '@prisma/client';
 
 export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
     const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
@@ -82,6 +82,18 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     })
                     .filter((task) => task !== null)
             ); // Filter out null tasks
+            const notificationTransactions = await Promise.all(
+                studentIds.map((studentId) => {
+                    return db.notification.create({
+                        data: {
+                            studentId: +studentId,
+                            type: NotificationType.FEE,
+                            content: `You have new Fee invoiced.`,
+                            actionUrl: `/student/fee-list?studentId=${studentId}`
+                        }
+                    });
+                })
+            );
             return {
                 message: 'FeeTemplate and FeePayments created successfully.',
                 feeTemplate,
@@ -147,6 +159,19 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     })
                     .filter((task) => task !== null)
             ); // Filter out null tasks
+
+            const notificationTransactions = await Promise.all(
+                studentIds.map((studentId) => {
+                    return db.notification.create({
+                        data: {
+                            studentId: +studentId,
+                            type: NotificationType.FEE,
+                            content: `You have new Fee invoiced.`,
+                            actionUrl: `/student/fee-list?studentId=${studentId}`
+                        }
+                    });
+                })
+            );
             return {
                 message: 'FeeTemplate and FeePayments created successfully.',
                 feeTemplate,

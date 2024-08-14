@@ -53,3 +53,15 @@ export const teacherAssignmentSchema = z.object({
     })
 });
 export type TeacherAssignmentSchema = z.infer<typeof teacherAssignmentSchema>;
+
+export const getStudentNotificationsSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Student ID is required' }).regex(/^\d+$/, 'Student ID must be a number')
+    }),
+    query: z.object({
+        limit: z.string().regex(/^\d+$/, 'Limit must be a number').optional(),
+        offset: z.string().regex(/^\d+$/, 'Offset must be a number').optional()
+    })
+});
+
+export type GetStudentNotificationsSchema = z.infer<typeof getStudentNotificationsSchema>;

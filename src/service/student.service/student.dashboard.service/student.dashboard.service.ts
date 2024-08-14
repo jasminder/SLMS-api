@@ -238,3 +238,18 @@ export async function findTeacherByAssignment(termSubjectLevelId: string, sectio
 
     return assignment;
 }
+export async function getAllUnreadStudentNotifications(studentId: string, limit?: string, offset?: string) {
+    const notifications = await db.notification.findMany({
+        where: {
+            studentId: +studentId,
+            isRead: false
+        },
+        orderBy: {
+            createdAt: 'desc'
+        }
+        // take: limit ? +limit : undefined,
+        // skip: offset ? +offset : undefined
+    });
+
+    return notifications;
+}

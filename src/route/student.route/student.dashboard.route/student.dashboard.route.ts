@@ -10,6 +10,7 @@ import {
     findActiveStudentDetailsSchema,
     findStudentsByEmailSchema,
     getStudentNoticeSchema,
+    getStudentNotificationsSchema,
     teacherAssignmentSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
@@ -18,6 +19,7 @@ import {
     findStudentDetailsByIdHandler,
     findStudentsByEmailHandler,
     getAllStudentPortalNoticesHandler,
+    getAllUnreadStudentNotificationsHandler,
     getStudentNoticePortalHandler,
     getTeacherAssignmentHandler
 } from '../../../controller/student.controller/student.dashboard.controller/student.dashboard.controller';
@@ -41,5 +43,9 @@ studentDashboardRoute
     .get(validate(fetchStudentAssignmentsSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchStudentAssignmentsHandler));
 
 studentDashboardRoute.route('/find-teacher/:termSubjectLevelId/:sectionId').get(validate(teacherAssignmentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), getTeacherAssignmentHandler);
+
+studentDashboardRoute
+    .route('/student-notifications/:studentId')
+    .get(validate(getStudentNotificationsSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getAllUnreadStudentNotificationsHandler));
 
 export default studentDashboardRoute;
