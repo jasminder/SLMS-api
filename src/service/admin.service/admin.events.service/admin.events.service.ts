@@ -37,7 +37,7 @@ export async function createEvent(start: string, end: string, data: CreateNewEve
                 studentId: student.id,
                 type: NotificationType.EVENT,
                 title: 'New Event',
-                content: `A new event "${data.appointment.title}" has been scheduled from ${start} to ${end}.`,
+                content: `A new event "${data.appointment.title}" has been added`,
                 actionUrl: `/student?studentId=${student.id}`
             }
         })
