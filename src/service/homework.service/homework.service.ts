@@ -46,7 +46,7 @@ export async function createHomework(
             description,
             attachments,
             createdAt: new Date(),
-            updatedAt: new Date(),
+            updatedAt: new Date()
         };
         const newHomework = await db.homework.create({ data });
         if (!newHomework) {
@@ -125,6 +125,36 @@ export async function findAllHomeworkByTermAndSection(termSubjectLevelId: string
                 gte: startDate,
                 lte: endDate
             }
+        },
+        include: {
+            subject: true,
+            teacher: true,
+            termSubjectLevel: {
+                select: {
+                    level: {
+                        select: { name: true }
+                    }
+                }
+            },
+            section: {
+                select: {
+                    name: true
+                }
+            }
+        },
+        orderBy: {
+            createdAt: 'desc'
+        }
+    });
+
+    return homeworks;
+}
+export async function findAllAssignedHomeworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
+    const homeworks = await db.homework.findMany({
+        where: {
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId,
+            teacherId: +teacherId
         },
         include: {
             subject: true,

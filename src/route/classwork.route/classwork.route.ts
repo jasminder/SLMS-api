@@ -1,7 +1,7 @@
 import express from 'express';
 import validate from '../../middleware/validateResource';
-import { createClassworkHandler, deleteClassworkHandler, editClassworkHandler, findClassworkByIdHandler, findClassworkBySubjectListHandler, findClassworkByTermAndSectionHandler } from '../../controller/classwork.controller/classwork.controller';
-import { createClassworkSchema, deleteClassworkSchema, editClassworkSchema, findAllClassworksBySubjectsListSchema, findClassworkByIdSchema, findClassworkByTermAndSectionSchema } from '../../schema/classwork.dto/classwork.dto';
+import { createClassworkHandler, deleteClassworkHandler, editClassworkHandler, findAssignedClassworkByTermAndSectionHandler, findClassworkByIdHandler, findClassworkBySubjectListHandler, findClassworkByTermAndSectionHandler } from '../../controller/classwork.controller/classwork.controller';
+import { createClassworkSchema, deleteClassworkSchema, editClassworkSchema, findAllClassworksBySubjectsListSchema, findAssignedClassworkByTermAndSectionSchema, findClassworkByIdSchema, findClassworkByTermAndSectionSchema } from '../../schema/classwork.dto/classwork.dto';
 import { asyncErrorHandler } from '../../utils/asyncErrorHandler';
 import { protectRoute } from '../../middleware/protectRoutes';
 import { restrict } from '../../middleware/restrict';
@@ -17,6 +17,9 @@ classworkRoute
 classworkRoute
     .route('/find-by-class-termSubjectLevel-section/:teacherId')
     .get(validate(findClassworkByTermAndSectionSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findClassworkByTermAndSectionHandler));
+classworkRoute
+    .route('/find-all-by-class-termSubjectLevel-section/:teacherId')
+    .get(validate(findAssignedClassworkByTermAndSectionSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findAssignedClassworkByTermAndSectionHandler));
 
 classworkRoute.route('/find-by-id/:classworkId').get(validate(findClassworkByIdSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findClassworkByIdHandler));
 

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { createClasswork, deleteclasswork, editClasswork, findAllClassworkByTermAndSection, findAllClassworksBySubjectsList, findClassworkById } from '../../service/classwork.service/classwork.service';
-import { CreateClassworkSchema, DeleteClassworkSchema, EditClassworkSchema, FindAllClassworksBySubjectsList, FindClassworkByIdSchema, FindClassworkByTermAndSectionSchema } from '../../schema/classwork.dto/classwork.dto';
+import { createClasswork, deleteclasswork, editClasswork, findAllAssignedClassworkByTermAndSection, findAllClassworkByTermAndSection, findAllClassworksBySubjectsList, findClassworkById } from '../../service/classwork.service/classwork.service';
+import { CreateClassworkSchema, DeleteClassworkSchema, EditClassworkSchema, FindAllClassworksBySubjectsList, FindAssignedClassworkByTermAndSectionSchema, FindClassworkByIdSchema, FindClassworkByTermAndSectionSchema } from '../../schema/classwork.dto/classwork.dto';
 
 export const createClassworkHandler = async (req: Request<CreateClassworkSchema['params'], {}, CreateClassworkSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { attachments, description, title, uploadedUserRole } = req.body;
@@ -15,11 +15,19 @@ export const findClassworkBySubjectListHandler = async (req: Request<FindAllClas
     const classwork = await findAllClassworksBySubjectsList(termSubjectLevelIdsArray, teacherId);
     res.status(200).json(classwork);
 };
-/* Find all Classwork records for a termsubjectlevelid and sectionid */
+/* Find all Classwork records for a termsubjectlevelid and sectionid for todays date */
 export const findClassworkByTermAndSectionHandler = async (req: Request<FindClassworkByTermAndSectionSchema['params'], {}, {}, FindClassworkByTermAndSectionSchema['query']>, res: Response) => {
     const { termSubjectLevelId, sectionId } = req.query;
     const { teacherId } = req.params;
     const Classworks = await findAllClassworkByTermAndSection(termSubjectLevelId, sectionId, teacherId);
+    res.status(200).json(Classworks);
+};
+
+/* Find all Classwork records for a termsubjectlevelid and sectionid for todays all date */
+export const findAssignedClassworkByTermAndSectionHandler = async (req: Request<FindAssignedClassworkByTermAndSectionSchema['params'], {}, {}, FindClassworkByTermAndSectionSchema['query']>, res: Response) => {
+    const { termSubjectLevelId, sectionId } = req.query;
+    const { teacherId } = req.params;
+    const Classworks = await findAllAssignedClassworkByTermAndSection(termSubjectLevelId, sectionId, teacherId);
     res.status(200).json(Classworks);
 };
 

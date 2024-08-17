@@ -5,6 +5,7 @@ import {
     createHomeworkHandler,
     deleteHomeworkHandler,
     editHomeworkHandler,
+    findAssignedHomeworkByTermAndSectionHandler,
     findHomeworkByIdHandler,
     findHomeworkBySubjectListHandler,
     findHomeworkByTermAndSectionHandler
@@ -14,6 +15,7 @@ import {
     deleteHomeworkSchema,
     editHomeworkSchema,
     findAllHomeworksBySubjectsListSchema,
+    findAssignedHomeworkByTermAndSectionSchema,
     findHomeworkByIdSchema,
     findHomeworkByTermAndSectionSchema
 } from '../../schema/homework.dto/homework.dto';
@@ -33,6 +35,9 @@ homeworkRoute
 homeworkRoute
     .route('/find-by-class-termSubjectLevel-section/:teacherId')
     .get(validate(findHomeworkByTermAndSectionSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findHomeworkByTermAndSectionHandler));
+homeworkRoute
+    .route('/find-all-by-class-termSubjectLevel-section/:teacherId')
+    .get(validate(findAssignedHomeworkByTermAndSectionSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findAssignedHomeworkByTermAndSectionHandler));
 
 /* edit homework*/
 homeworkRoute

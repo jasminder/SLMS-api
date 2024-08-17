@@ -152,6 +152,36 @@ export async function findAllClassworkByTermAndSection(termSubjectLevelId: strin
 
     return classworks;
 }
+export async function findAllAssignedClassworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
+    const classworks = await db.classwork.findMany({
+        where: {
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId,
+            teacherId: +teacherId
+        },
+        include: {
+            subject: true,
+            teacher: true,
+            termSubjectLevel: {
+                select: {
+                    level: {
+                        select: { name: true }
+                    }
+                }
+            },
+            section: {
+                select: {
+                    name: true
+                }
+            }
+        },
+        orderBy: {
+            createdAt: 'desc'
+        }
+    });
+
+    return classworks;
+}
 
 /* Get a classwork record by its ID */
 export async function findClassworkById(classworkId: string) {

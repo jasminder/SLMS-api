@@ -43,6 +43,17 @@ export const findHomeworkByTermAndSectionSchema = z.object({
 });
 
 export type FindHomeworkByTermAndSectionSchema = z.infer<typeof findHomeworkByTermAndSectionSchema>;
+export const findAssignedHomeworkByTermAndSectionSchema = z.object({
+    query: z.object({
+        termSubjectLevelId: z.string().min(1, 'TermSubjectId is required'),
+        sectionId: z.string().min(1, 'SectionId is required')
+    }),
+    params: z.object({
+        teacherId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+
+export type FindAssignedHomeworkByTermAndSectionSchema = z.infer<typeof findAssignedHomeworkByTermAndSectionSchema>;
 /*edit homework*/
 export const editHomeworkSchema = z.object({
     body: z.object({

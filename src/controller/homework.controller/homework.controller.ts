@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
-import { createHomework, deleteHomework, editHomework, findAllHomeworkByTermAndSection, findAllHomeworksBySubjectsList, findHomeworkById } from '../../service/homework.service/homework.service';
+import { createHomework, deleteHomework, editHomework, findAllAssignedHomeworkByTermAndSection, findAllHomeworkByTermAndSection, findAllHomeworksBySubjectsList, findHomeworkById } from '../../service/homework.service/homework.service';
 import {
     CreateHomeworkSchema,
     DeleteHomeworkSchema,
     EditHomeworkSchema,
     FindAllHomeworksBySubjectsList,
+    FindAssignedHomeworkByTermAndSectionSchema,
     FindHomeworkByIdSchema,
     FindHomeworkByTermAndSectionSchema
 } from '../../schema/homework.dto/homework.dto';
@@ -34,6 +35,12 @@ export const findHomeworkByTermAndSectionHandler = async (req: Request<FindHomew
     const { termSubjectLevelId, sectionId } = req.query;
     const { teacherId } = req.params;
     const homeworks = await findAllHomeworkByTermAndSection(termSubjectLevelId, sectionId, teacherId);
+    res.status(200).json(homeworks);
+};
+export const findAssignedHomeworkByTermAndSectionHandler = async (req: Request<FindAssignedHomeworkByTermAndSectionSchema['params'], {}, {}, FindHomeworkByTermAndSectionSchema['query']>, res: Response) => {
+    const { termSubjectLevelId, sectionId } = req.query;
+    const { teacherId } = req.params;
+    const homeworks = await findAllAssignedHomeworkByTermAndSection(termSubjectLevelId, sectionId, teacherId);
     res.status(200).json(homeworks);
 };
 /*edit homework*/
