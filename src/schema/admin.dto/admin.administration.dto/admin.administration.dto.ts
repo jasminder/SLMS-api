@@ -58,38 +58,6 @@ export const createTermSchema = z.object({
 });
 export type CreateTermSchema = z.infer<typeof createTermSchema>;
 
-// const TermSubjectSchema = z.object({
-//     id: z.number(),
-//     termId: z.number(),
-//     subjectId: z.number(),
-//     levelId: z.number().optional(),
-//     feeId: z.number().optional(),
-//     term: termSchema,
-//     subject: z.object({
-//         id: z.number(),
-//         name: z.string(),
-//         isActive: z.boolean()
-//     }),
-//     level: z
-//         .array(
-//             z.object({
-//                 id: z.number(),
-//                 name: z.string()
-//             })
-//         )
-//         .optional(),
-//     fee: z
-//         .object({
-//             id: z.number(),
-//             amount: z.number(),
-//             paymentType: z.enum(['MONTHLY', 'TERM'])
-//         })
-//         .optional()
-// });
-
-// const TermSubjectsArraySchema = z.array(TermSubjectSchema);
-
-// export type TermSubjectsArraySchema = z.infer<typeof TermSubjectsArraySchema>;
 
 const levelSchema = z.object({
     id: z.number(),

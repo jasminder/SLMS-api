@@ -75,6 +75,7 @@ import studentHomeworkRoute from './src/route/student.route/student.homework.rou
 import studentClassworkRoute from './src/route/student.route/student.classwork.route/student.classwork.route';
 import studentFeedbackRoute from './src/route/student.route/student.feedback.route/student.feedback.route';
 import messageAdminStudentRoute from './src/route/message.route/message.route';
+import adminFeedbackOptionsRoute from './src/route/admin.route/admin.feedbackOptions.route/admin.feedbackOptions.route';
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -177,6 +178,7 @@ app.use('/api/v1/admin/event', adminEventRoute);
 app.use('/api/v1/admin/csv', adminCSVRouter);
 app.use('/api/v1/admin/fee', adminFeeRoute);
 app.use('/api/v1/admin/finance-dashboard', adminFinanceDashboardRoute);
+app.use('/api/v1/admin/feedback-options', adminFeedbackOptionsRoute);
 
 /*Attendance and check in and checkout*/
 app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);

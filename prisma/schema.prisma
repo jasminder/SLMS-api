@@ -632,6 +632,7 @@ model Admin {
   StudentNotice                       StudentNotice[]
   StudentAdminMessage                 StudentAdminMessage[]
   EnrollmentConfirmationEmailTemplate EnrollmentConfirmationEmailTemplate[]
+  AdminFeedbackOption                 AdminFeedbackOption[]
 }
 
 model AdminPersonalDetails {
@@ -1272,7 +1273,7 @@ model AlumniRemarks {
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
-// ------------------- for message ------------------- //
+// ------------------- for notification ------------------- //
 enum NotificationType {
   FEE
   FEEOVERDUE
@@ -1285,15 +1286,41 @@ enum NotificationType {
 }
 
 model Notification {
-  id         Int              @id @default(autoincrement())
-  studentId  Int
-  type       NotificationType
-  title      String?
-  content    String
-  isRead     Boolean          @default(false)
-  actionUrl  String? // URL to the relevant page or resource
-  expiresAt  DateTime? // Optional expiration date for time-sensitive notifications
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id        Int              @id @default(autoincrement())
+  studentId Int
+  type      NotificationType
+  title     String?
+  content   String
+  isRead    Boolean          @default(false)
+  actionUrl String? // URL to the relevant page or resource
+  expiresAt DateTime? // Optional expiration date for time-sensitive notifications
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// ------------------- for feedback options ------------------- //
+model FeedbackCategory {
+  id        Int                   @id @default(autoincrement())
+  name      String                @unique
+  isActive  Boolean               @default(true)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  options   AdminFeedbackOption[]
+}
+
+model AdminFeedbackOption {
+  id         Int      @id @default(autoincrement())
+  categoryId Int
+  category   FeedbackCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  label      String?
+  value      String
+  isActive   Boolean  @default(true)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  createdBy  Int
+  admin      Admin    @relation(fields: [createdBy], references: [id])
+
+  @@unique([categoryId, label])
 }
