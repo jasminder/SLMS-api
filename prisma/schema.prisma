@@ -427,7 +427,7 @@ model FeeTemplate {
   termName           String
   amount             Int
   dueDate            DateTime
-  notes              String
+  notes              String @default("No notes")
   lastCronJobRun     DateTime?
   interval           PaymentType
   feePayments        FeePayment[]

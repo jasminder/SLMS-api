@@ -32,7 +32,8 @@ import {
     selectActiveStudentsSchema,
     updateAmountFeeDueSchema,
     updateAmountPaidAtSchoolSchema,
-    updateLeaveApplicationSchema
+    updateLeaveApplicationSchema,
+    updateStudentCreditBalanceSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 import {
     alumniStudentByIdHandler,
@@ -70,7 +71,8 @@ import {
     selectActiveStudentsWithNoSubjectsHandler,
     updateAmountFeeDueHandler,
     updateAmountPaidAtSchoolHandler,
-    updateLeaveApplicationHandler
+    updateLeaveApplicationHandler,
+    updateStudentCreditBalanceHandler
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
 
 import {
@@ -209,5 +211,9 @@ adminActiveStudentRoute
 adminActiveStudentRoute
     .route('/mark-absent-by-edit-attendance/:studentId')
     .patch(validate(markAbsentByEditSchoolCheckInAttendanceForStudentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markAbsentByEditSchoolCheckInAttendanceForStudentHandler));
+
+adminActiveStudentRoute
+    .route('/update-student-credit-balance/:studentId')
+    .patch(validate(updateStudentCreditBalanceSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateStudentCreditBalanceHandler));
 
 export default adminActiveStudentRoute;

@@ -107,7 +107,7 @@ export const updateAmountPaidAtSchoolSchema = z.object({
         paidAmount: z.string(),
         paidDate: z.string(),
         paymentMethod: z.string(),
-        paymentStatus: z.string(),
+        paymentStatus: z.string().optional(),
         remarks: z.string(),
         receivedBy: z.string()
     })
@@ -119,7 +119,7 @@ export const updateAmountFeeDueSchema = z.object({
         feePaymentId: z.string(),
         newDueAmount: z.string(),
         discountReason: z.string(),
-        status: z.string()
+        status: z.string().optional()
     })
 });
 export type UpdateAmountFeeDueSchema = z.infer<typeof updateAmountFeeDueSchema>;
@@ -285,3 +285,13 @@ export const markAbsentByEditSchoolCheckInAttendanceForStudentSchema = z.object(
     })
 });
 export type MarkAbsentByEditSchoolCheckInAttendanceForStudentSchema = z.infer<typeof markAbsentByEditSchoolCheckInAttendanceForStudentSchema>;
+
+export const updateStudentCreditBalanceSchema = z.object({
+    body: z.object({
+        amount: z.string()
+    }),
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type UpdateStudentCreditBalanceSchema = z.infer<typeof updateStudentCreditBalanceSchema>;

@@ -36,7 +36,8 @@ import {
     selectActiveStudentsWithNoSubjects,
     updateAmountFeeDue,
     updateAmountPaidAtSchool,
-    updateLeaveApplication
+    updateLeaveApplication,
+    updateStudentCreditBalance
 } from '../../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
 import {
     ActiveStudentEnrollDataSchema,
@@ -65,7 +66,8 @@ import {
     SelectActiveStudentsSchema,
     UpdateAmountFeeDueSchema,
     UpdateAmountPaidAtSchoolSchema,
-    UpdateLeaveApplicationSchema
+    UpdateLeaveApplicationSchema,
+    UpdateStudentCreditBalanceSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 
 // Find all students for the admin
@@ -135,10 +137,10 @@ export const defaultSelectActiveStudentsWIthNoSubjectsHandler = async (req: Requ
     }
 };
 export const selectActiveStudentsHandler = async (req: Request<{}, {}, {}, SelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption,sort, sort_dir  } = req.query;
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, sort, sort_dir } = req.query;
 
     if (termId) {
-        const searchResult = await selectActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption,sort, sort_dir );
+        const searchResult = await selectActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption, sort, sort_dir);
         res.status(200).json(searchResult);
     }
 };
@@ -189,13 +191,13 @@ export const findFeePaymentByIdHandler = async (req: Request<FindUniqueFeePaymen
 export const updateAmountPaidAtSchoolHandler = async (req: Request<{}, {}, UpdateAmountPaidAtSchoolSchema['body'], {}>, res: Response, next: NextFunction) => {
     // const { id } = req.params;
     // const { amountPaid } = req.query;
-    const { feePaymentId, paidAmount, paidDate, paymentMethod, paymentStatus, remarks, receivedBy } = req.body;
-    const result = await updateAmountPaidAtSchool(feePaymentId, paidAmount, paidDate, paymentMethod, paymentStatus, remarks, receivedBy);
+    const { feePaymentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy } = req.body;
+    const result = await updateAmountPaidAtSchool(feePaymentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy);
     res.status(200).json(result);
 };
 export const updateAmountFeeDueHandler = async (req: Request<{}, {}, UpdateAmountFeeDueSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { feePaymentId, newDueAmount, discountReason, status } = req.body;
-    const result = await updateAmountFeeDue(feePaymentId, +newDueAmount, discountReason, status);
+    const result = await updateAmountFeeDue(feePaymentId, +newDueAmount, discountReason);
     res.status(200).json(result);
 };
 
@@ -362,4 +364,11 @@ export const markAbsentByEditSchoolCheckInAttendanceForStudentHandler = async (
         const markSchoolCheckInAttendance = await markAbsentByEditSchoolCheckInAttendanceForStudent(studentId, date);
         res.status(200).json(markSchoolCheckInAttendance);
     }
+};
+
+export const updateStudentCreditBalanceHandler = async (req: Request<UpdateStudentCreditBalanceSchema['params'], {}, UpdateStudentCreditBalanceSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const { amount } = req.body;
+    const updatedStudent = await updateStudentCreditBalance(studentId, amount);
+    res.status(200).json(updatedStudent);
 };

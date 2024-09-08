@@ -1,7 +1,7 @@
 import { PaymentMethod, PaymentStatus } from '@prisma/client';
 import { db } from '../../../utils/db.server';
 
-export async function getAllFeePayments(search = '', page: number, termId: number, paymentStatus = '', dueAmountSort = 'asc', invoiceName = '') {
+export async function getAllFeePayments(search = '', page: number, termId: number, paymentStatus = '', dueAmountSort = 'asc', invoiceId = '') {
     const take = 10;
     const pageNum = page ?? 0;
     const skip = pageNum * take;
@@ -9,7 +9,7 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
         where: {
             feeTemplate: {
                 termId,
-                invoiceName: invoiceName ? invoiceName : undefined
+                id: invoiceId ? +invoiceId : undefined
             },
             OR: [
                 {
@@ -93,7 +93,7 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
         where: {
             feeTemplate: {
                 termId,
-                invoiceName: invoiceName ? invoiceName : undefined
+                id: invoiceId ? +invoiceId : undefined
             },
             OR: [
                 {

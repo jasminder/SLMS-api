@@ -2511,7 +2511,84 @@ export async function findFeePaymentById(id: string) {
 }
 
 /*update fee - amount paid made by the admin*/
-export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount: string, paidDate: string, paymentMethod: string, paymentStatus: string, remarks: string, receivedBy: string) {
+// export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount: string, paidDate: string, paymentMethod: string, paymentStatus: string, remarks: string, receivedBy: string) {
+//     return db.$transaction(async (transaction) => {
+//         const feePayment = await transaction.feePayment.findUnique({
+//             where: { id: +feePaymentId },
+//             include: { studentTermFee: { include: { student: true } } }
+//         });
+
+//         if (!feePayment) {
+//             throw customError('Fee payment record not found', 'fail', 400, true);
+//         }
+//         const newDueAmount = feePayment.dueAmount - parseInt(paidAmount);
+
+//         let updateStatus: PaymentStatus;
+//         let overDue = false;
+//         if (newDueAmount > 0 && new Date() > new Date(feePayment.dueDate)) {
+//             overDue = true;
+//             updateStatus = PaymentStatus.OVERDUE;
+//         } else {
+//             updateStatus = PaymentStatus.PENDING;
+//         }
+//         if (newDueAmount <= 0) {
+//             updateStatus = PaymentStatus.PAID; // Update status to PAID only if due amount is zero or less
+//         }
+//         // Validate client-provided paymentStatus
+//         // if (paymentStatus === 'PAID' && newDueAmount > 0) {
+//         //     throw customError('Invalid payment status: "PAID" cannot be applied unless the due amount is zero.', 'fail', 400, true);
+//         // }
+//         // if (paymentStatus === 'PENDING' && newDueAmount === 0) {
+//         //     throw customError('Invalid payment status: "PENDING" cannot be applied if the due amount is zero.', 'fail', 400, true);
+//         // }
+//         // if (paymentStatus === 'OVERDUE') {
+//         //     if (newDueAmount <= 0 || new Date() <= new Date(feePayment.dueDate)) {
+//         //         throw customError('Invalid payment status: "OVERDUE" cannot be applied unless the due amount is more than zero and the current date is past the due date.', 'fail', 400, true);
+//         //     }
+//         //     updateStatus = PaymentStatus.OVERDUE; // Explicitly setting to OVERDUE as provided and validated
+//         // }
+//         const paymentInstallment = await transaction.paymentInstallment.create({
+//             data: {
+//                 feePaymentId: +feePaymentId,
+//                 paidAmount: +paidAmount,
+//                 paidDate: paidDate ? new Date(paidDate) : new Date(),
+//                 paymentMethod: paymentMethod === 'CREDIT_CARD' ? PaymentMethod.CREDIT_CARD : paymentMethod === 'CASH' ? PaymentMethod.CASH : PaymentMethod.OTHER,
+//                 paymentStatus: updateStatus,
+//                 remarks,
+//                 receivedBy
+//             }
+//         });
+//         await transaction.feePayment.update({
+//             where: { id: +feePaymentId },
+//             data: {
+//                 dueAmount: newDueAmount > 0 ? newDueAmount : 0,
+//                 hasOverDue: overDue,
+//                 status: updateStatus
+//             }
+//         });
+
+//         const extraAmount = newDueAmount < 0 ? -newDueAmount : 0;
+//         if (extraAmount > 0) {
+//             await transaction.student.update({
+//                 where: { id: feePayment.studentTermFee?.student.id },
+//                 data: {
+//                     creditBalance: {
+//                         increment: extraAmount
+//                     },
+//                     hasOverDue: overDue
+//                 }
+//             });
+//         }
+
+//         return {
+//             paymentInstallment,
+//             newDueAmount,
+//             extraAmount
+//         };
+//     });
+// }
+
+export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount: string, paidDate: string, paymentMethod: string, remarks: string, receivedBy: string) {
     return db.$transaction(async (transaction) => {
         const feePayment = await transaction.feePayment.findUnique({
             where: { id: +feePaymentId },
@@ -2521,53 +2598,46 @@ export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount:
         if (!feePayment) {
             throw customError('Fee payment record not found', 'fail', 400, true);
         }
-        const newDueAmount = feePayment.dueAmount - parseInt(paidAmount);
 
+        const newDueAmount = feePayment.dueAmount - parseInt(paidAmount);
+        const currentDate = new Date();
+        const dueDate = new Date(feePayment.dueDate);
+
+        // Determine the status based on the new due amount and due date
         let updateStatus: PaymentStatus;
         let overDue = false;
-        if (newDueAmount > 0 && new Date() > new Date(feePayment.dueDate)) {
-            overDue = true;
+
+        if (newDueAmount <= 0) {
+            updateStatus = PaymentStatus.PAID;
+        } else if (currentDate > dueDate) {
             updateStatus = PaymentStatus.OVERDUE;
+            overDue = true;
         } else {
             updateStatus = PaymentStatus.PENDING;
         }
-        if (newDueAmount <= 0) {
-            updateStatus = PaymentStatus.PAID; // Update status to PAID only if due amount is zero or less
-        }
-        // Validate client-provided paymentStatus
-        if (paymentStatus === 'PAID' && newDueAmount > 0) {
-            throw customError('Invalid payment status: "PAID" cannot be applied unless the due amount is zero.', 'fail', 400, true);
-        }
-        if (paymentStatus === 'PENDING' && newDueAmount === 0) {
-            throw customError('Invalid payment status: "PENDING" cannot be applied if the due amount is zero.', 'fail', 400, true);
-        }
-        if (paymentStatus === 'OVERDUE') {
-            if (newDueAmount <= 0 || new Date() <= new Date(feePayment.dueDate)) {
-                throw customError('Invalid payment status: "OVERDUE" cannot be applied unless the due amount is more than zero and the current date is past the due date.', 'fail', 400, true);
-            }
-            updateStatus = PaymentStatus.OVERDUE; // Explicitly setting to OVERDUE as provided and validated
-        }
+
         const paymentInstallment = await transaction.paymentInstallment.create({
             data: {
                 feePaymentId: +feePaymentId,
                 paidAmount: +paidAmount,
-                paidDate: paidDate ? new Date(paidDate) : new Date(),
+                paidDate: paidDate ? new Date(paidDate) : currentDate,
                 paymentMethod: paymentMethod === 'CREDIT_CARD' ? PaymentMethod.CREDIT_CARD : paymentMethod === 'CASH' ? PaymentMethod.CASH : PaymentMethod.OTHER,
                 paymentStatus: updateStatus,
-                remarks,
+                remarks: remarks || 'No remarks',
                 receivedBy
             }
         });
+
         await transaction.feePayment.update({
             where: { id: +feePaymentId },
             data: {
-                dueAmount: newDueAmount > 0 ? newDueAmount : 0,
+                dueAmount: Math.max(newDueAmount, 0),
                 hasOverDue: overDue,
                 status: updateStatus
             }
         });
 
-        const extraAmount = newDueAmount < 0 ? -newDueAmount : 0;
+        const extraAmount = Math.max(-newDueAmount, 0);
         if (extraAmount > 0) {
             await transaction.student.update({
                 where: { id: feePayment.studentTermFee?.student.id },
@@ -2582,12 +2652,13 @@ export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount:
 
         return {
             paymentInstallment,
-            newDueAmount,
+            newDueAmount: Math.max(newDueAmount, 0),
             extraAmount
         };
     });
 }
-export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: number, discountReason: string, status: string) {
+
+export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: number, discountReason: string) {
     return db.$transaction(async (prisma) => {
         const feePayment = await prisma.feePayment.findUnique({
             where: { id: +feePaymentId }
@@ -2595,19 +2666,18 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
 
         if (!feePayment) throw customError('Fee payment record not found.', 'fail', 404, true);
 
-        // Enforce the business rule: If status is 'PAID', newDueAmount must be zero, and vice versa
-        if (status === 'PAID' && newDueAmount !== 0) {
-            throw customError('When status is PAID, due amount must be zero.', 'fail', 400, true);
-        }
-        if (newDueAmount === 0 && status !== 'PAID') {
-            throw customError('Due amount can only be zero if the status is PAID.', 'fail', 400, true);
-        }
-        if (newDueAmount === 0 && status === 'OVERDUE') {
-            throw customError('Due amount cannot be zero if the status is OVERDUE.', 'fail', 400, true);
-        }
-        const originalFeeAmount = feePayment.feeAmount || 0; // Assume feeAmount holds the initial total fee before any discounts
+        const originalFeeAmount = feePayment.feeAmount || 0;
         const newDiscountAmount = originalFeeAmount - newDueAmount;
-        const oldDueAmount = feePayment.dueAmount;
+
+        // Determine the status based on the new due amount
+        let status: PaymentStatus;
+        if (newDueAmount === 0) {
+            status = PaymentStatus.PAID;
+        } else if (newDueAmount < originalFeeAmount) {
+            status = PaymentStatus.PENDING;
+        } else {
+            status = PaymentStatus.OVERDUE;
+        }
 
         const updatedFeePayment = await prisma.feePayment.update({
             where: { id: feePayment.id },
@@ -2617,7 +2687,7 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
                 discountAmount: newDiscountAmount,
                 adjustedFeeAmount: newDueAmount,
                 discountReason: discountReason,
-                status: status === 'PAID' ? PaymentStatus.PAID : status === 'PENDING' ? PaymentStatus.PENDING : PaymentStatus.OVERDUE
+                status: status
             }
         });
 
@@ -2627,8 +2697,8 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
                 paidAmount: newDiscountAmount,
                 paidDate: new Date(),
                 paymentMethod: 'DISCOUNT',
-                paymentStatus: status === 'PAID' ? PaymentStatus.PAID : status === 'PENDING' ? PaymentStatus.PENDING : PaymentStatus.OVERDUE,
-                remarks: `${discountReason}`,
+                paymentStatus: status,
+                remarks: discountReason,
                 receivedBy: 'ADMIN'
             }
         });
@@ -3791,3 +3861,39 @@ export async function markAbsentByEditSchoolCheckInAttendanceForStudent(studentI
         updatedClassAttendanceRecords
     };
 }
+
+export async function updateStudentCreditBalance(studentId: string, amount: string) {
+    try {
+        const updatedStudent = await db.student.update({
+            where: { id: +studentId },
+            data: {
+                creditBalance: +amount
+            },
+            select: {
+                id: true,
+                akaalId: true,
+                creditBalance: true,
+                personalDetails: {
+                    select: {
+                        firstName: true,
+                        lastName: true
+                    }
+                }
+            }
+        });
+
+        if (!updatedStudent) {
+            throw customError('Student not found', 'fail', 404, true);
+        }
+
+        return {
+            message: 'Credit balance updated successfully',
+            student: updatedStudent
+        };
+    } catch (error) {
+        console.error('Error updating student credit balance:', error);
+        throw customError('Failed to update credit balance', 'error', 500, true);
+    }
+}
+
+// ... existing code ...

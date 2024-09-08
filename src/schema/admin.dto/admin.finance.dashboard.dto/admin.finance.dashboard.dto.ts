@@ -8,7 +8,7 @@ export const findAllFeePaymentRecordsSchema = z.object({
         termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
         dueAmountSort: z.string().optional(),
         paymentStatus: z.string().optional(),
-        invoiceName: z.string().optional()
+        invoiceId: z.string().optional()
     })
 });
 export type FindAllFeePaymentRecordsSchema = z.infer<typeof findAllFeePaymentRecordsSchema>;
