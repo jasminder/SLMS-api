@@ -5,12 +5,13 @@ import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
 import {
     feeDashboardQueryHandler,
+    filteredFeeDashboardQueryHandler,
     getAllFeePaymentsHandler,
     getAllInvoiceNamesByTermIdHandler,
     getAllTermsHandler,
     selectAllFeePaymentsHandler
 } from '../../../controller/admin.controller/admin.finance.dashboard.controller/admin.finance.dashboard.controller';
-import { findAllFeePaymentRecordsSchema, getAllInvoiceNamesByTermIdSchema, selectAllFeePaymentsSchema } from '../../../schema/admin.dto/admin.finance.dashboard.dto/admin.finance.dashboard.dto';
+import { filteredFeeDashboardQuerySchema, findAllFeePaymentRecordsSchema, getAllInvoiceNamesByTermIdSchema, selectAllFeePaymentsSchema } from '../../../schema/admin.dto/admin.finance.dashboard.dto/admin.finance.dashboard.dto';
 
 const adminFinanceDashboardRoute = express.Router();
 
@@ -22,5 +23,8 @@ adminFinanceDashboardRoute.route('/all-invoice-names-by-termId').get(validate(ge
 adminFinanceDashboardRoute.route('/all-term-for-finance-dashboard').get(protectRoute, restrict('ADMIN'), getAllTermsHandler);
 
 adminFinanceDashboardRoute.get('/fee-dashboard-details', protectRoute, asyncErrorHandler(feeDashboardQueryHandler));
+
+adminFinanceDashboardRoute.route('/fee-dashboard-details-filter').get(validate(filteredFeeDashboardQuerySchema), protectRoute, asyncErrorHandler(filteredFeeDashboardQueryHandler));
+
 
 export default adminFinanceDashboardRoute;

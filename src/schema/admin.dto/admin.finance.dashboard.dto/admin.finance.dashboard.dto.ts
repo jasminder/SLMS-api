@@ -31,3 +31,12 @@ export const getAllInvoiceNamesByTermIdSchema = z.object({
     })
 });
 export type GetAllInvoiceNamesByTermIdSchema = z.infer<typeof getAllInvoiceNamesByTermIdSchema>;
+
+export const filteredFeeDashboardQuerySchema = z.object({
+    query: z.object({
+        termId: z.string().optional(),
+        invoiceId: z.string().optional(),
+        paymentStatus: z.string().optional()
+    })
+});
+export type FilteredFeeDashboardQuerySchema = z.infer<typeof filteredFeeDashboardQuerySchema>;

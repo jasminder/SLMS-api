@@ -1,17 +1,19 @@
 import { NextFunction, Request, Response } from 'express';
 import {
     feeDashboardQuery,
+    filteredFeeDashboardQuery,
     getAllFeePayments,
     getAllInvoiceNamesByTermId,
     getAllTerms,
     selectAllFeePayments
 } from '../../../service/admin.service/admin.finance.dashboard.service/admin.finance.dashboard.service';
 import {
-
+    FilteredFeeDashboardQuerySchema,
     FindAllFeePaymentRecordsSchema,
     GetAllInvoiceNamesByTermIdSchema,
     SelectAllFeePaymentsSchema
 } from '../../../schema/admin.dto/admin.finance.dashboard.dto/admin.finance.dashboard.dto';
+import { PaymentStatus } from '@prisma/client';
 
 export const getAllFeePaymentsHandler = async (req: Request<{}, {}, {}, FindAllFeePaymentRecordsSchema['query']>, res: Response, next: NextFunction) => {
     const { page, termId, dueAmountSort, paymentStatus, search, invoiceId } = req.query;
@@ -51,4 +53,31 @@ export const feeDashboardQueryHandler = async (req: Request, res: Response, next
     const { termId } = req.params;
     const FeeDashbordDetails = await feeDashboardQuery();
     res.json({ FeeDashbordDetails });
+};
+
+export const filteredFeeDashboardQueryHandler = async (req: Request<{}, {}, {}, FilteredFeeDashboardQuerySchema['query']>, res: Response, next: NextFunction) => {
+    const { termId, invoiceId, paymentStatus } = req.query;
+    console.log(termId, invoiceId, paymentStatus);
+    if (!termId) {
+        return res.status(400).json({ error: 'TermId is required' });
+    }
+
+    const parsedTermId = parseInt(termId as string, 10);
+    if (isNaN(parsedTermId)) {
+        return res.status(400).json({ error: 'Invalid termId' });
+    }
+
+    const parsedInvoiceId = invoiceId ? parseInt(invoiceId as string, 10) : undefined;
+    if (invoiceId && isNaN(parsedInvoiceId!)) {
+        return res.status(400).json({ error: 'Invalid invoiceId' });
+    }
+
+    const validPaymentStatuses = ['PAID', 'UNPAID', 'OVERDUE', 'PARTIALLY_PAID'];
+    if (paymentStatus && !validPaymentStatuses.includes(paymentStatus as string)) {
+        return res.status(400).json({ error: 'Invalid paymentStatus' });
+    }
+
+    const feeDashboardDetails = await filteredFeeDashboardQuery(parsedTermId, parsedInvoiceId, paymentStatus as PaymentStatus | undefined);
+
+    res.status(200).json({ feeDashboardDetails });
 };

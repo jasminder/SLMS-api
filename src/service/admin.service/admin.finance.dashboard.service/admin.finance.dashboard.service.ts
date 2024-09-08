@@ -551,3 +551,55 @@ export async function feeDashboardQuery() {
         totalPaidPastTerms: paidAmountPastTerms._sum.paidAmount || 0
     };
 }
+
+
+export async function filteredFeeDashboardQuery(termId: number, invoiceId?: number, paymentStatus?: PaymentStatus) {
+    console.log(termId, invoiceId, paymentStatus);
+    const whereClause = {
+        feeTemplate: {
+            termId: termId,
+            ...(invoiceId && { id: invoiceId })
+        },
+        ...(paymentStatus && { status: paymentStatus })
+    };
+
+    const aggregation = await db.feePayment.aggregate({
+        _sum: {
+            feeAmount: true,
+            dueAmount: true,
+            discountAmount: true
+        },
+        where: whereClause
+    });
+
+    const paidAmount = await db.paymentInstallment.aggregate({
+        _sum: {
+            paidAmount: true
+        },
+        where: {
+            feePayment: whereClause,
+            NOT: {
+                paymentMethod: PaymentMethod.DISCOUNT
+            }
+        }
+    });
+
+    const overdueAggregation = await db.feePayment.aggregate({
+        _sum: {
+            dueAmount: true
+        },
+        where: {
+            ...whereClause,
+            hasOverDue: true,
+            status: PaymentStatus.OVERDUE
+        }
+    });
+
+    return {
+        totalInvoiced: aggregation._sum.feeAmount || 0,
+        totalDue: aggregation._sum.dueAmount || 0,
+        totalDiscount: aggregation._sum.discountAmount || 0,
+        totalOverdue: overdueAggregation._sum.dueAmount || 0,
+        totalPaid: paidAmount._sum.paidAmount || 0
+    };
+}
