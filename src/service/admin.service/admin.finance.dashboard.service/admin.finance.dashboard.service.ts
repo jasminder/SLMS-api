@@ -554,7 +554,7 @@ export async function feeDashboardQuery() {
 
 
 export async function filteredFeeDashboardQuery(termId: number, invoiceId?: number, paymentStatus?: PaymentStatus) {
-    console.log(termId, invoiceId, paymentStatus);
+    console.log(termId, invoiceId, paymentStatus, "hello");
     const whereClause = {
         feeTemplate: {
             termId: termId,

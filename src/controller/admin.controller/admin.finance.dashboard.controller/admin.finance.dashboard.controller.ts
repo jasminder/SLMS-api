@@ -72,7 +72,7 @@ export const filteredFeeDashboardQueryHandler = async (req: Request<{}, {}, {}, 
         return res.status(400).json({ error: 'Invalid invoiceId' });
     }
 
-    const validPaymentStatuses = ['PAID', 'UNPAID', 'OVERDUE', 'PARTIALLY_PAID'];
+    const validPaymentStatuses = ['PAID', 'UNPAID', 'OVERDUE', 'PENDING'];
     if (paymentStatus && !validPaymentStatuses.includes(paymentStatus as string)) {
         return res.status(400).json({ error: 'Invalid paymentStatus' });
     }
