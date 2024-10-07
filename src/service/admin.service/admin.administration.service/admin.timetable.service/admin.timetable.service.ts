@@ -1,6 +1,7 @@
-import { TimeTableSchema, UpdateTimeTableSchema } from '../../../../schema/admin.dto/admin.timetable.dto/admin.timetable.dto';
+import { CreateSchoolTimetableSchema, TimeTableSchema, UpdateTimeTableSchema } from '../../../../schema/admin.dto/admin.timetable.dto/admin.timetable.dto';
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
+import { Day } from '@prisma/client';
 
 export async function createTimetable(createTimetableData: TimeTableSchema['body']) {
     // Start a transaction
@@ -68,58 +69,187 @@ export async function updateTimetable(id: UpdateTimeTableSchema['params']['id'],
 
     return updatedTimeTable;
 }
-// ------------------- for time table ------------------- //
-export const createTimetable1 = async (timetableData: any) => {
-    const { name, isActive, timetableSlots } = timetableData;
+// ------------------- for school time table ------------------- //
 
-    const createdTimetable = await db.timetable.create({
-        data: {
-            name,
-            isActive,
-            timetableSlots: {
-                create: timetableSlots.map((slot: any) => ({
-                    classroomId: slot.classroomId,
-                    timeSlotId: slot.timeSlotId,
-                    termSubjectLevelId: slot.termSubjectLevelId,
-                    sectionId: slot.sectionId,
-                    teacherId: slot.teacherId
-                }))
+export async function createSchoolTimetable(timetableData: CreateSchoolTimetableSchema['body']['createSchoolTimetableData']) {
+    const { data, day, roomNames, totalRooms } = timetableData;
+    console.log('timetableData at controller', JSON.stringify(timetableData, null, 2));
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    return db.$transaction(async (tx) => {
+        // Deactivate existing active timetables for the same day
+        await tx.timetable.updateMany({
+            where: {
+                day: day as Day,
+                isActive: true
+            },
+            data: {
+                isActive: false
             }
+        });
+
+        // Create the main Timetable entry
+        const timetable = await tx.timetable.create({
+            data: {
+                day: day as Day,
+                totalRooms: totalRooms,
+                isActive: true,
+                name: `${day}-${currentTerm?.name}`
+            }
+        });
+
+        // Create ClassRooms
+        const classrooms = await Promise.all(
+            roomNames.map((name) =>
+                tx.classRoom.create({
+                    data: { name }
+                })
+            )
+        );
+
+        // Process each time slot
+        for (const slot of data.data) {
+            // Create TimeSlot
+            const timeSlot = await tx.timeSlot.create({
+                data: {
+                    timeRange: `${slot.startTime} - ${slot.endTime}`,
+                    startTime: new Date(`1970-01-01T${slot.startTime}:00Z`),
+                    endTime: new Date(`1970-01-01T${slot.endTime}:00Z`)
+                }
+            });
+
+            // Create TimetableSlots for each room in the time slot
+            for (let i = 0; i < slot.rooms.length; i++) {
+                const room = slot.rooms[i];
+                const [termSubjectLevelId, sectionId] = room.classId.split('-').map(Number);
+
+                await tx.timetableSlot.create({
+                    data: {
+                        timetableId: timetable.id,
+                        classroomId: classrooms[i].id,
+                        timeSlotId: timeSlot.id,
+                        termSubjectLevelId,
+                        sectionId,
+                        teacherId: parseInt(room.teacherId)
+                    }
+                });
+            }
+        }
+
+        // Fetch the complete timetable with all related data
+        const completeTimetable = await tx.timetable.findUnique({
+            where: { id: timetable.id },
+            include: {
+                timetableSlots: {
+                    include: {
+                        classroom: true,
+                        timeSlot: true,
+                        termSubjectLevel: true,
+                        section: true,
+                        teacher: true
+                    }
+                }
+            }
+        });
+
+        return completeTimetable;
+    });
+}
+
+interface Room {
+    teacherName: string;
+    className: string;
+}
+
+interface TimeSlot {
+    startTime: string;
+    endTime: string;
+    rooms: Room[];
+}
+
+interface TransformedTimetable {
+    data: {
+        data: TimeSlot[];
+    };
+    roomNames: string[];
+    totalRooms: number;
+    day: Day;
+}
+
+export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetable> {
+    const timetable = await db.timetable.findFirst({
+        where: {
+            day: day,
+            isActive: true
         },
         include: {
-            timetableSlots: true
+            timetableSlots: {
+                include: {
+                    classroom: true,
+                    timeSlot: true,
+                    termSubjectLevel: {
+                        include: {
+                            subject: true,
+                            level: true
+                        }
+                    },
+                    section: true,
+                    teacher: {
+                        include: {
+                            teacherPersonalDetails: true
+                        }
+                    }
+                }
+            }
         }
     });
 
-    return createdTimetable;
-};
-// ------------------- for time table ------------------- //
-// const studentTimetable = await db.student.findUnique({
-//     where: { id: studentId },  // replace studentId with actual student's ID
-//     include: {
-//       studentClassAssignment: {
-//         include: {
-//           section: {
-//             include: {
-//               timetableSlot: {
-//                 include: {
-//                   timeSlot: true,
-//                   classRoom: true
-//                 }
-//               }
-//             }
-//           },
-//           termSubjectLevel: {
-//             include: {
-//               timetableSlot: {
-//                 include: {
-//                   timeSlot: true,
-//                   classRoom: true
-//                 }
-//               }
-//             }
-//           }
-//         }
-//       }
-//     }
-//   });
+    if (!timetable) {
+        throw new Error('No active timetable found for the specified day');
+    }
+
+    const transformedData: TransformedTimetable = {
+        data: {
+            data: timetable.timetableSlots.reduce((acc: TimeSlot[], slot) => {
+                const startTime = slot.timeSlot.startTime;
+                const endTime = slot.timeSlot.endTime;
+
+                const existingSlot = acc.find((s) => 
+                    s.startTime === startTime.toISOString() && 
+                    s.endTime === endTime.toISOString()
+                );
+
+                const teacherName = `${slot.teacher.teacherPersonalDetails?.firstName} ${slot.teacher.teacherPersonalDetails?.lastName}`.trim();
+                const className = `${slot.termSubjectLevel.subject.name} ${slot.termSubjectLevel.level.name} ${slot.section.name}`.trim();
+
+                if (existingSlot) {
+                    existingSlot.rooms.push({
+                        teacherName,
+                        className
+                    });
+                } else {
+                    acc.push({
+                        startTime: startTime.toISOString(),
+                        endTime: endTime.toISOString(),
+                        rooms: [
+                            {
+                                teacherName,
+                                className
+                            }
+                        ]
+                    });
+                }
+                return acc;
+            }, [])
+        },
+        roomNames: [...new Set(timetable.timetableSlots.map((slot) => slot.classroom.name))],
+        totalRooms: timetable.totalRooms,
+        day: timetable.day
+    };
+
+    return transformedData;
+}
+// ------------------- for school time table ------------------- //

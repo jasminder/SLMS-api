@@ -427,7 +427,7 @@ model FeeTemplate {
   termName           String
   amount             Int
   dueDate            DateTime
-  notes              String @default("No notes")
+  notes              String            @default("No notes")
   lastCronJobRun     DateTime?
   interval           PaymentType
   feePayments        FeePayment[]
@@ -1188,16 +1188,28 @@ model Appointment {
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
-// ------------------- for time table ------------------- //
+// ------------------- for schoolst time table ------------------- //
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
 model ClassRoom {
   id             Int             @id @default(autoincrement())
-  name           String          @unique
+  name           String          
   timetableSlots TimetableSlot[]
 }
 
 model TimeSlot {
   id             Int             @id @default(autoincrement())
   timeRange      String // "11:00 AM to 12:30 PM"
+  startTime      DateTime        @db.Time
+  endTime        DateTime        @db.Time
   timetableSlots TimetableSlot[]
 }
 
@@ -1222,13 +1234,15 @@ model TimetableSlot {
 model Timetable {
   id             Int             @id @default(autoincrement())
   name           String?         @default("Timetable")
+  day            Day
+  totalRooms     Int
   isActive       Boolean         @default(true)
   timetableSlots TimetableSlot[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }
 
-// ------------------- for time table ------------------- //
+// ------------------- for school time table ------------------- //
 model EmailContent {
   id           Int      @id @default(autoincrement())
   studentId    Int
@@ -1310,17 +1324,17 @@ model FeedbackCategory {
 }
 
 model AdminFeedbackOption {
-  id         Int      @id @default(autoincrement())
+  id         Int              @id @default(autoincrement())
   categoryId Int
   category   FeedbackCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   label      String?
   value      String
-  isActive   Boolean  @default(true)
-  order      Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isActive   Boolean          @default(true)
+  order      Int              @default(0)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
   createdBy  Int
-  admin      Admin    @relation(fields: [createdBy], references: [id])
+  admin      Admin            @relation(fields: [createdBy], references: [id])
 
   @@unique([categoryId, label])
 }

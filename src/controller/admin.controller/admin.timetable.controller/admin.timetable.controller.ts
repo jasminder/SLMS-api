@@ -1,6 +1,13 @@
 import { NextFunction, Request, Response } from 'express';
-import { createTimetable, findActiveTimetable, updateTimetable } from '../../../service/admin.service/admin.administration.service/admin.timetable.service/admin.timetable.service';
-import { TimeTableSchema, UpdateTimeTableSchema } from '../../../schema/admin.dto/admin.timetable.dto/admin.timetable.dto';
+import {
+    createSchoolTimetable,
+    createTimetable,
+    fetchActiveTimetable,
+    findActiveTimetable,
+    updateTimetable
+} from '../../../service/admin.service/admin.administration.service/admin.timetable.service/admin.timetable.service';
+import { CreateSchoolTimetableSchema, FetchTimetableSchema, TimeTableSchema, UpdateTimeTableSchema } from '../../../schema/admin.dto/admin.timetable.dto/admin.timetable.dto';
+import { Day } from '@prisma/client';
 
 export const createTimeTablesHandler = async (req: Request<{}, {}, TimeTableSchema['body'], {}>, res: Response, next: NextFunction) => {
     const createTimetableData = req.body;
@@ -18,17 +25,26 @@ export const updateTimetableHandler = async (req: Request<UpdateTimeTableSchema[
     res.status(200).json({ updatedTimetable });
 };
 
-// src/controllers/timetableController.js
-
 // ------------------- for time table ------------------- //
-export const createTimetableHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const createSchoolTimetableHandler = async (req: Request<{}, {}, CreateSchoolTimetableSchema['body'], {}>, res: Response, next: NextFunction) => {
     try {
-        const timetableData = req.body;
-        const timetable = await createTimetable(timetableData);
+        const timetableData = req.body.createSchoolTimetableData;
+        // console.log('timetableData at controller', JSON.stringify(timetableData, null, 2));
+        const timetable = await createSchoolTimetable(timetableData);
         res.status(201).json({
             status: 'success',
             data: { timetable }
         });
+    } catch (error) {
+        next({ error: error });
+    }
+};
+
+export const fetchActiveTimetableHandler = async (req: Request<FetchTimetableSchema['params']>, res: Response, next: NextFunction) => {
+    try {
+        const { day } = req.params;
+        const timetable = await fetchActiveTimetable(day as Day);
+        res.status(200).json(timetable);
     } catch (error) {
         next(error);
     }

@@ -45,20 +45,41 @@ export const findUniqueTimetableSchema = z.object({
 });
 export type FindUniqueTimetableSchema = z.infer<typeof findUniqueTimetableSchema>;
 
-// ------------------- for time table ------------------- //
-export const timetableSchema = z.object({
+// ------------------- for school time table ------------------- //
+export const createSchoolTimetableSchema = z.object({
     body: z.object({
-        name: z.string(),
-        isActive: z.boolean(),
-        timetableSlots: z.array(
-            z.object({
-                classroomId: z.number(),
-                timeSlotId: z.number(),
-                termSubjectLevelId: z.number(),
-                sectionId: z.number(),
-                teacherId: z.number()
-            })
-        )
+        createSchoolTimetableData: z.object({
+            data: z.object({
+                data: z.array(
+                    z.object({
+                        startTime: z.string().regex(/^\d{2}:\d{2}$/),
+                        endTime: z.string().regex(/^\d{2}:\d{2}$/),
+                        rooms: z.array(
+                            z.object({
+                                teacherId: z.string(),
+                                classId: z.string()
+                            })
+                        )
+                    })
+                )
+            }),
+            roomNames: z.array(z.string()),
+            totalRooms: z.number().int().positive(),
+            day: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'])
+        })
     })
 });
-// ------------------- for time table ------------------- //
+
+export type CreateSchoolTimetableSchema = z.infer<typeof createSchoolTimetableSchema>;
+
+export const DayEnum = z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']);
+
+export const fetchTimetableSchema = z.object({
+    params: z.object({
+        day: DayEnum
+    })
+});
+
+export type FetchTimetableSchema = z.infer<typeof fetchTimetableSchema>;
+
+// ------------------- for school time table ------------------- //
