@@ -115,7 +115,7 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
             // Create TimeSlot
             const timeSlot = await tx.timeSlot.create({
                 data: {
-                    timeRange: `${slot.startTime} - ${slot.endTime}`,
+                    timeRange: `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
                     startTime: new Date(`1970-01-01T${slot.startTime}:00Z`),
                     endTime: new Date(`1970-01-01T${slot.endTime}:00Z`)
                 }
@@ -159,6 +159,13 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
     });
 }
 
+function formatTime(time: string): string {
+    const [hours, minutes] = time.split(':').map(Number);
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = hours % 12 || 12;
+    return `${formattedHours}${minutes > 0 ? ':' + minutes.toString().padStart(2, '0') : ''} ${ampm}`;
+}
+
 interface Room {
     teacherName: string;
     className: string;
@@ -167,6 +174,7 @@ interface Room {
 interface TimeSlot {
     startTime: string;
     endTime: string;
+    timeRange: string;
     rooms: Room[];
 }
 
@@ -234,6 +242,7 @@ export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetab
                     acc.push({
                         startTime: startTime.toISOString(),
                         endTime: endTime.toISOString(),
+                        timeRange: `${startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()}`,
                         rooms: [
                             {
                                 teacherName,
