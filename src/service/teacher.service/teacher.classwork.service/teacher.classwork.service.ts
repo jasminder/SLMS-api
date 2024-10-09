@@ -34,12 +34,19 @@ export async function createGroupClasswork(
                 }
             });
         });
+
+        // Find subject here
+        const termSubjectLevel = await db.termSubjectLevel.findUnique({
+            where: { id: +termSubjectLevelId },
+            include: { subject: true }
+        });
+        const subject = termSubjectLevel?.subject;
         const notificationTransactions = studentIds.map((studentId) => {
             return db.notification.create({
                 data: {
                     studentId: +studentId,
                     type: NotificationType.CLASSWORK,
-                    content: `A new classwork has been posted.`,
+                    content: `A new classwork has been posted for ${subject?.name || 'your subject'}.`,
                     actionUrl: `/student/homework-classwork?studentId=${studentId}`
                 }
             });
