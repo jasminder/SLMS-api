@@ -6,6 +6,7 @@ import {
     createSchoolTimetableHandler,
     createTimeTablesHandler,
     fetchActiveTimetableHandler,
+    fetchEditTimetableHandler,
     findActiveTimetableHandler,
     updateTimetableHandler
 } from '../../../controller/admin.controller/admin.timetable.controller/admin.timetable.controller';
@@ -21,5 +22,6 @@ adminTimetableRoute.route('/find-active-timetable').get(protectRoute, restrict('
 
 adminTimetableRoute.route('/create-school-timetable').post(validate(createSchoolTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createSchoolTimetableHandler));
 adminTimetableRoute.route('/fetch-active-timetable/:day').get(validate(fetchTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchActiveTimetableHandler));
+adminTimetableRoute.route('/fetch-edit-timetable/:day').get(validate(fetchTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchEditTimetableHandler));
 
 export default adminTimetableRoute;

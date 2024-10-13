@@ -167,8 +167,10 @@ function formatTime(time: string): string {
 }
 
 interface Room {
-    teacherName: string;
-    className: string;
+    teacherName?: string;
+    className?: string;
+    teacherId?: number;
+    classId?: string;
 }
 
 interface TimeSlot {
@@ -188,8 +190,16 @@ interface TransformedTimetable {
     totalRooms: number;
     day: Day;
 }
-
-// ... existing code ...
+interface EditTransformedTimetable {
+    id: number;
+    updatedAt: string;
+    data: {
+        data: TimeSlot[];
+    };
+    roomNames: string[];
+    totalRooms: number;
+    day: Day;
+}
 
 export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetable | null> {
     const timetable = await db.timetable.findFirst({
@@ -264,4 +274,85 @@ export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetab
 
     return transformedData;
 }
+
+export async function fetchEditTimetable(day: Day): Promise<EditTransformedTimetable | null> {
+    const timetable = await db.timetable.findFirst({
+        where: {
+            day: day,
+            isActive: true
+        },
+        include: {
+            timetableSlots: {
+                include: {
+                    classroom: true,
+                    timeSlot: true,
+                    termSubjectLevel: {
+                        include: {
+                            subject: true,
+                            level: true
+                        }
+                    },
+                    section: true,
+                    teacher: {
+                        include: {
+                            teacherPersonalDetails: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!timetable) {
+        return null;
+    }
+
+    const transformedData: EditTransformedTimetable = {
+        id: timetable.id,
+        updatedAt: timetable.updatedAt.toISOString(),
+        data: {
+            data: timetable.timetableSlots.reduce((acc: TimeSlot[], slot) => {
+                const startTime = slot.timeSlot.startTime;
+                const endTime = slot.timeSlot.endTime;
+
+                const existingSlot = acc.find((s) => s.startTime === startTime.toISOString() && s.endTime === endTime.toISOString());
+
+                const teacherName = `${slot.teacher.teacherPersonalDetails?.firstName} ${slot.teacher.teacherPersonalDetails?.lastName}`.trim();
+                const className = `${slot.termSubjectLevel.subject.name} ${slot.termSubjectLevel.level.name} ${slot.section.name}`.trim();
+                const teacherId = slot.teacher.id;
+                const classId = `${slot.termSubjectLevelId}-${slot.sectionId}`;
+
+                if (existingSlot) {
+                    existingSlot.rooms.push({
+                        teacherName,
+                        className,
+                        teacherId,
+                        classId
+                    });
+                } else {
+                    acc.push({
+                        startTime: startTime.toISOString(),
+                        endTime: endTime.toISOString(),
+                        timeRange: `${startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()}`,
+                        rooms: [
+                            {
+                                teacherName,
+                                className,
+                                teacherId,
+                                classId
+                            }
+                        ]
+                    });
+                }
+                return acc;
+            }, [])
+        },
+        roomNames: [...new Set(timetable.timetableSlots.map((slot) => slot.classroom.name))],
+        totalRooms: timetable.totalRooms,
+        day: timetable.day
+    };
+
+    return transformedData;
+}
+
 // ------------------- for school time table ------------------- //

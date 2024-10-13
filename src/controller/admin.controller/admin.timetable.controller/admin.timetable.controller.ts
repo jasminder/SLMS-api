@@ -3,6 +3,7 @@ import {
     createSchoolTimetable,
     createTimetable,
     fetchActiveTimetable,
+    fetchEditTimetable,
     findActiveTimetable,
     updateTimetable
 } from '../../../service/admin.service/admin.administration.service/admin.timetable.service/admin.timetable.service';
@@ -44,6 +45,16 @@ export const fetchActiveTimetableHandler = async (req: Request<FetchTimetableSch
     try {
         const { day } = req.params;
         const timetable = await fetchActiveTimetable(day as Day);
+        res.status(200).json(timetable);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const fetchEditTimetableHandler = async (req: Request<FetchTimetableSchema['params']>, res: Response, next: NextFunction) => {
+    try {
+        const { day } = req.params;
+        const timetable = await fetchEditTimetable(day as Day);
         res.status(200).json(timetable);
     } catch (error) {
         next(error);
