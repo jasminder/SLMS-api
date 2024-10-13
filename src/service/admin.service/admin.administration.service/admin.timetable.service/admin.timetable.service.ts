@@ -179,6 +179,8 @@ interface TimeSlot {
 }
 
 interface TransformedTimetable {
+    id: number;
+    updatedAt: string;
     data: {
         data: TimeSlot[];
     };
@@ -186,9 +188,10 @@ interface TransformedTimetable {
     totalRooms: number;
     day: Day;
 }
-type NullableTransformedTimetable = TransformedTimetable | null;
 
-export async function fetchActiveTimetable(day: Day): Promise<NullableTransformedTimetable> {
+// ... existing code ...
+
+export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetable | null> {
     const timetable = await db.timetable.findFirst({
         where: {
             day: day,
@@ -221,6 +224,8 @@ export async function fetchActiveTimetable(day: Day): Promise<NullableTransforme
     }
 
     const transformedData: TransformedTimetable = {
+        id: timetable.id,
+        updatedAt: timetable.updatedAt.toISOString(),
         data: {
             data: timetable.timetableSlots.reduce((acc: TimeSlot[], slot) => {
                 const startTime = slot.timeSlot.startTime;
