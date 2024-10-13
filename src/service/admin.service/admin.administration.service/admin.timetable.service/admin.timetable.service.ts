@@ -186,8 +186,9 @@ interface TransformedTimetable {
     totalRooms: number;
     day: Day;
 }
+type NullableTransformedTimetable = TransformedTimetable | null;
 
-export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetable> {
+export async function fetchActiveTimetable(day: Day): Promise<NullableTransformedTimetable> {
     const timetable = await db.timetable.findFirst({
         where: {
             day: day,
@@ -216,7 +217,7 @@ export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetab
     });
 
     if (!timetable) {
-        throw new Error('No active timetable found for the specified day');
+        return null;
     }
 
     const transformedData: TransformedTimetable = {
@@ -225,10 +226,7 @@ export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetab
                 const startTime = slot.timeSlot.startTime;
                 const endTime = slot.timeSlot.endTime;
 
-                const existingSlot = acc.find((s) => 
-                    s.startTime === startTime.toISOString() && 
-                    s.endTime === endTime.toISOString()
-                );
+                const existingSlot = acc.find((s) => s.startTime === startTime.toISOString() && s.endTime === endTime.toISOString());
 
                 const teacherName = `${slot.teacher.teacherPersonalDetails?.firstName} ${slot.teacher.teacherPersonalDetails?.lastName}`.trim();
                 const className = `${slot.termSubjectLevel.subject.name} ${slot.termSubjectLevel.level.name} ${slot.section.name}`.trim();
