@@ -52,8 +52,8 @@ export const createSchoolTimetableSchema = z.object({
             data: z.object({
                 data: z.array(
                     z.object({
-                        startTime: z.string().regex(/^\d{2}:\d{2}$/),
-                        endTime: z.string().regex(/^\d{2}:\d{2}$/),
+                        startTime: z.string(),
+                        endTime: z.string(),
                         rooms: z.array(
                             z.object({
                                 teacherId: z.string(),
@@ -81,5 +81,34 @@ export const fetchTimetableSchema = z.object({
 });
 
 export type FetchTimetableSchema = z.infer<typeof fetchTimetableSchema>;
+
+export const updateSchoolTimetableSchema = z.object({
+    params: z.object({
+        timetableId: z.string()
+    }),
+    body: z.object({
+        updateTimetableData: z.object({
+            data: z.object({
+                data: z.array(
+                    z.object({
+                        startTime: z.string(),
+                        endTime: z.string(),
+                        rooms: z.array(
+                            z.object({
+                                teacherId: z.string(),
+                                classId: z.string()
+                            })
+                        )
+                    })
+                )
+            }),
+            roomNames: z.array(z.string()),
+            day: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']).optional(),
+            totalRooms: z.number().int().positive(),
+        })
+    })
+});
+
+export type UpdateSchoolTimetableSchema = z.infer<typeof updateSchoolTimetableSchema>;
 
 // ------------------- for school time table ------------------- //

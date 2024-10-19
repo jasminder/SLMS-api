@@ -1,7 +1,7 @@
-import { CreateSchoolTimetableSchema, TimeTableSchema, UpdateTimeTableSchema } from '../../../../schema/admin.dto/admin.timetable.dto/admin.timetable.dto';
+import { CreateSchoolTimetableSchema, TimeTableSchema, UpdateTimeTableSchema, UpdateSchoolTimetableSchema } from '../../../../schema/admin.dto/admin.timetable.dto/admin.timetable.dto';
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
-import { Day } from '@prisma/client';
+import { Day, Prisma } from '@prisma/client';
 
 /************* old time table json *************/
 export async function createTimetable(createTimetableData: TimeTableSchema['body']) {
@@ -355,6 +355,120 @@ export async function fetchEditTimetable(day: Day): Promise<EditTransformedTimet
     };
 
     return transformedData;
+}
+
+export async function updateSchoolTimetable(timetableId: string, timetableData: UpdateSchoolTimetableSchema['body']['updateTimetableData']) {
+    const { data, day, roomNames, totalRooms } = timetableData;
+    try {
+        const currentTerm = await db.term.findFirst({
+            where: {
+                currentTerm: true
+            }
+        });
+
+        return await db.$transaction(async (tx) => {
+            // Deactivate existing active timetables for the same day
+            await tx.timetable.updateMany({
+                where: {
+                    day: day as Day,
+                    isActive: true,
+                    id: +timetableId
+                },
+                data: {
+                    isActive: false
+                }
+            });
+
+            // Create the main Timetable entry
+            const timetable = await tx.timetable.create({
+                data: {
+                    day: day as Day,
+                    totalRooms: totalRooms,
+                    isActive: true,
+                    name: `${day}-${currentTerm?.name}`
+                }
+            });
+
+            // Create ClassRooms
+            const classrooms = await Promise.all(
+                roomNames.map((name) =>
+                    tx.classRoom.create({
+                        data: { name }
+                    })
+                )
+            );
+
+            // Process each time slot
+            for (const slot of data.data) {
+                console.log('endTime', slot.endTime);
+                console.log('startTime', slot.startTime);
+                // Create TimeSlot
+                const timeSlot = await tx.timeSlot.create({
+                    data: {
+                        timeRange: `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
+                        startTime: new Date(slot.startTime),
+                        endTime: new Date(slot.endTime)
+                    }
+                });
+
+                // Create TimetableSlots for each room in the time slot
+                for (let i = 0; i < slot.rooms.length; i++) {
+                    const room = slot.rooms[i];
+                    const [termSubjectLevelId, sectionId] = room.classId.split('-').map(Number);
+
+                    await tx.timetableSlot.create({
+                        data: {
+                            timetableId: timetable.id,
+                            classroomId: classrooms[i].id,
+                            timeSlotId: timeSlot.id,
+                            termSubjectLevelId,
+                            sectionId,
+                            teacherId: parseInt(room.teacherId)
+                        }
+                    });
+                }
+            }
+
+            // Fetch the complete timetable with all related data
+            const completeTimetable = await tx.timetable.findUnique({
+                where: { id: timetable.id },
+                include: {
+                    timetableSlots: {
+                        include: {
+                            classroom: true,
+                            timeSlot: true,
+                            termSubjectLevel: true,
+                            section: true,
+                            teacher: true
+                        }
+                    }
+                }
+            });
+
+            return completeTimetable;
+        });
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            // Handle known Prisma errors
+            switch (error.code) {
+                case 'P2002':
+                    throw customError('A unique constraint violation occurred.', 'fail', 400, true);
+                case 'P2025':
+                    throw customError('Record not found.', 'fail', 404, true);
+                default:
+                    throw customError(`Database error: ${error.message}`, 'error', 500, true);
+            }
+        } else if (error instanceof Prisma.PrismaClientValidationError) {
+            // Handle Prisma validation errors
+            throw customError(`Validation error: ${error.message}`, 'fail', 400, true);
+        } else {
+            // Handle other types of errors
+            if (error instanceof Error) {
+                throw customError(`An unexpected error occurred: ${error.message}`, 'error', 500, true);
+            }
+            throw customError('An unexpected error occurred', 'error', 500, true);
+        }
+    }
 }
 
 // ------------------- for school time table ------------------- //

@@ -5,9 +5,16 @@ import {
     fetchActiveTimetable,
     fetchEditTimetable,
     findActiveTimetable,
+    updateSchoolTimetable,
     updateTimetable
 } from '../../../service/admin.service/admin.administration.service/admin.timetable.service/admin.timetable.service';
-import { CreateSchoolTimetableSchema, FetchTimetableSchema, TimeTableSchema, UpdateTimeTableSchema } from '../../../schema/admin.dto/admin.timetable.dto/admin.timetable.dto';
+import {
+    CreateSchoolTimetableSchema,
+    FetchTimetableSchema,
+    TimeTableSchema,
+    UpdateSchoolTimetableSchema,
+    UpdateTimeTableSchema
+} from '../../../schema/admin.dto/admin.timetable.dto/admin.timetable.dto';
 import { Day } from '@prisma/client';
 
 export const createTimeTablesHandler = async (req: Request<{}, {}, TimeTableSchema['body'], {}>, res: Response, next: NextFunction) => {
@@ -58,6 +65,20 @@ export const fetchEditTimetableHandler = async (req: Request<FetchTimetableSchem
         res.status(200).json(timetable);
     } catch (error) {
         next(error);
+    }
+};
+
+export const updateSchoolTimetableHandler = async (req: Request<UpdateSchoolTimetableSchema['params'], {}, UpdateSchoolTimetableSchema['body'], {}>, res: Response, next: NextFunction) => {
+    try {
+        const timetableId = req.params.timetableId;
+        const timetableData = req.body.updateTimetableData;
+        const updatedTimetable = await updateSchoolTimetable(timetableId, timetableData);
+        res.status(200).json({
+            status: 'success',
+            data: { timetable: updatedTimetable }
+        });
+    } catch (error) {
+        next({ error: error });
     }
 };
 // ------------------- for time table ------------------- //
