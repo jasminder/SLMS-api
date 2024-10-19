@@ -114,12 +114,31 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
 
         // Process each time slot
         for (const slot of data.data) {
+            console.log("Raw slot data:", slot);
+            console.log("endTime", slot.endTime);
+            console.log("startTime", slot.startTime);
+            
+            let startTime, endTime;
+            try {
+                startTime = new Date(slot.startTime);
+                endTime = new Date(slot.endTime);
+                
+                if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+                    throw new Error('Invalid date');
+                }
+            } catch (error) {
+                console.error("Error parsing dates:", error);
+                console.error("startTime:", slot.startTime);
+                console.error("endTime:", slot.endTime);
+                throw new Error(`Invalid date format for start time (${slot.startTime}) or end time (${slot.endTime})`);
+            }
+            
             // Create TimeSlot
             const timeSlot = await tx.timeSlot.create({
                 data: {
                     timeRange: `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
-                    startTime: new Date(`1970-01-01T${slot.startTime}:00Z`),
-                    endTime: new Date(`1970-01-01T${slot.endTime}:00Z`)
+                    startTime,
+                    endTime
                 }
             });
 
