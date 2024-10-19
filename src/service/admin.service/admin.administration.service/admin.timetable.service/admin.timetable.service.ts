@@ -3,6 +3,7 @@ import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
 import { Day } from '@prisma/client';
 
+/************* old time table json *************/
 export async function createTimetable(createTimetableData: TimeTableSchema['body']) {
     // Start a transaction
     const totalRooms = createTimetableData.createTimetableData.totalRooms;
@@ -69,11 +70,12 @@ export async function updateTimetable(id: UpdateTimeTableSchema['params']['id'],
 
     return updatedTimeTable;
 }
+/************* old time table json *************/
+
 // ------------------- for school time table ------------------- //
 
 export async function createSchoolTimetable(timetableData: CreateSchoolTimetableSchema['body']['createSchoolTimetableData']) {
     const { data, day, roomNames, totalRooms } = timetableData;
-    console.log('timetableData at controller', JSON.stringify(timetableData, null, 2));
     const currentTerm = await db.term.findFirst({
         where: {
             currentTerm: true
