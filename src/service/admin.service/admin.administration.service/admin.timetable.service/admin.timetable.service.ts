@@ -378,6 +378,7 @@ export async function fetchEditTimetable(day: Day): Promise<EditTransformedTimet
 
 export async function updateSchoolTimetable(timetableId: string, timetableData: UpdateSchoolTimetableSchema['body']['updateTimetableData']) {
     const { data, day, roomNames, totalRooms } = timetableData;
+    console.log('timetableData', timetableData);
     try {
         const currentTerm = await db.term.findFirst({
             where: {
