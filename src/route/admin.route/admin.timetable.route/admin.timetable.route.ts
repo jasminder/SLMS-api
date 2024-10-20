@@ -6,6 +6,7 @@ import {
     createSchoolTimetableHandler,
     createTimeTablesHandler,
     fetchActiveTimetableHandler,
+    fetchAllTimetablesDataHandler,
     fetchEditTimetableHandler,
     findActiveTimetableHandler,
     updateSchoolTimetableHandler,
@@ -31,5 +32,5 @@ adminTimetableRoute.route('/create-school-timetable').post(validate(createSchool
 adminTimetableRoute.route('/fetch-active-timetable/:day').get(validate(fetchTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchActiveTimetableHandler));
 adminTimetableRoute.route('/fetch-edit-timetable/:day').get(validate(fetchTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchEditTimetableHandler));
 adminTimetableRoute.route('/update-school-timetable/:timetableId').post(validate(updateSchoolTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateSchoolTimetableHandler));
-
+adminTimetableRoute.route('/fetch-all-timetables').get(protectRoute, restrict('ADMIN', 'TEACHER', 'STUDENT'), asyncErrorHandler(fetchAllTimetablesDataHandler));
 export default adminTimetableRoute;

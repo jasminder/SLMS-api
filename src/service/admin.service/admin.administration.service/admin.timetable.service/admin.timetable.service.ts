@@ -508,4 +508,40 @@ export async function updateSchoolTimetable(timetableId: string, timetableData: 
     }
 }
 
+export async function fetchAllTimetablesData() {
+    const days: Day[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+  
+    const allTimetables = await Promise.all(
+      days.map(async (day) => {
+        const timetable = await db.timetable.findFirst({
+          where: { day, isActive: true },
+          include: {
+            timetableSlots: {
+              include: {
+                classroom: true,
+                timeSlot: true,
+                teacher: {
+                  include: {
+                    teacherPersonalDetails: true
+                  }
+                },
+                termSubjectLevel: {
+                  include: {
+                    subject: true,
+                    level: true,
+                  }
+                },
+                section: true,
+              },
+            },
+          },
+        });
+  
+        return { [day]: timetable };
+      })
+    );
+  
+    return Object.assign({}, ...allTimetables);
+  }
+
 // ------------------- for school time table ------------------- //

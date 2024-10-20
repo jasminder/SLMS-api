@@ -6,7 +6,8 @@ import {
     fetchEditTimetable,
     findActiveTimetable,
     updateSchoolTimetable,
-    updateTimetable
+    updateTimetable,
+    fetchAllTimetablesData
 } from '../../../service/admin.service/admin.administration.service/admin.timetable.service/admin.timetable.service';
 import {
     CreateSchoolTimetableSchema,
@@ -82,3 +83,9 @@ export const updateSchoolTimetableHandler = async (req: Request<UpdateSchoolTime
     }
 };
 // ------------------- for time table ------------------- //
+
+// New controller function to fetch all timetables data
+export const fetchAllTimetablesDataHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const allTimetables = await fetchAllTimetablesData();
+    res.status(200).json(allTimetables);
+};
