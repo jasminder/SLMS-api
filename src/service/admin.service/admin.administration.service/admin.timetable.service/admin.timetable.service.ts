@@ -114,25 +114,17 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
 
         // Process each time slot
         for (const slot of data.data) {
-            console.log("Raw slot data:", slot);
-            console.log("endTime", slot.endTime);
-            console.log("startTime", slot.startTime);
-            
             let startTime, endTime;
             try {
                 startTime = new Date(slot.startTime);
                 endTime = new Date(slot.endTime);
-                
+
                 if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
                     throw new Error('Invalid date');
                 }
             } catch (error) {
-                console.error("Error parsing dates:", error);
-                console.error("startTime:", slot.startTime);
-                console.error("endTime:", slot.endTime);
                 throw new Error(`Invalid date format for start time (${slot.startTime}) or end time (${slot.endTime})`);
             }
-            
             // Create TimeSlot
             const timeSlot = await tx.timeSlot.create({
                 data: {
@@ -145,7 +137,17 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
             // Create TimetableSlots for each room in the time slot
             for (let i = 0; i < slot.rooms.length; i++) {
                 const room = slot.rooms[i];
-                const [termSubjectLevelId, sectionId] = room.classId.split('-').map(Number);
+                const teacherId = room.teacherId || null;
+                const classId = room.classId || null;
+
+                let termSubjectLevelId: number | null = null;
+                let sectionId: number | null = null;
+
+                if (classId) {
+                    const [tslId, secId] = classId.split('-').map(Number);
+                    termSubjectLevelId = isNaN(tslId) ? null : tslId;
+                    sectionId = isNaN(secId) ? null : secId;
+                }
 
                 await tx.timetableSlot.create({
                     data: {
@@ -154,7 +156,7 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
                         timeSlotId: timeSlot.id,
                         termSubjectLevelId,
                         sectionId,
-                        teacherId: parseInt(room.teacherId)
+                        teacherId: teacherId ? (isNaN(Number(teacherId)) ? null : Number(teacherId)) : null
                     }
                 });
             }
@@ -188,10 +190,10 @@ function formatTime(time: string): string {
 }
 
 interface Room {
-    teacherName?: string;
-    className?: string;
-    teacherId?: number;
-    classId?: string;
+    teacherName?: string | null;
+    className?: string | null;
+    teacherId?: number | null;
+    classId?: string | null;
 }
 
 interface TimeSlot {
@@ -264,8 +266,10 @@ export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetab
 
                 const existingSlot = acc.find((s) => s.startTime === startTime.toISOString() && s.endTime === endTime.toISOString());
 
-                const teacherName = `${slot.teacher.teacherPersonalDetails?.firstName} ${slot.teacher.teacherPersonalDetails?.lastName}`.trim();
-                const className = `${slot.termSubjectLevel.subject.name} ${slot.termSubjectLevel.level.name} ${slot.section.name}`.trim();
+                const teacherName = slot.teacher?.teacherPersonalDetails?.firstName
+                    ? `${slot.teacher?.teacherPersonalDetails?.firstName} ${slot.teacher?.teacherPersonalDetails?.lastName}sss`.trim()
+                    : null;
+                const className = slot.termSubjectLevel?.subject.name ? `${slot.termSubjectLevel?.subject.name} ${slot.termSubjectLevel?.level.name} ${slot.section?.name}www`.trim() : null;
 
                 if (existingSlot) {
                     existingSlot.rooms.push({
@@ -288,7 +292,7 @@ export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetab
                 return acc;
             }, [])
         },
-        roomNames: [...new Set(timetable.timetableSlots.map((slot) => slot.classroom.name))],
+        roomNames: [...new Set(timetable.timetableSlots.map((slot) => slot.classroom?.name || ''))],
         totalRooms: timetable.totalRooms,
         day: timetable.day
     };
@@ -338,10 +342,13 @@ export async function fetchEditTimetable(day: Day): Promise<EditTransformedTimet
 
                 const existingSlot = acc.find((s) => s.startTime === startTime.toISOString() && s.endTime === endTime.toISOString());
 
-                const teacherName = `${slot.teacher.teacherPersonalDetails?.firstName} ${slot.teacher.teacherPersonalDetails?.lastName}`.trim();
-                const className = `${slot.termSubjectLevel.subject.name} ${slot.termSubjectLevel.level.name} ${slot.section.name}`.trim();
-                const teacherId = slot.teacher.id;
-                const classId = `${slot.termSubjectLevelId}-${slot.sectionId}`;
+                const teacherName = slot.teacher?.teacherPersonalDetails?.firstName
+                    ? `${slot.teacher?.teacherPersonalDetails?.firstName} ${slot.teacher?.teacherPersonalDetails?.lastName}sss`.trim()
+                    : null;
+                const className = slot.termSubjectLevel?.subject.name ? `${slot.termSubjectLevel?.subject.name} ${slot.termSubjectLevel?.level.name} ${slot.section?.name}www`.trim() : null;
+
+                const teacherId = slot.teacher?.id || null;
+                const classId = `${slot.termSubjectLevelId}-${slot.sectionId}` || null;
 
                 if (existingSlot) {
                     existingSlot.rooms.push({
@@ -368,7 +375,7 @@ export async function fetchEditTimetable(day: Day): Promise<EditTransformedTimet
                 return acc;
             }, [])
         },
-        roomNames: [...new Set(timetable.timetableSlots.map((slot) => slot.classroom.name))],
+        roomNames: [...new Set(timetable.timetableSlots.map((slot) => slot.classroom?.name || ''))],
         totalRooms: timetable.totalRooms,
         day: timetable.day
     };
@@ -378,7 +385,7 @@ export async function fetchEditTimetable(day: Day): Promise<EditTransformedTimet
 
 export async function updateSchoolTimetable(timetableId: string, timetableData: UpdateSchoolTimetableSchema['body']['updateTimetableData']) {
     const { data, day, roomNames, totalRooms } = timetableData;
-    console.log('timetableData', timetableData);
+    console.log('timetableData', JSON.stringify(timetableData, null, 2));
     try {
         const currentTerm = await db.term.findFirst({
             where: {
@@ -434,7 +441,17 @@ export async function updateSchoolTimetable(timetableId: string, timetableData: 
                 // Create TimetableSlots for each room in the time slot
                 for (let i = 0; i < slot.rooms.length; i++) {
                     const room = slot.rooms[i];
-                    const [termSubjectLevelId, sectionId] = room.classId.split('-').map(Number);
+                    const teacherId = room.teacherId || null;
+                    const classId = room.classId || null;
+
+                    let termSubjectLevelId: number | null = null;
+                    let sectionId: number | null = null;
+
+                    if (classId) {
+                        const [tslId, secId] = classId.split('-').map(Number);
+                        termSubjectLevelId = isNaN(tslId) ? null : tslId;
+                        sectionId = isNaN(secId) ? null : secId;
+                    }
 
                     await tx.timetableSlot.create({
                         data: {
@@ -443,7 +460,7 @@ export async function updateSchoolTimetable(timetableId: string, timetableData: 
                             timeSlotId: timeSlot.id,
                             termSubjectLevelId,
                             sectionId,
-                            teacherId: parseInt(room.teacherId)
+                            teacherId: teacherId ? (isNaN(Number(teacherId)) ? null : Number(teacherId)) : null
                         }
                     });
                 }

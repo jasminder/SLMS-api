@@ -272,8 +272,8 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         studentClassAssignment: {
                             some: {
                                 OR: timetableSlots.map((slot) => ({
-                                    termSubjectLevelId: slot.termSubjectLevelId,
-                                    sectionId: slot.sectionId,
+                                    termSubjectLevelId: slot.termSubjectLevelId ?? undefined,
+                                    sectionId: slot.sectionId ?? undefined,
                                     isCurrentlyAssigned: true
                                 }))
                             }
@@ -1129,3 +1129,4 @@ export async function undoFalseCheckin(studentId: string) {
 
     return updatedRecord;
 }
+
