@@ -267,9 +267,9 @@ export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetab
                 const existingSlot = acc.find((s) => s.startTime === startTime.toISOString() && s.endTime === endTime.toISOString());
 
                 const teacherName = slot.teacher?.teacherPersonalDetails?.firstName
-                    ? `${slot.teacher?.teacherPersonalDetails?.firstName} ${slot.teacher?.teacherPersonalDetails?.lastName}sss`.trim()
+                    ? `${slot.teacher?.teacherPersonalDetails?.firstName} ${slot.teacher?.teacherPersonalDetails?.lastName}`.trim()
                     : null;
-                const className = slot.termSubjectLevel?.subject.name ? `${slot.termSubjectLevel?.subject.name} ${slot.termSubjectLevel?.level.name} ${slot.section?.name}www`.trim() : null;
+                const className = slot.termSubjectLevel?.subject.name ? `${slot.termSubjectLevel?.subject.name} ${slot.termSubjectLevel?.level.name} ${slot.section?.name}`.trim() : null;
 
                 if (existingSlot) {
                     existingSlot.rooms.push({
@@ -343,9 +343,9 @@ export async function fetchEditTimetable(day: Day): Promise<EditTransformedTimet
                 const existingSlot = acc.find((s) => s.startTime === startTime.toISOString() && s.endTime === endTime.toISOString());
 
                 const teacherName = slot.teacher?.teacherPersonalDetails?.firstName
-                    ? `${slot.teacher?.teacherPersonalDetails?.firstName} ${slot.teacher?.teacherPersonalDetails?.lastName}sss`.trim()
+                    ? `${slot.teacher?.teacherPersonalDetails?.firstName} ${slot.teacher?.teacherPersonalDetails?.lastName}`.trim()
                     : null;
-                const className = slot.termSubjectLevel?.subject.name ? `${slot.termSubjectLevel?.subject.name} ${slot.termSubjectLevel?.level.name} ${slot.section?.name}www`.trim() : null;
+                const className = slot.termSubjectLevel?.subject.name ? `${slot.termSubjectLevel?.subject.name} ${slot.termSubjectLevel?.level.name} ${slot.section?.name}`.trim() : null;
 
                 const teacherId = slot.teacher?.id || null;
                 const classId = `${slot.termSubjectLevelId}-${slot.sectionId}` || null;
