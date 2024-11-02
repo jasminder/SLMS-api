@@ -3682,6 +3682,21 @@ export async function findStudentAttendanceById(studentId: string) {
                 include: {
                     personalDetails: true
                 }
+            },
+            classAttendance: {
+                include: {
+                    studentClassAssignment: {
+                        include: {
+                            section: true,
+                            termSubjectLevel: {
+                                include: {
+                                    level: true,
+                                    subject: true
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         orderBy: {

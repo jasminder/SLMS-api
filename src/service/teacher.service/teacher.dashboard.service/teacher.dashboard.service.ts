@@ -182,6 +182,7 @@ export const findAllClassesAssignedForTeacher = async (teacherId: string) => {
     return assignedClasses;
 };
 // find students in the same class
+// TODO: check if this is used anywhere
 export async function fetchStudentsInSameClass(termSubjectLevelId: string, sectionName: string) {
     const numericTermSubjectLevelId = parseInt(termSubjectLevelId);
 

@@ -545,3 +545,35 @@ export async function fetchAllTimetablesData() {
   }
 
 // ------------------- for school time table ------------------- //
+// ------------------- for time table ------------------- //
+
+// ------------------- for time table ------------------- //
+// const studentTimetable = await db.student.findUnique({
+//     where: { id: studentId },  // replace studentId with actual student's ID
+//     include: {
+//       studentClassAssignment: {
+//         include: {
+//           section: {
+//             include: {
+//               timetableSlot: {
+//                 include: {
+//                   timeSlot: true,
+//                   classRoom: true
+//                 }
+//               }
+//             }
+//           },
+//           termSubjectLevel: {
+//             include: {
+//               timetableSlot: {
+//                 include: {
+//                   timeSlot: true,
+//                   classRoom: true
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   });

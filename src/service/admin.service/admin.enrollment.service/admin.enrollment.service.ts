@@ -18,6 +18,7 @@ export async function findAllApplicants(page: number) {
             id: true,
             role: true,
             createdAt: true,
+            hasSeenNewApplication: true,
             personalDetails: {
                 select: {
                     id: true,
