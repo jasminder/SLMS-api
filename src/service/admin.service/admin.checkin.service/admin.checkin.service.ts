@@ -292,8 +292,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 });
 
-                //
-
                 const startDate = new Date(date);
                 startDate.setHours(0, 0, 0, 0);
                 const endDate = new Date(date);
@@ -309,8 +307,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                             schoolOperatedDate: startDate
                         }
                     });
-                } else if (schoolDayRecord.isOnSunday) {
-                    throw customError('Attendance-already-created-for-today', 'fail', 400, true);
                 }
 
                 if (activeStudents.length === 0) {
@@ -342,6 +338,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
 
                         if (!existingAttendance) {
+                            console.log('creating new school check in attendance');
                             const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
                                 where: { studentId: student.id, isOnLeave: false },
                                 orderBy: { date: 'desc' },
@@ -365,7 +362,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                     isOnLeave: isOnLeave
                                 }
                             });
-
+                            console.log('newAttendanceRecord', JSON.stringify(newAttendanceRecord));
                             // attendanceRecords.push(newAttendanceRecord);
 
                             // Find all current studentClassAssignments for the student
@@ -373,18 +370,13 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                 where: {
                                     studentId: student.id,
                                     isCurrentlyAssigned: true,
+
                                     termSubjectLevel: {
-                                        subject: {
-                                            termSubject: {
-                                                every: {
-                                                    isOnSunday: true
-                                                }
-                                            }
-                                        }
+                                        termId: currentTerm?.id
                                     }
                                 }
                             });
-
+                            console.log('studentClassAssignments', JSON.stringify(studentClassAssignments));
                             const processClassAssignments = studentClassAssignments.map(async (assignment) => {
                                 const existingClassAttendance = await db.classAttendance.findUnique({
                                     where: {
@@ -394,8 +386,10 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                         }
                                     }
                                 });
+                                console.log('existingClassAttendance', JSON.stringify(existingClassAttendance));
 
                                 if (!existingClassAttendance) {
+                                    console.log('creating new class attendance');
                                     return db.classAttendance.create({
                                         data: {
                                             studentClassAssignmentId: assignment.id,
@@ -409,49 +403,52 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                 }
                             });
 
-                            await Promise.all(processClassAssignments);
+                            const classAttendanceRecords = await Promise.all(processClassAssignments);
+                            console.log('classAttendanceRecords', JSON.stringify(classAttendanceRecords));
                         } else {
                             // const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
-                            const studentClassAssignments = await db.studentClassAssignment.findMany({
-                                where: {
-                                    studentId: student.id,
-                                    isCurrentlyAssigned: true,
-                                    termSubjectLevel: {
-                                        subject: {
-                                            termSubject: {
-                                                every: {
-                                                    isOnSunday: true
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                            const processClassAssignments = studentClassAssignments.map(async (assignment) => {
-                                const existingClassAttendance = await db.classAttendance.findUnique({
-                                    where: {
-                                        studentClassAssignmentId_date: {
-                                            studentClassAssignmentId: assignment.id,
-                                            date: startDate
-                                        }
-                                    }
-                                });
+                            // const studentClassAssignments = await db.studentClassAssignment.findMany({
+                            //     where: {
+                            //         studentId: student.id,
+                            //         isCurrentlyAssigned: true,
+                            //         termSubjectLevel: {
+                            //             subject: {
+                            //                 termSubject: {
+                            //                     every: {
+                            //                         isOnSunday: true
+                            //                     }
+                            //                 }
+                            //             }
+                            //         }
+                            //     }
+                            // });
+                            // const processClassAssignments = studentClassAssignments.map(async (assignment) => {
+                            //     const existingClassAttendance = await db.classAttendance.findUnique({
+                            //         where: {
+                            //             studentClassAssignmentId_date: {
+                            //                 studentClassAssignmentId: assignment.id,
+                            //                 date: startDate
+                            //             }
+                            //         }
+                            //     });
+                            //     console.log('existingClassAttendance', JSON.stringify(existingClassAttendance));
 
-                                if (!existingClassAttendance) {
-                                    return db.classAttendance.create({
-                                        data: {
-                                            studentClassAssignmentId: assignment.id,
-                                            date: startDate,
-                                            schoolCheckInAttendanceId: existingAttendance.id,
-                                            attendanceStatus: attendanceStatus,
-                                            schoolDayId: schoolDayRecord?.id
-                                            // other fields if necessary
-                                        }
-                                    });
-                                }
-                            });
+                            //     if (!existingClassAttendance) {
+                            //         return db.classAttendance.create({
+                            //             data: {
+                            //                 studentClassAssignmentId: assignment.id,
+                            //                 date: startDate,
+                            //                 schoolCheckInAttendanceId: existingAttendance.id,
+                            //                 attendanceStatus: attendanceStatus,
+                            //                 schoolDayId: schoolDayRecord?.id
+                            //                 // other fields if necessary
+                            //             }
+                            //         });
+                            //     }
+                            // });
 
-                            await Promise.all(processClassAssignments);
+                            // await Promise.all(processClassAssignments);
+                            console.log('existing attendance');
                         }
                     })
                 );
@@ -1129,4 +1126,3 @@ export async function undoFalseCheckin(studentId: string) {
 
     return updatedRecord;
 }
-
