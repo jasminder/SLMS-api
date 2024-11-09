@@ -194,6 +194,11 @@ interface Room {
     className?: string | null;
     teacherId?: number | null;
     classId?: string | null;
+    roomName?: string | null;
+    roomId?: number | null;
+    termSubjectLevelId?: number | null;
+    sectionId?: number | null;
+    timeRange?: string | null;
 }
 
 interface TimeSlot {
@@ -263,18 +268,28 @@ export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetab
             data: timetable.timetableSlots.reduce((acc: TimeSlot[], slot) => {
                 const startTime = slot.timeSlot.startTime;
                 const endTime = slot.timeSlot.endTime;
-
+                const roomName = slot.classroom?.name || null;
+                const roomId = slot.classroom?.id || null;
+                const termSubjectLevelId = slot.termSubjectLevelId || null;
+                const sectionId = slot.sectionId || null;
                 const existingSlot = acc.find((s) => s.startTime === startTime.toISOString() && s.endTime === endTime.toISOString());
 
                 const teacherName = slot.teacher?.teacherPersonalDetails?.firstName
                     ? `${slot.teacher?.teacherPersonalDetails?.firstName} ${slot.teacher?.teacherPersonalDetails?.lastName}`.trim()
                     : null;
+                const teacherId = slot.teacher?.id || null;
                 const className = slot.termSubjectLevel?.subject.name ? `${slot.termSubjectLevel?.subject.name} ${slot.termSubjectLevel?.level.name} ${slot.section?.name}`.trim() : null;
 
                 if (existingSlot) {
                     existingSlot.rooms.push({
                         teacherName,
-                        className
+                        className,
+                        roomName,
+                        roomId,
+                        termSubjectLevelId,
+                        sectionId,
+                        teacherId,
+                        timeRange: `${startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()}`
                     });
                 } else {
                     acc.push({
@@ -284,7 +299,13 @@ export async function fetchActiveTimetable(day: Day): Promise<TransformedTimetab
                         rooms: [
                             {
                                 teacherName,
-                                className
+                                className,
+                                roomName,
+                                roomId,
+                                termSubjectLevelId,
+                                sectionId,
+                                teacherId,
+                                timeRange: `${startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()}`
                             }
                         ]
                     });
@@ -510,39 +531,68 @@ export async function updateSchoolTimetable(timetableId: string, timetableData: 
 
 export async function fetchAllTimetablesData() {
     const days: Day[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-  
+
     const allTimetables = await Promise.all(
-      days.map(async (day) => {
-        const timetable = await db.timetable.findFirst({
-          where: { day, isActive: true },
-          include: {
-            timetableSlots: {
-              include: {
-                classroom: true,
-                timeSlot: true,
-                teacher: {
-                  include: {
-                    teacherPersonalDetails: true
-                  }
-                },
-                termSubjectLevel: {
-                  include: {
-                    subject: true,
-                    level: true,
-                  }
-                },
-                section: true,
-              },
-            },
-          },
-        });
-  
-        return { [day]: timetable };
-      })
+        days.map(async (day) => {
+            const timetable = await db.timetable.findFirst({
+                where: { day, isActive: true },
+                include: {
+                    timetableSlots: {
+                        include: {
+                            classroom: true,
+                            timeSlot: true,
+                            teacher: {
+                                include: {
+                                    teacherPersonalDetails: true
+                                }
+                            },
+                            termSubjectLevel: {
+                                include: {
+                                    subject: true,
+                                    level: true
+                                }
+                            },
+                            section: true
+                        }
+                    }
+                }
+            });
+
+            return { [day]: timetable };
+        })
     );
-  
+
     return Object.assign({}, ...allTimetables);
-  }
+}
+
+export async function fetchStudentsInSameClassForTimetable(termSubjectLevelId: string, sectionId: string) {
+    const classAssignments = await db.studentClassAssignment.findMany({
+        where: {
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId,
+            isCurrentlyAssigned: true,
+            student: {
+                isActive: true,
+                role: 'STUDENT'
+            }
+        },
+        select: {
+            student: {
+                select: {
+                    akaalId: true,
+                    personalDetails: {
+                        select: {
+                            firstName: true,
+                            lastName: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    return classAssignments;
+}
 
 // ------------------- for school time table ------------------- //
 // ------------------- for time table ------------------- //

@@ -7,10 +7,12 @@ import {
     findActiveTimetable,
     updateSchoolTimetable,
     updateTimetable,
-    fetchAllTimetablesData
+    fetchAllTimetablesData,
+    fetchStudentsInSameClassForTimetable
 } from '../../../service/admin.service/admin.administration.service/admin.timetable.service/admin.timetable.service';
 import {
     CreateSchoolTimetableSchema,
+    FetchStudentsInSameClassForTimetableSchema,
     FetchTimetableSchema,
     TimeTableSchema,
     UpdateSchoolTimetableSchema,
@@ -81,6 +83,11 @@ export const updateSchoolTimetableHandler = async (req: Request<UpdateSchoolTime
     } catch (error) {
         next({ error: error });
     }
+};
+export const fetchStudentsInSameClassForTimetableHandler = async (req: Request<FetchStudentsInSameClassForTimetableSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { termSubjectLevelId, sectionId } = req.params;
+    const students = await fetchStudentsInSameClassForTimetable(termSubjectLevelId, sectionId);
+    res.status(200).json(students);
 };
 // ------------------- for time table ------------------- //
 

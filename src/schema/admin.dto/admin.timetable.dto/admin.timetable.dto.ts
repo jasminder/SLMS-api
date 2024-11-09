@@ -104,11 +104,19 @@ export const updateSchoolTimetableSchema = z.object({
             }),
             roomNames: z.array(z.string()),
             day: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']).optional(),
-            totalRooms: z.number().int().positive(),
+            totalRooms: z.number().int().positive()
         })
     })
 });
 
 export type UpdateSchoolTimetableSchema = z.infer<typeof updateSchoolTimetableSchema>;
+
+export const fetchStudentsInSameClassForTimetableSchema = z.object({
+    params: z.object({
+        termSubjectLevelId: z.string(),
+        sectionId: z.string()
+    })
+});
+export type FetchStudentsInSameClassForTimetableSchema = z.infer<typeof fetchStudentsInSameClassForTimetableSchema>;
 
 // ------------------- for school time table ------------------- //
