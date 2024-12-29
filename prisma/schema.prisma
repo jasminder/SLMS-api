@@ -1188,7 +1188,7 @@ model Appointment {
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
-// ------------------- for schoolst time table ------------------- //
+// ------------------- for school time table ------------------- //
 enum Day {
   MONDAY
   TUESDAY
