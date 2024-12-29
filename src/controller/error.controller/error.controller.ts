@@ -16,11 +16,16 @@ const prodErrors = (err: Err, res: Response) => {
     }
 };
 export const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error('Original error:', err);  // Log the original error object
     err.statusCode = err.statusCode || 500;
     err.status = err.statusCode >= 400 && err.statusCode < 500 ? 'Fail' : 'server error';
     Error.captureStackTrace(err);
-    if (process.env.NODE_ENV === 'development') devErrors(err, res);
-    else if (process.env.NODE_ENV === 'production') {
+    
+    if (process.env.NODE_ENV === 'development') {
+        console.log('Sending development error response');
+        devErrors(err, res);
+    } else if (process.env.NODE_ENV === 'production') {
+        console.log('Sending production error response');
         prodErrors(err, res);
     }
 };

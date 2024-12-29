@@ -45,20 +45,78 @@ export const findUniqueTimetableSchema = z.object({
 });
 export type FindUniqueTimetableSchema = z.infer<typeof findUniqueTimetableSchema>;
 
-// ------------------- for time table ------------------- //
-export const timetableSchema = z.object({
+// ------------------- for school time table ------------------- //
+export const createSchoolTimetableSchema = z.object({
     body: z.object({
-        name: z.string(),
-        isActive: z.boolean(),
-        timetableSlots: z.array(
-            z.object({
-                classroomId: z.number(),
-                timeSlotId: z.number(),
-                termSubjectLevelId: z.number(),
-                sectionId: z.number(),
-                teacherId: z.number()
-            })
-        )
+        createSchoolTimetableData: z.object({
+            data: z.object({
+                data: z.array(
+                    z.object({
+                        startTime: z.string(),
+                        endTime: z.string(),
+                        rooms: z.array(
+                            z.object({
+                                teacherId: z.string(),
+                                classId: z.string()
+                            })
+                        )
+                    })
+                )
+            }),
+            roomNames: z.array(z.string()),
+            totalRooms: z.number().int().positive(),
+            day: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'])
+        })
     })
 });
-// ------------------- for time table ------------------- //
+
+export type CreateSchoolTimetableSchema = z.infer<typeof createSchoolTimetableSchema>;
+
+export const DayEnum = z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']);
+
+export const fetchTimetableSchema = z.object({
+    params: z.object({
+        day: DayEnum
+    })
+});
+
+export type FetchTimetableSchema = z.infer<typeof fetchTimetableSchema>;
+
+export const updateSchoolTimetableSchema = z.object({
+    params: z.object({
+        timetableId: z.string()
+    }),
+    body: z.object({
+        updateTimetableData: z.object({
+            data: z.object({
+                data: z.array(
+                    z.object({
+                        startTime: z.string(),
+                        endTime: z.string(),
+                        rooms: z.array(
+                            z.object({
+                                teacherId: z.string(),
+                                classId: z.string()
+                            })
+                        )
+                    })
+                )
+            }),
+            roomNames: z.array(z.string()),
+            day: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']).optional(),
+            totalRooms: z.number().int().positive()
+        })
+    })
+});
+
+export type UpdateSchoolTimetableSchema = z.infer<typeof updateSchoolTimetableSchema>;
+
+export const fetchStudentsInSameClassForTimetableSchema = z.object({
+    params: z.object({
+        termSubjectLevelId: z.string(),
+        sectionId: z.string()
+    })
+});
+export type FetchStudentsInSameClassForTimetableSchema = z.infer<typeof fetchStudentsInSameClassForTimetableSchema>;
+
+// ------------------- for school time table ------------------- //

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "TimetableSlot" ALTER COLUMN "classroomId" DROP NOT NULL,
+ALTER COLUMN "termSubjectLevelId" DROP NOT NULL,
+ALTER COLUMN "sectionId" DROP NOT NULL,
+ALTER COLUMN "teacherId" DROP NOT NULL;
