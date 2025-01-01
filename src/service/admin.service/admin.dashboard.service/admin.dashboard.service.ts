@@ -78,9 +78,7 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
         where: {
             schoolOperatedDate: {
                 lte: startDate // Less than or equal to the query date
-            },
-            isOnSunday: true
-            // isOnWeekday: false
+            }
         },
         orderBy: {
             schoolOperatedDate: 'desc'
@@ -98,9 +96,7 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
         where: {
             schoolOperatedDate: {
                 lt: recentSchoolDay?.schoolOperatedDate
-            },
-            isOnSunday: true,
-            isOnWeekday: false
+            }
         },
         orderBy: {
             schoolOperatedDate: 'desc'
