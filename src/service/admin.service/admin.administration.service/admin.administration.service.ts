@@ -422,115 +422,6 @@ export async function unPublishTerm(id: FindUniqueTermSchema['params']['id']) {
         return updatedTerm;
     });
 }
-export async function makeCurrentTerm1Temp(id: FindUniqueTermSchema['params']['id']) {
-    // Find the currently active term
-    const currentTerm = await db.term.findFirst({
-        where: {
-            currentTerm: true
-        }
-    });
-
-    // Start a transaction
-    return db.$transaction(async () => {
-        // If there is a current term, deactivate the associated timetables
-        if (currentTerm) {
-            await db.timeTable.updateMany({
-                where: {
-                    isActive: true,
-                    termId: currentTerm.id
-                },
-                data: {
-                    isActive: false
-                }
-            });
-        }
-
-        // Set all terms to not be the current term
-        await db.term.updateMany({
-            data: {
-                currentTerm: false
-            }
-        });
-
-        const lastActiveStudent = await db.student.findFirst({
-            where: { isActive: true, role: 'STUDENT' },
-            orderBy: { akaalId: 'desc' }
-        });
-        let nextAkaalId = 1;
-        if (lastActiveStudent?.akaalId) {
-            nextAkaalId = lastActiveStudent ? lastActiveStudent?.akaalId + 1 : 1;
-        }
-
-        // Find the term to be set as the current term
-        const newCurrentTerm = await db.term.findUnique({
-            where: {
-                id: +id
-            }
-        });
-
-        if (!newCurrentTerm) {
-            throw customError(`Term not found or could not be updated. Please try again later`, 'fail', 404, true);
-        }
-
-        // Update the term to be the current term
-        const updatedTerm = await db.term.update({
-            where: {
-                id: +id
-            },
-            data: {
-                currentTerm: true
-            }
-        });
-        // Retrieve IDs of students to update
-        const studentsToUpdate = await db.student.findMany({
-            where: {
-                role: 'STUDENT',
-                isActive: false
-            },
-            select: { id: true, akaalId: true }
-        });
-        const studentsToUpdateAttendance = await db.student.findMany({
-            where: {
-                role: 'STUDENT',
-                isActive: true
-            },
-            select: { id: true }
-        });
-
-        const batchSize = 100; // Adjust the batch size as needed
-        for (let i = 0; i < studentsToUpdate.length; i += batchSize) {
-            const batch = studentsToUpdate.slice(i, i + batchSize);
-            const updates = batch.map((student) => {
-                let updateData: any = { isActive: true };
-                if (!student.akaalId) {
-                    // Only assign a new akaalId if it's null
-                    updateData.akaalId = nextAkaalId++;
-                }
-                return db.student.update({
-                    where: { id: student.id, isActive: false, role: 'STUDENT' },
-                    data: { ...updateData }
-                });
-            });
-            await Promise.all(updates);
-        }
-        for (let i = 0; i < studentsToUpdateAttendance.length; i++) {
-            const batch = studentsToUpdateAttendance.slice(i, i + batchSize);
-            const updates = batch.map((student) =>
-                db.student.updateMany({
-                    where: {
-                        id: student.id
-                    },
-                    data: {
-                        termAttendance: 0,
-                        attendancePercentageValue: 0
-                    }
-                })
-            );
-            Promise.all(updates);
-        }
-        return updatedTerm;
-    });
-}
 
 export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) {
     let emailTasks: { email: string; subject: string; text: string }[] = [];
@@ -550,6 +441,14 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
                 where: {
                     isActive: true,
                     termId: currentTerm.id
+                },
+                data: {
+                    isActive: false
+                }
+            });
+            await prisma.timetable.updateMany({
+                where: {
+                    isActive: true
                 },
                 data: {
                     isActive: false
