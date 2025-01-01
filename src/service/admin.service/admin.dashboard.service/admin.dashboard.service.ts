@@ -1,5 +1,6 @@
 import { db } from '../../../utils/db.server';
-import { SchoolDay } from '@prisma/client';
+import { Day, SchoolDay } from '@prisma/client';
+import { getCurrentDay } from '../../../utils/getCurrentDay';
 
 export async function fetchActiveCheckedInStudents(dateString: string) {
     const date = new Date(dateString);
@@ -16,13 +17,58 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
             id: true
         }
     });
+    const currentDay = getCurrentDay();
+    const currentTimetable = await db.timetable.findFirst({
+        where: {
+            isActive: true,
+            day: currentDay as Day
+        },
+        include: {
+            timetableSlots: true
+        }
+    });
+    console.log(currentTimetable);
+    const slotMappings = currentTimetable?.timetableSlots
+        .filter((slot) => slot.termSubjectLevelId !== null && slot.sectionId !== null)
+        .map((slot) => ({
+            termSubjectLevelId: slot.termSubjectLevelId!,
+            sectionId: slot.sectionId!
+        }));
+
     const activeStudents = await db.student.findMany({
         where: {
             isActive: true,
-            role: 'STUDENT',
+            studentClassAssignment: {
+                some: {
+                    OR: slotMappings?.map((slot) => ({
+                        AND: {
+                            termSubjectLevelId: slot.termSubjectLevelId,
+                            sectionId: slot.sectionId,
+                            isCurrentlyAssigned: true
+                        }
+                    }))
+                }
+            },
             studentTermFee: {
                 some: {
                     termId: currentTerm?.id
+                }
+            }
+        },
+        include: {
+            personalDetails: true,
+            studentClassAssignment: {
+                where: {
+                    isCurrentlyAssigned: true
+                },
+                include: {
+                    termSubjectLevel: {
+                        include: {
+                            subject: true,
+                            level: true
+                        }
+                    },
+                    section: true
                 }
             }
         }
@@ -40,6 +86,8 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
             schoolOperatedDate: 'desc'
         }
     });
+
+    // here
 
     // if (!recentSchoolDay) {
     //     throw new Error('No recent school day found.');
