@@ -35,7 +35,7 @@ export async function createLeaveApplicationByStudent(
             endDate: formattedEndDate,
             comments,
             reason: reason,
-            status: 'PENDING'
+            status: 'APPROVED'
         }
     });
     const currentDate = new Date();
