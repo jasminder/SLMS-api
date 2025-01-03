@@ -183,10 +183,26 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
 }
 
 function formatTime(time: string): string {
-    const [hours, minutes] = time.split(':').map(Number);
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedHours = hours % 12 || 12;
-    return `${formattedHours}${minutes > 0 ? ':' + minutes.toString().padStart(2, '0') : ''} ${ampm}`;
+    try {
+        // Handle ISO string format
+        if (time.includes('T')) {
+            const date = new Date(time);
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // Handle HH:mm format
+        const [hours, minutes] = time.split(':').map(Number);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12;
+        const formattedMinutes = minutes.toString().padStart(2, '0');
+        return `${formattedHours}:${formattedMinutes} ${ampm}`;
+    } catch (error) {
+        throw new Error(`Invalid time format: ${time}`);
+    }
 }
 
 interface Room {
