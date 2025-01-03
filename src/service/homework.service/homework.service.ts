@@ -154,7 +154,6 @@ export async function findAllAssignedHomeworkByTermAndSection(termSubjectLevelId
         where: {
             termSubjectLevelId: +termSubjectLevelId,
             sectionId: +sectionId,
-            teacherId: +teacherId
         },
         include: {
             subject: true,

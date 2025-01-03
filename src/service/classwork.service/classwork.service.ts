@@ -156,8 +156,7 @@ export async function findAllAssignedClassworkByTermAndSection(termSubjectLevelI
     const classworks = await db.classwork.findMany({
         where: {
             termSubjectLevelId: +termSubjectLevelId,
-            sectionId: +sectionId,
-            teacherId: +teacherId
+            sectionId: +sectionId
         },
         include: {
             subject: true,
