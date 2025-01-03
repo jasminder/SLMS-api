@@ -876,8 +876,9 @@ export async function fetchWeekdayActiveCheckedInStudents(dateString: string) {
 }
 export async function fetchPendingLeaves() {
     return await db.leave.findMany({
-        where: {
-            status: 'PENDING'
+        take: 10,
+        orderBy: {
+            createdAt: 'desc'
         },
         include: {
             student: {
