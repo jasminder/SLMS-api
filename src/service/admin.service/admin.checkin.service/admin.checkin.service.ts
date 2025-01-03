@@ -4,7 +4,7 @@ import { getIo } from '../../../sockets/socket';
 import { Day } from '@prisma/client';
 
 export async function createSchoolCheckInAttendanceForStudent1(date: string) {
-    console.log('creating reports');
+    // console.log('creating reports');
     if (!date) {
         throw customError('You need to provide a date to create School Check In Attendance record.', 'fail', 404, true);
     }
@@ -225,7 +225,7 @@ export async function createSchoolCheckInAttendanceForStudent1(date: string) {
     }
 }
 export async function createSchoolCheckInAttendanceForStudent(date: string) {
-    console.log('creating reports');
+    // console.log('creating reports');
     if (!date) {
         throw customError('You need to provide a date to create School Check In Attendance record.', 'fail', 404, true);
     }
@@ -250,7 +250,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                 }
 
                 // Get all timetable slots for the active timetable
-                const timetableSlots = await db.timetableSlot.findMany({
+                const allTimetableSlots = await db.timetableSlot.findMany({
                     where: {
                         timetableId: activeTimetable.id
                     },
@@ -259,7 +259,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         sectionId: true
                     }
                 });
-
+                const timetableSlots = allTimetableSlots.filter((slot) => slot.termSubjectLevelId !== null && slot.sectionId !== null);
                 const activeStudents = await db.student.findMany({
                     where: {
                         role: 'STUDENT',
@@ -291,7 +291,9 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         }
                     }
                 });
-
+                // console.log('activeStudents', JSON.stringify(activeStudents));
+                console.log('timetableSlots', JSON.stringify(timetableSlots));
+                console.log('timetable', JSON.stringify(activeTimetable));
                 const startDate = new Date(date);
                 startDate.setHours(0, 0, 0, 0);
                 const endDate = new Date(date);
@@ -338,7 +340,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
 
                         if (!existingAttendance) {
-                            console.log('creating new school check in attendance');
+                            // console.log('creating new school check in attendance');
                             const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
                                 where: { studentId: student.id, isOnLeave: false },
                                 orderBy: { date: 'desc' },
@@ -362,7 +364,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                     isOnLeave: isOnLeave
                                 }
                             });
-                            console.log('newAttendanceRecord', JSON.stringify(newAttendanceRecord));
+                            // console.log('newAttendanceRecord', JSON.stringify(newAttendanceRecord));
                             // attendanceRecords.push(newAttendanceRecord);
 
                             // Find all current studentClassAssignments for the student
@@ -376,7 +378,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                     }
                                 }
                             });
-                            console.log('studentClassAssignments', JSON.stringify(studentClassAssignments));
+                            // console.log('studentClassAssignments', JSON.stringify(studentClassAssignments));
                             const processClassAssignments = studentClassAssignments.map(async (assignment) => {
                                 const existingClassAttendance = await db.classAttendance.findUnique({
                                     where: {
@@ -386,10 +388,10 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                                         }
                                     }
                                 });
-                                console.log('existingClassAttendance', JSON.stringify(existingClassAttendance));
+                                // console.log('existingClassAttendance', JSON.stringify(existingClassAttendance));
 
                                 if (!existingClassAttendance) {
-                                    console.log('creating new class attendance');
+                                    // console.log('creating new class attendance');
                                     return db.classAttendance.create({
                                         data: {
                                             studentClassAssignmentId: assignment.id,
@@ -404,7 +406,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                             });
 
                             const classAttendanceRecords = await Promise.all(processClassAssignments);
-                            console.log('classAttendanceRecords', JSON.stringify(classAttendanceRecords));
+                            // console.log('classAttendanceRecords', JSON.stringify(classAttendanceRecords));
                         } else {
                             // const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
                             // const studentClassAssignments = await db.studentClassAssignment.findMany({
@@ -432,7 +434,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                             //         }
                             //     });
                             //     console.log('existingClassAttendance', JSON.stringify(existingClassAttendance));
-
                             //     if (!existingClassAttendance) {
                             //         return db.classAttendance.create({
                             //             data: {
@@ -446,9 +447,8 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                             //         });
                             //     }
                             // });
-
                             // await Promise.all(processClassAssignments);
-                            console.log('existing attendance');
+                            // console.log('existing attendance');
                         }
                     })
                 );
