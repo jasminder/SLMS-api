@@ -3145,3 +3145,21 @@ export async function updateStudentCreditBalance(studentId: string, amount: stri
         throw customError('Failed to update credit balance', 'error', 500, true);
     }
 }
+
+export async function getActiveStudentsCount() {
+    const studentsCount = await db.student.count({
+        where: {
+            role: 'STUDENT',
+            isActive: true,
+            studentTermFee: {
+                none: {
+                    term:{
+                        currentTerm:true
+                    }
+                }
+            }
+        }
+    });
+    console.log(studentsCount);
+    return studentsCount;
+}

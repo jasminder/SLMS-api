@@ -26,6 +26,7 @@ import {
     findTermSubjectGroupIdEnrolledSubjects,
     findTermToEnrollActiveStudent,
     findUniqueStudentClassDetails,
+    getActiveStudentsCount,
     getPaymentsByFeePaymentId,
     manageClasses,
     markAbsentByEditSchoolCheckInAttendanceForStudent,
@@ -366,9 +367,18 @@ export const markAbsentByEditSchoolCheckInAttendanceForStudentHandler = async (
     }
 };
 
-export const updateStudentCreditBalanceHandler = async (req: Request<UpdateStudentCreditBalanceSchema['params'], {}, UpdateStudentCreditBalanceSchema['body'], {}>, res: Response, next: NextFunction) => {
+export const updateStudentCreditBalanceHandler = async (
+    req: Request<UpdateStudentCreditBalanceSchema['params'], {}, UpdateStudentCreditBalanceSchema['body'], {}>,
+    res: Response,
+    next: NextFunction
+) => {
     const { studentId } = req.params;
     const { amount } = req.body;
     const updatedStudent = await updateStudentCreditBalance(studentId, amount);
     res.status(200).json(updatedStudent);
+};
+
+export const getActiveStudentsCountHandler = async (req: Request<{}, {}, {}, {}>, res: Response, next: NextFunction) => {
+    const activeStudentsCount = await getActiveStudentsCount();
+    res.status(200).json(activeStudentsCount);
 };

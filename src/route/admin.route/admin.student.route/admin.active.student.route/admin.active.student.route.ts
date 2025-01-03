@@ -60,6 +60,7 @@ import {
     findTermSubjectGroupIdEnrolledSubjectsHandler,
     findTermToEnrollActiveStudentHandler,
     findUniqueStudentClassDetailsHandler,
+    getActiveStudentsCountHandler,
     getPaymentsByFeePaymentIdHandler,
     getStudentAttendanceByIdHandler,
     manageClassesHandler,
@@ -215,5 +216,7 @@ adminActiveStudentRoute
 adminActiveStudentRoute
     .route('/update-student-credit-balance/:studentId')
     .patch(validate(updateStudentCreditBalanceSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateStudentCreditBalanceHandler));
+
+adminActiveStudentRoute.route('/get-active-students-count-without-subject').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(getActiveStudentsCountHandler));
 
 export default adminActiveStudentRoute;
