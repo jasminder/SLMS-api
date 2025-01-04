@@ -223,20 +223,21 @@ export async function fetchCheckedOutStudents(dateString: string) {
     return checkedOutStudents;
 }
 export async function fetchStudentsOnLeave(dateString: string) {
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
     const date = new Date(dateString);
     const startDate = new Date(date);
     startDate.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
 
     const studentsOnLeave = await db.classAttendance.findMany({
         where: {
             date: {
-                gte: startDate,
-                lte: endDate
+                gte: currentDate // Changed from startDate to currentDate
             },
-            attendanceStatus: 'LEAVE' // Replace 'ON_LEAVE' with the actual enum value for leave
+            attendanceStatus: 'LEAVE'
         },
         include: {
             schoolCheckInAttendance: {
