@@ -9,6 +9,7 @@ import {
     markCheckInTrueForSelectedStudentsSchema,
     markSchoolCheckInAttendanceForStudentSchema,
     markStudentAsNotCheckedInSchema,
+    toggleAutomatedAttendanceSchema,
     undoCheckInSchema,
     undoFalseCheckinSchema,
     undoSchoolCheckInAttendanceForStudentByIdSchema
@@ -20,6 +21,7 @@ import {
     markCheckInTrueForSelectedStudentsHandler,
     markSchoolCheckInAttendanceForStudentHandler,
     markStudentAsNotCheckedInHandler,
+    toggleAutomatedAttendanceHandler,
     undoCheckInHandler,
     undoFalseCheckinHandler,
     undoSchoolCheckInAttendanceForStudentByIdHandler,
@@ -67,4 +69,8 @@ adminCheckinRoute.route('/undo-false-checkin/:studentId').patch(validate(undoFal
 
 //undo creation of school checkin and class atendance by student id and date
 adminCheckinRoute.route('/undo-school-attendance-record-by-studentId').post(validate(undoSchoolCheckInAttendanceForStudentByIdSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(undoSchoolCheckInAttendanceForStudentByIdHandler));
+
+//toggle automated attendance
+adminCheckinRoute.route('/toggle-automated-attendance').post(validate(toggleAutomatedAttendanceSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(toggleAutomatedAttendanceHandler));
 export default adminCheckinRoute;
+

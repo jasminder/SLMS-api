@@ -74,3 +74,11 @@ export const undoSchoolCheckInAttendanceForStudentByIdSchema = z.object({
 });
 
 export type UndoSchoolCheckInAttendanceForStudentByIdSchema = z.infer<typeof undoSchoolCheckInAttendanceForStudentByIdSchema>;
+
+export const toggleAutomatedAttendanceSchema = z.object({
+    body: z.object({
+        termId: z.string().min(1, { message: 'Term ID is required' }),
+        enabled: z.boolean()
+    })
+});
+export type ToggleAutomatedAttendanceSchema = z.infer<typeof toggleAutomatedAttendanceSchema>;

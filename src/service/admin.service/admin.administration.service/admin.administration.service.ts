@@ -821,6 +821,7 @@ export async function findCurrentTerm() {
             name: true,
             isPublish: true,
             currentTerm: true,
+            automatedAttendanceEnabled: true,
             startDate: true,
             endDate: true,
             createdAt: true,

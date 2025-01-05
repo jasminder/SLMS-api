@@ -699,7 +699,7 @@ export async function searchSchoolCheckInAttendance(search = '', page: number, s
     return { todaySchoolCheckInAttendance };
 }
 
-/* NOT TO BE USED*/
+/* NOT TO BE USED Deprecated*/
 /*mark check in false for all in bulk*/
 // export async function markCheckInFalseForNonAttendees() {
 //     // Find all SchoolCheckInAttendance records for the specified date where checkedIn is false
@@ -870,4 +870,40 @@ export async function undoFalseCheckin(studentId: string) {
     });
 
     return updatedRecord;
+}
+
+export async function toggleAutomatedAttendance(termId: string, enabled: boolean) {
+    try {
+        // Validate term exists
+        const term = await db.term.findUnique({
+            where: { id: Number(termId) }
+        });
+
+        if (!term) {
+            throw customError('Term not found', 'fail', 404, true);
+        }
+
+        // Update the term's automated attendance setting
+        const updatedTerm = await db.term.update({
+            where: { id: Number(termId) },
+            data: {
+                automatedAttendanceEnabled: enabled
+            }
+        });
+
+        return {
+            status: 'success',
+            message: `Automated attendance ${enabled ? 'enabled' : 'disabled'} for term ${term.name}`,
+            data: updatedTerm
+        };
+
+    } catch (error: any) {
+        console.error('Error toggling automated attendance:', error);
+        throw customError(
+            error.message || 'Failed to update automated attendance setting',
+            'error',
+            error.statusCode || 500,
+            true
+        );
+    }
 }

@@ -8,6 +8,7 @@ cron.schedule('30 7 * * 0', async () => {
     await createAutomatedSchoolCheckInAttendance();
 });
 
+
 export async function createAutomatedSchoolCheckInAttendance() {
     console.log('createAutomatedSchoolCheckInAttendance');
     try {
@@ -26,9 +27,10 @@ export async function createAutomatedSchoolCheckInAttendance() {
         console.log(currentTerm);
         // Get today's date
         const today = new Date().toISOString().split('T')[0];
-
+        
         // Call your existing function
         return await createSchoolCheckInAttendanceForStudent(today);
+
     } catch (error) {
         console.error('Error in automated attendance creation:', error);
         // Handle error appropriately

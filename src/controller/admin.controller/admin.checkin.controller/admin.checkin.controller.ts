@@ -6,6 +6,7 @@ import {
     markCheckInTrueForSelectedStudents,
     markSchoolCheckInAttendanceForStudent,
     markStudentAsNotCheckedIn,
+    toggleAutomatedAttendance,
     undoCheckIn,
     undoFalseCheckin,
     undoSchoolCheckInAttendanceForStudent,
@@ -17,6 +18,7 @@ import {
     MarkCheckInTrueForSelectedStudentsSchema,
     MarkSchoolCheckInAttendanceForStudentSchema,
     MarkStudentAsNotCheckedInSchema,
+    ToggleAutomatedAttendanceSchema,
     UndoCheckInSchema,
     UndoFalseCheckinSchema,
     UndoSchoolCheckInAttendanceForStudentByIdSchema
@@ -97,4 +99,10 @@ export const undoSchoolCheckInAttendanceForStudentByIdHandler = async (req: Requ
 
     const updatedRecord = await undoSchoolCheckInAttendanceForStudentById(studentId, date);
     res.status(200).json(updatedRecord);
+};
+
+export const toggleAutomatedAttendanceHandler = async (req: Request<{}, {}, ToggleAutomatedAttendanceSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { termId, enabled } = req.body;
+    const updatedTerm = await toggleAutomatedAttendance(termId, enabled);
+    res.status(200).json(updatedTerm);
 };
