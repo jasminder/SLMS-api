@@ -12,6 +12,8 @@ import {
     undoWeekdayStudentAsPresentSchema
 } from '../../../../schema/teacher.dto/teacher.attendance.dto/teacher.weekday.attendance.dto/teacher.weekday.attendance.dto';
 const teacherWeekdayAttendanceRoute = express.Router();
+
+/** THIS API IS DEPRECATED.  */
 teacherWeekdayAttendanceRoute
     .route('/checkin-present-single-student/:studentId/:studentClassAssignmentId')
     .patch(validate(markWeekdayStudentAsPresentSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(markWeekdayStudentAsPresentHandler));
@@ -21,3 +23,4 @@ teacherWeekdayAttendanceRoute
     .route('/undo-checkin-present-single-student/:studentId/:studentClassAssignmentId')
     .patch(validate(undoWeekdayStudentAsPresentSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(undoMarkWeekdayStudentAsPresentHandler));
 export default teacherWeekdayAttendanceRoute;
+/** THIS API IS DEPRECATED.  */
