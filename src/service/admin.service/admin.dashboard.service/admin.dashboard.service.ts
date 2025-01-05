@@ -27,7 +27,6 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
             timetableSlots: true
         }
     });
-    console.log(currentTimetable);
     const slotMappings = currentTimetable?.timetableSlots
         .filter((slot) => slot.termSubjectLevelId !== null && slot.sectionId !== null)
         .map((slot) => ({
@@ -226,29 +225,28 @@ export async function fetchStudentsOnLeave(dateString: string) {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
 
-    const date = new Date(dateString);
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(date);
-    endDate.setHours(23, 59, 59, 999);
-
-    const studentsOnLeave = await db.classAttendance.findMany({
+    const studentsOnLeave = await db.leave.findMany({
         where: {
-            date: {
-                gte: currentDate // Changed from startDate to currentDate
-            },
-            attendanceStatus: 'LEAVE'
+            AND: [
+                {
+                    startDate: {
+                        gte: currentDate // End date should be greater than or equal to current date
+                    }
+                },
+                {
+                    status: 'APPROVED' // Only get approved leaves
+                }
+            ]
+        },
+        orderBy: {
+            startDate: 'asc' // Order by start date ascending
         },
         include: {
-            schoolCheckInAttendance: {
-                include: {
-                    student: true
-                }
-            }
+            student: true
         }
     });
-
-    return studentsOnLeave.map((attendanceRecord) => attendanceRecord.schoolCheckInAttendance.student);
+    console.log(studentsOnLeave);
+    return studentsOnLeave.map((leave) => leave.student);
 }
 export async function fetchStudentsOnAbsent(dateString: string) {
     const date = new Date(dateString);
@@ -876,7 +874,21 @@ export async function fetchWeekdayActiveCheckedInStudents(dateString: string) {
     return { activeStudents, lastFiveSchoolDay };
 }
 export async function fetchPendingLeaves() {
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
     return await db.leave.findMany({
+        where: {
+            AND: [
+                {
+                    startDate: {
+                        gte: currentDate // End date should be greater than or equal to current date
+                    }
+                },
+                {
+                    status: 'APPROVED' // Only get approved leaves
+                }
+            ]
+        },
         take: 10,
         orderBy: {
             createdAt: 'desc'
