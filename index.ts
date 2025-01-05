@@ -185,10 +185,10 @@ app.use('/api/v1/admin/attendance/checkin', adminCheckinRoute);
 app.use('/api/v1/admin/attendance/checkout', adminCheckoutRoute);
 app.use('/api/v1/admin/attendance/skip-reports', adminAttendanceRoute);
 app.use('/api/v1/teacher/attendance', teacherAttendanceRoute);
-/********** for Kirtan*********/
+/********** for Kirtan********* deprecated*********/
 app.use('/api/v1/admin-teacher/attendance/weekday/checkin', adminTeacherWeekdayCheckinRoute);
 app.use('/api/v1/teacher/attendance/weekday/class', teacherWeekdayAttendanceRoute);
-/********** for Kirtan*********/
+/********** for Kirtan********* deprecated*********/
 
 app.use('/api/v1/teacher', teacherRoute);
 app.use('/api/v1/teacher-feedback-for-student', feedbackRoute);

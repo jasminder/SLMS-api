@@ -18,7 +18,8 @@ export type FetchSchooldayTypeSchema = z.infer<typeof fetchSchooldayTypeSchema>;
 export const markStudentAsPresentSchema = z.object({
     params: z.object({
         studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
-        studentClassAssignmentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+        // studentClassAssignmentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
+        classAttendanceId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     })
 });
 export type MarkStudentAsPresentSchema = z.infer<typeof markStudentAsPresentSchema>;
@@ -72,3 +73,12 @@ export const findAutomatedMailSchema = z.object({
 });
 
 export type FindAutomatedMailSchema = z.infer<typeof findAutomatedMailSchema>;
+
+/*undo mark  student as present*/
+export const undoMarkStudentAsPresentSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Student ID is required' }),
+        classAttendanceId: z.string().min(1, { message: 'Student ID is required' })
+    })
+});
+export type UndoMarkStudentAsPresentSchema = z.infer<typeof undoMarkStudentAsPresentSchema>;

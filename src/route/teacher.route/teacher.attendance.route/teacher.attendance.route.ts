@@ -9,7 +9,8 @@ import {
     fetchSchooldayTypeHandler,
     findAutomatedMailHandler,
     getLastFiveClassAttendancesHandler,
-    markStudentAsPresentHandler
+    markStudentAsPresentHandler,
+    undoMarkStudentAsPresentHandler
 } from '../../../controller/teacher.controller/teacher.attendance.controller/teacher.attendance.controller';
 import {
     createAutomatedMailForParentsSchema,
@@ -18,7 +19,8 @@ import {
     fetchSchooldayTypeSchema,
     findAutomatedMailSchema,
     getLastFiveClassAttendancesSchema,
-    markStudentAsPresentSchema
+    markStudentAsPresentSchema,
+    undoMarkStudentAsPresentSchema
 } from '../../../schema/teacher.dto/teacher.attendance.dto/teacher.attendance.dto';
 import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
@@ -35,7 +37,7 @@ teacherAttendanceRoute
 
 /*mark presenttrue for a single studentid*/
 teacherAttendanceRoute
-    .route('/mark-single-student-as-present/:studentId/:studentClassAssignmentId')
+    .route('/mark-single-student-as-present/:studentId/:classAttendanceId')
     .patch(validate(markStudentAsPresentSchema), protectRoute, restrict('TEACHER', 'ADMIN'), asyncErrorHandler(markStudentAsPresentHandler));
 
 /* create student skip report*/
@@ -57,4 +59,10 @@ teacherAttendanceRoute
 teacherAttendanceRoute
     .route('/find-automated-email-for-parents-in-class')
     .get(validate(findAutomatedMailSchema), protectRoute, restrict('TEACHER', 'ADMIN'), asyncErrorHandler(findAutomatedMailHandler));
+
+/*undo mark student as present*/
+teacherAttendanceRoute
+    .route('/undo-mark-student-as-present/:studentId/:classAttendanceId')
+    .patch(validate(undoMarkStudentAsPresentSchema), protectRoute, restrict('TEACHER', 'ADMIN'), asyncErrorHandler(undoMarkStudentAsPresentHandler));
+
 export default teacherAttendanceRoute;

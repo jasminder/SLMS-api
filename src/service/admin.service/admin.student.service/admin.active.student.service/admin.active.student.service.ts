@@ -2921,6 +2921,9 @@ export async function findStudentAttendanceById(studentId: string) {
                 }
             },
             classAttendance: {
+                orderBy: {
+                    id: 'desc'
+                },
                 include: {
                     studentClassAssignment: {
                         include: {
@@ -3153,8 +3156,8 @@ export async function getActiveStudentsCount() {
             isActive: true,
             studentTermFee: {
                 none: {
-                    term:{
-                        currentTerm:true
+                    term: {
+                        currentTerm: true
                     }
                 }
             }

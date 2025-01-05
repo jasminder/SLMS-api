@@ -6,7 +6,8 @@ import {
     fetchSchooldayType,
     findAutomatedMail,
     getLastFiveClassAttendances,
-    markStudentAsPresent
+    markStudentAsPresent,
+    undoMarkStudentAsPresent
 } from '../../../service/teacher.service/teacher.attendance.service/teacher.attendance.service';
 import {
     CreateAutomatedMailForParentsSchema,
@@ -15,7 +16,8 @@ import {
     FetchSchooldayTypeSchema,
     FindAutomatedMailSchema,
     GetLastFiveClassAttendancesSchema,
-    MarkStudentAsPresentSchema
+    MarkStudentAsPresentSchema,
+    UndoMarkStudentAsPresentSchema
 } from '../../../schema/teacher.dto/teacher.attendance.dto/teacher.attendance.dto';
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
@@ -25,15 +27,15 @@ export const fetchCheckedInStudentsWithAttendanceHandler = async (req: Request<F
     res.status(200).json(markSchoolCheckInAttendance);
 };
 export const fetchSchooldayTypeHandler = async (req: Request<FetchSchooldayTypeSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
-    const { termSubjectLevelId} = req.params;
+    const { termSubjectLevelId } = req.params;
     const markSchoolCheckInAttendance = await fetchSchooldayType(termSubjectLevelId);
     res.status(200).json(markSchoolCheckInAttendance);
 };
 
 /*mark presenttrue for a single studentid*/
 export const markStudentAsPresentHandler = async (req: Request<MarkStudentAsPresentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
-    const { studentClassAssignmentId, studentId } = req.params;
-    const markSchoolCheckInAttendance = await markStudentAsPresent(studentId, studentClassAssignmentId);
+    const { studentId, classAttendanceId } = req.params;
+    const markSchoolCheckInAttendance = await markStudentAsPresent(studentId, classAttendanceId);
     res.status(200).json(markSchoolCheckInAttendance);
 };
 /* create student skip report*/
@@ -64,4 +66,9 @@ export const findAutomatedMailHandler = async (req: Request<{}, {}, {}, FindAuto
     const { studentIds, termSubjectLevelId, sectionId, teacherId } = req.query;
     const mails = await findAutomatedMail(studentIds, termSubjectLevelId, sectionId, teacherId);
     res.status(200).json(mails);
+};
+export const undoMarkStudentAsPresentHandler = async (req: Request<UndoMarkStudentAsPresentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId, classAttendanceId } = req.params;
+    const undoMarkStudentAsPresentResult = await undoMarkStudentAsPresent(studentId, classAttendanceId);
+    res.status(200).json(undoMarkStudentAsPresentResult);
 };

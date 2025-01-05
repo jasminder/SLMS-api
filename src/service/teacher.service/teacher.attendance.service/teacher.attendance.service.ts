@@ -122,7 +122,7 @@ export async function fetchSchooldayType(termSubjectLevelId: string) {
     });
     return schooldayType;
 }
-export async function markStudentAsPresent(studentId: string, studentClassAssignmentId: string) {
+export async function markStudentAsPresent(studentId: string, classAttendanceId: string) {
     // Update the existing ClassAttendance record to mark the student as "PRESENT"
 
     const startDate = new Date();
@@ -132,11 +132,7 @@ export async function markStudentAsPresent(studentId: string, studentClassAssign
     endDate.setHours(23, 59, 59, 999);
     const updatedClassAttendanceRecord = await db.classAttendance.updateMany({
         where: {
-            studentClassAssignmentId: +studentClassAssignmentId,
-            date: {
-                gte: startDate,
-                lte: endDate
-            },
+            id: +classAttendanceId,
             attendanceStatus: 'ABSENT',
             studentClassAssignment: {
                 studentId: +studentId
@@ -157,7 +153,39 @@ export async function markStudentAsPresent(studentId: string, studentClassAssign
     });
     return updatedClassAttendanceRecord;
 }
+export async function undoMarkStudentAsPresent(studentId: string, classAttendanceId: string) {
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
 
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+
+    const updatedClassAttendanceRecord = await db.classAttendance.updateMany({
+        where: {
+            id: +classAttendanceId,
+            attendanceStatus: 'PRESENT',
+            studentClassAssignment: {
+                studentId: +studentId
+            }
+        },
+        data: {
+            attendanceStatus: 'ABSENT'
+        }
+    });
+
+    if (!updatedClassAttendanceRecord) {
+        throw customError(`Failed to undo mark student as PRESENT.`, 'fail', 400, true);
+    }
+
+    const io = getIo();
+    io.emit('markStudentAsPresentInClass', {
+        studentId: studentId,
+        status: 'ABSENT',
+        date: new Date()
+    });
+
+    return updatedClassAttendanceRecord;
+}
 /* create student skip report*/
 export async function createSkipReport(studentId: string, teacherId: string, reason: string, className: string) {
     const startDate = new Date();
@@ -253,3 +281,5 @@ export async function findAutomatedMail(studentIds: string[], termSubjectLevelId
 
     return mails.length;
 }
+
+
