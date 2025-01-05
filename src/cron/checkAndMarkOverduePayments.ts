@@ -1,4 +1,3 @@
-import { db } from '../utils/db.server';
 const cron = require('node-cron');
 import { checkAndMarkOverduePayments } from '../service/cron.service/cron.checkAndMarkOverduePayments/cron.checkAndMarkOverduePayments';
 

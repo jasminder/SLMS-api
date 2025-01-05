@@ -201,21 +201,22 @@ model SubjectGroup {
 }
 
 model Term {
-  id                      Int                       @id @default(autoincrement())
-  isPublish               Boolean                   @default(false)
-  currentTerm             Boolean                   @default(false)
-  name                    String                    @unique
-  startDate               DateTime
-  endDate                 DateTime
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  termSubject             TermSubject[]
-  termSubjectGroup        TermSubjectGroup[]
-  termSubjectGroupSubject TermSubjectGroupSubject[]
-  studentTermFee          StudentTermFee[]
-  termSubjectLevel        TermSubjectLevel[]
-  FeeTemplate             FeeTemplate[]
-  FeeDashboard            FeeDashboard[]
+  id                         Int                       @id @default(autoincrement())
+  isPublish                  Boolean                   @default(false)
+  currentTerm                Boolean                   @default(false)
+  name                       String                    @unique
+  startDate                  DateTime
+  endDate                    DateTime
+  createdAt                  DateTime                  @default(now())
+  updatedAt                  DateTime                  @updatedAt
+  termSubject                TermSubject[]
+  termSubjectGroup           TermSubjectGroup[]
+  termSubjectGroupSubject    TermSubjectGroupSubject[]
+  studentTermFee             StudentTermFee[]
+  termSubjectLevel           TermSubjectLevel[]
+  FeeTemplate                FeeTemplate[]
+  FeeDashboard               FeeDashboard[]
+  automatedAttendanceEnabled Boolean                   @default(false)
 }
 
 model Level {

@@ -4,7 +4,7 @@ import { getIo } from '../../../sockets/socket';
 import { Day } from '@prisma/client';
 
 export async function createSchoolCheckInAttendanceForStudent(date: string) {
-    // console.log('creating reports');
+    console.log('creating reports');
     if (!date) {
         throw customError('You need to provide a date to create School Check In Attendance record.', 'fail', 404, true);
     }
@@ -23,6 +23,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         isActive: true
                     }
                 });
+                console.log('activeTimetable', activeTimetable);
                 if (!activeTimetable) {
                     throw customError('No active timetable found for today', 'fail', 404, true);
                 }
@@ -38,6 +39,10 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 });
                 const timetableSlots = allTimetableSlots.filter((slot) => slot.termSubjectLevelId !== null && slot.sectionId !== null);
+                console.log('timetableSlots', timetableSlots);
+                if (timetableSlots.length === 0) {
+                    throw customError('No classes scheduled in timetable for today', 'fail', 400, true);
+                }
                 const activeStudents = await db.student.findMany({
                     where: {
                         role: 'STUDENT',
@@ -185,48 +190,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
 
                             const classAttendanceRecords = await Promise.all(processClassAssignments);
                             // console.log('classAttendanceRecords', JSON.stringify(classAttendanceRecords));
-                        } else {
-                            // const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
-                            // const studentClassAssignments = await db.studentClassAssignment.findMany({
-                            //     where: {
-                            //         studentId: student.id,
-                            //         isCurrentlyAssigned: true,
-                            //         termSubjectLevel: {
-                            //             subject: {
-                            //                 termSubject: {
-                            //                     every: {
-                            //                         isOnSunday: true
-                            //                     }
-                            //                 }
-                            //             }
-                            //         }
-                            //     }
-                            // });
-                            // const processClassAssignments = studentClassAssignments.map(async (assignment) => {
-                            //     const existingClassAttendance = await db.classAttendance.findUnique({
-                            //         where: {
-                            //             studentClassAssignmentId_date: {
-                            //                 studentClassAssignmentId: assignment.id,
-                            //                 date: startDate
-                            //             }
-                            //         }
-                            //     });
-                            //     console.log('existingClassAttendance', JSON.stringify(existingClassAttendance));
-                            //     if (!existingClassAttendance) {
-                            //         return db.classAttendance.create({
-                            //             data: {
-                            //                 studentClassAssignmentId: assignment.id,
-                            //                 date: startDate,
-                            //                 schoolCheckInAttendanceId: existingAttendance.id,
-                            //                 attendanceStatus: attendanceStatus,
-                            //                 schoolDayId: schoolDayRecord?.id
-                            //                 // other fields if necessary
-                            //             }
-                            //         });
-                            //     }
-                            // });
-                            // await Promise.all(processClassAssignments);
-                            // console.log('existing attendance');
                         }
                     })
                 );
@@ -241,6 +204,10 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
         console.log(error.message);
         if (error.message === 'Attendance-already-created-for-today') {
             throw customError('Attendance already created for today', 'fail', 400, true);
+        } else if (error.message === 'No active timetable found for today') {
+            throw customError('No active timetable found for today', 'fail', 400, true);
+        } else if (error.message === 'No classes scheduled in timetable for today') {
+            throw customError('No classes scheduled in timetable for today', 'fail', 400, true);
         } else {
             throw customError('Generating report cannot be completed. Please check your network and try again after one minute.', 'error', 500, true);
         }
