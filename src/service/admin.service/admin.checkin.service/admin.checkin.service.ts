@@ -68,7 +68,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 });
                 // console.log('activeStudents', JSON.stringify(activeStudents));
-                console.log('timetableSlots', JSON.stringify(timetableSlots));
+                // console.log('timetableSlots', JSON.stringify(timetableSlots));
                 // console.log('timetable', JSON.stringify(activeTimetable));
                 const startDate = new Date(date);
                 startDate.setHours(0, 0, 0, 0);
