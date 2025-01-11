@@ -8,9 +8,7 @@ cron.schedule('30 7 * * 0', async () => {
     await createAutomatedSchoolCheckInAttendance();
 });
 
-
 export async function createAutomatedSchoolCheckInAttendance() {
-    console.log('createAutomatedSchoolCheckInAttendance');
     try {
         // Check if automation is enabled for current term
         const currentTerm = await db.term.findFirst({
@@ -20,17 +18,21 @@ export async function createAutomatedSchoolCheckInAttendance() {
         });
 
         if (!currentTerm?.automatedAttendanceEnabled) {
-            console.log('Automated attendance creation is disabled for current term');
             return;
         }
-        console.log('Automated attendance creation is enabled for current term');
-        console.log(currentTerm);
-        // Get today's date
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Call your existing function
-        return await createSchoolCheckInAttendanceForStudent(today);
 
+        // Get today's date
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+
+        // Check if today is after or equal to term start date
+        if (today < currentTerm.startDate) {
+            console.log('Skipping attendance creation: Current date is before term start date');
+            return;
+        }
+
+        // Call your existing function
+        return await createSchoolCheckInAttendanceForStudent(todayStr);
     } catch (error) {
         console.error('Error in automated attendance creation:', error);
         // Handle error appropriately

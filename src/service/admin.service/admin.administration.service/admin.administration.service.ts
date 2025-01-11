@@ -459,7 +459,9 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
         // Set all terms to not be the current term
         await prisma.term.updateMany({
             data: {
-                currentTerm: false
+                currentTerm: false,
+                isPublish: false,
+                automatedAttendanceEnabled: false
             }
         });
 
