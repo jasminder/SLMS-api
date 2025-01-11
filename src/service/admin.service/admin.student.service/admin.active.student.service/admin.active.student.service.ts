@@ -280,7 +280,6 @@ export async function searchActiveStudents(
     const pageNum = page ?? 0;
     const skip = pageNum * take;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
-    console.log('subjectOption', subjectOption);
     // Base where condition
     let whereCondition: Prisma.StudentWhereInput = {
         role: 'STUDENT',
@@ -3182,6 +3181,5 @@ export async function getActiveStudentsCount() {
             }
         }
     });
-    console.log(studentsCount);
     return studentsCount;
 }

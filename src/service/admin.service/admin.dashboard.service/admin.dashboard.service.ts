@@ -43,7 +43,6 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
         };
     }
 
-    console.log(slotMappings);
     const activeStudents = await db.student.findMany({
         where: {
             isActive: true,
@@ -255,7 +254,6 @@ export async function fetchStudentsOnLeave(dateString: string) {
             student: true
         }
     });
-    console.log(studentsOnLeave);
     return studentsOnLeave.map((leave) => leave.student);
 }
 export async function fetchStudentsOnAbsent(dateString: string) {
