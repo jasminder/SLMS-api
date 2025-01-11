@@ -34,12 +34,22 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
             sectionId: slot.sectionId!
         }));
 
+    // Add safety check before query
+    if (!slotMappings || slotMappings.length === 0) {
+        return {
+            activeStudents: [],
+            recentAttendance: { totalCheckedIn: [], totalCheckedOut: [], totalAbsent: [], totalLeave: [], totalPresent: [] },
+            previousAttendance: { totalCheckedIn: [], totalCheckedOut: [], totalAbsent: [], totalLeave: [], totalPresent: [] }
+        };
+    }
+
+    console.log(slotMappings);
     const activeStudents = await db.student.findMany({
         where: {
             isActive: true,
             studentClassAssignment: {
                 some: {
-                    OR: slotMappings?.map((slot) => ({
+                    OR: slotMappings.map((slot) => ({
                         AND: {
                             termSubjectLevelId: slot.termSubjectLevelId,
                             sectionId: slot.sectionId,
