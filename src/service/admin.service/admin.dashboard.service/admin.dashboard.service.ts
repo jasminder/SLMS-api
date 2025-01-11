@@ -873,6 +873,70 @@ export async function fetchWeekdayActiveCheckedInStudents(dateString: string) {
     });
     return { activeStudents, lastFiveSchoolDay };
 }
+export async function fetchKirtanAttendanceStudents(dateString: string) {
+    const date = new Date(dateString);
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        },
+        select: {
+            id: true
+        }
+    });
+    const activeStudents = await db.student.count({
+        where: {
+            isActive: true,
+            role: 'STUDENT',
+            studentTermFee: {
+                some: {
+                    termId: currentTerm?.id
+                }
+            },
+            studentClassAssignment: {
+                some: {
+                    termSubjectLevel: {
+                        subject: {
+                            name: 'Kirtan'
+                        }
+                    }
+                }
+            }
+        }
+    });
+    const lastFiveSchoolDay = await db.schoolDay.findMany({
+        where: {
+            schoolOperatedDate: {
+                lte: startDate // Less than or equal to the query date
+            }
+        },
+        include: {
+            schoolAttendances: {
+                where: {
+                    classAttendance: {
+                        some: {
+                            studentClassAssignment: {
+                                termSubjectLevel: {
+                                    subject: { name: 'Kirtan' }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        take: 5,
+        orderBy: {
+            schoolOperatedDate: 'desc'
+        }
+    });
+    return { activeStudents, lastFiveSchoolDay };
+}
+
 export async function fetchPendingLeaves() {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
