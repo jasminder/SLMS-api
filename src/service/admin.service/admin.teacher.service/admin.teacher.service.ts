@@ -308,15 +308,30 @@ export async function assignSubjectToApprovedTeacher(teacherId: string, subjectN
     return { message: 'Successfully assigned' };
 }
 export async function findSubjectsAssignedToApprovedTeacher(id: string) {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    
     const assignedSubjects = await db.teacherSubject.findMany({
         where: {
-            teacherId: +id
+            teacherId: +id,
+            subject: {
+                termSubject: {
+                    some: {
+                        term: {
+                            currentTerm: true
+                        }
+                    }
+                }
+            }
         },
         include: {
             subject: true
         }
     });
-
+    console.log(assignedSubjects);
     // Mapping to get only necessary details, if needed
     // return assignedSubjects;
     return assignedSubjects.map((assignment) => ({
