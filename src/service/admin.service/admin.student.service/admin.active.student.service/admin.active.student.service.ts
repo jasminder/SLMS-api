@@ -277,35 +277,10 @@ export async function searchActiveStudents(
     sort_dir = 'asc'
 ) {
     const take = 10;
+    const pageNum = page ?? 0;
+    const skip = pageNum * take;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
-
-    let classAssignmentFilters: Prisma.StudentClassAssignmentWhereInput[] = [];
-
-    if (subjectOption) {
-        classAssignmentFilters.push({
-            termSubjectLevel: {
-                subject: {
-                    id: +subjectOption
-                }
-            }
-        });
-    }
-
-    if (levelOption) {
-        classAssignmentFilters.push({
-            termSubjectLevel: {
-                level: {
-                    id: +levelOption
-                }
-            }
-        });
-    }
-    if (sectionOption) {
-        classAssignmentFilters.push({
-            sectionId: +sectionOption
-        });
-    }
-
+    console.log('subjectOption', subjectOption);
     // Base where condition
     let whereCondition: Prisma.StudentWhereInput = {
         role: 'STUDENT',
@@ -314,16 +289,59 @@ export async function searchActiveStudents(
             some: {
                 termId: +termId
             }
-        },
-
-        attendancePercentageValue: attendanceOption ? +attendanceOption : undefined
+        }
     };
 
-    // Only add studentClassAssignment condition if there are filters
-    if (classAssignmentFilters.length > 0) {
+    // Add attendance filter if specified
+    if (attendanceOption) {
+        whereCondition.attendancePercentageValue = +attendanceOption;
+    }
+
+    // Add subject filter - Modified to be more precise
+    if (subjectOption) {
+        whereCondition.enrollments = {
+            some: {
+                AND: [
+                    {
+                        subjectEnrollment: {
+                            termSubject: {
+                                subjectId: +subjectOption,
+                                termId: +termId
+                            }
+                        }
+                    },
+                    {
+                        termSubjectGroup: {
+                            termId: +termId
+                        }
+                    }
+                ]
+            }
+        };
+    }
+
+    // Add level filter
+    if (levelOption) {
         whereCondition.studentClassAssignment = {
             some: {
-                AND: classAssignmentFilters
+                termSubjectLevel: {
+                    levelId: +levelOption,
+                    termId: +termId
+                },
+                isCurrentlyAssigned: true
+            }
+        };
+    }
+
+    // Add section filter
+    if (sectionOption) {
+        whereCondition.studentClassAssignment = {
+            some: {
+                sectionId: +sectionOption,
+                isCurrentlyAssigned: true,
+                termSubjectLevel: {
+                    termId: +termId
+                }
             }
         };
     }
@@ -355,9 +373,6 @@ export async function searchActiveStudents(
             }
         ];
     }
-
-    const pageNum: number = page ?? 0;
-    const skip = pageNum * take;
 
     const activeStudents = await db.student.findMany({
         skip,
