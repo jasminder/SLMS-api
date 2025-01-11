@@ -265,8 +265,6 @@ export async function findActiveStudentsWithNoSubjects(page: number, termId: num
     return { activeStudents, count, studentsWithNoSubjects };
 }
 
-// search active student for the admin
-
 export async function searchActiveStudents(
     search = '',
     page: number,
@@ -312,6 +310,12 @@ export async function searchActiveStudents(
     let whereCondition: Prisma.StudentWhereInput = {
         role: 'STUDENT',
         isActive: true,
+        studentTermFee: {
+            some: {
+                termId: +termId
+            }
+        },
+
         attendancePercentageValue: attendanceOption ? +attendanceOption : undefined
     };
 
