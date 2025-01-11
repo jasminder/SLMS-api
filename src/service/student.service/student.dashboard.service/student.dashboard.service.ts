@@ -200,7 +200,12 @@ export async function fetchStudentAssignments(studentId: number) {
     console.log(studentId);
     const studentAssignments = await db.studentClassAssignment.findMany({
         where: {
-            studentId: studentId
+            studentId: studentId,
+            termSubjectLevel: {
+                term: {
+                    currentTerm: true
+                }
+            }
         },
         include: {
             termSubjectLevel: {
