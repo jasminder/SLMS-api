@@ -503,6 +503,11 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
             select: { id: true, akaalId: true }
         });
 
+        //delete all student notice acknowledgement
+        await prisma.studentNoticeAcknowledgement.deleteMany();
+
+        // Then delete all StudentNotice records
+        await prisma.studentNotice.deleteMany();
         const studentsToUpdateAttendance = await prisma.student.findMany({
             where: {
                 role: 'STUDENT',
