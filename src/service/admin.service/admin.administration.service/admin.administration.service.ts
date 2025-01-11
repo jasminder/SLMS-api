@@ -912,6 +912,7 @@ export async function findPublishTermAdministration() {
             name: true,
             isPublish: true,
             currentTerm: true,
+            automatedAttendanceEnabled: true,
             startDate: true,
             endDate: true,
             createdAt: true,
