@@ -481,7 +481,6 @@ export async function fetchSchoolCheckInAttendance() {
                             }
                         }
                     },
-
                     personalDetails: {
                         select: {
                             firstName: true,
@@ -896,14 +895,8 @@ export async function toggleAutomatedAttendance(termId: string, enabled: boolean
             message: `Automated attendance ${enabled ? 'enabled' : 'disabled'} for term ${term.name}`,
             data: updatedTerm
         };
-
     } catch (error: any) {
         console.error('Error toggling automated attendance:', error);
-        throw customError(
-            error.message || 'Failed to update automated attendance setting',
-            'error',
-            error.statusCode || 500,
-            true
-        );
+        throw customError(error.message || 'Failed to update automated attendance setting', 'error', error.statusCode || 500, true);
     }
 }
