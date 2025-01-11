@@ -3,7 +3,7 @@ import { db } from '../../../utils/db.server';
 export async function fetchStudentHomework(studentId: number, termSubjectLevelId: number, sectionId: number) {
     const currentTerm = await db.term.findFirst({
         where: { currentTerm: true },
-        select: { startDate: true }
+        // select: { startDate: true }
     });
 
     if (!currentTerm) {
@@ -20,13 +20,7 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
                 where: {
                     homework: {
                         termSubjectLevelId: termSubjectLevelId,
-                        sectionId: sectionId,
-                        createdAt: {
-                            gte: startDate
-                        }
-                    },
-                    createdAt: {
-                        gte: startDate
+                        sectionId: sectionId
                     }
                 },
                 include: {
@@ -37,13 +31,7 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
                 where: {
                     classwork: {
                         termSubjectLevelId: termSubjectLevelId,
-                        sectionId: sectionId,
-                        createdAt: {
-                            gte: startDate
-                        }
-                    },
-                    createdAt: {
-                        gte: startDate
+                        sectionId: sectionId
                     }
                 },
                 include: {
@@ -53,10 +41,7 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
             feedback: {
                 where: {
                     termSubjectLevelId: termSubjectLevelId,
-                    sectionId: sectionId,
-                    createdAt: {
-                        gt: startDate
-                    }
+                    sectionId: sectionId
                 }
             }
         }
@@ -73,9 +58,7 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
     const schoolCA = await db.schoolCheckInAttendance.findMany({
         where: {
             studentId,
-            date: {
-                gt: startDate
-            }
+            
         },
         select: {
             date: true,
