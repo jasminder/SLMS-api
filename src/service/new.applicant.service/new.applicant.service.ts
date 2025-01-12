@@ -145,6 +145,7 @@ export async function findPublishTerm() {
             name: true,
             isPublish: true,
             currentTerm: true,
+            automatedAttendanceEnabled: true,
             startDate: true,
             endDate: true,
             createdAt: true,
