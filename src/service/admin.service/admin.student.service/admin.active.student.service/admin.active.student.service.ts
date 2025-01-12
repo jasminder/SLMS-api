@@ -1,7 +1,7 @@
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 import { ActiveStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
-import { PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
+import { Day, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import { getIo } from '../../../../sockets/socket';
 
 type AttendanceFilter = {
@@ -2288,7 +2288,192 @@ export async function assignClassToStudent(studentId: string, termId: string, su
         }
     });
 
+    // After successful assignment, create attendance for today. This
+    //is done so that when a new student is added to a class, the attendance is created for the current day.
+    const today = new Date().toISOString().split('T')[0];
+    await createAttendanceForSingleStudent(studentId, today);
+
     return { message: 'Class assigned successfully' };
+}
+
+export async function createAttendanceForSingleStudent(studentId: string, date: string) {
+    try {
+        const transaction = await db.$transaction(
+            async (db) => {
+                // Get current day and term
+                const currentDay = new Date().toLocaleString('en-us', { weekday: 'long' }).toUpperCase() as unknown as Day;
+                const currentTerm = await db.term.findFirst({
+                    where: { currentTerm: true }
+                });
+
+                // Get active timetable
+                const activeTimetable = await db.timetable.findFirst({
+                    where: {
+                        day: currentDay,
+                        isActive: true
+                    }
+                });
+
+                if (!activeTimetable) {
+                    throw customError('No active timetable found for today', 'fail', 404, true);
+                }
+
+                // Get timetable slots
+                const allTimetableSlots = await db.timetableSlot.findMany({
+                    where: { timetableId: activeTimetable.id },
+                    select: {
+                        termSubjectLevelId: true,
+                        sectionId: true
+                    }
+                });
+
+                const timetableSlots = allTimetableSlots.filter((slot) => slot.termSubjectLevelId !== null && slot.sectionId !== null);
+
+                if (timetableSlots.length === 0) {
+                    throw customError('No classes scheduled in timetable for today', 'fail', 400, true);
+                }
+
+                // Get student data
+                const student = await db.student.findFirst({
+                    where: {
+                        id: +studentId,
+                        role: 'STUDENT',
+                        isActive: true,
+                        studentTermFee: {
+                            some: { termId: currentTerm?.id }
+                        },
+                        studentClassAssignment: {
+                            some: {
+                                OR: timetableSlots.map((slot) => ({
+                                    AND: [{ termSubjectLevelId: slot.termSubjectLevelId ?? undefined }, { sectionId: slot.sectionId ?? undefined }]
+                                }))
+                            }
+                        }
+                    },
+                    include: {
+                        studentClassAssignment: {
+                            where: { isCurrentlyAssigned: true },
+                            include: {
+                                termSubjectLevel: true,
+                                section: true
+                            }
+                        }
+                    }
+                });
+
+                if (!student) {
+                    throw customError('Student not found or not active', 'fail', 404, true);
+                }
+
+                // Set up date range
+                const startDate = new Date(date);
+                startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(date);
+                endDate.setHours(23, 59, 59, 999);
+
+                // Get or create school day record
+                let schoolDayRecord = await db.schoolDay.findFirst({
+                    where: { schoolOperatedDate: startDate }
+                });
+
+                if (!schoolDayRecord) {
+                    schoolDayRecord = await db.schoolDay.create({
+                        data: { schoolOperatedDate: startDate }
+                    });
+                }
+
+                // Check for existing attendance
+                const existingAttendance = await db.schoolCheckInAttendance.findFirst({
+                    where: {
+                        studentId: student.id,
+                        date: {
+                            gte: startDate,
+                            lte: endDate
+                        }
+                    }
+                });
+
+                if (existingAttendance) {
+                    throw customError('Attendance already exists for this student today', 'fail', 400, true);
+                }
+
+                // Check for leave
+                const leaveRecord = await db.leave.findFirst({
+                    where: {
+                        studentId: student.id,
+                        startDate: { lte: new Date(date) },
+                        endDate: { gte: new Date(date) },
+                        status: 'APPROVED'
+                    }
+                });
+
+                const isOnLeave = !!leaveRecord;
+                const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
+
+                // Create new attendance record
+                const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
+                    where: { studentId: student.id, isOnLeave: false },
+                    orderBy: { date: 'desc' },
+                    take: 2
+                });
+
+                let newAttendanceValue = 0;
+                const countMarkedAndCheckedIn = recentAttendanceRecords.filter((record) => record.isMarked && record.checkedIn).length;
+
+                if (countMarkedAndCheckedIn === 2) newAttendanceValue = 2;
+                else if (countMarkedAndCheckedIn === 1) newAttendanceValue = 1;
+
+                const newAttendanceRecord = await db.schoolCheckInAttendance.create({
+                    data: {
+                        studentId: student.id,
+                        date: new Date(date),
+                        schoolDayId: schoolDayRecord?.id,
+                        attendanceValue: newAttendanceValue,
+                        isOnLeave
+                    }
+                });
+
+                // Create class attendance records
+                const studentClassAssignments = await db.studentClassAssignment.findMany({
+                    where: {
+                        studentId: student.id,
+                        isCurrentlyAssigned: true,
+                        termSubjectLevel: {
+                            termId: currentTerm?.id
+                        },
+                        OR: timetableSlots.map((slot) => ({
+                            AND: [{ termSubjectLevelId: slot.termSubjectLevelId ?? undefined }, { sectionId: slot.sectionId ?? undefined }]
+                        }))
+                    }
+                });
+
+                await Promise.all(
+                    studentClassAssignments.map(async (assignment) => {
+                        return db.classAttendance.create({
+                            data: {
+                                studentClassAssignmentId: assignment.id,
+                                date: startDate,
+                                schoolCheckInAttendanceId: newAttendanceRecord.id,
+                                attendanceStatus: attendanceStatus,
+                                schoolDayId: schoolDayRecord?.id
+                            }
+                        });
+                    })
+                );
+
+                return newAttendanceRecord;
+            },
+            { timeout: 30000 }
+        );
+
+        return transaction;
+    } catch (error: any) {
+        console.error('Error creating attendance:', error);
+        if (error.message.includes('already exists')) {
+            throw customError(error.message, 'fail', 400, true);
+        }
+        throw customError('Failed to create attendance. Please try again.', 'error', 500, true);
+    }
 }
 
 /****** * remove/ delete  class for  student*****/
