@@ -46,10 +46,22 @@ export const createCheckoutSession = async (feePaymentId: string, amount: number
     return session;
 };
 export const handlePaymentSuccess = async (paymentIntent: Stripe.PaymentIntent) => {
+    // Check if feePaymentId exists in metadata
+    if (!paymentIntent.metadata?.feePaymentId) {
+        console.log('Test webhook received - no feePaymentId in metadata');
+        return; // Exit gracefully for test webhooks
+    }
 
     const feePaymentId = paymentIntent.metadata.feePaymentId;
-    const transactionId = paymentIntent.id; // Stripe's payment intent ID
+    const transactionId = paymentIntent.id;
     const paidAmount = paymentIntent.amount_received;
+
+    // Validate feePaymentId is a number
+    if (isNaN(+feePaymentId)) {
+        console.log('Invalid feePaymentId format:', feePaymentId);
+        return;
+    }
+
     const feePayment = await db.feePayment.findUnique({
         where: {
             id: +feePaymentId
