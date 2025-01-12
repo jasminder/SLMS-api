@@ -28,9 +28,18 @@ async function calculateTermAttendance() {
             const students = await db.student.findMany({
                 where: {
                     role: 'STUDENT',
-                    isActive: true
+                    isActive: true,
+                    studentClassAssignment: {
+                        some: {
+                            termSubjectLevel: {
+                                termId: currentTerm?.id
+                            }
+                        }
+                    }
                 },
                 include: {
+
+                    //this is to get the attendance of the student for after the current term start date. So that we can calculate the attendance percentage for the current term.
                     schoolCheckInAttendance: {
                         where: {
                             date: {
@@ -86,5 +95,3 @@ async function calculateTermAttendance() {
         }
     }
 }
-
-// Call the function or set it to be called by a scheduler
