@@ -432,26 +432,11 @@ export async function enrollApplicant(enrollData: ApplicantEnrollDataSchema['bod
                 },
                 select: { id: true }
             });
-            // const existingFeePayment = await db.feePayment.findFirst({
-            //     where: {
-            //         studentTermFeeId: studentTermFee.id,
-            //         feeId: feeInfo.feeId
-            //     }
-            // });
-            // if (!existingFeePayment) {
-            //     await db.feePayment.create({
-            //         data: {
-            //             feeId: feeInfo.feeId,
-            //             studentTermFeeId: studentTermFee.id,
-            //             dueDate: feeInfo?.enrollment?.find((en) => en.termSubjectGroupId === termSubjectGroupId)?.dueDate || new Date(),
-            //             amountPaid: 0,
-            //             dueAmount: feeInfo.fee?.amount || 0,
-            //             status: 'PENDING',
-            //             method: 'NA',
-            //             feeAmount: feeInfo.fee?.amount || 0
-            //         }
-            //     });
-            // }
+            await db.student.update({
+                where: { id: enrollData.applicantId },
+                data: { hasSeenNewApplication: true }
+            });
+        
         }
     }
 
