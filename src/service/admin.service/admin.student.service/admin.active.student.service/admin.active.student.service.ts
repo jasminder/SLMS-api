@@ -2927,7 +2927,7 @@ export async function findStudentAttendanceById(studentId: string) {
             student: {
                 id: +studentId
             },
-            //this is to get the attendance of the student for after the current term start date. So that we can calculate the attendance percentage for the current term.
+            //
             date: {
                 gte: currentTerm?.startDate
             }
