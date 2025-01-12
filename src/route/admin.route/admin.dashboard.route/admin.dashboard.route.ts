@@ -15,12 +15,12 @@ import {
 import {
     fetchActiveCheckedInStudentsHandler,
     fetchCheckedOutStudentsHandler,
+    fetchKirtanAttendanceStudentsHandler,
     fetchPendingLeavesHandler,
     fetchStudentsOnAbsentHandler,
     fetchStudentsOnAttendanceHandler,
     fetchStudentsOnLeaveHandler,
     fetchUnviewedApplicantsHandler,
-    fetchWeekdayActiveCheckedInStudentsHandler,
     findActiveStudentsWithFlagsHandler,
     searchActiveStudentsWithFlagsHandler
 } from '../../../controller/admin.controller/admin.dashboard.controller/admin.dashboard.controller';
@@ -41,8 +41,8 @@ adminDashboardRoute
     .route('/student/active/search-active-students-with-flags')
     .get(validate(searchActiveStudentsWithFlagsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsWithFlagsHandler));
 adminDashboardRoute
-    .route('/fetch-weekday-active-checked-in-students')
-    .get(validate(fetchActiveCheckedInStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchWeekdayActiveCheckedInStudentsHandler));
+    .route('/fetch-kirtan-attendance-students')
+    .get(validate(fetchActiveCheckedInStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchKirtanAttendanceStudentsHandler));
 adminDashboardRoute.route('/new-students-leaves/pending').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchPendingLeavesHandler));
 adminDashboardRoute.route('/applicants/unviewed').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchUnviewedApplicantsHandler));
 

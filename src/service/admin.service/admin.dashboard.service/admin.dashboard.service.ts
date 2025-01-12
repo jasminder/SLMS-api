@@ -893,7 +893,8 @@ export async function fetchKirtanAttendanceStudents(dateString: string) {
             currentTerm: true
         },
         select: {
-            id: true
+            id: true,
+            startDate: true
         }
     });
     const activeStudents = await db.student.count({
@@ -919,7 +920,8 @@ export async function fetchKirtanAttendanceStudents(dateString: string) {
     const lastFiveSchoolDay = await db.schoolDay.findMany({
         where: {
             schoolOperatedDate: {
-                lte: startDate // Less than or equal to the query date
+                lte: startDate,
+                gte: currentTerm?.startDate
             }
         },
         include: {
