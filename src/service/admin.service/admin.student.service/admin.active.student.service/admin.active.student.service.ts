@@ -2288,11 +2288,6 @@ export async function assignClassToStudent(studentId: string, termId: string, su
         }
     });
 
-    // After successful assignment, create attendance for today. This
-    //is done so that when a new student is added to a class, the attendance is created for the current day.
-    const today = new Date().toISOString().split('T')[0];
-    await createAttendanceForSingleStudent(studentId, today);
-
     return { message: 'Class assigned successfully' };
 }
 
