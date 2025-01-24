@@ -21,52 +21,51 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
     const normalizedDOB = startOfDay(melbourneDOB);
     const formattedDOB = format(normalizedDOB, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", { timeZone: melbourneTimeZone });
     const DOBDate = formattedDOB;
-    const dobDateOnly = format(normalizedDOB, 'yyyy-MM-dd', { timeZone: melbourneTimeZone });
-    const startOfDayUTC = new Date(Date.UTC(normalizedDOB.getUTCFullYear(), normalizedDOB.getUTCMonth(), normalizedDOB.getUTCDate()));
-    const endOfDayUTC = new Date(Date.UTC(normalizedDOB.getUTCFullYear(), normalizedDOB.getUTCMonth(), normalizedDOB.getUTCDate(), 23, 59, 59, 999));
 
-    const existingStudent = await db.personalDetails.findFirst({
+    // Convert the input DOB to a Date object and extract the UTC date parts
+    const dobUTC = new Date(DOB);
+    const dobDateOnlyUTC = `${dobUTC.getUTCFullYear()}-${(dobUTC.getUTCMonth() + 1).toString().padStart(2, '0')}-${dobUTC.getUTCDate().toString().padStart(2, '0')}`;
+
+    // Find existing student by first and last name, then compare DOB considering timezone
+    const existingStudents = await db.personalDetails.findMany({
         where: {
             firstName: {
-                equals: firstName,
+                equals: firstName.trim(),
                 mode: 'insensitive'
             },
             lastName: {
-                equals: lastName,
+                equals: lastName.trim(),
                 mode: 'insensitive'
-            },
-            OR: [
-                {
-                    DOB: {
-                        gte: new Date(`${dobDateOnly}T00:00:00.000Z`),
-                        lte: new Date(`${dobDateOnly}T23:59:59.999Z`)
-                    }
-                },
-                {
-                    DOB: {
-                        gte: startOfDayUTC,
-                        lte: endOfDayUTC
-                    }
-                }
-            ]
-        },
-        include: {
-            student: {
-                select: {
-                    role: true
-                }
             }
         }
     });
-    if (existingStudent?.email) {
-        if (existingStudent.student.role == 'APPLICANT') {
-            throw customError(`The name, DOB given is already used for submitting an application. `, 'fail', 404, true);
-        } else if (existingStudent.student.role == 'STUDENT') {
-            throw customError(`The name, DOB given belongs to an existing student. `, 'fail', 404, true);
-        } else if (existingStudent.student.role == 'ALUMNI') {
-            throw customError(`The name, DOB given belongs to an alumni. please contact the school. `, 'fail', 404, true);
+
+    if (existingStudents.length > 0) {
+        for (const student of existingStudents) {
+            const studentDOB = new Date(student.DOB);
+            console.log(studentDOB, "studentDOB")
+            console.log(dobDateOnlyUTC,"dobDateOnlyUTC")
+            const studentDOBInMelbourne = new Date(studentDOB.toLocaleString('en-US', { timeZone: melbourneTimeZone }));
+            const studentDOBDateOnly = `${studentDOBInMelbourne.getFullYear()}-${(studentDOBInMelbourne.getMonth() + 1).toString().padStart(2, '0')}-${studentDOBInMelbourne
+                .getDate()
+                .toString()
+                .padStart(2, '0')}`;
+            console.log(studentDOBDateOnly, "studentDOBDateOnly")
+            console.log(dobDateOnlyUTC, "dobDateOnlyUTC")
+            if (studentDOBDateOnly === dobDateOnlyUTC) {
+                throw customError(`The name, DOB given is already used for submitting an application. `, 'fail', 404, true);
+            }
         }
     }
+    // if (existingStudent?.email) {
+    //     if (existingStudent.student.role == 'APPLICANT') {
+    //         throw customError(`The name, DOB given is already used for submitting an application. `, 'fail', 404, true);
+    //     } else if (existingStudent.student.role == 'STUDENT') {
+    //         throw customError(`The name, DOB given belongs to an existing student. `, 'fail', 404, true);
+    //     } else if (existingStudent.student.role == 'ALUMNI') {
+    //         throw customError(`The name, DOB given belongs to an alumni. please contact the school. `, 'fail', 404, true);
+    //     }
+    // }
     try {
         const student = await db.student.create({
             data: {
