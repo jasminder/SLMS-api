@@ -2,6 +2,7 @@ import { CreateSchoolTimetableSchema, TimeTableSchema, UpdateTimeTableSchema, Up
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
 import { Day, Prisma } from '@prisma/client';
+import moment from 'moment-timezone';
 
 /************* old time table json *************/
 export async function createTimetable(createTimetableData: TimeTableSchema['body']) {
@@ -116,8 +117,10 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
         for (const slot of data.data) {
             let startTime, endTime;
             try {
-                startTime = new Date(slot.startTime);
-                endTime = new Date(slot.endTime);
+                // Assume timezone is provided in the slot data or from user's settings
+                const timezone = 'Australia/Melbourne'; // Default to Melbourne if not specified
+                startTime = adjustTimeToSpecifiedTimezone(slot.startTime, timezone);
+                endTime = adjustTimeToSpecifiedTimezone(slot.endTime, timezone);
 
                 if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
                     throw new Error('Invalid date');
@@ -203,6 +206,11 @@ function formatTime(time: string): string {
     } catch (error) {
         throw new Error(`Invalid time format: ${time}`);
     }
+}
+
+function adjustTimeToSpecifiedTimezone(dateTimeString: string, timezone: string): Date {
+    // Parse the date in the given timezone and then convert it to a JavaScript Date object
+    return moment.tz(dateTimeString, timezone).toDate();
 }
 
 interface Room {
