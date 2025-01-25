@@ -18,6 +18,7 @@ import {
     fetchRecentSchoolAttendanceSchema,
     findActiveStudentEnrolledSubjectsSchema,
     findAllActiveStudentsSchema,
+    findCurrentTermToAssignClassSchema,
     findLeaveByIdSchema,
     findStudentAttendanceByIdSchema,
     findStudentFeeDetailsSchema,
@@ -52,6 +53,7 @@ import {
     findActiveStudentByIdHandler,
     findActiveStudentEnrolledSubjectsHandler,
     findActiveStudentsHandler,
+    findCurrentTermToAssignClassByIdHandler,
     findActiveStudentsWithNoSubjectsHandler,
     findCurrentTermToAssignClassHandler,
     findFeePaymentByIdHandler,
@@ -159,6 +161,9 @@ adminActiveStudentRoute
 
 // find current term for assign classes to active students
 adminActiveStudentRoute.route('/find-current-term-to-assign-class').get(protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findCurrentTermToAssignClassHandler));
+
+// find current term for assign classes to active students by id
+adminActiveStudentRoute.route('/find-current-term-to-assign-class-by-id/:id').get(validate(findCurrentTermToAssignClassSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findCurrentTermToAssignClassByIdHandler));
 
 /****** * assign class to student*****/
 adminActiveStudentRoute

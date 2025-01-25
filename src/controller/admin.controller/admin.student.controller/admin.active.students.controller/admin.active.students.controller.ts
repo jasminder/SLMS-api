@@ -19,6 +19,7 @@ import {
     findActiveStudents,
     findActiveStudentsWithNoSubjects,
     findCurrentTermToAssignClass,
+    findCurrentTermToAssignClassById,
     findFeePaymentById,
     findLeaveById,
     findStudentAttendanceById,
@@ -53,6 +54,7 @@ import {
     FetchRecentSchoolAttendanceSchema,
     FindActiveStudentEnrolledSubjectsSchema,
     FindAllActiveStudentsSchema,
+    FindCurrentTermToAssignClassSchema,
     FindLeaveByIdSchema,
     FindStudentAttendanceByIdSchema,
     FindStudentFeeDetailsSchemaSchema,
@@ -234,7 +236,11 @@ export const findCurrentTermToAssignClassHandler = async (req: Request<{}, {}, {
     const currentTerm = await findCurrentTermToAssignClass();
     res.status(200).json(currentTerm);
 };
-
+export const findCurrentTermToAssignClassByIdHandler = async (req: Request<FindCurrentTermToAssignClassSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const currentTerm = await findCurrentTermToAssignClassById(id);
+    res.status(200).json(currentTerm);
+};
 //AssignClassToStudentSchema
 /****** * assign class to student*****/
 export const assignClassToStudentHandler = async (req: Request<AssignClassToStudentSchema['params'], {}, AssignClassToStudentSchema['body'], {}>, res: Response, next: NextFunction) => {

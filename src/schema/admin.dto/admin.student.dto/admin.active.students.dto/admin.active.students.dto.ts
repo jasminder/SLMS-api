@@ -157,6 +157,14 @@ export const findActiveStudentEnrolledSubjectsSchema = z.object({
 });
 export type FindActiveStudentEnrolledSubjectsSchema = z.infer<typeof findActiveStudentEnrolledSubjectsSchema>;
 
+// find current term for assign classes to active students
+export const findCurrentTermToAssignClassSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type FindCurrentTermToAssignClassSchema = z.infer<typeof findCurrentTermToAssignClassSchema>;
+
 /****** * assign class to student*****/
 export const assignClassToStudentSchema = z.object({
     params: z.object({

@@ -2189,6 +2189,48 @@ export const findCurrentTermToAssignClass = async () => {
     return currentTerm;
 };
 
+//find current term for assign classes to active students based on ID
+export const findCurrentTermToAssignClassById = async (id: string) => {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            id: +id
+        },
+        select: {
+            id: true,
+            name: true,
+            isPublish: true,
+            currentTerm: true,
+            startDate: true,
+            endDate: true,
+            createdAt: true,
+            updatedAt: true,
+            termSubject: {
+                select: {
+                    id: true,
+                    subject: true,
+                    level: true,
+                    termSubjectGroup: true
+                }
+            },
+            termSubjectLevel: {
+                include: {
+                    sections: {
+                        select: { name: true, id: true }
+                    },
+                    level: { select: { name: true } },
+                    subject: { select: { name: true } }
+                }
+            }
+        }
+    });
+
+    if (!currentTerm) {
+        throw customError(`Current Term could not found. Please try again later`, 'fail', 404, true);
+    }
+
+    return currentTerm;
+};
+
 /****** * assign class to student*****/
 export async function assignClassToStudent(studentId: string, termId: string, subjectName: string, levelName: string, sectionName: string) {
     // Find Subject ID
