@@ -15,6 +15,7 @@ import {
     fetchLeavesForStudent,
     fetchRecentSchoolAttendanceForStudent,
     findActiveStudentById,
+    findActiveStudentByIdWithoutSubjects,
     findActiveStudentEnrolledSubjects,
     findActiveStudents,
     findActiveStudentsWithNoSubjects,
@@ -59,6 +60,7 @@ import {
     FindStudentAttendanceByIdSchema,
     FindStudentFeeDetailsSchemaSchema,
     FindTermSubjectGroupIdEnrolledSubjectsSchema,
+    FindUniqueActiveStudentWithoutSubjectsSchema,
     FindUniqueActiveStudentSchema,
     FindUniqueFeePaymentSchema,
     GetPaymentsByFeePaymentIdSchema,
@@ -160,6 +162,11 @@ export const findActiveStudentByIdHandler = async (req: Request<FindUniqueActive
     const { id } = req.params;
     const { termId } = req.query;
     const student = await findActiveStudentById(id, termId);
+    res.status(200).json(student);
+};
+export const findActiveStudentByIdWithoutSubjectsHandler = async (req: Request<FindUniqueActiveStudentWithoutSubjectsSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const student = await findActiveStudentByIdWithoutSubjects(id);
     res.status(200).json(student);
 };
 export const findStudentFeeDetailsHandler = async (

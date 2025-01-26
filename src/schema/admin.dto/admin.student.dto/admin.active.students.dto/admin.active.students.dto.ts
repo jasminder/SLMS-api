@@ -11,6 +11,13 @@ export const findUniqueActiveStudentSchema = z.object({
 });
 export type FindUniqueActiveStudentSchema = z.infer<typeof findUniqueActiveStudentSchema>;
 
+export const findUniqueActiveStudentWithoutSubjectsSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type FindUniqueActiveStudentWithoutSubjectsSchema = z.infer<typeof findUniqueActiveStudentWithoutSubjectsSchema>;
+
 //To find all active students for Admin
 export const findAllActiveStudentsSchema = z.object({
     query: z.object({
@@ -263,7 +270,7 @@ export const findStudentAttendanceByIdSchema = z.object({
     }),
     query: z.object({
         termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
-    }),
+    })
 });
 
 export type FindStudentAttendanceByIdSchema = z.infer<typeof findStudentAttendanceByIdSchema>;

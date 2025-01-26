@@ -1538,6 +1538,9 @@ export async function findActiveStudentById(id: string, termId: string) {
         }
     });
     const isSelectedTermCurrent = currentTerm?.id === +termId;
+    console.log('isSelectedTermCurrent', isSelectedTermCurrent);
+    console.log('termId', termId);
+    console.log('currentTerm?.id', currentTerm?.id);
     const activeStudent = await db.student.findUnique({
         where: {
             id: +id,
@@ -1548,6 +1551,157 @@ export async function findActiveStudentById(id: string, termId: string) {
                     termId: +termId
                 }
             }
+        },
+        include: {
+            personalDetails: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    punjabiName: true,
+                    DOB: true,
+                    gender: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    state: true,
+                    country: true,
+                    postcode: true,
+                    image: true
+                }
+            },
+            parentsDetails: {
+                select: {
+                    id: true,
+                    fatherName: true,
+                    motherName: true,
+                    parentEmail: true,
+                    parentContact: true
+                }
+            },
+            emergencyContact: {
+                select: {
+                    id: true,
+                    contactPerson: true,
+                    contactNumber: true,
+                    relationship: true
+                }
+            },
+            healthInformation: {
+                select: {
+                    id: true,
+                    medicareNumber: true,
+                    ambulanceMembershipNumber: true,
+                    medicalCondition: true,
+                    allergy: true
+                }
+            },
+            otherInformation: {
+                select: {
+                    id: true,
+                    otherInfo: true,
+                    declaration: true
+                }
+            },
+            enrollments: {
+                select: {
+                    subjectEnrollment: true,
+                    createdAt: true
+                }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
+            }
+        }
+    });
+    console.log(activeStudent);
+    const siblings = await db.student.findMany({
+        where: {
+            personalDetails: {
+                email: activeStudent?.personalDetails?.email
+            },
+
+            NOT: {
+                id: +id // Exclude the current student
+            }
+        },
+        include: {
+            personalDetails: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    DOB: true,
+                    gender: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    state: true,
+                    country: true,
+                    postcode: true,
+                    image: true
+                }
+            },
+            parentsDetails: {
+                select: {
+                    id: true,
+                    fatherName: true,
+                    motherName: true,
+                    parentEmail: true,
+                    parentContact: true
+                }
+            },
+            emergencyContact: {
+                select: {
+                    id: true,
+                    contactPerson: true,
+                    contactNumber: true,
+                    relationship: true
+                }
+            },
+            healthInformation: {
+                select: {
+                    id: true,
+                    medicareNumber: true,
+                    ambulanceMembershipNumber: true,
+                    medicalCondition: true,
+                    allergy: true
+                }
+            },
+            otherInformation: {
+                select: {
+                    id: true,
+                    otherInfo: true,
+                    declaration: true
+                }
+            },
+            enrollments: {
+                select: {
+                    subjectEnrollment: true,
+                    createdAt: true
+                }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
+            }
+        }
+    });
+
+    return { activeStudent, siblings };
+}
+
+export async function findActiveStudentByIdWithoutSubjects(id: string) {
+    const activeStudent = await db.student.findUnique({
+        where: {
+            id: +id,
+            role: 'STUDENT',
+            isActive: true
         },
         include: {
             personalDetails: {
@@ -1691,6 +1845,7 @@ export async function findActiveStudentById(id: string, termId: string) {
 
     return { activeStudent, siblings };
 }
+
 export async function findStudentFeeDetails(studentId: number, termId: number) {
     const studentTermFees = await db.feePayment.findMany({
         where: {
