@@ -280,10 +280,16 @@ export async function searchActiveStudents(
     const pageNum = page ?? 0;
     const skip = pageNum * take;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    const isSelectedTermCurrent = currentTerm?.id === +termId;
     // Base where condition
     let whereCondition: Prisma.StudentWhereInput = {
-        role: 'STUDENT',
-        isActive: true,
+        role: isSelectedTermCurrent ? 'STUDENT' : undefined,
+        isActive: isSelectedTermCurrent ? true : undefined,
         studentTermFee: {
             some: {
                 termId: +termId
@@ -1525,12 +1531,23 @@ export async function selectActiveStudentsWithNoSubjects(search = '', page: numb
 }
 
 // find unqiue student by ID for internal queries
-export async function findActiveStudentById(id: string) {
+export async function findActiveStudentById(id: string, termId: string) {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    const isSelectedTermCurrent = currentTerm?.id === +termId;
     const activeStudent = await db.student.findUnique({
         where: {
             id: +id,
-            role: 'STUDENT',
-            isActive: true
+            role: isSelectedTermCurrent ? 'STUDENT' : undefined,
+            isActive: isSelectedTermCurrent ? true : undefined,
+            studentTermFee: {
+                some: {
+                    termId: +termId
+                }
+            }
         },
         include: {
             personalDetails: {
@@ -2537,14 +2554,12 @@ export async function deleteClassAssignment(id: string) {
 }
 
 /*get all classes for students*/
-export async function findUniqueStudentClassDetails(studentId: string) {
+export async function findUniqueStudentClassDetails(studentId: string, termId: string) {
     const studentClassAssignmentRecords = await db.studentClassAssignment.findMany({
         where: {
             studentId: +studentId,
             termSubjectLevel: {
-                term: {
-                    currentTerm: true
-                }
+                termId: +termId
             }
         },
         include: {
@@ -3136,14 +3151,13 @@ export async function findStudentAttendanceById1(studentId: string) {
 
     return attendance;
 }
-export async function findStudentAttendanceById(studentId: string) {
-    const currentTerm = await db.term.findFirst({
+export async function findStudentAttendanceById(studentId: string, termId: string) {
+    const selectedTerm = await db.term.findUnique({
         where: {
-            currentTerm: true
+            id: +termId
         }
     });
 
-    // if (!currentTerm) return [];
     const attendance = await db.schoolCheckInAttendance.findMany({
         where: {
             student: {
@@ -3151,7 +3165,7 @@ export async function findStudentAttendanceById(studentId: string) {
             },
             //
             date: {
-                gte: currentTerm?.startDate
+                gte: selectedTerm?.startDate
             }
         },
 

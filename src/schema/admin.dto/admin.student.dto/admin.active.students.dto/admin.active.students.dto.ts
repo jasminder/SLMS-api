@@ -4,6 +4,9 @@ import { z } from 'zod';
 export const findUniqueActiveStudentSchema = z.object({
     params: z.object({
         id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    }),
+    query: z.object({
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     })
 });
 export type FindUniqueActiveStudentSchema = z.infer<typeof findUniqueActiveStudentSchema>;
@@ -257,7 +260,10 @@ export type FindLeaveByIdSchema = z.infer<typeof findLeaveByIdSchema>;
 export const findStudentAttendanceByIdSchema = z.object({
     params: z.object({
         studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
-    })
+    }),
+    query: z.object({
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    }),
 });
 
 export type FindStudentAttendanceByIdSchema = z.infer<typeof findStudentAttendanceByIdSchema>;
