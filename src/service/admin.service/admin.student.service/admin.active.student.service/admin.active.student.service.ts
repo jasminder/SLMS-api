@@ -474,7 +474,7 @@ export async function searchActiveStudents(
     return { activeStudents, count };
 }
 
-export async function searchActiveStudentsWithNoSubjects(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '') {
+export async function searchActiveStudentsWithNoSubjects(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '', sort = 'previousTermAttendance', sort_dir = 'asc') {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     const studentsWithNoSubjects = await db.student.count({
@@ -495,7 +495,7 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
             skip,
             take,
             orderBy: {
-                akaalId: 'desc'
+                previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
             },
             where: {
                 role: 'STUDENT',
@@ -650,7 +650,7 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
             skip,
             take,
             orderBy: {
-                akaalId: 'desc'
+                previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
             },
             where: {
                 role: 'STUDENT',
@@ -1291,31 +1291,28 @@ export async function selectActiveStudents1(
         return { activeStudents, count };
     }
 }
-export async function selectActiveStudentsWithNoSubjects(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '') {
+export async function selectActiveStudentsWithNoSubjects(
+    search = '',
+    page: number,
+    termId: number,
+    subjectOption = '',
+    levelOption = '',
+    sectionOption = '',
+    attendanceOption = '',
+    sort = 'previousTermAttendance',
+    sort_dir = 'asc'
+) {
+
+    console.log('Sorting params:', { sort, sort_dir });
+    console.log('Query orderBy:', {
+        previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
+    });
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     if (searchAsNumber) {
-        const latestAttendanceIdsRaw = (
-            await db.student.findMany({
-                where: {
-                    role: 'STUDENT',
-                    isActive: true
-                    // ... other conditions as needed
-                },
-                select: {
-                    id: true,
-                    schoolCheckInAttendance: {
-                        take: 1,
-                        orderBy: { date: 'desc' },
-                        select: { id: true }
-                    }
-                }
-            })
-        ).map((student) => student.schoolCheckInAttendance[0]?.id);
-        const latestAttendanceIds = latestAttendanceIdsRaw.filter((id) => id !== undefined);
         const activeStudents = await db.student.findMany({
-            // orderBy: {
-            //     attendancePercentageValue: 'desc'
-            // },
+            orderBy: {
+                previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
+            },
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -1355,6 +1352,7 @@ export async function selectActiveStudentsWithNoSubjects(search = '', page: numb
                 akaalId: true,
                 role: true,
                 isActive: true,
+                previousTermAttendance: true,
 
                 personalDetails: {
                     select: {
@@ -1413,29 +1411,10 @@ export async function selectActiveStudentsWithNoSubjects(search = '', page: numb
         });
         return { activeStudents, count };
     } else if (!searchAsNumber) {
-        const latestAttendanceIdsRaw = (
-            await db.student.findMany({
-                where: {
-                    role: 'STUDENT',
-                    isActive: true
-                    // ... other conditions as needed
-                },
-                select: {
-                    id: true,
-                    schoolCheckInAttendance: {
-                        take: 1,
-                        orderBy: { date: 'desc' },
-                        select: { id: true }
-                    }
-                }
-            })
-        ).map((student) => student.schoolCheckInAttendance[0]?.id);
-        const latestAttendanceIds = latestAttendanceIdsRaw.filter((id) => id !== undefined);
-
         const activeStudents = await db.student.findMany({
-            // orderBy: {
-            //     attendancePercentageValue: 'desc'
-            // },
+            orderBy: {
+                previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
+            },
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -1474,7 +1453,7 @@ export async function selectActiveStudentsWithNoSubjects(search = '', page: numb
                 akaalId: true,
                 role: true,
                 isActive: true,
-
+                previousTermAttendance: true,
                 personalDetails: {
                     select: {
                         id: true,

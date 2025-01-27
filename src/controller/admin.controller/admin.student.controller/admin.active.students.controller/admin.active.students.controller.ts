@@ -110,10 +110,10 @@ export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, Searc
     }
 };
 export const searchActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, sort, sort_dir } = req.query;
 
     if (termId) {
-        const searchResult = await searchActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption);
+        const searchResult = await searchActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption, sort, sort_dir);
         res.status(200).json(searchResult);
     }
 };
@@ -150,10 +150,10 @@ export const selectActiveStudentsHandler = async (req: Request<{}, {}, {}, Selec
     }
 };
 export const selectActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {}, {}, SelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, sort, sort_dir } = req.query;
 
     if (termId) {
-        const searchResult = await selectActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption);
+        const searchResult = await selectActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption, sort, sort_dir);
         res.status(200).json(searchResult);
     }
 };
