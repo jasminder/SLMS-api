@@ -179,6 +179,7 @@ export async function findActiveStudentsWithNoSubjects(page: number, termId: num
             akaalId: true,
             role: true,
             termAttendance: true,
+            previousTermAttendance: true,
             attendancePercentageValue: true,
             isActive: true,
             updatedAt: true,
@@ -538,6 +539,7 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
                 updatedAt: true,
                 createdAt: true,
                 termAttendance: true,
+                previousTermAttendance: true,
                 attendancePercentageValue: true,
                 personalDetails: {
                     select: {
@@ -691,6 +693,7 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
                 updatedAt: true,
                 createdAt: true,
                 termAttendance: true,
+                previousTermAttendance: true,
                 personalDetails: {
                     select: {
                         id: true,

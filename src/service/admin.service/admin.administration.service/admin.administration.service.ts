@@ -462,7 +462,6 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
         await prisma.term.updateMany({
             data: {
                 currentTerm: false,
-                isPublish: false,
                 automatedAttendanceEnabled: false
             }
         });
@@ -513,7 +512,7 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
                 role: 'STUDENT',
                 isActive: true
             },
-            select: { id: true }
+            select: { id: true, termAttendance: true, previousTermAttendance: true }
         });
 
         const template = await prisma.enrollmentConfirmationEmailTemplate.findFirst({
@@ -561,6 +560,7 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
                         id: student.id
                     },
                     data: {
+                        previousTermAttendance: student.termAttendance,
                         termAttendance: 0,
                         attendancePercentageValue: 0
                     }
