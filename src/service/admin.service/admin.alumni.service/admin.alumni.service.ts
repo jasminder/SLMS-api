@@ -82,7 +82,7 @@ export async function findAllAlumni(page: number) {
             }
         },
         orderBy: {
-            createdAt: 'desc'
+            updatedAt: 'desc'
         }
     });
     const count = await db.student.count({
