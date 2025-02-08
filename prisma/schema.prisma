@@ -83,6 +83,7 @@ model Student {
   akaalId                      Int?
   attendancePercentageValue    Int                            @default(0)
   termAttendance               Int                            @default(0)
+  previousTermAttendance       Int                            @default(0)
   role                         Role                           @default(APPLICANT)
   isActive                     Boolean                        @default(false)
   isAllowedLogin               Boolean                        @default(false)
@@ -120,6 +121,21 @@ model Student {
   AlumniRemarks                AlumniRemarks[]
   hasSeenNewApplication        Boolean                        @default(false)
   Notification                 Notification[]
+  StudentTermAttendanceHistory StudentTermAttendanceHistory[]
+}
+
+model StudentTermAttendanceHistory {
+  id             Int      @id @default(autoincrement())
+  studentId      Int
+  termId         Int
+  termName       String
+  termAttendance Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  term           Term     @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, termId])
 }
 
 // child table to Student table. connection is established through FK studentID
@@ -201,22 +217,23 @@ model SubjectGroup {
 }
 
 model Term {
-  id                         Int                       @id @default(autoincrement())
-  isPublish                  Boolean                   @default(false)
-  currentTerm                Boolean                   @default(false)
-  name                       String                    @unique
-  startDate                  DateTime
-  endDate                    DateTime
-  createdAt                  DateTime                  @default(now())
-  updatedAt                  DateTime                  @updatedAt
-  termSubject                TermSubject[]
-  termSubjectGroup           TermSubjectGroup[]
-  termSubjectGroupSubject    TermSubjectGroupSubject[]
-  studentTermFee             StudentTermFee[]
-  termSubjectLevel           TermSubjectLevel[]
-  FeeTemplate                FeeTemplate[]
-  FeeDashboard               FeeDashboard[]
-  automatedAttendanceEnabled Boolean                   @default(false)
+  id                           Int                            @id @default(autoincrement())
+  isPublish                    Boolean                        @default(false)
+  currentTerm                  Boolean                        @default(false)
+  name                         String                         @unique
+  startDate                    DateTime
+  endDate                      DateTime
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @updatedAt
+  termSubject                  TermSubject[]
+  termSubjectGroup             TermSubjectGroup[]
+  termSubjectGroupSubject      TermSubjectGroupSubject[]
+  studentTermFee               StudentTermFee[]
+  termSubjectLevel             TermSubjectLevel[]
+  FeeTemplate                  FeeTemplate[]
+  FeeDashboard                 FeeDashboard[]
+  automatedAttendanceEnabled   Boolean                        @default(false)
+  StudentTermAttendanceHistory StudentTermAttendanceHistory[]
 }
 
 model Level {

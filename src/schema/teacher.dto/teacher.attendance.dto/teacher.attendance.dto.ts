@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const fetchCheckedInStudentsWithAttendanceSchema = z.object({
     params: z.object({
         termSubjectLevelId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }),
-        sectionName: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+        sectionId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     })
 });
 export type FetchCheckedInStudentsWithAttendanceSchema = z.infer<typeof fetchCheckedInStudentsWithAttendanceSchema>;

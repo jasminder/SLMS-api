@@ -4,9 +4,19 @@ import { z } from 'zod';
 export const findUniqueActiveStudentSchema = z.object({
     params: z.object({
         id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    }),
+    query: z.object({
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     })
 });
 export type FindUniqueActiveStudentSchema = z.infer<typeof findUniqueActiveStudentSchema>;
+
+export const findUniqueActiveStudentWithoutSubjectsSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type FindUniqueActiveStudentWithoutSubjectsSchema = z.infer<typeof findUniqueActiveStudentWithoutSubjectsSchema>;
 
 //To find all active students for Admin
 export const findAllActiveStudentsSchema = z.object({
@@ -56,7 +66,7 @@ export const selectActiveStudentsSchema = z.object({
         levelOption: z.string().optional(),
         sectionOption: z.string().optional(),
         attendanceOption: z.string().optional(),
-        sort: z.string().optional().default('termAttendance'),
+        sort: z.string().optional().default('previousTermAttendance'),
         sort_dir: z.string().optional().default('asc'),
         page: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional(),
         termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' }).optional()
@@ -157,6 +167,14 @@ export const findActiveStudentEnrolledSubjectsSchema = z.object({
 });
 export type FindActiveStudentEnrolledSubjectsSchema = z.infer<typeof findActiveStudentEnrolledSubjectsSchema>;
 
+// find current term for assign classes to active students
+export const findCurrentTermToAssignClassSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type FindCurrentTermToAssignClassSchema = z.infer<typeof findCurrentTermToAssignClassSchema>;
+
 /****** * assign class to student*****/
 export const assignClassToStudentSchema = z.object({
     params: z.object({
@@ -249,6 +267,9 @@ export type FindLeaveByIdSchema = z.infer<typeof findLeaveByIdSchema>;
 export const findStudentAttendanceByIdSchema = z.object({
     params: z.object({
         studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    }),
+    query: z.object({
+        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     })
 });
 

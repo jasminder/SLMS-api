@@ -244,10 +244,24 @@ export async function findTeacherByAssignment(termSubjectLevelId: string, sectio
     return assignment;
 }
 export async function getAllUnreadStudentNotifications(studentId: string, limit?: string, offset?: string) {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        },
+        select: {
+            id: true,
+            startDate: true,
+            endDate: true
+        }
+    });
     const notifications = await db.notification.findMany({
         where: {
             studentId: +studentId,
-            isRead: false
+            isRead: false,
+            createdAt: {
+                gte: currentTerm?.startDate,
+                lte: currentTerm?.endDate
+            }
         },
         orderBy: {
             createdAt: 'desc'

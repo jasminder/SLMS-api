@@ -436,7 +436,10 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
                 currentTerm: true
             }
         });
-
+        const currentTermBeforeChange = currentTerm;
+        if (!currentTermBeforeChange) {
+            throw customError(`No current term found`, 'fail', 404, true);
+        }
         // If there is a current term, deactivate the associated timetables
         if (currentTerm) {
             await prisma.timeTable.updateMany({
@@ -462,7 +465,6 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
         await prisma.term.updateMany({
             data: {
                 currentTerm: false,
-                isPublish: false,
                 automatedAttendanceEnabled: false
             }
         });
@@ -513,7 +515,7 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
                 role: 'STUDENT',
                 isActive: true
             },
-            select: { id: true }
+            select: { id: true, termAttendance: true, previousTermAttendance: true }
         });
 
         const template = await prisma.enrollmentConfirmationEmailTemplate.findFirst({
@@ -556,11 +558,47 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
         for (let i = 0; i < studentsToUpdateAttendance.length; i += batchSize) {
             const batch = studentsToUpdateAttendance.slice(i, i + batchSize);
             const updates = batch.map((student) =>
+                db.$transaction([
+                    db.studentTermAttendanceHistory.upsert({
+                        where: {
+                            studentId_termId: {
+                                studentId: student.id,
+                                termId: currentTermBeforeChange.id
+                            }
+                        },
+                        create: {
+                            studentId: student.id,
+                            termId: currentTermBeforeChange.id,
+                            termName: currentTermBeforeChange.name,
+                            termAttendance: student.termAttendance
+                        },
+                        update: {
+                            termAttendance: student.termAttendance
+                        }
+                    }),
+                    prisma.student.update({
+                        where: {
+                            id: student.id
+                        },
+                        data: {
+                            termAttendance: 0,
+                            attendancePercentageValue: 0
+                        }
+                    })
+                ])
+            );
+            await Promise.all(updates);
+        }
+
+        for (let i = 0; i < studentsToUpdateAttendance.length; i += batchSize) {
+            const batch = studentsToUpdateAttendance.slice(i, i + batchSize);
+            const updates = batch.map((student) =>
                 prisma.student.update({
                     where: {
                         id: student.id
                     },
                     data: {
+                        previousTermAttendance: student.termAttendance,
                         termAttendance: 0,
                         attendancePercentageValue: 0
                     }

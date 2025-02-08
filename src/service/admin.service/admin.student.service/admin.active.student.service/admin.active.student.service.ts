@@ -179,6 +179,7 @@ export async function findActiveStudentsWithNoSubjects(page: number, termId: num
             akaalId: true,
             role: true,
             termAttendance: true,
+            previousTermAttendance: true,
             attendancePercentageValue: true,
             isActive: true,
             updatedAt: true,
@@ -280,10 +281,16 @@ export async function searchActiveStudents(
     const pageNum = page ?? 0;
     const skip = pageNum * take;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    const isSelectedTermCurrent = currentTerm?.id === +termId;
     // Base where condition
     let whereCondition: Prisma.StudentWhereInput = {
-        role: 'STUDENT',
-        isActive: true,
+        role: isSelectedTermCurrent ? 'STUDENT' : undefined,
+        isActive: isSelectedTermCurrent ? true : undefined,
         studentTermFee: {
             some: {
                 termId: +termId
@@ -467,7 +474,7 @@ export async function searchActiveStudents(
     return { activeStudents, count };
 }
 
-export async function searchActiveStudentsWithNoSubjects(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '') {
+export async function searchActiveStudentsWithNoSubjects(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '', sort = 'previousTermAttendance', sort_dir = 'asc') {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     const studentsWithNoSubjects = await db.student.count({
@@ -488,7 +495,7 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
             skip,
             take,
             orderBy: {
-                akaalId: 'desc'
+                previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
             },
             where: {
                 role: 'STUDENT',
@@ -532,6 +539,7 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
                 updatedAt: true,
                 createdAt: true,
                 termAttendance: true,
+                previousTermAttendance: true,
                 attendancePercentageValue: true,
                 personalDetails: {
                     select: {
@@ -642,7 +650,7 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
             skip,
             take,
             orderBy: {
-                akaalId: 'desc'
+                previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
             },
             where: {
                 role: 'STUDENT',
@@ -685,6 +693,7 @@ export async function searchActiveStudentsWithNoSubjects(search = '', page: numb
                 updatedAt: true,
                 createdAt: true,
                 termAttendance: true,
+                previousTermAttendance: true,
                 personalDetails: {
                     select: {
                         id: true,
@@ -1282,31 +1291,28 @@ export async function selectActiveStudents1(
         return { activeStudents, count };
     }
 }
-export async function selectActiveStudentsWithNoSubjects(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '') {
+export async function selectActiveStudentsWithNoSubjects(
+    search = '',
+    page: number,
+    termId: number,
+    subjectOption = '',
+    levelOption = '',
+    sectionOption = '',
+    attendanceOption = '',
+    sort = 'previousTermAttendance',
+    sort_dir = 'asc'
+) {
+
+    console.log('Sorting params:', { sort, sort_dir });
+    console.log('Query orderBy:', {
+        previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
+    });
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     if (searchAsNumber) {
-        const latestAttendanceIdsRaw = (
-            await db.student.findMany({
-                where: {
-                    role: 'STUDENT',
-                    isActive: true
-                    // ... other conditions as needed
-                },
-                select: {
-                    id: true,
-                    schoolCheckInAttendance: {
-                        take: 1,
-                        orderBy: { date: 'desc' },
-                        select: { id: true }
-                    }
-                }
-            })
-        ).map((student) => student.schoolCheckInAttendance[0]?.id);
-        const latestAttendanceIds = latestAttendanceIdsRaw.filter((id) => id !== undefined);
         const activeStudents = await db.student.findMany({
-            // orderBy: {
-            //     attendancePercentageValue: 'desc'
-            // },
+            orderBy: {
+                previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
+            },
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -1346,6 +1352,7 @@ export async function selectActiveStudentsWithNoSubjects(search = '', page: numb
                 akaalId: true,
                 role: true,
                 isActive: true,
+                previousTermAttendance: true,
 
                 personalDetails: {
                     select: {
@@ -1404,29 +1411,10 @@ export async function selectActiveStudentsWithNoSubjects(search = '', page: numb
         });
         return { activeStudents, count };
     } else if (!searchAsNumber) {
-        const latestAttendanceIdsRaw = (
-            await db.student.findMany({
-                where: {
-                    role: 'STUDENT',
-                    isActive: true
-                    // ... other conditions as needed
-                },
-                select: {
-                    id: true,
-                    schoolCheckInAttendance: {
-                        take: 1,
-                        orderBy: { date: 'desc' },
-                        select: { id: true }
-                    }
-                }
-            })
-        ).map((student) => student.schoolCheckInAttendance[0]?.id);
-        const latestAttendanceIds = latestAttendanceIdsRaw.filter((id) => id !== undefined);
-
         const activeStudents = await db.student.findMany({
-            // orderBy: {
-            //     attendancePercentageValue: 'desc'
-            // },
+            orderBy: {
+                previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
+            },
             where: {
                 role: 'STUDENT',
                 isActive: true,
@@ -1465,7 +1453,7 @@ export async function selectActiveStudentsWithNoSubjects(search = '', page: numb
                 akaalId: true,
                 role: true,
                 isActive: true,
-
+                previousTermAttendance: true,
                 personalDetails: {
                     select: {
                         id: true,
@@ -1525,7 +1513,172 @@ export async function selectActiveStudentsWithNoSubjects(search = '', page: numb
 }
 
 // find unqiue student by ID for internal queries
-export async function findActiveStudentById(id: string) {
+export async function findActiveStudentById(id: string, termId: string) {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            currentTerm: true
+        }
+    });
+    const isSelectedTermCurrent = currentTerm?.id === +termId;
+    console.log('isSelectedTermCurrent', isSelectedTermCurrent);
+    console.log('termId', termId);
+    console.log('currentTerm?.id', currentTerm?.id);
+    const activeStudent = await db.student.findUnique({
+        where: {
+            id: +id,
+            role: isSelectedTermCurrent ? 'STUDENT' : undefined,
+            isActive: isSelectedTermCurrent ? true : undefined,
+            studentTermFee: {
+                some: {
+                    termId: +termId
+                }
+            }
+        },
+        include: {
+            personalDetails: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    punjabiName: true,
+                    DOB: true,
+                    gender: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    state: true,
+                    country: true,
+                    postcode: true,
+                    image: true
+                }
+            },
+            parentsDetails: {
+                select: {
+                    id: true,
+                    fatherName: true,
+                    motherName: true,
+                    parentEmail: true,
+                    parentContact: true
+                }
+            },
+            emergencyContact: {
+                select: {
+                    id: true,
+                    contactPerson: true,
+                    contactNumber: true,
+                    relationship: true
+                }
+            },
+            healthInformation: {
+                select: {
+                    id: true,
+                    medicareNumber: true,
+                    ambulanceMembershipNumber: true,
+                    medicalCondition: true,
+                    allergy: true
+                }
+            },
+            otherInformation: {
+                select: {
+                    id: true,
+                    otherInfo: true,
+                    declaration: true
+                }
+            },
+            enrollments: {
+                select: {
+                    subjectEnrollment: true,
+                    createdAt: true
+                }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
+            }
+        }
+    });
+    console.log(activeStudent);
+    const siblings = await db.student.findMany({
+        where: {
+            personalDetails: {
+                email: activeStudent?.personalDetails?.email
+            },
+
+            NOT: {
+                id: +id // Exclude the current student
+            }
+        },
+        include: {
+            personalDetails: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    DOB: true,
+                    gender: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    state: true,
+                    country: true,
+                    postcode: true,
+                    image: true
+                }
+            },
+            parentsDetails: {
+                select: {
+                    id: true,
+                    fatherName: true,
+                    motherName: true,
+                    parentEmail: true,
+                    parentContact: true
+                }
+            },
+            emergencyContact: {
+                select: {
+                    id: true,
+                    contactPerson: true,
+                    contactNumber: true,
+                    relationship: true
+                }
+            },
+            healthInformation: {
+                select: {
+                    id: true,
+                    medicareNumber: true,
+                    ambulanceMembershipNumber: true,
+                    medicalCondition: true,
+                    allergy: true
+                }
+            },
+            otherInformation: {
+                select: {
+                    id: true,
+                    otherInfo: true,
+                    declaration: true
+                }
+            },
+            enrollments: {
+                select: {
+                    subjectEnrollment: true,
+                    createdAt: true
+                }
+            },
+            skipReport: {
+                select: {
+                    isClosed: true
+                }
+            }
+        }
+    });
+
+    return { activeStudent, siblings };
+}
+
+export async function findActiveStudentByIdWithoutSubjects(id: string) {
     const activeStudent = await db.student.findUnique({
         where: {
             id: +id,
@@ -1674,6 +1827,7 @@ export async function findActiveStudentById(id: string) {
 
     return { activeStudent, siblings };
 }
+
 export async function findStudentFeeDetails(studentId: number, termId: number) {
     const studentTermFees = await db.feePayment.findMany({
         where: {
@@ -2189,6 +2343,48 @@ export const findCurrentTermToAssignClass = async () => {
     return currentTerm;
 };
 
+//find current term for assign classes to active students based on ID
+export const findCurrentTermToAssignClassById = async (id: string) => {
+    const currentTerm = await db.term.findFirst({
+        where: {
+            id: +id
+        },
+        select: {
+            id: true,
+            name: true,
+            isPublish: true,
+            currentTerm: true,
+            startDate: true,
+            endDate: true,
+            createdAt: true,
+            updatedAt: true,
+            termSubject: {
+                select: {
+                    id: true,
+                    subject: true,
+                    level: true,
+                    termSubjectGroup: true
+                }
+            },
+            termSubjectLevel: {
+                include: {
+                    sections: {
+                        select: { name: true, id: true }
+                    },
+                    level: { select: { name: true } },
+                    subject: { select: { name: true } }
+                }
+            }
+        }
+    });
+
+    if (!currentTerm) {
+        throw customError(`Current Term could not found. Please try again later`, 'fail', 404, true);
+    }
+
+    return currentTerm;
+};
+
 /****** * assign class to student*****/
 export async function assignClassToStudent(studentId: string, termId: string, subjectName: string, levelName: string, sectionName: string) {
     // Find Subject ID
@@ -2495,14 +2691,12 @@ export async function deleteClassAssignment(id: string) {
 }
 
 /*get all classes for students*/
-export async function findUniqueStudentClassDetails(studentId: string) {
+export async function findUniqueStudentClassDetails(studentId: string, termId: string) {
     const studentClassAssignmentRecords = await db.studentClassAssignment.findMany({
         where: {
             studentId: +studentId,
             termSubjectLevel: {
-                term: {
-                    currentTerm: true
-                }
+                termId: +termId
             }
         },
         include: {
@@ -3094,14 +3288,13 @@ export async function findStudentAttendanceById1(studentId: string) {
 
     return attendance;
 }
-export async function findStudentAttendanceById(studentId: string) {
-    const currentTerm = await db.term.findFirst({
+export async function findStudentAttendanceById(studentId: string, termId: string) {
+    const selectedTerm = await db.term.findUnique({
         where: {
-            currentTerm: true
+            id: +termId
         }
     });
 
-    // if (!currentTerm) return [];
     const attendance = await db.schoolCheckInAttendance.findMany({
         where: {
             student: {
@@ -3109,7 +3302,7 @@ export async function findStudentAttendanceById(studentId: string) {
             },
             //
             date: {
-                gte: currentTerm?.startDate
+                gte: selectedTerm?.startDate
             }
         },
 

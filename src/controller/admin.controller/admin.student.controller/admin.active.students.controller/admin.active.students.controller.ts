@@ -15,10 +15,12 @@ import {
     fetchLeavesForStudent,
     fetchRecentSchoolAttendanceForStudent,
     findActiveStudentById,
+    findActiveStudentByIdWithoutSubjects,
     findActiveStudentEnrolledSubjects,
     findActiveStudents,
     findActiveStudentsWithNoSubjects,
     findCurrentTermToAssignClass,
+    findCurrentTermToAssignClassById,
     findFeePaymentById,
     findLeaveById,
     findStudentAttendanceById,
@@ -53,10 +55,12 @@ import {
     FetchRecentSchoolAttendanceSchema,
     FindActiveStudentEnrolledSubjectsSchema,
     FindAllActiveStudentsSchema,
+    FindCurrentTermToAssignClassSchema,
     FindLeaveByIdSchema,
     FindStudentAttendanceByIdSchema,
     FindStudentFeeDetailsSchemaSchema,
     FindTermSubjectGroupIdEnrolledSubjectsSchema,
+    FindUniqueActiveStudentWithoutSubjectsSchema,
     FindUniqueActiveStudentSchema,
     FindUniqueFeePaymentSchema,
     GetPaymentsByFeePaymentIdSchema,
@@ -106,10 +110,10 @@ export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, Searc
     }
 };
 export const searchActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, sort, sort_dir } = req.query;
 
     if (termId) {
-        const searchResult = await searchActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption);
+        const searchResult = await searchActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption, sort, sort_dir);
         res.status(200).json(searchResult);
     }
 };
@@ -146,17 +150,23 @@ export const selectActiveStudentsHandler = async (req: Request<{}, {}, {}, Selec
     }
 };
 export const selectActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {}, {}, SelectActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
-    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption } = req.query;
+    const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, sort, sort_dir } = req.query;
 
     if (termId) {
-        const searchResult = await selectActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption);
+        const searchResult = await selectActiveStudentsWithNoSubjects(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption, sort, sort_dir);
         res.status(200).json(searchResult);
     }
 };
 
-export const findActiveStudentByIdHandler = async (req: Request<FindUniqueActiveStudentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+export const findActiveStudentByIdHandler = async (req: Request<FindUniqueActiveStudentSchema['params'], {}, {}, FindUniqueActiveStudentSchema['query']>, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const student = await findActiveStudentById(id);
+    const { termId } = req.query;
+    const student = await findActiveStudentById(id, termId);
+    res.status(200).json(student);
+};
+export const findActiveStudentByIdWithoutSubjectsHandler = async (req: Request<FindUniqueActiveStudentWithoutSubjectsSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const student = await findActiveStudentByIdWithoutSubjects(id);
     res.status(200).json(student);
 };
 export const findStudentFeeDetailsHandler = async (
@@ -234,7 +244,11 @@ export const findCurrentTermToAssignClassHandler = async (req: Request<{}, {}, {
     const currentTerm = await findCurrentTermToAssignClass();
     res.status(200).json(currentTerm);
 };
-
+export const findCurrentTermToAssignClassByIdHandler = async (req: Request<FindCurrentTermToAssignClassSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const currentTerm = await findCurrentTermToAssignClassById(id);
+    res.status(200).json(currentTerm);
+};
 //AssignClassToStudentSchema
 /****** * assign class to student*****/
 export const assignClassToStudentHandler = async (req: Request<AssignClassToStudentSchema['params'], {}, AssignClassToStudentSchema['body'], {}>, res: Response, next: NextFunction) => {
@@ -253,9 +267,10 @@ export const deleteClassAssignmentHandler = async (req: Request<DeleteClassAssig
 };
 
 /*get all classes for students*/
-export const findUniqueStudentClassDetailsHandler = async (req: Request<FindUniqueActiveStudentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+export const findUniqueStudentClassDetailsHandler = async (req: Request<FindUniqueActiveStudentSchema['params'], {}, {}, FindUniqueActiveStudentSchema['query']>, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const student = await findUniqueStudentClassDetails(id);
+    const { termId } = req.query;
+    const student = await findUniqueStudentClassDetails(id, termId);
     res.status(200).json(student);
 };
 /*Manage classes for students*/
@@ -319,9 +334,10 @@ export const findLeaveByIdHandler = async (req: Request<FindLeaveByIdSchema['par
     res.status(200).json(leaveApplication);
 };
 
-export const getStudentAttendanceByIdHandler = async (req: Request<FindStudentAttendanceByIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+export const getStudentAttendanceByIdHandler = async (req: Request<FindStudentAttendanceByIdSchema['params'], {}, {}, FindStudentAttendanceByIdSchema['query']>, res: Response, next: NextFunction) => {
     const { studentId } = req.params;
-    const attendanceRecords = await findStudentAttendanceById(studentId);
+    const { termId } = req.query;
+    const attendanceRecords = await findStudentAttendanceById(studentId, termId);
     res.status(200).json(attendanceRecords);
 };
 
