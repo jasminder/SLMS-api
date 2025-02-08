@@ -29,7 +29,7 @@ const teacherAttendanceRoute = express.Router();
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
 teacherAttendanceRoute
-    .route('/fetch-checkedin-students-for-attendance/:termSubjectLevelId/:sectionName')
+    .route('/fetch-checkedin-students-for-attendance/:termSubjectLevelId/:sectionId')
     .get(validate(fetchCheckedInStudentsWithAttendanceSchema), protectRoute, restrict('TEACHER', 'ADMIN'), asyncErrorHandler(fetchCheckedInStudentsWithAttendanceHandler));
 teacherAttendanceRoute
     .route('/fetch-schoolday-type/:termSubjectLevelId')

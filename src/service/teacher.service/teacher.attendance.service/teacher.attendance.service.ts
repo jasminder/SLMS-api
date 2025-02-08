@@ -5,7 +5,7 @@ import { calculateSendDate } from '../../../utils/setSendDate';
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
 
-export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: string, sectionName: string) {
+export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: string, sectionId: string) {
     const numericTermSubjectLevelId = parseInt(termSubjectLevelId);
 
     // Find students who are currently assigned to the specified class and are active
@@ -13,7 +13,7 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
         where: {
             termSubjectLevelId: numericTermSubjectLevelId,
             section: {
-                name: sectionName
+                id: +sectionId
             },
             isCurrentlyAssigned: true,
             student: {

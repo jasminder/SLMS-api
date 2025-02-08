@@ -22,8 +22,8 @@ import {
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
 export const fetchCheckedInStudentsWithAttendanceHandler = async (req: Request<FetchCheckedInStudentsWithAttendanceSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
-    const { termSubjectLevelId, sectionName } = req.params;
-    const markSchoolCheckInAttendance = await fetchCheckedInStudentsWithAttendance(termSubjectLevelId, sectionName);
+    const { termSubjectLevelId, sectionId } = req.params;
+    const markSchoolCheckInAttendance = await fetchCheckedInStudentsWithAttendance(termSubjectLevelId, sectionId);
     res.status(200).json(markSchoolCheckInAttendance);
 };
 export const fetchSchooldayTypeHandler = async (req: Request<FetchSchooldayTypeSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
