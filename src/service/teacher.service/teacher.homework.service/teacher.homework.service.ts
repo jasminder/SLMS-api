@@ -3,15 +3,7 @@ import { customError } from '../../../utils/customError';
 
 import { db } from '../../../utils/db.server';
 import { calculateSendDate } from '../../../utils/setSendDate';
-/*
-   const createHomeworkNotification = await db.notification.create({
-            data: {
-                studentId: student.id,
-                type: NotificationType.HOMEWORK,
-                content: `A new homework assignment has been posted for ${description}.`,
-                actionUrl: `/student/homework-classwork?studentId=${student.id}`
-            }
-        });*/
+
 export async function createGroupHomework(
     studentIds: string[],
     teacherId: string,
@@ -55,7 +47,9 @@ export async function createGroupHomework(
                     studentId: +studentId,
                     type: NotificationType.HOMEWORK,
                     content: `A new homework has been posted for ${subject?.name || 'your subject'}.`,
-                    actionUrl: `/student/homework-classwork?studentId=${studentId}`
+                    actionUrl: `/student/homework-classwork?studentId=${studentId}`,
+                    termSubjectLevelId: +termSubjectLevelId,
+                    sectionId: +sectionId
                 }
             });
         });

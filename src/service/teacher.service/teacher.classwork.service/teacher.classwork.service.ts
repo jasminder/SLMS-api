@@ -47,7 +47,9 @@ export async function createGroupClasswork(
                     studentId: +studentId,
                     type: NotificationType.CLASSWORK,
                     content: `A new classwork has been posted for ${subject?.name || 'your subject'}.`,
-                    actionUrl: `/student/homework-classwork?studentId=${studentId}`
+                    actionUrl: `/student/homework-classwork?studentId=${studentId}`,
+                    termSubjectLevelId: +termSubjectLevelId,
+                    sectionId: +sectionId
                 }
             });
         });

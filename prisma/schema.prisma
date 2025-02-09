@@ -256,6 +256,7 @@ model Section {
   GroupHomework           GroupHomework[]
   GroupClasswork          GroupClasswork[]
   TimetableSlot           TimetableSlot[]
+  Notification            Notification[]
 }
 
 model TermSubjectGroup {
@@ -311,6 +312,7 @@ model TermSubjectLevel {
   Classwork               Classwork[]
   Homework                Homework[]
   TimetableSlot           TimetableSlot[]
+  Notification            Notification[]
 
   @@unique([termId, subjectId, levelId])
 }
@@ -1316,17 +1318,21 @@ enum NotificationType {
 }
 
 model Notification {
-  id        Int              @id @default(autoincrement())
-  studentId Int
-  type      NotificationType
-  title     String?
-  content   String
-  isRead    Boolean          @default(false)
-  actionUrl String? // URL to the relevant page or resource
-  expiresAt DateTime? // Optional expiration date for time-sensitive notifications
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id                 Int               @id @default(autoincrement())
+  studentId          Int
+  type               NotificationType
+  title              String?
+  content            String
+  isRead             Boolean           @default(false)
+  actionUrl          String? // URL to the relevant page or resource
+  expiresAt          DateTime? // Optional expiration date for time-sensitive notifications
+  termSubjectLevelId Int?
+  sectionId          Int?
+  section            Section?          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  termSubjectLevel   TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id], onDelete: Cascade)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  student            Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 // ------------------- for feedback options ------------------- //
