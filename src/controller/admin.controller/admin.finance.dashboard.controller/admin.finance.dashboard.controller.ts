@@ -57,7 +57,6 @@ export const feeDashboardQueryHandler = async (req: Request, res: Response, next
 
 export const filteredFeeDashboardQueryHandler = async (req: Request<{}, {}, {}, FilteredFeeDashboardQuerySchema['query']>, res: Response, next: NextFunction) => {
     const { termId, invoiceId, paymentStatus } = req.query;
-    console.log(termId, invoiceId, paymentStatus);
     if (!termId) {
         return res.status(400).json({ error: 'TermId is required' });
     }

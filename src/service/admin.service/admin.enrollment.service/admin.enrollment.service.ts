@@ -592,7 +592,6 @@ export async function markApplicantAsSeen(studentId: string) {
     });
 }
 export async function deleteApplication(studentId: string) {
-    console.log(studentId);
     const id = parseInt(studentId, 10); // Ensure the ID is an integer
     if (isNaN(id)) {
         throw new Error('Invalid student ID');

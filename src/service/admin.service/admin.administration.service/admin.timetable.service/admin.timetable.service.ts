@@ -430,7 +430,6 @@ export async function fetchEditTimetable(day: Day): Promise<EditTransformedTimet
 
 export async function updateSchoolTimetable(timetableId: string, timetableData: UpdateSchoolTimetableSchema['body']['updateTimetableData']) {
     const { data, day, roomNames, totalRooms } = timetableData;
-    console.log('timetableData', JSON.stringify(timetableData, null, 2));
     try {
         const currentTerm = await db.term.findFirst({
             where: {
@@ -472,8 +471,6 @@ export async function updateSchoolTimetable(timetableId: string, timetableData: 
 
             // Process each time slot
             for (const slot of data.data) {
-                console.log('endTime', slot.endTime);
-                console.log('startTime', slot.startTime);
                 // Create TimeSlot
                 const timeSlot = await tx.timeSlot.create({
                     data: {

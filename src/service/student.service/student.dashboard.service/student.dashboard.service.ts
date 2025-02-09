@@ -197,7 +197,6 @@ export async function acknowledgeStudentNotice(studentId: string, studentNoticeI
 }
 
 export async function fetchStudentAssignments(studentId: number) {
-    console.log(studentId);
     const studentAssignments = await db.studentClassAssignment.findMany({
         where: {
             studentId: studentId,

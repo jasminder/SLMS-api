@@ -4,7 +4,6 @@ import { getIo } from '../../../sockets/socket';
 import { Day } from '@prisma/client';
 
 export async function createSchoolCheckInAttendanceForStudent(date: string) {
-    console.log('creating reports');
     if (!date) {
         throw customError('You need to provide a date to create School Check In Attendance record.', 'fail', 404, true);
     }
@@ -23,7 +22,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         isActive: true
                     }
                 });
-                console.log('activeTimetable', activeTimetable);
                 if (!activeTimetable) {
                     throw customError('No active timetable found for today', 'fail', 404, true);
                 }
@@ -39,7 +37,6 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 });
                 const timetableSlots = allTimetableSlots.filter((slot) => slot.termSubjectLevelId !== null && slot.sectionId !== null);
-                console.log('timetableSlots', timetableSlots);
                 if (timetableSlots.length === 0) {
                     throw customError('No classes scheduled in timetable for today', 'fail', 400, true);
                 }

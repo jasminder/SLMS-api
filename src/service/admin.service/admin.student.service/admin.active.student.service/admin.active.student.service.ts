@@ -474,7 +474,17 @@ export async function searchActiveStudents(
     return { activeStudents, count };
 }
 
-export async function searchActiveStudentsWithNoSubjects(search = '', page: number, termId: number, subjectOption = '', levelOption = '', sectionOption = '', attendanceOption = '', sort = 'previousTermAttendance', sort_dir = 'asc') {
+export async function searchActiveStudentsWithNoSubjects(
+    search = '',
+    page: number,
+    termId: number,
+    subjectOption = '',
+    levelOption = '',
+    sectionOption = '',
+    attendanceOption = '',
+    sort = 'previousTermAttendance',
+    sort_dir = 'asc'
+) {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     const studentsWithNoSubjects = await db.student.count({
@@ -1302,11 +1312,6 @@ export async function selectActiveStudentsWithNoSubjects(
     sort = 'previousTermAttendance',
     sort_dir = 'asc'
 ) {
-
-    console.log('Sorting params:', { sort, sort_dir });
-    console.log('Query orderBy:', {
-        previousTermAttendance: sort_dir === 'asc' ? 'asc' : 'desc'
-    });
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     if (searchAsNumber) {
         const activeStudents = await db.student.findMany({
@@ -1520,9 +1525,7 @@ export async function findActiveStudentById(id: string, termId: string) {
         }
     });
     const isSelectedTermCurrent = currentTerm?.id === +termId;
-    console.log('isSelectedTermCurrent', isSelectedTermCurrent);
-    console.log('termId', termId);
-    console.log('currentTerm?.id', currentTerm?.id);
+
     const activeStudent = await db.student.findUnique({
         where: {
             id: +id,

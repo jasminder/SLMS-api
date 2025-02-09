@@ -43,15 +43,11 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
     if (existingStudents.length > 0) {
         for (const student of existingStudents) {
             const studentDOB = new Date(student.DOB);
-            console.log(studentDOB, "studentDOB")
-            console.log(dobDateOnlyUTC,"dobDateOnlyUTC")
             const studentDOBInMelbourne = new Date(studentDOB.toLocaleString('en-US', { timeZone: melbourneTimeZone }));
             const studentDOBDateOnly = `${studentDOBInMelbourne.getFullYear()}-${(studentDOBInMelbourne.getMonth() + 1).toString().padStart(2, '0')}-${studentDOBInMelbourne
                 .getDate()
                 .toString()
                 .padStart(2, '0')}`;
-            console.log(studentDOBDateOnly, "studentDOBDateOnly")
-            console.log(dobDateOnlyUTC, "dobDateOnlyUTC")
             if (studentDOBDateOnly === dobDateOnlyUTC) {
                 throw customError(`The name, DOB given is already used for submitting an application. `, 'fail', 404, true);
             }

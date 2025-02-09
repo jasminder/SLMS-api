@@ -331,7 +331,6 @@ export async function findSubjectsAssignedToApprovedTeacher(id: string) {
             subject: true
         }
     });
-    console.log(assignedSubjects);
     // Mapping to get only necessary details, if needed
     // return assignedSubjects;
     return assignedSubjects.map((assignment) => ({
