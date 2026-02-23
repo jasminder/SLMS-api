@@ -2074,7 +2074,11 @@ export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount:
 export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: number, discountReason: string) {
     return db.$transaction(async (prisma) => {
         const feePayment = await prisma.feePayment.findUnique({
-            where: { id: +feePaymentId }
+            where: { id: +feePaymentId },
+            include: {
+                studentTermFee: { select: { studentId: true } },
+                paymentInstallment: { select: { paidAmount: true } }
+            }
         });
 
         if (!feePayment) throw customError('Fee payment record not found.', 'fail', 404, true);
@@ -2082,39 +2086,74 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
         const originalFeeAmount = feePayment.feeAmount || 0;
         const newDiscountAmount = originalFeeAmount - newDueAmount;
 
-        // Determine the status based on the new due amount
+        // Total already paid (all installments) – remaining due = new due amount minus what's already paid
+        const totalPaid = (feePayment.paymentInstallment || []).reduce((sum, i) => sum + (i.paidAmount ?? 0), 0);
+        const remainingDue = Math.max(0, newDueAmount - totalPaid);
+
+        // Compare calendar dates only: overdue only when due amount > 0 and today is strictly after the due date
+        const now = new Date();
+        const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        const due = new Date(feePayment.dueDate);
+        const dueDateStart = new Date(Date.UTC(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate()));
+        const overDue = remainingDue > 0 && todayStart > dueDateStart;
+
         let status: PaymentStatus;
-        if (newDueAmount === 0) {
+        if (remainingDue <= 0) {
             status = PaymentStatus.PAID;
-        } else if (newDueAmount < originalFeeAmount) {
-            status = PaymentStatus.PENDING;
-        } else {
+        } else if (overDue) {
             status = PaymentStatus.OVERDUE;
+        } else {
+            status = PaymentStatus.PENDING;
         }
 
         const updatedFeePayment = await prisma.feePayment.update({
             where: { id: feePayment.id },
             data: {
-                dueAmount: newDueAmount,
+                dueAmount: remainingDue,
                 hasDiscount: newDiscountAmount > 0,
                 discountAmount: newDiscountAmount,
                 adjustedFeeAmount: newDueAmount,
                 discountReason: discountReason,
-                status: status
+                status,
+                hasOverDue: overDue
             }
         });
 
-        const paymentInstallment = await prisma.paymentInstallment.create({
-            data: {
-                feePaymentId: +feePaymentId,
-                paidAmount: newDiscountAmount,
-                paidDate: new Date(),
-                paymentMethod: 'DISCOUNT',
-                paymentStatus: status,
-                remarks: discountReason,
-                receivedBy: 'ADMIN'
-            }
-        });
+        // Only create a discount installment when we're reducing the amount due (avoid duplicate when reconciling to match paid)
+        const currentDueBeforeUpdate = feePayment.dueAmount ?? 0;
+        if (newDiscountAmount > 0 && currentDueBeforeUpdate > newDueAmount) {
+            await prisma.paymentInstallment.create({
+                data: {
+                    feePaymentId: +feePaymentId,
+                    paidAmount: newDiscountAmount,
+                    paidDate: new Date(),
+                    paymentMethod: 'DISCOUNT',
+                    paymentStatus: status,
+                    remarks: discountReason,
+                    receivedBy: 'ADMIN'
+                }
+            });
+        }
+
+        const studentId = feePayment.studentTermFee?.studentId;
+        if (studentId != null) {
+            const allPayments = await prisma.feePayment.findMany({
+                where: { studentTermFee: { studentId } },
+                select: { dueAmount: true, status: true }
+            });
+            const currentInvoiceDue = allPayments.reduce((sum, p) => sum + (p.dueAmount ?? 0), 0);
+            const overDueTotal = allPayments
+                .filter((p) => p.status === 'OVERDUE')
+                .reduce((sum, p) => sum + (p.dueAmount ?? 0), 0);
+            await prisma.student.update({
+                where: { id: studentId },
+                data: {
+                    currentInvoiceDue,
+                    overDue: overDueTotal,
+                    hasOverDue: overDueTotal > 0
+                }
+            });
+        }
 
         return updatedFeePayment;
     });
@@ -2895,36 +2934,38 @@ export async function deEnrollActiveStudent(deEnrollData: ActiveStudentEnrollDat
             where: { id: subjectEnrollment.enrollmentId }
         });
 
-        // Check for remaining enrollments in the same TermSubjectGroup
-        const remainingEnrollments = await db.enrollment.count({
-            where: {
-                studentId: deEnrollData.activeStudentId,
-                termSubjectGroupId: deEnrollItem.termSubjectGroupId
-            }
-        });
+        // Do not delete StudentTermFee or FeePayment when de-enrolling. Preserve fee history and due fees.
 
-        // If no remaining enrollments, handle StudentTermFee and FeePayment records
-        if (remainingEnrollments === 0) {
-            const studentTermFee = await db.studentTermFee.findFirst({
-                where: {
-                    studentId: deEnrollData.activeStudentId,
-                    termSubjectGroupId: deEnrollItem.termSubjectGroupId,
-                    termId: deEnrollItem.termId
-                }
-            });
+        // // Check for remaining enrollments in the same TermSubjectGroup
+        // const remainingEnrollments = await db.enrollment.count({
+        //     where: {
+        //         studentId: deEnrollData.activeStudentId,
+        //         termSubjectGroupId: deEnrollItem.termSubjectGroupId
+        //     }
+        // });
 
-            if (studentTermFee) {
-                // Delete associated FeePayment records
-                await db.feePayment.deleteMany({
-                    where: { studentTermFeeId: studentTermFee.id }
-                });
+        // // If no remaining enrollments, handle StudentTermFee and FeePayment records
+        // if (remainingEnrollments === 0) {
+        //     const studentTermFee = await db.studentTermFee.findFirst({
+        //         where: {
+        //             studentId: deEnrollData.activeStudentId,
+        //             termSubjectGroupId: deEnrollItem.termSubjectGroupId,
+        //             termId: deEnrollItem.termId
+        //         }
+        //     });
 
-                // Delete the StudentTermFee record
-                await db.studentTermFee.delete({
-                    where: { id: studentTermFee.id }
-                });
-            }
-        }
+        //     if (studentTermFee) {
+        //         // Delete associated FeePayment records
+        //         await db.feePayment.deleteMany({
+        //             where: { studentTermFeeId: studentTermFee.id }
+        //         });
+
+        //         // Delete the StudentTermFee record
+        //         await db.studentTermFee.delete({
+        //             where: { id: studentTermFee.id }
+        //         });
+        //     }
+        // }
 
         deEnrolledSubjects.push(deEnrollItem.subject);
     }

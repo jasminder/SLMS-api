@@ -211,95 +211,95 @@ async function seedTeachers() {
 /*Admin*/
 
 const adminSeedData: AdminApplicantSchema['body'][] = [
-    {
-        adminPersonalDetails: {
-            firstName: 'Navinder',
-            lastName: 'Singh',
-            DOB: '1980-01-01T00:00:00.000Z',
-            gender: 'Male',
-            email: 'SNAVINDER007@YAHOO.COM',
-            contact: '0421985131',
-            address: '123 Main St 1',
-            suburb: 'Suburb1',
-            state: 'SomeState',
-            country: 'SomeCountry',
-            postcode: '1231',
-            image: 'path/to/image.jpg'
-        },
-        adminEmergencyContact: {
-            contactPerson: 'EmergencyContact1',
-            contactNumber: '045678911',
-            relationship: 'Relative'
-        },
-        adminWWCHealthInformation: {
-            medicalCondition: 'None',
-            medicareNumber: 'Medicare1',
-            childrenCheckCardNumber: 'WWC1',
-            workingWithChildrenCheckExpiry: '2030-01-01T00:00:00.000Z',
-            workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
-        },
-        adminWorkRights: {
-            immigrationStatus: 'Visa Holder',
-            workRights: 'yes'
-        },
-        adminBankDetails: {
-            ABN: 'ABN1',
-            accountNumber: 'Account1',
-            bankAccountName: 'BankName1',
-            BSB: 'BSB1'
-        },
-        adminOtherInformation: {
-            otherInfo: 'Other Info 1'
-        }
-    },
-    {
-        adminPersonalDetails: {
-            firstName: 'Lakhwinder',
-            lastName: 'Singh',
-            DOB: '1980-01-01T00:00:00.000Z',
-            gender: 'male',
-            email: 'singhaus1986@gmail.com',
-            contact: '0433029912',
-            address: '123 Main St 2',
-            suburb: 'Suburb2',
-            state: 'SomeState',
-            country: 'SomeCountry',
-            postcode: '1232',
-            image: 'path/to/image.jpg'
-        },
-        adminEmergencyContact: {
-            contactPerson: 'EmergencyContact2',
-            contactNumber: '045678912',
-            relationship: 'Relative'
-        },
-        adminWWCHealthInformation: {
-            medicalCondition: 'None',
-            medicareNumber: 'Medicare2',
-            childrenCheckCardNumber: 'WWC2',
-            workingWithChildrenCheckExpiry: '2030-01-01T00:00:00.000Z',
-            workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
-        },
-        adminWorkRights: {
-            immigrationStatus: 'Citizen',
-            workRights: 'yes'
-        },
-        adminBankDetails: {
-            ABN: 'ABN2',
-            accountNumber: 'Account2',
-            bankAccountName: 'BankName2',
-            BSB: 'BSB2'
-        },
-        adminOtherInformation: {
-            otherInfo: 'Other Info 2'
-        }
-    },
+    // {
+    //     adminPersonalDetails: {
+    //         firstName: 'Navinder',
+    //         lastName: 'Singh',
+    //         DOB: '1980-01-01T00:00:00.000Z',
+    //         gender: 'Male',
+    //         email: 'SNAVINDER007@YAHOO.COM',
+    //         contact: '0421985131',
+    //         address: '123 Main St 1',
+    //         suburb: 'Suburb1',
+    //         state: 'SomeState',
+    //         country: 'SomeCountry',
+    //         postcode: '1231',
+    //         image: 'path/to/image.jpg'
+    //     },
+    //     adminEmergencyContact: {
+    //         contactPerson: 'EmergencyContact1',
+    //         contactNumber: '045678911',
+    //         relationship: 'Relative'
+    //     },
+    //     adminWWCHealthInformation: {
+    //         medicalCondition: 'None',
+    //         medicareNumber: 'Medicare1',
+    //         childrenCheckCardNumber: 'WWC1',
+    //         workingWithChildrenCheckExpiry: '2030-01-01T00:00:00.000Z',
+    //         workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
+    //     },
+    //     adminWorkRights: {
+    //         immigrationStatus: 'Visa Holder',
+    //         workRights: 'yes'
+    //     },
+    //     adminBankDetails: {
+    //         ABN: 'ABN1',
+    //         accountNumber: 'Account1',
+    //         bankAccountName: 'BankName1',
+    //         BSB: 'BSB1'
+    //     },
+    //     adminOtherInformation: {
+    //         otherInfo: 'Other Info 1'
+    //     }
+    // },
+    // {
+    //     adminPersonalDetails: {
+    //         firstName: 'Lakhwinder',
+    //         lastName: 'Singh',
+    //         DOB: '1980-01-01T00:00:00.000Z',
+    //         gender: 'male',
+    //         email: 'singhaus1986@gmail.com',
+    //         contact: '0433029912',
+    //         address: '123 Main St 2',
+    //         suburb: 'Suburb2',
+    //         state: 'SomeState',
+    //         country: 'SomeCountry',
+    //         postcode: '1232',
+    //         image: 'path/to/image.jpg'
+    //     },
+    //     adminEmergencyContact: {
+    //         contactPerson: 'EmergencyContact2',
+    //         contactNumber: '045678912',
+    //         relationship: 'Relative'
+    //     },
+    //     adminWWCHealthInformation: {
+    //         medicalCondition: 'None',
+    //         medicareNumber: 'Medicare2',
+    //         childrenCheckCardNumber: 'WWC2',
+    //         workingWithChildrenCheckExpiry: '2030-01-01T00:00:00.000Z',
+    //         workingwithChildrenCheckCardPhotoImage: 'path/to/photo.jpg'
+    //     },
+    //     adminWorkRights: {
+    //         immigrationStatus: 'Citizen',
+    //         workRights: 'yes'
+    //     },
+    //     adminBankDetails: {
+    //         ABN: 'ABN2',
+    //         accountNumber: 'Account2',
+    //         bankAccountName: 'BankName2',
+    //         BSB: 'BSB2'
+    //     },
+    //     adminOtherInformation: {
+    //         otherInfo: 'Other Info 2'
+    //     }
+    // },
     {
         adminPersonalDetails: {
             firstName: 'Akaal',
             lastName: 'Shaouni',
             DOB: '1980-01-01T00:00:00.000Z',
             gender: 'male',
-            email: 'akaalshaouni@gmail.com',
+            email: 'manavsingh839@gmail.com',
             contact: '0433029910',
             address: '123 Main St 2',
             suburb: 'Suburb2',

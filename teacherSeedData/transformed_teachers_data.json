@@ -1,0 +1,11 @@
+{ "teachers": [
+    {
+        "id": 1,
+        "name": "John Teacher",
+        "email": "teacher1@example.com",
+        "password": "password",
+        "role": "teacher",
+        "createdAt": "2021-01-01",
+        "updatedAt": "2021-01-01"
+    }
+] }

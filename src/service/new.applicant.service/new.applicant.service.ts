@@ -26,6 +26,12 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
     const dobUTC = new Date(DOB);
     const dobDateOnlyUTC = `${dobUTC.getUTCFullYear()}-${(dobUTC.getUTCMonth() + 1).toString().padStart(2, '0')}-${dobUTC.getUTCDate().toString().padStart(2, '0')}`;
 
+    const start = new Date(dobDateOnlyUTC);
+    start.setUTCHours(0, 0, 0, 0);
+
+    const end = new Date(dobDateOnlyUTC);
+    end.setUTCHours(23, 59, 59, 999);
+
     // Find existing student by first and last name, then compare DOB considering timezone
     const existingStudents = await db.personalDetails.findMany({
         where: {
@@ -36,6 +42,14 @@ export async function createApplicant(data: NewApplicantSchema['body']) {
             lastName: {
                 equals: lastName.trim(),
                 mode: 'insensitive'
+            },
+            gender: {
+                equals: gender.trim(),
+                mode: 'insensitive'
+            },
+            DOB: {
+                gte: start,
+                lte: end
             }
         }
     });

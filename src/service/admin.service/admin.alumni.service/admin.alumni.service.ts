@@ -607,37 +607,37 @@ export async function deEnrollAlumniEnrolledToSubjects(deEnrollData: AlumniEnrol
         await db.enrollment.delete({
             where: { id: subjectEnrollment.enrollmentId }
         });
+        // Do not delete StudentTermFee or FeePayment when de-enrolling. Preserve fee history and due fees.
+        // // Check for remaining enrollments in the same TermSubjectGroup
+        // const remainingEnrollments = await db.enrollment.count({
+        //     where: {
+        //         studentId: deEnrollData.alumniId,
+        //         termSubjectGroupId: deEnrollItem.termSubjectGroupId
+        //     }
+        // });
 
-        // Check for remaining enrollments in the same TermSubjectGroup
-        const remainingEnrollments = await db.enrollment.count({
-            where: {
-                studentId: deEnrollData.alumniId,
-                termSubjectGroupId: deEnrollItem.termSubjectGroupId
-            }
-        });
+        // // If no remaining enrollments, handle StudentTermFee and FeePayment records
+        // if (remainingEnrollments === 0) {
+        //     const studentTermFee = await db.studentTermFee.findFirst({
+        //         where: {
+        //             studentId: deEnrollData.alumniId,
+        //             termSubjectGroupId: deEnrollItem.termSubjectGroupId,
+        //             termId: deEnrollItem.termId
+        //         }
+        //     });
 
-        // If no remaining enrollments, handle StudentTermFee and FeePayment records
-        if (remainingEnrollments === 0) {
-            const studentTermFee = await db.studentTermFee.findFirst({
-                where: {
-                    studentId: deEnrollData.alumniId,
-                    termSubjectGroupId: deEnrollItem.termSubjectGroupId,
-                    termId: deEnrollItem.termId
-                }
-            });
+        //     if (studentTermFee) {
+        //         // Delete associated FeePayment records
+        //         await db.feePayment.deleteMany({
+        //             where: { studentTermFeeId: studentTermFee.id }
+        //         });
 
-            if (studentTermFee) {
-                // Delete associated FeePayment records
-                await db.feePayment.deleteMany({
-                    where: { studentTermFeeId: studentTermFee.id }
-                });
-
-                // Delete the StudentTermFee record
-                await db.studentTermFee.delete({
-                    where: { id: studentTermFee.id }
-                });
-            }
-        }
+        //         // Delete the StudentTermFee record
+        //         await db.studentTermFee.delete({
+        //             where: { id: studentTermFee.id }
+        //         });
+        //     }
+        // }
 
         deEnrolledSubjects.push(deEnrollItem.subject);
     }
