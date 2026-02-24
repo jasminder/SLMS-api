@@ -7,121 +7,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  TEACHER
-  APPLICANT
-  WAITLISTED
-  STUDENT
-  ALUMNI
-}
-
-enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  EXCUSED
-  LATE
-  LEAVE
-}
-
-enum InteractionType {
-  EMAIL
-  MEETING
-  PHONE_CALL
-  MESSAGE
-  CONFERENCE
-  OTHER
-  AUTOMATED_EMAIL
-}
-
-enum LeaveStatus {
-  PENDING
-  APPROVED
-  DECLINED
-}
-
-enum PaymentMethod {
-  ONLINE
-  CREDIT_CARD
-  CASH
-  OTHER
-  SCHOOL
-  NA
-  DISCOUNT
-  CREDIT_BALANCE
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  NODUES
-  DUE
-  OVERDUE
-  FAILED
-}
-
-enum PaymentType {
-  MONTHLY
-  TERM
-}
-
-enum MessageType {
-  STUDENT
-  ADMIN
-}
-
-enum MessageStatus {
-  SENT
-  DELIVERED
-  READ
-  ERROR
-}
-
-//parent table to PersonalDetails.. etc
 model Student {
   id                           Int                            @id @default(autoincrement())
-  akaalId                      Int?
-  attendancePercentageValue    Int                            @default(0)
-  termAttendance               Int                            @default(0)
-  previousTermAttendance       Int                            @default(0)
   role                         Role                           @default(APPLICANT)
-  isActive                     Boolean                        @default(false)
-  isAllowedLogin               Boolean                        @default(false)
-  enrollments                  Enrollment[]
-  personalDetails              PersonalDetails?
-  parentsDetails               ParentsDetails?
-  emergencyContact             EmergencyContact?
-  healthInformation            HealthInformation?
-  otherInformation             OtherInformation?
-  studentTermFee               StudentTermFee[]
   subjectsChosen               String[]                       @default(["Subjects Chosen Not available"])
   subjectRelated               String[]                       @default(["Options Not available"])
   createdAt                    DateTime                       @default(now())
   updatedAt                    DateTime                       @updatedAt
-  studentClassAssignment       StudentClassAssignment[]
-  user                         User?
+  isActive                     Boolean                        @default(false)
+  isAllowedLogin               Boolean                        @default(false)
+  akaalId                      Int?
+  attendancePercentageValue    Int                            @default(0)
+  termAttendance               Int                            @default(0)
+  currentInvoiceDue            Int?
+  hasOverDue                   Boolean?                       @default(false)
+  overDue                      Int?
+  creditBalance                Int                            @default(0)
+  hasSeenNewApplication        Boolean                        @default(false)
+  previousTermAttendance       Int                            @default(0)
+  AlumniRemarks                AlumniRemarks[]
+  AutomatedMailForParents      AutomatedMailForParents[]
+  comment                      Comment[]
+  EmailContent                 EmailContent[]
+  emergencyContact             EmergencyContact?
+  enrollments                  Enrollment[]
+  feedback                     Feedback[]
+  GroupClasswork               GroupClasswork[]
+  GroupHomework                GroupHomework[]
+  healthInformation            HealthInformation?
+  interaction                  Interaction[]
+  Leave                        Leave[]
+  Notification                 Notification[]
+  otherInformation             OtherInformation?
+  parentsDetails               ParentsDetails?
+  personalDetails              PersonalDetails?
   schoolCheckInAttendance      SchoolCheckInAttendance[]
   skipReport                   SkipReport[]
-  feedback                     Feedback[]
-  interaction                  Interaction[]
-  comment                      Comment[]
-  GroupHomework                GroupHomework[]
-  AutomatedMailForParents      AutomatedMailForParents[]
-  GroupClasswork               GroupClasswork[]
-  Leave                        Leave[]
-  StudentNoticeAcknowledgement StudentNoticeAcknowledgement[]
-  hasOverDue                   Boolean?                       @default(false) // Indicates if there is any overdue amount
-  overDue                      Int? //to be used to indicate total overdue of all invoices                       @default(0) // Amount overdue for payment
-  currentInvoiceDue            Int? //to indicate total current invoice due                   @default(0)
-  EmailContent                 EmailContent[]
-  creditBalance                Int                            @default(0)
-  studentHomework              StudentHomework[]
-  studentClasswork             StudentClasswork[]
   studentAdminMessage          StudentAdminMessage[]
-  AlumniRemarks                AlumniRemarks[]
-  hasSeenNewApplication        Boolean                        @default(false)
-  Notification                 Notification[]
+  studentClassAssignment       StudentClassAssignment[]
+  studentClasswork             StudentClasswork[]
+  studentHomework              StudentHomework[]
+  StudentNoticeAcknowledgement StudentNoticeAcknowledgement[]
   StudentTermAttendanceHistory StudentTermAttendanceHistory[]
+  studentTermFee               StudentTermFee[]
+  user                         User?
 }
 
 model StudentTermAttendanceHistory {
@@ -138,24 +67,23 @@ model StudentTermAttendanceHistory {
   @@unique([studentId, termId])
 }
 
-// child table to Student table. connection is established through FK studentID
 model PersonalDetails {
-  id          Int      @id @default(autoincrement()) // entity integrity PK
-  studentId   Int      @unique // referential integrity is maintained used @unique with  FK
+  id          Int      @id @default(autoincrement())
+  studentId   Int      @unique
   firstName   String
   lastName    String
-  punjabiName String?
-  DOB         DateTime // this has to be a date type , -> domain integrtity \
+  DOB         DateTime
   gender      String
   email       String
   contact     String
-  address     String // house + street address || atomicity for breaking up whole address
+  address     String
   suburb      String
   state       String
   country     String   @default("Australia")
   postcode    String
   image       String?
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade) // relates to onDelete: Cascade FK constraint
+  punjabiName String?
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model ParentsDetails {
@@ -192,20 +120,20 @@ model OtherInformation {
   otherInfo   String   @default("No information provided")
   declaration String[] @default([""])
   studentId   Int      @unique
-  student     Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Subject {
   id                      Int                       @id @default(autoincrement())
   name                    String                    @unique
   isActive                Boolean                   @default(true)
+  Classwork               Classwork[]
+  Homework                Homework[]
+  TeacherSubject          TeacherSubject[]
   termSubject             TermSubject[]
   termSubjectGroupSubject TermSubjectGroupSubject[]
-  termSubjectGroup        TermSubjectGroup[]
   termSubjectLevel        TermSubjectLevel[]
-  TeacherSubject          TeacherSubject[]
-  Homework                Homework[]
-  Classwork               Classwork[]
+  termSubjectGroup        TermSubjectGroup[]        @relation("SubjectToTermSubjectGroup")
 }
 
 model SubjectGroup {
@@ -225,38 +153,38 @@ model Term {
   endDate                      DateTime
   createdAt                    DateTime                       @default(now())
   updatedAt                    DateTime                       @updatedAt
+  automatedAttendanceEnabled   Boolean                        @default(false)
+  FeeDashboard                 FeeDashboard[]
+  FeeTemplate                  FeeTemplate[]
+  StudentTermAttendanceHistory StudentTermAttendanceHistory[]
+  studentTermFee               StudentTermFee[]
   termSubject                  TermSubject[]
   termSubjectGroup             TermSubjectGroup[]
   termSubjectGroupSubject      TermSubjectGroupSubject[]
-  studentTermFee               StudentTermFee[]
   termSubjectLevel             TermSubjectLevel[]
-  FeeTemplate                  FeeTemplate[]
-  FeeDashboard                 FeeDashboard[]
-  automatedAttendanceEnabled   Boolean                        @default(false)
-  StudentTermAttendanceHistory StudentTermAttendanceHistory[]
 }
 
 model Level {
   id               Int                @id @default(autoincrement())
   isActive         Boolean            @default(true)
   name             String             @unique
-  termSubject      TermSubject[]
   TermSubjectLevel TermSubjectLevel[]
+  termSubject      TermSubject[]      @relation("LevelToTermSubject")
 }
 
 model Section {
   id                      Int                       @id @default(autoincrement())
   name                    String                    @unique
-  termSubjectLevel        TermSubjectLevel[]
+  AutomatedMailForParents AutomatedMailForParents[]
+  Classwork               Classwork[]
+  GroupClasswork          GroupClasswork[]
+  GroupHomework           GroupHomework[]
+  Homework                Homework[]
+  Notification            Notification[]
   StudentClassAssignment  StudentClassAssignment[]
   TeacherClassAssignment  TeacherClassAssignment[]
-  AutomatedMailForParents AutomatedMailForParents[]
-  Homework                Homework[]
-  Classwork               Classwork[]
-  GroupHomework           GroupHomework[]
-  GroupClasswork          GroupClasswork[]
   TimetableSlot           TimetableSlot[]
-  Notification            Notification[]
+  termSubjectLevel        TermSubjectLevel[]        @relation("SectionToTermSubjectLevel")
 }
 
 model TermSubjectGroup {
@@ -264,15 +192,15 @@ model TermSubjectGroup {
   termId                  Int
   feeId                   Int?
   subjectGroupId          Int
-  fee                     Fee?                      @relation(fields: [feeId], references: [id], onDelete: Cascade)
-  term                    Term                      @relation(fields: [termId], references: [id], onDelete: Cascade)
-  subjectGroup            SubjectGroup              @relation(fields: [subjectGroupId], references: [id])
   enrollment              Enrollment[]
-  subject                 Subject[]
-  termSubject             TermSubject[]
-  termSubjectGroupSubject TermSubjectGroupSubject[]
-  studentTermFee          StudentTermFee[]
   FeeTemplate             FeeTemplate[]
+  studentTermFee          StudentTermFee[]
+  termSubject             TermSubject[]
+  fee                     Fee?                      @relation(fields: [feeId], references: [id], onDelete: Cascade)
+  subjectGroup            SubjectGroup              @relation(fields: [subjectGroupId], references: [id])
+  term                    Term                      @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termSubjectGroupSubject TermSubjectGroupSubject[]
+  subject                 Subject[]                 @relation("SubjectToTermSubjectGroup")
 
   @@unique([termId, subjectGroupId])
 }
@@ -284,11 +212,11 @@ model TermSubject {
   termId             Int
   isOnSunday         Boolean             @default(false)
   isOnWeekday        Boolean             @default(false)
-  level              Level[]
-  subject            Subject             @relation(fields: [subjectId], references: [id])
   subjectEnrollments SubjectEnrollment[]
+  subject            Subject             @relation(fields: [subjectId], references: [id])
   term               Term                @relation(fields: [termId], references: [id], onDelete: Cascade)
   termSubjectGroup   TermSubjectGroup    @relation(fields: [termSubjectGroupId], references: [id])
+  level              Level[]             @relation("LevelToTermSubject")
 
   @@unique([termId, subjectId, termSubjectGroupId])
 }
@@ -298,21 +226,21 @@ model TermSubjectLevel {
   termId                  Int
   subjectId               Int
   levelId                 Int
-  sections                Section[]
-  term                    Term                      @relation(fields: [termId], references: [id])
-  subject                 Subject                   @relation(fields: [subjectId], references: [id])
-  level                   Level                     @relation(fields: [levelId], references: [id])
+  AutomatedMailForParents AutomatedMailForParents[]
+  Classwork               Classwork[]
   enrollments             Enrollment[]
+  Feedback                Feedback[]
+  GroupClasswork          GroupClasswork[]
+  GroupHomework           GroupHomework[]
+  Homework                Homework[]
+  Notification            Notification[]
   studentClassAssignment  StudentClassAssignment[]
   teacherClassAssignment  TeacherClassAssignment[]
-  Feedback                Feedback[]
-  GroupHomework           GroupHomework[]
-  AutomatedMailForParents AutomatedMailForParents[]
-  GroupClasswork          GroupClasswork[]
-  Classwork               Classwork[]
-  Homework                Homework[]
+  level                   Level                     @relation(fields: [levelId], references: [id])
+  subject                 Subject                   @relation(fields: [subjectId], references: [id])
+  term                    Term                      @relation(fields: [termId], references: [id])
   TimetableSlot           TimetableSlot[]
-  Notification            Notification[]
+  sections                Section[]                 @relation("SectionToTermSubjectLevel")
 
   @@unique([termId, subjectId, levelId])
 }
@@ -325,12 +253,12 @@ model StudentClassAssignment {
   sectionId           Int
   isCurrentlyAssigned Boolean           @default(true)
   changeDate          DateTime          @default(now())
-  note                String? // Optional field for notes
+  note                String?
+  classAttendance     ClassAttendance[]
   enrollment          Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  section             Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   student             Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
   termSubjectLevel    TermSubjectLevel  @relation(fields: [termSubjectLevelId], references: [id], onDelete: Cascade)
-  section             Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  classAttendance     ClassAttendance[]
 
   @@unique([studentId, termSubjectLevelId, isCurrentlyAssigned, sectionId])
 }
@@ -342,14 +270,14 @@ model Enrollment {
   termSubjectGroupId      Int
   subjectEnrollmentId     Int?                      @unique
   createdAt               DateTime                  @default(now())
-  updatedAt               DateTime?                 @updatedAt
   termSubjectLevelId      Int?
+  updatedAt               DateTime?                 @updatedAt
   student                 Student                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   termSubjectGroup        TermSubjectGroup          @relation(fields: [termSubjectGroupId], references: [id])
-  termSubjectGroupSubject TermSubjectGroupSubject[]
-  subjectEnrollment       SubjectEnrollment?
   termSubjectLevel        TermSubjectLevel?         @relation(fields: [termSubjectLevelId], references: [id])
   studentClassAssignment  StudentClassAssignment[]
+  subjectEnrollment       SubjectEnrollment?
+  termSubjectGroupSubject TermSubjectGroupSubject[]
 
   @@unique([studentId, termSubjectGroupId, subjectEnrollmentId])
 }
@@ -358,7 +286,7 @@ model SubjectEnrollment {
   id            Int         @id @default(autoincrement())
   enrollmentId  Int         @unique
   termSubjectId Int
-  grade         String      @default("No Grades yet") // Optional, for storing grades
+  grade         String      @default("No Grades yet")
   enrollment    Enrollment  @relation(fields: [enrollmentId], references: [id])
   termSubject   TermSubject @relation(fields: [termSubjectId], references: [id])
 
@@ -369,8 +297,8 @@ model Fee {
   id               Int                @id @default(autoincrement())
   amount           Int
   paymentType      PaymentType
-  termSubjectGroup TermSubjectGroup[]
   feePayment       FeePayment[]
+  termSubjectGroup TermSubjectGroup[]
 
   @@unique([amount, paymentType])
 }
@@ -380,11 +308,11 @@ model StudentTermFee {
   studentId          Int
   termSubjectGroupId Int
   termId             Int
+  createdAt          DateTime         @default(now())
   feePayment         FeePayment[]
   student            Student          @relation(fields: [studentId], references: [id])
-  termSubjectGroup   TermSubjectGroup @relation(fields: [termSubjectGroupId], references: [id])
   term               Term             @relation(fields: [termId], references: [id])
-  createdAt          DateTime         @default(now())
+  termSubjectGroup   TermSubjectGroup @relation(fields: [termSubjectGroupId], references: [id])
 
   @@unique([studentId, termSubjectGroupId, termId])
 }
@@ -398,44 +326,46 @@ model PaymentInstallment {
   paymentStatus       PaymentStatus @default(PENDING)
   remarks             String        @default("No remarks")
   receivedBy          String?
-  transactionId       String?
-  errorDetails        String?
   createdAt           DateTime      @default(now())
+  errorDetails        String?
+  isTransactionSucess Boolean       @default(true)
+  transactionId       String?
   updatedAt           DateTime?     @updatedAt
   feePayment          FeePayment    @relation(fields: [feePaymentId], references: [id])
-  isTransactionSucess Boolean       @default(true)
 
   @@index([feePaymentId])
 }
 
 model FeePayment {
   id                 Int                  @id @default(autoincrement())
-  invoiceId          String?              @default("0000_0_0")
-  feeTemplateId      Int?
   feeId              Int?
   dueDate            DateTime
-  dueAmount          Int // Amount still due (if any)
-  creditAmount       Int                  @default(0) /// not required- moved to student model
+  paidDate           DateTime?
+  dueAmount          Int
+  studentTermFeeId   Int?
+  status             PaymentStatus?
+  method             PaymentMethod?
+  amountPaid         Int?
+  /// /moved to  PaymentInstallment
+  remarks            String?
+  /// not required- moved to student model
+  creditAmount       Int                  @default(0)
   feeAmount          Int?
-  studentTermFeeId   Int? // modality. FK is optional or NOT non nullable
-  hasDiscount        Boolean?             @default(false)
-  hasOverDue         Boolean?             @default(false)
-  hasDue             Boolean?             @default(true)
-  isActive           Boolean?             @default(true)
+  createdAt          DateTime?            @default(now())
   adjustedFeeAmount  Int?
   discountAmount     Int?                 @default(0)
   discountReason     String?
-  paidDate           DateTime? // not required- moved to PaymentInstallment
-  amountPaid         Int? //not required  - moved to  PaymentInstallment
-  status             PaymentStatus? //moved to  PaymentInstallment
-  method             PaymentMethod? //moved to  PaymentInstallment
-  remarks            String? ////moved to  PaymentInstallment
-  fee                Fee?                 @relation(fields: [feeId], references: [id])
-  studentTermFee     StudentTermFee?      @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
-  createdAt          DateTime?            @default(now())
+  hasDiscount        Boolean?             @default(false)
+  hasDue             Boolean?             @default(true)
+  hasOverDue         Boolean?             @default(false)
+  invoiceId          String?              @default("0000_0_0")
+  isActive           Boolean?             @default(true)
   updatedAt          DateTime?            @updatedAt
-  paymentInstallment PaymentInstallment[]
+  feeTemplateId      Int?
+  fee                Fee?                 @relation(fields: [feeId], references: [id])
   feeTemplate        FeeTemplate?         @relation(fields: [feeTemplateId], references: [id], onDelete: Cascade)
+  studentTermFee     StudentTermFee?      @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
+  paymentInstallment PaymentInstallment[]
 }
 
 model FeeTemplate {
@@ -448,15 +378,15 @@ model FeeTemplate {
   amount             Int
   dueDate            DateTime
   notes              String            @default("No notes")
-  lastCronJobRun     DateTime?
   interval           PaymentType
-  feePayments        FeePayment[]
-  termId             Int? // Optional link to Term
-  termSubjectGroupId Int? // Optional link to TermSubjectGroup
-  term               Term?             @relation(fields: [termId], references: [id])
-  termSubjectGroup   TermSubjectGroup? @relation(fields: [termSubjectGroupId], references: [id])
+  termId             Int?
+  termSubjectGroupId Int?
   updatedAt          DateTime          @updatedAt
   createdAt          DateTime          @default(now())
+  lastCronJobRun     DateTime?
+  feePayments        FeePayment[]
+  term               Term?             @relation(fields: [termId], references: [id])
+  termSubjectGroup   TermSubjectGroup? @relation(fields: [termSubjectGroupId], references: [id])
 
   @@unique([invoiceName, dueDate, groupName, interval])
 }
@@ -468,12 +398,12 @@ model FeeDashboard {
   totalFeesDue         Int      @default(0)
   totalFeesOverdue     Int      @default(0)
   totalFeesOverduePrev Int      @default(0)
-  termId               Int // Link to the term if these values are specific to a term
+  termId               Int
   updatedAt            DateTime @updatedAt
   createdAt            DateTime @default(now())
   term                 Term     @relation(fields: [termId], references: [id])
 
-  @@unique([termId, createdAt]) // Assuming you want unique records per term and snapshot
+  @@unique([termId, createdAt])
 }
 
 model TermSubjectGroupSubject {
@@ -483,11 +413,11 @@ model TermSubjectGroupSubject {
   termSubjectGroupId Int?
   enrollmentId       Int?
   subjectId          Int
-  term               Term              @relation(fields: [termId], references: [id], onDelete: Cascade)
+  enrollment         Enrollment?       @relation(fields: [enrollmentId], references: [id])
   subjectGroup       SubjectGroup      @relation(fields: [subjectGroupId], references: [id])
   subject            Subject           @relation(fields: [subjectId], references: [id])
+  term               Term              @relation(fields: [termId], references: [id], onDelete: Cascade)
   termSubjectGroup   TermSubjectGroup? @relation(fields: [termSubjectGroupId], references: [id], onDelete: Cascade)
-  enrollment         Enrollment?       @relation(fields: [enrollmentId], references: [id])
 
   @@unique([termId, subjectGroupId, subjectId])
 }
@@ -495,13 +425,13 @@ model TermSubjectGroupSubject {
 model TimeTable {
   id         Int      @id @default(autoincrement())
   name       String?  @default("Timetable")
-  termId     Int?
-  roomNames  String[] @default([])
   isActive   Boolean  @default(true)
   data       Json
-  totalRooms Int      @default(6)
   updatedAt  DateTime @updatedAt
   createdAt  DateTime @default(now())
+  termId     Int?
+  totalRooms Int      @default(6)
+  roomNames  String[] @default([])
 }
 
 model Teacher {
@@ -509,27 +439,27 @@ model Teacher {
   role                             Role                              @default(APPLICANT)
   isActive                         Boolean                           @default(false)
   isAllowedLogin                   Boolean                           @default(false)
-  teacherPersonalDetails           TeacherPersonalDetails?
-  teacherEmergencyContact          TeacherEmergencyContact?
-  teacherWWCHealthInformation      TeacherWWCHealthInformation?
-  teacherWorkRights                TeacherWorkRights?
-  teacherQualificationAvailability TeacherQualificationAvailability?
-  teacherBankDetails               TeacherBankDetails?
-  teacherOtherInformation          TeacherOtherInformation?
-  teacherSubject                   TeacherSubject[]
-  teacherSubjectAssignment         TeacherClassAssignment[]
   createdAt                        DateTime                          @default(now())
   updatedAt                        DateTime                          @updatedAt
-  user                             User?
-  skipReport                       SkipReport[]
-  Homework                         Homework[]
-  feedback                         Feedback[]
-  GroupHomework                    GroupHomework[]
   AutomatedMailForParents          AutomatedMailForParents[]
   Classwork                        Classwork[]
+  feedback                         Feedback[]
   GroupClasswork                   GroupClasswork[]
+  GroupHomework                    GroupHomework[]
+  Homework                         Homework[]
   NoticeAcknowledgement            NoticeAcknowledgement[]
+  skipReport                       SkipReport[]
+  teacherBankDetails               TeacherBankDetails?
+  teacherSubjectAssignment         TeacherClassAssignment[]
+  teacherEmergencyContact          TeacherEmergencyContact?
+  teacherOtherInformation          TeacherOtherInformation?
+  teacherPersonalDetails           TeacherPersonalDetails?
+  teacherQualificationAvailability TeacherQualificationAvailability?
+  teacherSubject                   TeacherSubject[]
+  teacherWWCHealthInformation      TeacherWWCHealthInformation?
+  teacherWorkRights                TeacherWorkRights?
   TimetableSlot                    TimetableSlot[]
+  user                             User?
 }
 
 model TeacherPersonalDetails {
@@ -561,47 +491,47 @@ model TeacherEmergencyContact {
 
 model TeacherWWCHealthInformation {
   id                                     Int      @id @default(autoincrement())
-  teacherId                              Int      @unique
   medicareNumber                         String?  @default("Medicare Number not provided")
   medicalCondition                       String
   childrenCheckCardNumber                String   @unique
   workingWithChildrenCheckExpiry         DateTime
+  teacherId                              Int      @unique
   workingwithChildrenCheckCardPhotoImage String?
   teacher                                Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 model TeacherWorkRights {
   id                Int     @id @default(autoincrement())
-  teacherId         Int     @unique
   workRights        Boolean
   immigrationStatus String
+  teacherId         Int     @unique
   teacher           Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 model TeacherQualificationAvailability {
   id              Int      @id @default(autoincrement())
-  teacherId       Int      @unique
   qualification   String
-  experience      String
   subjectsChosen  String[]
   timeSlotsChosen String[]
+  teacherId       Int      @unique
+  experience      String
   teacher         Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 model TeacherBankDetails {
   id              Int     @id @default(autoincrement())
-  teacherId       Int     @unique
   bankAccountName String
   BSB             String
   accountNumber   String
   ABN             String? @default("NA")
+  teacherId       Int     @unique
   teacher         Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 model TeacherOtherInformation {
   id        Int     @id @default(autoincrement())
-  teacherId Int     @unique
   otherInfo String  @default("No information provided")
+  teacherId Int     @unique
   teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
@@ -609,8 +539,8 @@ model TeacherSubject {
   id        Int     @id @default(autoincrement())
   teacherId Int
   subjectId Int
-  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   subject   Subject @relation(fields: [subjectId], references: [id])
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@unique([teacherId, subjectId])
 }
@@ -621,9 +551,9 @@ model TeacherClassAssignment {
   termSubjectLevelId Int
   sectionId          Int
   timeSlot           String?
+  section            Section          @relation(fields: [sectionId], references: [id])
   teacher            Teacher          @relation(fields: [teacherId], references: [id])
   termSubjectLevel   TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
-  section            Section          @relation(fields: [sectionId], references: [id])
 
   @@unique([teacherId, termSubjectLevelId, sectionId])
 }
@@ -633,26 +563,26 @@ model Admin {
   role                                Role                                  @default(ADMIN)
   isActive                            Boolean                               @default(true)
   isAllowedLogin                      Boolean                               @default(true)
-  adminPersonalDetails                AdminPersonalDetails?
-  adminEmergencyContact               AdminEmergencyContact?
-  adminWWCHealthInformation           AdminWWCHealthInformation?
-  adminWorkRights                     AdminWorkRights?
-  adminBankDetails                    AdminBankDetails?
-  adminOtherInformation               AdminOtherInformation?
   createdAt                           DateTime                              @default(now())
   updatedAt                           DateTime                              @updatedAt
-  user                                User?
-  Homework                            Homework[]
-  comment                             Comment[]
-  Classwork                           Classwork[]
-  SkipReport                          SkipReport[]
-  Leave                               Leave[]
-  EmailTemplate                       EmailTemplate[]
-  Notice                              Notice[]
-  StudentNotice                       StudentNotice[]
-  StudentAdminMessage                 StudentAdminMessage[]
-  EnrollmentConfirmationEmailTemplate EnrollmentConfirmationEmailTemplate[]
+  adminBankDetails                    AdminBankDetails?
+  adminEmergencyContact               AdminEmergencyContact?
   AdminFeedbackOption                 AdminFeedbackOption[]
+  adminOtherInformation               AdminOtherInformation?
+  adminPersonalDetails                AdminPersonalDetails?
+  adminWWCHealthInformation           AdminWWCHealthInformation?
+  adminWorkRights                     AdminWorkRights?
+  Classwork                           Classwork[]
+  comment                             Comment[]
+  EmailTemplate                       EmailTemplate[]
+  EnrollmentConfirmationEmailTemplate EnrollmentConfirmationEmailTemplate[]
+  Homework                            Homework[]
+  Leave                               Leave[]
+  Notice                              Notice[]
+  SkipReport                          SkipReport[]
+  StudentAdminMessage                 StudentAdminMessage[]
+  StudentNotice                       StudentNotice[]
+  user                                User?
 }
 
 model AdminPersonalDetails {
@@ -723,93 +653,91 @@ model User {
   email                       String   @unique
   password                    String
   role                        Role
-  adminId                     Int?     @unique
-  teacherId                   Int?     @unique
-  studentId                   Int?     @unique
-  admin                       Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  teacher                     Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  student                     Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
   isActive                    Boolean  @default(true)
   isEmailVerified             Boolean  @default(false)
+  adminId                     Int?     @unique
+  studentId                   Int?     @unique
+  teacherId                   Int?     @unique
   resetPasswordToken          String?
   resetPasswordTokenExpiresAt Int?
+  admin                       Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  student                     Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher                     Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 model SchoolCheckInAttendance {
   id              Int               @id @default(autoincrement())
   studentId       Int
+  date            DateTime
+  checkInTime     DateTime?
+  remarks         String?
+  checkedIn       Boolean           @default(false)
   isMarked        Boolean           @default(false)
-  date            DateTime // The date of check-in
-  checkInTime     DateTime? // Nullable field for the time of check-in
-  checkedIn       Boolean           @default(false) // Default to false to indicate not checked in initially
-  isCheckedOut    Boolean? // Optional field to track whether the student is checked out
   checkOutTime    DateTime?
-  remarks         String? // Optional field for notes
-  isOnLeave       Boolean           @default(false)
+  isCheckedOut    Boolean?
+  schoolDayId     Int?
   attendanceValue Int               @default(0)
-  student         Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  isOnLeave       Boolean           @default(false)
   classAttendance ClassAttendance[]
   SchoolDay       SchoolDay?        @relation(fields: [schoolDayId], references: [id])
-  schoolDayId     Int?
+  student         Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@unique([studentId, date]) // Ensuring uniqueness for check-in entry per student per day
+  @@unique([studentId, date])
 }
 
 model ClassAttendance {
   id                        Int                     @id @default(autoincrement())
   studentClassAssignmentId  Int
+  date                      DateTime
+  attendanceStatus          AttendanceStatus        @default(ABSENT)
+  remarks                   String?                 @default("NA")
   schoolCheckInAttendanceId Int
-  date                      DateTime // The date creating record
   schoolDayId               Int?
-  remarks                   String?                 @default("NA") // Optional field for any notes
-  attendanceStatus          AttendanceStatus        @default(ABSENT) // Enum for presence, absence, etc.
   schoolCheckInAttendance   SchoolCheckInAttendance @relation(fields: [schoolCheckInAttendanceId], references: [id])
-  studentClassAssignment    StudentClassAssignment  @relation(fields: [studentClassAssignmentId], references: [id], onDelete: Cascade)
   SchoolDay                 SchoolDay?              @relation(fields: [schoolDayId], references: [id])
+  studentClassAssignment    StudentClassAssignment  @relation(fields: [studentClassAssignmentId], references: [id], onDelete: Cascade)
 
-  @@unique([studentClassAssignmentId, date]) // Ensuring uniqueness for attendance entry per class per day
+  @@unique([studentClassAssignmentId, date])
 }
 
 model SkipReport {
   id                  Int       @id @default(autoincrement())
   studentId           Int
   teacherId           Int?
-  adminId             Int?
   date                DateTime
   reason              String
   isClosed            Boolean   @default(false)
   adminClosingRemarks String?
   className           String
+  adminId             Int?
   closeDate           DateTime?
-  admin               Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  teacher             Teacher?  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  student             Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime? @updatedAt
+  admin               Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  student             Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher             Teacher?  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 model Homework {
-  id                 Int               @id @default(autoincrement())
-  subjectId          Int
-  teacherId          Int? // Optional: ID of the teacher who uploaded the homework
-  adminId            Int? // Optional: ID of the admin who uploaded the homework
-  termSubjectLevelId Int?
-  sectionId          Int?
-  uploadedUserRole   String // Role of the uploader ('teacher' or 'admin')
-  title              String?           @default("No title")
-  description        String
-  attachments        String[] // URLs of the attached documents
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  subject            Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  teacher            Teacher?          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  admin              Admin?            @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  termSubjectLevel   TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id])
-  section            Section?          @relation(fields: [sectionId], references: [id])
-
-  // @@unique([subjectId, title])
+  id                   Int                    @id @default(autoincrement())
+  subjectId            Int
+  teacherId            Int?
+  adminId              Int?
+  uploadedUserRole     String
+  title                String?                @default("No title")
+  description          String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  attachments          String[]
+  termSubjectLevelId   Int?
+  sectionId            Int?
+  admin                Admin?                 @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  section              Section?               @relation(fields: [sectionId], references: [id])
+  subject              Subject                @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher              Teacher?               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel     TermSubjectLevel?      @relation(fields: [termSubjectLevelId], references: [id])
   HomeworkSnapshot     HomeworkSnapshot[]
   SentHomeworkSnapshot SentHomeworkSnapshot[]
   StudentHomework      StudentHomework[]
@@ -819,63 +747,59 @@ model StudentHomework {
   id             Int       @id @default(autoincrement())
   studentId      Int
   homeworkId     Int
-  submissionDate DateTime? // Optional, if students can submit their homework late
-  grade          String? // Optional, if homework is graded
-  feedback       String? // Teacher's feedback for the submitted homework
-  submitted      Boolean   @default(false) // Tracks whether homework has been submitted
-  attachments    String[] // Attachments that the student submits
+  submissionDate DateTime?
+  grade          String?
+  feedback       String?
+  submitted      Boolean   @default(false)
+  attachments    String[]
   sendDate       DateTime?
   classTime      String?
   roomName       String?
   className      String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  student        Student?  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  homework       Homework? @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  homework       Homework  @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@unique([studentId, homeworkId]) // Ensure unique combinations to prevent duplicate entries
+  @@unique([studentId, homeworkId])
 }
 
 model Feedback {
-  id                 Int      @id @default(autoincrement())
+  id                 Int              @id @default(autoincrement())
   studentId          Int
   teacherId          Int
-  termSubjectLevelId Int
-  sectionId          Int?
-  title              String
   content            String
-  isSent             Boolean  @default(false)
-  sendDate           DateTime @default(now())
+  isSent             Boolean          @default(false)
+  sendDate           DateTime         @default(now())
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  title              String
+  termSubjectLevelId Int
+  className          String?
   classTime          String?
   roomName           String?
-  className          String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
-
-  // @@unique([studentId, teacherId, termSubjectLevelId, title]) // Ensuring uniqueness of the feedback
+  sectionId          Int?
+  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher            Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel   TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
 }
 
 model GroupHomework {
-  id                 Int      @id @default(autoincrement())
-  studentId          Int
-  teacherId          Int
-  termSubjectLevelId Int
-  sectionId          Int?
-  title              String
-  description        String[]
-  attachments        String[] // URLs of the attached documents
-  isSent             Boolean  @default(false)
-  sendDate           DateTime @default(now())
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
+  id                   Int                    @id @default(autoincrement())
+  studentId            Int
+  teacherId            Int
+  termSubjectLevelId   Int
+  title                String
+  attachments          String[]
+  isSent               Boolean                @default(false)
+  sendDate             DateTime               @default(now())
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  description          String[]
+  sectionId            Int?
+  section              Section?               @relation(fields: [sectionId], references: [id])
   student              Student                @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher              Teacher                @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  section              Section?               @relation(fields: [sectionId], references: [id])
   termSubjectLevel     TermSubjectLevel       @relation(fields: [termSubjectLevelId], references: [id])
   HomeworkSnapshot     HomeworkSnapshot[]
   SentHomeworkSnapshot SentHomeworkSnapshot[]
@@ -883,55 +807,51 @@ model GroupHomework {
 
 model HomeworkSnapshot {
   id              Int           @id @default(autoincrement())
-  homeworkId      Int // Foreign key to Homework
-  groupHomeworkId Int // Foreign key to GroupHomework
-  description     String
-  attachments     String[]
-  fileNames       String[]
-  sendDate        DateTime      @default(now())
+  homeworkId      Int
+  groupHomeworkId Int
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  homework        Homework      @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  description     String
+  fileNames       String[]
+  attachments     String[]
+  sendDate        DateTime      @default(now())
   groupHomework   GroupHomework @relation(fields: [groupHomeworkId], references: [id], onDelete: Cascade)
+  homework        Homework      @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
 }
 
 model SentHomeworkSnapshot {
-  id              Int      @id @default(autoincrement())
-  homeworkId      Int? // Foreign key to Homework
-  groupHomeworkId Int // Foreign key to GroupHomework
-  description     String // Snapshot description at the time of sending
-  attachments     String[] // Snapshot attachments at the time of sending
-  fileNames       String[] // Snapshot filenames at the time of sending
-  sendDate        DateTime // Date when the snapshot was sent
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relationships
-  homework      Homework?     @relation(fields: [homeworkId], references: [id], onDelete: SetNull)
-  groupHomework GroupHomework @relation(fields: [groupHomeworkId], references: [id])
+  id              Int           @id @default(autoincrement())
+  homeworkId      Int?
+  groupHomeworkId Int
+  description     String
+  attachments     String[]
+  fileNames       String[]
+  sendDate        DateTime
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  groupHomework   GroupHomework @relation(fields: [groupHomeworkId], references: [id])
+  homework        Homework?     @relation(fields: [homeworkId], references: [id])
 }
 
 model Classwork {
-  id                 Int               @id @default(autoincrement())
-  subjectId          Int
-  teacherId          Int? // ID of the teacher who created the classwork
-  adminId            Int?
-  termSubjectLevelId Int?
-  sectionId          Int?
-  uploadedUserRole   String // Role of the uploader ('teacher' or 'admin')
-  title              String?           @default("No title")
-  description        String
-  attachments        String[]
-  dueDate            DateTime          @default(now())
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  termSubjectLevel   TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id])
-  subject            Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  teacher            Teacher?          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  admin              Admin?            @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  section            Section?          @relation(fields: [sectionId], references: [id])
-
-  // @@unique([subjectId, title])
+  id                    Int                     @id @default(autoincrement())
+  subjectId             Int
+  teacherId             Int?
+  uploadedUserRole      String
+  title                 String?                 @default("No title")
+  description           String
+  attachments           String[]
+  dueDate               DateTime                @default(now())
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  termSubjectLevelId    Int?
+  adminId               Int?
+  sectionId             Int?
+  admin                 Admin?                  @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  section               Section?                @relation(fields: [sectionId], references: [id])
+  subject               Subject                 @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher               Teacher?                @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel      TermSubjectLevel?       @relation(fields: [termSubjectLevelId], references: [id])
   ClassworkSnapshot     ClassworkSnapshot[]
   SentClassworkSnapshot SentClassworkSnapshot[]
   StudentClasswork      StudentClasswork[]
@@ -952,40 +872,37 @@ model StudentClasswork {
   className      String?
   createdAt      DateTime? @default(now())
   updatedAt      DateTime? @updatedAt
-  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   classwork      Classwork @relation(fields: [classworkId], references: [id], onDelete: Cascade)
+  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@unique([studentId, classworkId]) // Ensure unique combinations to prevent duplicate entries
+  @@unique([studentId, classworkId])
 }
 
 model GroupClasswork {
-  id                 Int      @id @default(autoincrement())
-  studentId          Int
-  teacherId          Int
-  termSubjectLevelId Int
-  sectionId          Int?
-  title              String
-  description        String[]
-  attachments        String[] // URLs of the attached documents
-  isSent             Boolean  @default(false)
-  sendDate           DateTime @default(now())
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  section          Section?         @relation(fields: [sectionId], references: [id])
-  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
-
-  // @@unique([termSubjectLevelId, title])
+  id                    Int                     @id @default(autoincrement())
+  termSubjectLevelId    Int
+  title                 String
+  description           String[]
+  attachments           String[]
+  isSent                Boolean                 @default(false)
+  sendDate              DateTime                @default(now())
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  studentId             Int
+  teacherId             Int
+  sectionId             Int?
   ClassworkSnapshot     ClassworkSnapshot[]
+  section               Section?                @relation(fields: [sectionId], references: [id])
+  student               Student                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher               Teacher                 @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel      TermSubjectLevel        @relation(fields: [termSubjectLevelId], references: [id])
   SentClassworkSnapshot SentClassworkSnapshot[]
 }
 
 model ClassworkSnapshot {
   id               Int            @id @default(autoincrement())
-  classworkId      Int // Foreign key to Homework
-  groupClassworkId Int // Foreign key to GroupHomework
+  classworkId      Int
+  groupClassworkId Int
   description      String
   attachments      String[]
   fileNames        String[]
@@ -997,146 +914,134 @@ model ClassworkSnapshot {
 }
 
 model SentClassworkSnapshot {
-  id               Int      @id @default(autoincrement())
-  classworkId      Int? // Foreign key to Classwork
-  groupClassworkId Int // Foreign key to GroupClasswork
-  description      String // Snapshot description at the time of sending
-  attachments      String[] // Snapshot attachments at the time of sending
-  fileNames        String[] // Snapshot filenames at the time of sending
-  sendDate         DateTime // Date when the snapshot was sent
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  // Relationships
-  classwork      Classwork?     @relation(fields: [classworkId], references: [id], onDelete: SetNull)
-  groupClasswork GroupClasswork @relation(fields: [groupClassworkId], references: [id])
+  id               Int            @id @default(autoincrement())
+  classworkId      Int?
+  groupClassworkId Int
+  description      String
+  attachments      String[]
+  fileNames        String[]
+  sendDate         DateTime
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  classwork        Classwork?     @relation(fields: [classworkId], references: [id])
+  groupClasswork   GroupClasswork @relation(fields: [groupClassworkId], references: [id])
 }
 
 model AutomatedMailForParents {
-  id                 Int      @id @default(autoincrement())
+  id                 Int              @id @default(autoincrement())
   studentId          Int
   teacherId          Int
   termSubjectLevelId Int
   sectionId          Int
   className          String
   roomName           String
+  isSent             Boolean          @default(false)
+  sendDate           DateTime         @default(now())
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
   classTime          String
-  isSent             Boolean  @default(false)
-  sendDate           DateTime @default(now())
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher          Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  termSubjectLevel TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
-  section          Section          @relation(fields: [sectionId], references: [id])
+  section            Section          @relation(fields: [sectionId], references: [id])
+  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher            Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel   TermSubjectLevel @relation(fields: [termSubjectLevelId], references: [id])
 
   @@unique([studentId, termSubjectLevelId, sectionId, sendDate, teacherId])
 }
 
 model Interaction {
   id              Int             @id @default(autoincrement())
-  studentId       Int // Foreign key reference to Student model
-  interactionType InteractionType // Enum for interaction type
-  description     String?         @default("No comments") // Optional detailed description of the interaction
-  contactedDate   DateTime // Date and time of the interaction
-  createdBy       Int // ID of the staff member who recorded the interaction
+  studentId       Int
+  interactionType InteractionType
+  description     String?         @default("No comments")
+  contactedDate   DateTime
+  createdBy       Int
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  // Optionally include a relation to the staff or teacher who created the interaction
-  // staff         Staff           @relation(fields: [createdBy], references: [id])
 }
 
 model Comment {
   id              Int             @id @default(autoincrement())
-  studentId       Int // Foreign key reference to the Student model
-  content         String // The text content of the comment
-  interactionType InteractionType
-  createdBy       Int // ID of the admin who created the comment
+  studentId       Int
+  content         String
+  createdBy       Int
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  interactionType InteractionType
   admin           Admin           @relation(fields: [createdBy], references: [id])
+  student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Institution {
   id               Int      @id @default(autoincrement())
   name             String
   address          String
-  logo             String // URL to the logo image, optional
+  logo             String
   contact          String
-  contactSecondary String
-  contactTertiary  String
   email            String
-  accountName      String?
-  BSB              String?
-  accountNumber    String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-
-  // You can add other fields or relationships as required
+  contactSecondary String
+  contactTertiary  String
+  BSB              String?
+  accountName      String?
+  accountNumber    String?
 }
 
 model SchoolDay {
   id                 Int                       @id @default(autoincrement())
-  schoolOperatedDate DateTime // The date the school operated
-  schoolAttendances  SchoolCheckInAttendance[] // Relationship with SchoolCheckInAttendance
-  classAttendances   ClassAttendance[] // Relationship with ClassAttendance
-  isOnSunday         Boolean                   @default(true)
-  isOnWeekday        Boolean                   @default(false)
+  schoolOperatedDate DateTime
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
-
-  // You might want to add additional fields like notes or special events on that day
+  isOnSunday         Boolean                   @default(true)
+  isOnWeekday        Boolean                   @default(false)
+  classAttendances   ClassAttendance[]
+  schoolAttendances  SchoolCheckInAttendance[]
 }
 
 model Leave {
   id            Int         @id @default(autoincrement())
-  studentId     Int // Foreign key reference to Student
-  appliedById   Int // ID of the person (admin/student) who applied for the leave
+  studentId     Int
+  startDate     DateTime
+  endDate       DateTime
+  reason        String
+  status        LeaveStatus @default(PENDING)
+  appliedOn     DateTime    @default(now())
+  approvedOn    DateTime?
+  approverId    Int?
+  comments      String?
+  appliedById   Int
   appliedByRole Role
-  startDate     DateTime // Start date of the leave
-  endDate       DateTime // End date of the leave
-  reason        String // Reason for the leave
-  status        LeaveStatus @default(PENDING) // Status of the leave request
-  appliedOn     DateTime    @default(now()) // Date when the leave was applied for
-  approvedOn    DateTime? // Date when the leave was approved, nullable for pending leaves
-  approverId    Int? // ID of the admin/teacher who approved the leave, nullable for pending leaves
-  comments      String? // Optional comments about the leave request
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  approver      Admin?      @relation(fields: [approverId], references: [id])
+  student       Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  approver  Admin?   @relation(fields: [approverId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([studentId, startDate, endDate]) // Ensuring a student doesn't have overlapping leaves
+  @@unique([studentId, startDate, endDate])
 }
 
-//This template is used while sending application submission-confirmation mail
 model EmailTemplate {
   id          Int      @id @default(autoincrement())
-  name        String // A unique name for identifying the template
-  description String? // An optional description of the template
-  subject     String // The subject line of the email
-  text        String // The body text of the email template
-  adminId     Int // Foreign key to reference the admin who created the template
+  name        String
+  description String?
+  subject     String
+  text        String
+  adminId     Int
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  admin       Admin    @relation(fields: [adminId], references: [id]) // Relation to the Admin model
+  admin       Admin    @relation(fields: [adminId], references: [id])
 }
 
-//This template is used while sending enrollment confirmation mail
 model EnrollmentConfirmationEmailTemplate {
   id          Int      @id @default(autoincrement())
-  name        String // A unique name for identifying the template
-  description String? // An optional description of the template
-  subject     String // The subject line of the email
-  text        String // The body text of the email template
-  adminId     Int // Foreign key to reference the admin who created the template
+  name        String
+  description String?
+  subject     String
+  text        String
+  adminId     Int
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  admin       Admin    @relation(fields: [adminId], references: [id]) // Relation to the Admin model
+  admin       Admin    @relation(fields: [adminId], references: [id])
 }
 
 model Notice {
@@ -1151,16 +1056,15 @@ model Notice {
 }
 
 model NoticeAcknowledgement {
-  id        Int @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   noticeId  Int
   teacherId Int
+  isSeen    Boolean   @default(false)
+  seenAt    DateTime?
+  notice    Notice    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  teacher   Teacher   @relation(fields: [teacherId], references: [id])
 
-  isSeen  Boolean   @default(false)
-  seenAt  DateTime? // Set this to the current time when the notice is seen
-  notice  Notice    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
-  teacher Teacher   @relation(fields: [teacherId], references: [id])
-
-  @@unique([noticeId, teacherId]) // Ensuring a unique record per notice per teacher
+  @@unique([noticeId, teacherId])
 }
 
 model StudentNotice {
@@ -1177,20 +1081,19 @@ model StudentNotice {
 model StudentNoticeAcknowledgement {
   id              Int           @id @default(autoincrement())
   studentNoticeId Int
-  studentId       Int // Foreign key reference to Student
+  studentId       Int
   isSeen          Boolean       @default(false)
-  seenAt          DateTime? // Set this to the current time when the notice is seen
+  seenAt          DateTime?
+  student         Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentNotice   StudentNotice @relation(fields: [studentNoticeId], references: [id], onDelete: Cascade)
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([studentNoticeId, studentId]) // Ensuring a unique record per notice per teacher
+  @@unique([studentNoticeId, studentId])
 }
 
 model Event {
   id    Int          @id @default(autoincrement())
-  start DateTime     @default(now()) // Start date and time for the event
-  end   DateTime     @default(now()) // End date and time for the event
+  start DateTime     @default(now())
+  end   DateTime     @default(now())
   data  Appointment?
 }
 
@@ -1198,7 +1101,7 @@ model Appointment {
   id          Int      @id @default(autoincrement())
   eventId     Int      @unique
   title       String
-  color       String? // Optional color of the appointment
+  color       String?
   isCompleted Boolean? @default(false)
   location    String?  @default("School")
   status      String?  @default("Melbourne")
@@ -1206,17 +1109,6 @@ model Appointment {
   remarks     String?  @default("NA")
   type        String?  @default("Event")
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-}
-
-// ------------------- for school time table ------------------- //
-enum Day {
-  MONDAY
-  TUESDAY
-  WEDNESDAY
-  THURSDAY
-  FRIDAY
-  SATURDAY
-  SUNDAY
 }
 
 model ClassRoom {
@@ -1227,9 +1119,9 @@ model ClassRoom {
 
 model TimeSlot {
   id             Int             @id @default(autoincrement())
-  timeRange      String // "11:00 AM to 12:30 PM"
-  startTime      DateTime        @db.Time
-  endTime        DateTime        @db.Time
+  timeRange      String
+  endTime        DateTime        @db.Time(6)
+  startTime      DateTime        @db.Time(6)
   timetableSlots TimetableSlot[]
 }
 
@@ -1242,34 +1134,31 @@ model TimetableSlot {
   sectionId          Int?
   teacherId          Int?
   classroom          ClassRoom?        @relation(fields: [classroomId], references: [id], onDelete: Cascade)
-  timeSlot           TimeSlot          @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
-  termSubjectLevel   TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id], onDelete: Cascade)
   section            Section?          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   teacher            Teacher?          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  termSubjectLevel   TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id], onDelete: Cascade)
+  timeSlot           TimeSlot          @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
   timetable          Timetable         @relation(fields: [timetableId], references: [id], onDelete: Cascade)
 }
 
 model Timetable {
   id             Int             @id @default(autoincrement())
   name           String?         @default("Timetable")
-  day            Day
-  totalRooms     Int
   isActive       Boolean         @default(true)
-  timetableSlots TimetableSlot[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  day            Day
+  totalRooms     Int
+  timetableSlots TimetableSlot[]
 }
 
-// ------------------- for school time table ------------------- //
 model EmailContent {
   id           Int      @id @default(autoincrement())
   studentId    Int
-  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   emailcontent String
   sendDate     DateTime
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
-
-// ------------------- for message------------------- //
 
 model Message {
   id                  Int                   @id @default(autoincrement())
@@ -1278,7 +1167,7 @@ model Message {
   updatedAt           DateTime              @updatedAt
   senderId            Int
   status              MessageStatus         @default(SENT)
-  messageType         MessageType // Enum to distinguish between Student and Admin
+  messageType         MessageType
   StudentAdminMessage StudentAdminMessage[]
 }
 
@@ -1287,34 +1176,20 @@ model StudentAdminMessage {
   studentId Int
   adminId   Int
   messageId Int
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   admin     Admin   @relation(fields: [adminId], references: [id])
   message   Message @relation(fields: [messageId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, adminId, messageId])
 }
 
-// ------------------- for message ------------------- //
 model AlumniRemarks {
   id        Int      @id @default(autoincrement())
-  studentId Int // Foreign key reference to Student
-  remarks   String // Remarks for the alumni
+  studentId Int
+  remarks   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-}
-
-// ------------------- for notification ------------------- //
-enum NotificationType {
-  FEE
-  FEEOVERDUE
-  MESSAGE
-  EVENT
-  ATTENDANCE
-  CLASSWORK
-  HOMEWORK
-  FEEDBACK
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Notification {
@@ -1324,18 +1199,17 @@ model Notification {
   title              String?
   content            String
   isRead             Boolean           @default(false)
-  actionUrl          String? // URL to the relevant page or resource
-  expiresAt          DateTime? // Optional expiration date for time-sensitive notifications
-  termSubjectLevelId Int?
-  sectionId          Int?
-  section            Section?          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  termSubjectLevel   TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id], onDelete: Cascade)
+  actionUrl          String?
+  expiresAt          DateTime?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+  sectionId          Int?
+  termSubjectLevelId Int?
+  section            Section?          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   student            Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  termSubjectLevel   TermSubjectLevel? @relation(fields: [termSubjectLevelId], references: [id], onDelete: Cascade)
 }
 
-// ------------------- for feedback options ------------------- //
 model FeedbackCategory {
   id        Int                   @id @default(autoincrement())
   name      String                @unique
@@ -1348,7 +1222,6 @@ model FeedbackCategory {
 model AdminFeedbackOption {
   id         Int              @id @default(autoincrement())
   categoryId Int
-  category   FeedbackCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   label      String?
   value      String
   isActive   Boolean          @default(true)
@@ -1356,7 +1229,99 @@ model AdminFeedbackOption {
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
   createdBy  Int
+  category   FeedbackCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   admin      Admin            @relation(fields: [createdBy], references: [id])
 
   @@unique([categoryId, label])
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  APPLICANT
+  WAITLISTED
+  STUDENT
+  ALUMNI
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+  LATE
+  LEAVE
+}
+
+enum InteractionType {
+  EMAIL
+  MEETING
+  PHONE_CALL
+  MESSAGE
+  CONFERENCE
+  OTHER
+  AUTOMATED_EMAIL
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+enum PaymentMethod {
+  ONLINE
+  SCHOOL
+  NA
+  DISCOUNT
+  CREDIT_CARD
+  CASH
+  OTHER
+  CREDIT_BALANCE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  NODUES
+  DUE
+  OVERDUE
+  FAILED
+}
+
+enum PaymentType {
+  MONTHLY
+  TERM
+}
+
+enum MessageType {
+  STUDENT
+  ADMIN
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  ERROR
+}
+
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum NotificationType {
+  FEE
+  MESSAGE
+  EVENT
+  ATTENDANCE
+  CLASSWORK
+  HOMEWORK
+  FEEDBACK
+  FEEOVERDUE
 }

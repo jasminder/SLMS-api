@@ -2077,17 +2077,19 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
             where: { id: +feePaymentId },
             include: {
                 studentTermFee: { select: { studentId: true } },
-                paymentInstallment: { select: { paidAmount: true } }
+                paymentInstallment: { select: { paidAmount: true, paymentMethod: true } }
             }
         });
 
         if (!feePayment) throw customError('Fee payment record not found.', 'fail', 404, true);
 
-        const originalFeeAmount = feePayment.feeAmount || 0;
-        const newDiscountAmount = originalFeeAmount - newDueAmount;
+        const originalFeeAmount = feePayment.feeAmount ?? feePayment.adjustedFeeAmount ?? 0;
+        const newDiscountAmount = Math.max(0, originalFeeAmount - newDueAmount);
 
-        // Total already paid (all installments) – remaining due = new due amount minus what's already paid
-        const totalPaid = (feePayment.paymentInstallment || []).reduce((sum, i) => sum + (i.paidAmount ?? 0), 0);
+        // Total paid = only real payments (exclude DISCOUNT so due = total fee − paid; discount is handled separately)
+        const totalPaid = (feePayment.paymentInstallment || [])
+            .filter((i) => (i as { paymentMethod?: string }).paymentMethod !== 'DISCOUNT')
+            .reduce((sum, i) => sum + (i.paidAmount ?? 0), 0);
         const remainingDue = Math.max(0, newDueAmount - totalPaid);
 
         // Compare calendar dates only: overdue only when due amount > 0 and today is strictly after the due date
@@ -2106,6 +2108,12 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
             status = PaymentStatus.PENDING;
         }
 
+        // When increasing (or same): remove any existing discount installments so due recalculates correctly.
+        // When reducing: we will create one new discount installment below (after removing any old one).
+        await prisma.paymentInstallment.deleteMany({
+            where: { feePaymentId: +feePaymentId, paymentMethod: 'DISCOUNT' }
+        });
+
         const updatedFeePayment = await prisma.feePayment.update({
             where: { id: feePayment.id },
             data: {
@@ -2119,9 +2127,8 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
             }
         });
 
-        // Only create a discount installment when we're reducing the amount due (avoid duplicate when reconciling to match paid)
-        const currentDueBeforeUpdate = feePayment.dueAmount ?? 0;
-        if (newDiscountAmount > 0 && currentDueBeforeUpdate > newDueAmount) {
+        // When reducing amount: create a single discount installment for audit (e.g. 100 → 70 → discount 30).
+        if (newDiscountAmount > 0) {
             await prisma.paymentInstallment.create({
                 data: {
                     feePaymentId: +feePaymentId,

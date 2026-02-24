@@ -1,8 +1,10 @@
 /**
  * Ingest Student Fee data to verify the fee management feature.
- * Creates FeeTemplates (TERM + MONTHLY), FeePayments per student, and optional
- * PaymentInstallments so you can test: PENDING, PAID, OVERDUE, partial payments,
- * and manage-fee flows (update amount paid, update fee due, apply credit).
+ * By default performs a clean reset: deletes all fee payment records (PaymentInstallment,
+ * FeePayment), then creates fresh PENDING fee payment entries only.
+ *
+ * Creates FeeTemplates (TERM + MONTHLY), FeePayments per student. When CLEAN_RESET_PENDING_ONLY
+ * is true (default), no PaymentInstallments or status changes are applied so all entries stay PENDING.
  *
  * Usage:
  *   npx ts-node prisma/ingest-student-fee.ts
@@ -25,9 +27,18 @@ const TERM_INVOICE_NAME = 'SLMS Ingest Term Fee';
 const MONTHLY_INVOICE_PREFIX = 'SLMS Ingest Monthly';
 /** Number of monthly fee entries to create per student (e.g. 5 = 5 months; 2 extra PENDING entries when run with 2 students). */
 const NUM_MONTHLY_ENTRIES = 5;
+/** When true, delete all fee payment records first and create only PENDING entries (no PAID/OVERDUE/partial). */
+const CLEAN_RESET_PENDING_ONLY = true;
 
 async function main() {
   console.log('Ingesting Student Fee data for fee management verification...\n');
+
+  // --- 0. Clean reset: delete all fee payment records ---
+  if (CLEAN_RESET_PENDING_ONLY) {
+    const deletedInstallments = await prisma.paymentInstallment.deleteMany({});
+    const deletedPayments = await prisma.feePayment.deleteMany({});
+    console.log(`Clean reset: deleted ${deletedInstallments.count} PaymentInstallment(s), ${deletedPayments.count} FeePayment(s).\n`);
+  }
 
   const term = await prisma.term.findFirst({ where: { currentTerm: true } });
   if (!term) {
@@ -179,92 +190,29 @@ async function main() {
     },
     orderBy: [{ feeTemplateId: 'asc' }, { id: 'asc' }],
   });
-  const firstMonthlyTemplateId = monthlyTemplates[0].id;
-  const monthlyPayments = allMonthlyPayments.filter((p) => p.feeTemplateId === firstMonthlyTemplateId);
   console.log(`  FeePayments (MONTHLY): ${allMonthlyPayments.length} total across ${NUM_MONTHLY_ENTRIES} months\n`);
 
-  // --- 3. Add variety: some PAID, some OVERDUE, some with installments ---
-  const paidCount = Math.min(2, termPayments.length);
-  const overdueCount = Math.min(1, monthlyPayments.length);
-  const pastDue = new Date(now);
-  pastDue.setDate(pastDue.getDate() - 10);
+  if (!CLEAN_RESET_PENDING_ONLY) {
+    // --- 3. Add variety: some PAID, some OVERDUE, some with installments ---
+    const firstMonthlyTemplateId = monthlyTemplates[0].id;
+    const monthlyPayments = allMonthlyPayments.filter((p) => p.feeTemplateId === firstMonthlyTemplateId);
+    const paidCount = Math.min(2, termPayments.length);
+    const overdueCount = Math.min(1, monthlyPayments.length);
+    const pastDue = new Date(now);
+    pastDue.setDate(pastDue.getDate() - 10);
 
-  for (let i = 0; i < paidCount; i++) {
-    const fp = termPayments[i];
-    const currentDue = fp.dueAmount ?? TERM_FEE_AMOUNT;
-    if (currentDue <= 0) continue;
-    await prisma.paymentInstallment.create({
-      data: {
-        feePaymentId: fp.id,
-        paidAmount: currentDue,
-        paidDate: new Date(),
-        paymentMethod: PaymentMethod.CASH,
-        paymentStatus: PaymentStatus.PAID,
-        remarks: 'Ingest: full payment for testing',
-        receivedBy: 'ADMIN',
-      },
-    });
-    await prisma.feePayment.update({
-      where: { id: fp.id },
-      data: { dueAmount: 0, status: PaymentStatus.PAID, hasOverDue: false },
-    });
-  }
-
-  for (let i = 0; i < overdueCount; i++) {
-    const fp = monthlyPayments[i];
-    await prisma.feePayment.update({
-      where: { id: fp.id },
-      data: {
-        dueDate: pastDue,
-        status: PaymentStatus.OVERDUE,
-        hasOverDue: true,
-      },
-    });
-  }
-
-  // One partial payment (first month) for manage-fee testing
-  const partialIndex = overdueCount;
-  if (monthlyPayments.length > partialIndex) {
-    const fp = monthlyPayments[partialIndex];
-    const partial = Math.floor(MONTHLY_FEE_AMOUNT / 2);
-    const remaining = (fp.dueAmount ?? MONTHLY_FEE_AMOUNT) - partial;
-    if (remaining > 0) {
+    for (let i = 0; i < paidCount; i++) {
+      const fp = termPayments[i];
+      const currentDue = fp.dueAmount ?? TERM_FEE_AMOUNT;
+      if (currentDue <= 0) continue;
       await prisma.paymentInstallment.create({
         data: {
           feePaymentId: fp.id,
-          paidAmount: partial,
-          paidDate: new Date(),
-          paymentMethod: PaymentMethod.CASH,
-          paymentStatus: PaymentStatus.PENDING,
-          remarks: 'Ingest: partial payment',
-          receivedBy: 'ADMIN',
-        },
-      });
-      await prisma.feePayment.update({
-        where: { id: fp.id },
-        data: { dueAmount: remaining },
-      });
-    }
-  }
-
-  // Mark some later-month fees as PAID (more entries with different states)
-  const paymentsByTemplate = monthlyTemplates.map((t) =>
-    allMonthlyPayments.filter((p) => p.feeTemplateId === t.id)
-  );
-  let monthlyPaidCount = 0;
-  for (let t = 1; t < paymentsByTemplate.length && monthlyPaidCount < 3; t++) {
-    const list = paymentsByTemplate[t];
-    for (let i = 0; i < list.length && monthlyPaidCount < 3; i++) {
-      const fp = list[i];
-      if ((fp.dueAmount ?? 0) <= 0) continue;
-      await prisma.paymentInstallment.create({
-        data: {
-          feePaymentId: fp.id,
-          paidAmount: MONTHLY_FEE_AMOUNT,
+          paidAmount: currentDue,
           paidDate: new Date(),
           paymentMethod: PaymentMethod.CASH,
           paymentStatus: PaymentStatus.PAID,
-          remarks: 'Ingest: monthly paid',
+          remarks: 'Ingest: full payment for testing',
           receivedBy: 'ADMIN',
         },
       });
@@ -272,15 +220,81 @@ async function main() {
         where: { id: fp.id },
         data: { dueAmount: 0, status: PaymentStatus.PAID, hasOverDue: false },
       });
-      monthlyPaidCount++;
     }
+
+    for (let i = 0; i < overdueCount; i++) {
+      const fp = monthlyPayments[i];
+      await prisma.feePayment.update({
+        where: { id: fp.id },
+        data: {
+          dueDate: pastDue,
+          status: PaymentStatus.OVERDUE,
+          hasOverDue: true,
+        },
+      });
+    }
+
+    const partialIndex = overdueCount;
+    if (monthlyPayments.length > partialIndex) {
+      const fp = monthlyPayments[partialIndex];
+      const partial = Math.floor(MONTHLY_FEE_AMOUNT / 2);
+      const remaining = (fp.dueAmount ?? MONTHLY_FEE_AMOUNT) - partial;
+      if (remaining > 0) {
+        await prisma.paymentInstallment.create({
+          data: {
+            feePaymentId: fp.id,
+            paidAmount: partial,
+            paidDate: new Date(),
+            paymentMethod: PaymentMethod.CASH,
+            paymentStatus: PaymentStatus.PENDING,
+            remarks: 'Ingest: partial payment',
+            receivedBy: 'ADMIN',
+          },
+        });
+        await prisma.feePayment.update({
+          where: { id: fp.id },
+          data: { dueAmount: remaining },
+        });
+      }
+    }
+
+    const paymentsByTemplate = monthlyTemplates.map((t) =>
+      allMonthlyPayments.filter((p) => p.feeTemplateId === t.id)
+    );
+    let monthlyPaidCount = 0;
+    for (let t = 1; t < paymentsByTemplate.length && monthlyPaidCount < 3; t++) {
+      const list = paymentsByTemplate[t];
+      for (let i = 0; i < list.length && monthlyPaidCount < 3; i++) {
+        const fp = list[i];
+        if ((fp.dueAmount ?? 0) <= 0) continue;
+        await prisma.paymentInstallment.create({
+          data: {
+            feePaymentId: fp.id,
+            paidAmount: MONTHLY_FEE_AMOUNT,
+            paidDate: new Date(),
+            paymentMethod: PaymentMethod.CASH,
+            paymentStatus: PaymentStatus.PAID,
+            remarks: 'Ingest: monthly paid',
+            receivedBy: 'ADMIN',
+          },
+        });
+        await prisma.feePayment.update({
+          where: { id: fp.id },
+          data: { dueAmount: 0, status: PaymentStatus.PAID, hasOverDue: false },
+        });
+        monthlyPaidCount++;
+      }
+    }
+
+    console.log('Sample fee states applied:');
+    console.log(`  - ${paidCount} TERM fee(s) marked PAID with installments`);
+    console.log(`  - ${overdueCount} MONTHLY fee(s) set OVERDUE (first month)`);
+    console.log('  - 1 MONTHLY fee with partial payment (first month)');
+    console.log(`  - ${monthlyPaidCount} later-month fee(s) marked PAID\n`);
+  } else {
+    console.log('All new fee payments created as PENDING (clean reset mode).\n');
   }
 
-  console.log('Sample fee states applied:');
-  console.log(`  - ${paidCount} TERM fee(s) marked PAID with installments`);
-  console.log(`  - ${overdueCount} MONTHLY fee(s) set OVERDUE (first month)`);
-  console.log('  - 1 MONTHLY fee with partial payment (first month)');
-  console.log(`  - ${monthlyPaidCount} later-month fee(s) marked PAID\n`);
   console.log('Ingest complete. You can verify:');
   console.log('  - Admin > Students > Active Student > Fee (Manage Fee, Payment Installments)');
   console.log('  - Finance > Fee Template, Invoice Management');
