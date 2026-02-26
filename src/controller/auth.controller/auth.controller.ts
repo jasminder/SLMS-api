@@ -171,7 +171,7 @@ export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordS
     const resetUrl = `${process.env.CLIENT_URL}/forgot-password/${resetToken}`;
 
     const subject = `Reset your Password at Akal Shaouni`;
-    const text = ` We have received a request to reset password . Please visit ${resetUrl}  to complete your reset password. Link is valid of 10 minutes`;
+    const text = `We have received a request to reset your password. Please visit ${resetUrl} to complete the reset. This link is valid for 1 hour.`;
     try {
         if (existingUser) {
             const resonse = await sendEmail({
@@ -192,12 +192,16 @@ export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordS
 export const resetPasswordHandler = async (req: Request<ResetPasswordSchema['params'], {}, ResetPasswordSchema['body'], {}>, res: Response, next: NextFunction) => {
     const token = req.params.token;
 
-    const existingUser = await findUserByResetToken(token);
+    const result = await findUserByResetToken(token);
 
-    if (!existingUser) {
-        throw customError('The reset token has expired. Please try again@ksm', 'fail', 404, true);
+    if (result.expired) {
+        throw customError('This reset link has expired. Please request a new password reset link.', 'fail', 410, true);
+    }
+    if (!result.user) {
+        throw customError('Invalid or used reset link. Please request a new password reset.', 'fail', 404, true);
     }
 
+    const existingUser = result.user;
     const { password, confirmPassword } = req.body;
     if (!password || !confirmPassword) {
         const error = customError('Password or confirm password not provided @ksm', 'fail', 400, true);

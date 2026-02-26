@@ -355,6 +355,9 @@ export const existingAuthUser = async (email: string, role: string) => {
 
 //************** Forgot Password **************
 
+/** Password reset link validity in seconds (1 hour). Was 10 min; extended for parents resetting multiple children. */
+const RESET_TOKEN_VALIDITY_SECONDS = 60 * 60;
+
 export const existingUserForgotPassword = async (email: string, resetToken: string) => {
     const existingUser = await db.user.findUnique({
         where: { email: email.toLowerCase() },
@@ -376,7 +379,7 @@ export const existingUserForgotPassword = async (email: string, resetToken: stri
         return null;
     }
     const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    const resetPasswordTokenExpiresAt = Math.floor(Date.now() / 1000) + 10 * 60; // This will be in seconds
+    const resetPasswordTokenExpiresAt = Math.floor(Date.now() / 1000) + RESET_TOKEN_VALIDITY_SECONDS;
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     await db.user.update({
@@ -418,29 +421,34 @@ export const existingUserForgotPasswordSendMailError = async (email: string) => 
     return existingUser;
 };
 
-export const findUserByResetToken = async (token: string) => {
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+export type FindUserByResetTokenResult =
+    | { user: { id: number; email: string; role: Role }; expired: false }
+    | { user: null; expired: true }
+    | { user: null; expired: false };
 
+export const findUserByResetToken = async (token: string): Promise<FindUserByResetTokenResult> => {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const currentTimeInSeconds = Math.floor(Date.now() / 1000);
 
     const user = await db.user.findFirst({
-        where: {
-            resetPasswordToken: hashedToken,
-            resetPasswordTokenExpiresAt: {
-                gt: currentTimeInSeconds
-            }
-        },
+        where: { resetPasswordToken: hashedToken },
         select: {
             id: true,
             email: true,
             role: true,
-            resetPasswordToken: true
-
-            // Add other fields as needed but exclude 'password'
+            resetPasswordToken: true,
+            resetPasswordTokenExpiresAt: true
         }
     });
 
-    return user;
+    if (!user) {
+        return { user: null, expired: false };
+    }
+    const expiresAt = user.resetPasswordTokenExpiresAt ?? 0;
+    if (expiresAt <= currentTimeInSeconds) {
+        return { user: null, expired: true };
+    }
+    return { user: { id: user.id, email: user.email, role: user.role }, expired: false };
 };
 
 export const resetUserPassword = async (email: string, newPassword: string) => {
