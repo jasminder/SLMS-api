@@ -4,6 +4,12 @@ import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
 import { calculateSendDate } from '../../../utils/setSendDate';
 
+function normalizeSendDate(date: Date): Date {
+    const normalized = new Date(date);
+    normalized.setHours(20, 30, 0, 0);
+    return normalized;
+}
+
 export async function createGroupHomework(
     studentIds: string[],
     teacherId: string,
@@ -14,10 +20,12 @@ export async function createGroupHomework(
     className: string,
     roomName: string,
     classTime: string,
-    homeworkIds: string[]
+    homeworkIds: string[],
+    sendDateInput?: string
 ) {
-    const sendDate = await calculateSendDate(termSubjectLevelId);
-    console.log(sendDate);
+    const sendDate = sendDateInput
+        ? normalizeSendDate(new Date(sendDateInput))
+        : await calculateSendDate(termSubjectLevelId);
     const numericStudentIds = studentIds.map(Number);
     let groupHomework;
 

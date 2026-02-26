@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+const isoDateStringSchema = z.string().refine(
+    (val) => {
+        const date = new Date(val);
+        return !isNaN(date.getTime());
+    },
+    { message: 'Invalid date format. Use YYYY-MM-DD or ISO date string.' }
+);
+
 export const createGroupHomeworkSchema = z.object({
     body: z.object({
         studentIds: z.array(z.string().min(1, { message: 'Student ID is required' })),
@@ -19,7 +27,8 @@ export const createGroupHomeworkSchema = z.object({
         className: z.string().min(1, { message: 'homeworkcontent is required' }),
         roomName: z.string().min(1, { message: 'homeworkcontent is required' }),
         classTime: z.string().min(1, { message: 'homeworkcontent is required' }),
-        homeworkIds: z.array(z.string().min(1, { message: 'Student ID is required' }))
+        homeworkIds: z.array(z.string().min(1, { message: 'Student ID is required' })),
+        sendDate: isoDateStringSchema.optional()
     })
 });
 export type CreateGroupHomeworkSchema = z.infer<typeof createGroupHomeworkSchema>;

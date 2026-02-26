@@ -3,8 +3,8 @@ import { createGroupHomework, findAssignedHomeworks } from '../../../service/tea
 import { CreateGroupHomeworkSchema, FindAssignedHomeworksSchema } from '../../../schema/teacher.dto/teacher.homework.dto/teacher.homework.dto';
 
 export const createGroupHomeworkHandler = async (req: Request<{}, {}, CreateGroupHomeworkSchema['body'], {}>, res: Response, next: NextFunction) => {
-    const { studentIds, teacherId, title, className, roomName, sectionId, termSubjectLevelId, homeworkDetails, classTime, homeworkIds } = req.body;
-    const homework = await createGroupHomework(studentIds, teacherId, termSubjectLevelId, sectionId, title, homeworkDetails, className, roomName, classTime, homeworkIds);
+    const { studentIds, teacherId, title, className, roomName, sectionId, termSubjectLevelId, homeworkDetails, classTime, homeworkIds, sendDate } = req.body;
+    const homework = await createGroupHomework(studentIds, teacherId, termSubjectLevelId, sectionId, title, homeworkDetails, className, roomName, classTime, homeworkIds, sendDate);
     res.status(201).json(homework);
 };
 export const findAssignedHomeworksHandler = async (req: Request<FindAssignedHomeworksSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {

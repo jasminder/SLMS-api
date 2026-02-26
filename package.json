@@ -8,7 +8,9 @@
         "serve": "nodemon",
         "test": "echo \"Error: no test specified\" && exit 1",
         "migrate": "prisma migrate deploy",
-        "ingest-student-fee": "ts-node prisma/ingest-student-fee.ts"
+        "ingest-student-fee": "ts-node prisma/ingest-student-fee.ts",
+        "seed:teachers-homework": "ts-node prisma/seed-teachers-homework.ts",
+        "seed:dummy-data": "ts-node prisma/seed-dummy-data.ts"
     },
     "nodemonConfig": {
         "watch": [
