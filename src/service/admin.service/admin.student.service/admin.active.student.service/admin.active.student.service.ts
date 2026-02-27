@@ -3,6 +3,7 @@ import { customError } from '../../../../utils/customError';
 import { ActiveStudentEnrollDataSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 import { Day, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import { getIo } from '../../../../sockets/socket';
+import { updateStudentLastTwoDaysAttendance } from '../../admin.checkin.service/admin.checkin.service';
 
 type AttendanceFilter = {
     attendancePercentageValue?: number;
@@ -2701,6 +2702,7 @@ export async function createAttendanceForSingleStudent(studentId: string, date: 
                     })
                 );
 
+                await updateStudentLastTwoDaysAttendance(db, student.id);
                 return newAttendanceRecord;
             },
             { timeout: 30000 }
@@ -3081,7 +3083,6 @@ export async function createLeaveApplication(studentId: string, appliedById: str
         });
 
         if (schoolAttendanceRecord) {
-            // Update the schoolCheckInAttendance record to mark isOnLeave as true
             await db.schoolCheckInAttendance.update({
                 where: {
                     id: schoolAttendanceRecord.id
@@ -3090,6 +3091,7 @@ export async function createLeaveApplication(studentId: string, appliedById: str
                     isOnLeave: true
                 }
             });
+            await updateStudentLastTwoDaysAttendance(db, +studentId);
         }
 
         // Find and update classAttendance records for the current day
@@ -3191,6 +3193,7 @@ export async function updateLeaveApplication(leaveId: string, updatedById: strin
                 isOnLeave: isCurrentDateWithinLeave && status === 'APPROVED'
             }
         });
+        await updateStudentLastTwoDaysAttendance(db, schoolAttendanceRecord.studentId);
     }
 
     const classAttendanceRecords = await db.classAttendance.findMany({
@@ -3269,6 +3272,7 @@ export async function deleteLeaveApplication(leaveId: string) {
                     isOnLeave: false
                 }
             });
+            await updateStudentLastTwoDaysAttendance(db, studentId);
         }
 
         const classAttendanceRecords = await db.classAttendance.findMany({
@@ -3487,7 +3491,6 @@ export async function markPresentByEditSchoolCheckInAttendanceForStudent(student
         newAttendanceValue = 1; // One of the records has isMarked and checkedIn true
     }
 
-    // Update the attendance value of the updated record
     const finalAttendanceUpdate = await db.schoolCheckInAttendance.update({
         where: {
             id: updatedAttendanceRecord.id
@@ -3496,7 +3499,7 @@ export async function markPresentByEditSchoolCheckInAttendanceForStudent(student
             attendanceValue: newAttendanceValue
         }
     });
-
+    await updateStudentLastTwoDaysAttendance(db, +studentId);
     return finalAttendanceUpdate;
 }
 export async function markAbsentByEditSchoolCheckInAttendanceForStudent(studentId: string, date: string, remarks?: string) {
@@ -3523,7 +3526,6 @@ export async function markAbsentByEditSchoolCheckInAttendanceForStudent(studentI
         throw customError('Attendance record not found or already marked for today.', 'fail', 404, true);
     }
 
-    // Mark as not checked in and update the marked status
     const updatedSchoolAttendance = await db.schoolCheckInAttendance.update({
         where: {
             id: attendanceRecord.id
@@ -3537,6 +3539,7 @@ export async function markAbsentByEditSchoolCheckInAttendanceForStudent(studentI
             isMarked: false
         }
     });
+    await updateStudentLastTwoDaysAttendance(db, +studentId);
 
     // Update related ClassAttendance records to mark them as 'ABSENT'
     const updatedClassAttendanceRecords = await db.classAttendance.updateMany({

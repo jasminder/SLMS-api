@@ -1,5 +1,6 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
+import { updateStudentLastTwoDaysAttendance } from '../admin.checkin.service/admin.checkin.service';
 
 // Fetch all students who are checked in for the current day for checkingout at the end of school day
 export async function fetchCheckedInStudentsForCheckout() {
@@ -134,6 +135,7 @@ export async function markStudentAsCheckedOut(studentId: string) {
             checkOutTime: new Date() // Set the check-out time to the current time
         }
     });
+    await updateStudentLastTwoDaysAttendance(db, +studentId);
 }
 
 // Function to mark multiple students as checked out in SchoolCheckInAttendance records
@@ -165,18 +167,18 @@ export async function markSelectedStudentsAsCheckedOut(studentIds: string[]) {
         throw new Error('All students are already checked out below.');
     }
 
+    const distinctStudentIds = [...new Set(attendanceRecords.map((r) => r.studentId))];
     for (const attendanceRecord of attendanceRecords) {
-        // Update each SchoolCheckInAttendance record to mark the student as checked out
         await db.schoolCheckInAttendance.update({
-            where: {
-                id: attendanceRecord.id
-            },
+            where: { id: attendanceRecord.id },
             data: {
-                isCheckedOut: true, // Mark the student as checked out
-                checkOutTime: new Date() // Set the check-out time to the current time
+                isCheckedOut: true,
+                checkOutTime: new Date()
             }
         });
     }
-
+    for (const sid of distinctStudentIds) {
+        await updateStudentLastTwoDaysAttendance(db, sid);
+    }
     return attendanceRecords;
 }

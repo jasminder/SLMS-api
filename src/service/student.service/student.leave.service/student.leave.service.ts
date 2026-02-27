@@ -63,6 +63,10 @@ export async function createLeaveApplicationByStudent(
                     isOnLeave: true
                 }
             });
+            const { updateStudentLastTwoDaysAttendance } = await import(
+                '../../admin.service/admin.checkin.service/admin.checkin.service'
+            );
+            await updateStudentLastTwoDaysAttendance(db, +studentId);
         }
 
         // Find and update classAttendance records for the current day

@@ -1,6 +1,7 @@
 import { getIo } from '../../../../sockets/socket';
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
+import { updateStudentLastTwoDaysAttendance } from '../../../../service/admin.service/admin.checkin.service/admin.checkin.service';
 
 export async function markWeekdayStudentAsPresent(studentId: string, studentClassAssignmentId: string, remarks?: string) {
     // Update the existing ClassAttendance record to mark the student as "PRESENT"
@@ -63,6 +64,7 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
     if (!updatedClassAttendanceRecord) {
         throw customError(`Failed to mark student as PRESENT.`, 'fail', 400, true);
     }
+    await updateStudentLastTwoDaysAttendance(db, +studentId);
     const io = getIo();
     io.emit('studentAttendanceUpdated', {
         studentId: studentId,
@@ -106,6 +108,7 @@ export async function undoMarkWeekdayStudentAsPresent(studentId: string, student
             isMarked: false
         }
     });
+    await updateStudentLastTwoDaysAttendance(db, +studentId);
 
     const updatedClassAttendanceRecords = await db.classAttendance.updateMany({
         where: {

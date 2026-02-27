@@ -3,6 +3,39 @@ import { customError } from '../../../utils/customError';
 import { getIo } from '../../../sockets/socket';
 import { Day } from '@prisma/client';
 
+/** DB type: works with both global db and transaction client (Omit<PrismaClient, ...>) */
+type DbClient = Parameters<Parameters<typeof db.$transaction>[0]>[0];
+
+/**
+ * Recomputes the "last 2 days" attendance value (0, 1, or 2) for a student
+ * using the same logic as the cron: last 2 records with isOnLeave: false,
+ * count how many have isMarked && checkedIn. Updates the most recent record's
+ * attendanceValue and the Student's attendancePercentageValue.
+ * Exported so other services (weekday checkin, checkout, leave, teacher attendance) can trigger recalculation.
+ */
+export async function updateStudentLastTwoDaysAttendance(db: DbClient, studentId: number): Promise<void> {
+    const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
+        where: { studentId, isOnLeave: false },
+        orderBy: { date: 'desc' },
+        take: 2
+    });
+    let newAttendanceValue = 0;
+    const countMarkedAndCheckedIn = recentAttendanceRecords.filter((r) => r.isMarked && r.checkedIn).length;
+    if (countMarkedAndCheckedIn === 2) newAttendanceValue = 2;
+    else if (countMarkedAndCheckedIn === 1) newAttendanceValue = 1;
+
+    if (recentAttendanceRecords.length > 0) {
+        await db.schoolCheckInAttendance.update({
+            where: { id: recentAttendanceRecords[0].id },
+            data: { attendanceValue: newAttendanceValue }
+        });
+    }
+    await db.student.update({
+        where: { id: studentId },
+        data: { attendancePercentageValue: newAttendanceValue }
+    });
+}
+
 export async function createSchoolCheckInAttendanceForStudent(date: string) {
     if (!date) {
         throw customError('You need to provide a date to create School Check In Attendance record.', 'fail', 404, true);
@@ -10,7 +43,9 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
     try {
         const transaction = await db.$transaction(
             async (db) => {
-                const currentDay = new Date().toLocaleString('en-us', { weekday: 'long' }).toUpperCase() as unknown as Day;
+                // Use the date we're creating attendance for (not "today") so past-date ingest uses correct timetable
+                const dateForDay = new Date(date);
+                const currentDay = dateForDay.toLocaleString('en-us', { weekday: 'long' }).toUpperCase() as unknown as Day;
                 const currentTerm = await db.term.findFirst({
                     where: {
                         currentTerm: true
@@ -23,7 +58,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                     }
                 });
                 if (!activeTimetable) {
-                    throw customError('No active timetable found for today', 'fail', 404, true);
+                    throw customError(`No active timetable found for ${currentDay} (${date})`, 'fail', 404, true);
                 }
 
                 // Get all timetable slots for the active timetable
@@ -38,7 +73,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                 });
                 const timetableSlots = allTimetableSlots.filter((slot) => slot.termSubjectLevelId !== null && slot.sectionId !== null);
                 if (timetableSlots.length === 0) {
-                    throw customError('No classes scheduled in timetable for today', 'fail', 400, true);
+                    throw customError(`No classes scheduled in timetable for ${currentDay} (${date})`, 'fail', 400, true);
                 }
                 const activeStudents = await db.student.findMany({
                     where: {
@@ -90,7 +125,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                 }
 
                 if (activeStudents.length === 0) {
-                    throw customError('No students are enrolled for today. Nothing to generate. Check isWeekDay/isSunday.', 'fail', 400, true);
+                    throw customError(`No students are enrolled for ${date}. Nothing to generate. Check isWeekDay/isSunday.`, 'fail', 400, true);
                 }
 
                 const attendanceRecords = await Promise.all(
@@ -187,6 +222,8 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
 
                             const classAttendanceRecords = await Promise.all(processClassAssignments);
                             // console.log('classAttendanceRecords', JSON.stringify(classAttendanceRecords));
+
+                            await updateStudentLastTwoDaysAttendance(db, student.id);
                         }
                     })
                 );
@@ -246,30 +283,7 @@ export async function undoSchoolCheckInAttendanceForStudent(date: string) {
                 });
             }
             for (const record of attendanceRecords) {
-                const recentAttendanceRecords = await db.schoolCheckInAttendance.findMany({
-                    where: {
-                        studentId: record.studentId,
-                        date: { lt: startDate }
-                    },
-                    orderBy: { date: 'desc' },
-                    take: 2
-                });
-
-                let newAttendanceValue = 0;
-                const countMarkedAndCheckedIn = recentAttendanceRecords.filter((rec) => rec.isMarked && rec.checkedIn).length;
-
-                if (countMarkedAndCheckedIn === 2) {
-                    newAttendanceValue = 2;
-                } else if (countMarkedAndCheckedIn === 1) {
-                    newAttendanceValue = 1;
-                }
-
-                if (recentAttendanceRecords.length > 0) {
-                    await db.schoolCheckInAttendance.update({
-                        where: { id: recentAttendanceRecords[0].id },
-                        data: { attendanceValue: newAttendanceValue }
-                    });
-                }
+                await updateStudentLastTwoDaysAttendance(db, record.studentId);
             }
             const mailsToDelete = await db.automatedMailForParents.findMany({
                 where: {
@@ -344,6 +358,8 @@ export async function undoSchoolCheckInAttendanceForStudentById(studentId: strin
                 where: { id: schoolCheckinAttendance.id }
             });
         }
+
+        await updateStudentLastTwoDaysAttendance(db, +studentId);
 
         const attendanceRecords = await db.schoolCheckInAttendance.findMany({
             where: { studentId: +studentId },
@@ -573,6 +589,8 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
             // attendanceValue: newAttendanceValue
         }
     });
+    await updateStudentLastTwoDaysAttendance(db, +studentId);
+
     const io = getIo();
     io.emit('markSchoolCheckInAttendanceForStudent', {
         studentId: studentId,
@@ -614,10 +632,9 @@ export async function undoCheckIn(studentId: string) {
             checkedIn: false,
             checkInTime: null,
             isMarked: false
-            // Reset the check-in time
-            // Update other fields if necessary
         }
     });
+    await updateStudentLastTwoDaysAttendance(db, +studentId);
     const io = getIo();
     io.emit('markSchoolCheckInAttendanceForStudent', {
         studentId: studentId,
@@ -749,7 +766,6 @@ export async function markStudentAsNotCheckedIn(studentId: string) {
         // If not checked in, calculate new value based on current attendanceValue
         newAttendanceValue = record.attendanceValue === 2 ? 1 : 0;
     }
-    // Update the found record to set checkedIn as false
     const updatedRecord = await db.schoolCheckInAttendance.update({
         where: {
             id: record.id
@@ -759,6 +775,7 @@ export async function markStudentAsNotCheckedIn(studentId: string) {
             isMarked: true
         }
     });
+    await updateStudentLastTwoDaysAttendance(db, +studentId);
 
     return updatedRecord;
 }
@@ -778,21 +795,20 @@ export async function markCheckInTrueForSelectedStudents(studentIds: string[]) {
         }
     });
 
-    // Update the found records to set checkedIn as true and isMarked as true
     const updatedRecords = await Promise.all(
-        checkInRecords.map(async (record) => {
-            return db.schoolCheckInAttendance.update({
-                where: {
-                    id: record.id
-                },
+        checkInRecords.map((record) =>
+            db.schoolCheckInAttendance.update({
+                where: { id: record.id },
                 data: {
                     checkedIn: true,
                     checkInTime: new Date(),
                     isMarked: true
                 }
-            });
-        })
+            })
+        )
     );
+    const distinctStudentIds = [...new Set(checkInRecords.map((r) => r.studentId))];
+    await Promise.all(distinctStudentIds.map((id) => updateStudentLastTwoDaysAttendance(db, id)));
 
     return updatedRecords;
 }
@@ -812,20 +828,19 @@ export async function markCheckInFalseForSelectedStudents(studentIds: string[]) 
         }
     });
 
-    // Update the found records to set checkedIn as false
     const updatedRecords = await Promise.all(
-        checkInRecords.map(async (record) => {
-            return db.schoolCheckInAttendance.update({
-                where: {
-                    id: record.id
-                },
+        checkInRecords.map((record) =>
+            db.schoolCheckInAttendance.update({
+                where: { id: record.id },
                 data: {
                     checkedIn: false,
                     isMarked: true
                 }
-            });
-        })
+            })
+        )
     );
+    const distinctStudentIds = [...new Set(checkInRecords.map((r) => r.studentId))];
+    await Promise.all(distinctStudentIds.map((id) => updateStudentLastTwoDaysAttendance(db, id)));
 
     return updatedRecords;
 }

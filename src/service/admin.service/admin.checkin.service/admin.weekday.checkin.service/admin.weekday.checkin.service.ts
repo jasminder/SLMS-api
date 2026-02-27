@@ -1,6 +1,7 @@
 import { getIo } from '../../../../sockets/socket';
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
+import { updateStudentLastTwoDaysAttendance } from '../../admin.checkin.service/admin.checkin.service';
 
 export async function createWeekdaySchoolCheckInAttendanceForStudent(date: string, termSubjectLevelId: string, sectionName: string) {
     if (!date) {
@@ -164,6 +165,7 @@ export async function createWeekdaySchoolCheckInAttendanceForStudent(date: strin
                         });
 
                         attendanceRecords.push(newAttendanceRecord);
+                        await updateStudentLastTwoDaysAttendance(db, student.id);
 
                         // Find all current studentClassAssignments for the student
                         const studentClassAssignments = await db.studentClassAssignment.findMany({
