@@ -2017,6 +2017,11 @@ export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount:
         const currentDate = new Date();
         const dueDate = new Date(feePayment.dueDate);
 
+        // Use user-entered payment date when valid; only fall back to current date when missing or invalid
+        const parsedPaidDate = paidDate && typeof paidDate === 'string' ? new Date(paidDate) : null;
+        const paymentDateToStore =
+            parsedPaidDate && !Number.isNaN(parsedPaidDate.getTime()) ? parsedPaidDate : currentDate;
+
         // Determine the status based on the new due amount and due date
         let updateStatus: PaymentStatus;
         let overDue = false;
@@ -2034,7 +2039,7 @@ export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount:
             data: {
                 feePaymentId: +feePaymentId,
                 paidAmount: +paidAmount,
-                paidDate: paidDate ? new Date(paidDate) : currentDate,
+                paidDate: paymentDateToStore,
                 paymentMethod: paymentMethod === 'CREDIT_CARD' ? PaymentMethod.CREDIT_CARD : paymentMethod === 'CASH' ? PaymentMethod.CASH : PaymentMethod.OTHER,
                 paymentStatus: updateStatus,
                 remarks: remarks || 'No remarks',
