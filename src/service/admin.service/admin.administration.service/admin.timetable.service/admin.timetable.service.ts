@@ -152,6 +152,7 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
                     sectionId = isNaN(secId) ? null : secId;
                 }
 
+                const slotTeacherId = teacherId ? (isNaN(Number(teacherId)) ? null : Number(teacherId)) : null;
                 await tx.timetableSlot.create({
                     data: {
                         timetableId: timetable.id,
@@ -159,9 +160,29 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
                         timeSlotId: timeSlot.id,
                         termSubjectLevelId,
                         sectionId,
-                        teacherId: teacherId ? (isNaN(Number(teacherId)) ? null : Number(teacherId)) : null
+                        teacherId: slotTeacherId
                     }
                 });
+                // Sync teacher allocation: upsert TeacherClassAssignment so teacher's assigned classes stay in sync
+                if (slotTeacherId && termSubjectLevelId != null && sectionId != null) {
+                    const timeRangeStr = `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
+                    await tx.teacherClassAssignment.upsert({
+                        where: {
+                            teacherId_termSubjectLevelId_sectionId: {
+                                teacherId: slotTeacherId,
+                                termSubjectLevelId,
+                                sectionId
+                            }
+                        },
+                        create: {
+                            teacherId: slotTeacherId,
+                            termSubjectLevelId,
+                            sectionId,
+                            timeSlot: timeRangeStr
+                        },
+                        update: { timeSlot: timeRangeStr }
+                    });
+                }
             }
         }
 
@@ -469,14 +490,25 @@ export async function updateSchoolTimetable(timetableId: string, timetableData: 
                 )
             );
 
-            // Process each time slot
+            // Process each time slot (use same timezone as create so PM/AM is preserved)
+            const timezone = 'Australia/Melbourne';
             for (const slot of data.data) {
-                // Create TimeSlot
+                let startTime: Date;
+                let endTime: Date;
+                try {
+                    startTime = adjustTimeToSpecifiedTimezone(slot.startTime, timezone);
+                    endTime = adjustTimeToSpecifiedTimezone(slot.endTime, timezone);
+                    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+                        throw new Error('Invalid date');
+                    }
+                } catch (error) {
+                    throw new Error(`Invalid date format for start time (${slot.startTime}) or end time (${slot.endTime})`);
+                }
                 const timeSlot = await tx.timeSlot.create({
                     data: {
                         timeRange: `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
-                        startTime: new Date(slot.startTime),
-                        endTime: new Date(slot.endTime)
+                        startTime,
+                        endTime
                     }
                 });
 
@@ -495,6 +527,7 @@ export async function updateSchoolTimetable(timetableId: string, timetableData: 
                         sectionId = isNaN(secId) ? null : secId;
                     }
 
+                    const slotTeacherId = teacherId ? (isNaN(Number(teacherId)) ? null : Number(teacherId)) : null;
                     await tx.timetableSlot.create({
                         data: {
                             timetableId: timetable.id,
@@ -502,9 +535,29 @@ export async function updateSchoolTimetable(timetableId: string, timetableData: 
                             timeSlotId: timeSlot.id,
                             termSubjectLevelId,
                             sectionId,
-                            teacherId: teacherId ? (isNaN(Number(teacherId)) ? null : Number(teacherId)) : null
+                            teacherId: slotTeacherId
                         }
                     });
+                    // Sync teacher allocation: upsert TeacherClassAssignment so teacher's assigned classes stay in sync
+                    if (slotTeacherId && termSubjectLevelId != null && sectionId != null) {
+                        const timeRangeStr = `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
+                        await tx.teacherClassAssignment.upsert({
+                            where: {
+                                teacherId_termSubjectLevelId_sectionId: {
+                                    teacherId: slotTeacherId,
+                                    termSubjectLevelId,
+                                    sectionId
+                                }
+                            },
+                            create: {
+                                teacherId: slotTeacherId,
+                                termSubjectLevelId,
+                                sectionId,
+                                timeSlot: timeRangeStr
+                            },
+                            update: { timeSlot: timeRangeStr }
+                        });
+                    }
                 }
             }
 
