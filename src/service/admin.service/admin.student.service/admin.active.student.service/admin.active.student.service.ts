@@ -2266,6 +2266,112 @@ export async function getPaymentsByFeePaymentId(feePaymentId: string) {
 
     return payments;
 }
+
+/* update a single payment installment (edit wrong fee) and recalculate FeePayment due amount */
+function mapPaymentMethod(method: string): PaymentMethod {
+    if (method === 'CREDIT_CARD') return PaymentMethod.CREDIT_CARD;
+    if (method === 'CASH') return PaymentMethod.CASH;
+    if (method === 'BANK_TRANSFER') return PaymentMethod.OTHER;
+    return PaymentMethod.OTHER;
+}
+
+export async function updatePaymentInstallment(
+    paymentInstallmentId: string,
+    paidAmount: string,
+    paidDate: string,
+    paymentMethod: string,
+    remarks: string,
+    receivedBy: string
+) {
+    return db.$transaction(async (transaction) => {
+        const installment = await transaction.paymentInstallment.findUnique({
+            where: { id: +paymentInstallmentId },
+            include: {
+                feePayment: {
+                    include: {
+                        studentTermFee: { include: { student: true } }
+                    }
+                }
+            }
+        });
+
+        if (!installment) {
+            throw customError('Payment installment not found', 'fail', 404, true);
+        }
+
+        const feePayment = installment.feePayment;
+        if (!feePayment) {
+            throw customError('Fee payment record not found', 'fail', 400, true);
+        }
+
+        const oldPaidAmount = installment.paidAmount;
+        const newPaidAmount = parseInt(paidAmount, 10);
+        if (Number.isNaN(newPaidAmount) || newPaidAmount < 0) {
+            throw customError('Invalid paid amount', 'fail', 400, true);
+        }
+
+        const parsedPaidDate = paidDate && typeof paidDate === 'string' ? new Date(paidDate) : null;
+        const paymentDateToStore =
+            parsedPaidDate && !Number.isNaN(parsedPaidDate.getTime()) ? parsedPaidDate : new Date(installment.paidDate ?? installment.createdAt);
+
+        const newDueAmount = feePayment.dueAmount + oldPaidAmount - newPaidAmount;
+        const currentDate = new Date();
+        const dueDate = new Date(feePayment.dueDate);
+
+        let updateStatus: PaymentStatus;
+        let overDue = false;
+        if (newDueAmount <= 0) {
+            updateStatus = PaymentStatus.PAID;
+        } else if (currentDate > dueDate) {
+            updateStatus = PaymentStatus.OVERDUE;
+            overDue = true;
+        } else {
+            updateStatus = PaymentStatus.PENDING;
+        }
+
+        await transaction.paymentInstallment.update({
+            where: { id: +paymentInstallmentId },
+            data: {
+                paidAmount: newPaidAmount,
+                paidDate: paymentDateToStore,
+                paymentMethod: mapPaymentMethod(paymentMethod),
+                remarks: remarks || 'No remarks',
+                receivedBy
+            }
+        });
+
+        await transaction.feePayment.update({
+            where: { id: feePayment.id },
+            data: {
+                dueAmount: Math.max(newDueAmount, 0),
+                hasOverDue: overDue,
+                status: updateStatus
+            }
+        });
+
+        const extraAmount = Math.max(-newDueAmount, 0);
+        if (extraAmount > 0 && feePayment.studentTermFee?.student) {
+            await transaction.student.update({
+                where: { id: feePayment.studentTermFee.student.id },
+                data: {
+                    creditBalance: { increment: extraAmount },
+                    hasOverDue: overDue
+                }
+            });
+        }
+
+        const updatedInstallment = await transaction.paymentInstallment.findUnique({
+            where: { id: +paymentInstallmentId },
+            include: { feePayment: true }
+        });
+
+        return {
+            paymentInstallment: updatedInstallment,
+            newDueAmount: Math.max(newDueAmount, 0),
+            extraAmount
+        };
+    });
+}
 /*get invoice data for generating invoice*/
 
 export async function fetchFeePaymentByIdForInvoice(feePaymentId: string) {

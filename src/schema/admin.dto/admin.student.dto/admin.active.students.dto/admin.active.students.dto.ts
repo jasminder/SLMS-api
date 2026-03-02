@@ -151,6 +151,18 @@ export const getPaymentsByFeePaymentIdSchema = z.object({
 });
 export type GetPaymentsByFeePaymentIdSchema = z.infer<typeof getPaymentsByFeePaymentIdSchema>;
 
+export const updatePaymentInstallmentSchema = z.object({
+    body: z.object({
+        paymentInstallmentId: z.string().min(1, { message: 'Payment installment ID is required' }),
+        paidAmount: z.string().min(1, { message: 'Paid amount is required' }),
+        paidDate: z.string(),
+        paymentMethod: z.string().min(1, { message: 'Payment method is required' }),
+        remarks: z.string().default('No remarks'),
+        receivedBy: z.string().min(1, { message: 'Received by is required' })
+    })
+});
+export type UpdatePaymentInstallmentSchema = z.infer<typeof updatePaymentInstallmentSchema>;
+
 export const fetchFeePaymentByIdForInvoiceSchema = z.object({
     params: z.object({
         feePaymentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })

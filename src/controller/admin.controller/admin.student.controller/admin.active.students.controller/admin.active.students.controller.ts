@@ -39,6 +39,7 @@ import {
     selectActiveStudentsWithNoSubjects,
     updateAmountFeeDue,
     updateAmountPaidAtSchool,
+    updatePaymentInstallment,
     updateLeaveApplication,
     updateStudentCreditBalance
 } from '../../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
@@ -71,6 +72,7 @@ import {
     SelectActiveStudentsSchema,
     UpdateAmountFeeDueSchema,
     UpdateAmountPaidAtSchoolSchema,
+    UpdatePaymentInstallmentSchema,
     UpdateLeaveApplicationSchema,
     UpdateStudentCreditBalanceSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
@@ -228,6 +230,12 @@ export const getPaymentsByFeePaymentIdHandler = async (req: Request<GetPaymentsB
     const feePaymentId = req.params.feePaymentId;
     const payments = await getPaymentsByFeePaymentId(feePaymentId);
     res.status(200).json(payments);
+};
+
+export const updatePaymentInstallmentHandler = async (req: Request<{}, {}, UpdatePaymentInstallmentSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { paymentInstallmentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy } = req.body;
+    const result = await updatePaymentInstallment(paymentInstallmentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy);
+    res.status(200).json(result);
 };
 /* find enrolled subjects for active students*/
 

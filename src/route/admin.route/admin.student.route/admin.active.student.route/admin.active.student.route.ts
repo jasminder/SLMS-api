@@ -34,6 +34,7 @@ import {
     selectActiveStudentsSchema,
     updateAmountFeeDueSchema,
     updateAmountPaidAtSchoolSchema,
+    updatePaymentInstallmentSchema,
     updateLeaveApplicationSchema,
     updateStudentCreditBalanceSchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
@@ -75,6 +76,7 @@ import {
     selectActiveStudentsWithNoSubjectsHandler,
     updateAmountFeeDueHandler,
     updateAmountPaidAtSchoolHandler,
+    updatePaymentInstallmentHandler,
     updateLeaveApplicationHandler,
     updateStudentCreditBalanceHandler,
     findActiveStudentByIdWithoutSubjectsHandler
@@ -156,6 +158,9 @@ adminActiveStudentRoute.get(
     restrict('ADMIN'),
     asyncErrorHandler(getPaymentsByFeePaymentIdHandler)
 );
+
+adminActiveStudentRoute
+    .patch('/update-payment-installment', validate(updatePaymentInstallmentSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updatePaymentInstallmentHandler));
 
 /*find enrolled subject for late enrollments*/
 adminActiveStudentRoute
