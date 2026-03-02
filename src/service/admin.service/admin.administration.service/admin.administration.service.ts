@@ -428,7 +428,7 @@ export async function unPublishTerm(id: FindUniqueTermSchema['params']['id']) {
 export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) {
     let emailTasks: { email: string; subject: string; text: string }[] = [];
 
-    // Start a transaction
+    // Start a transaction (extended timeout for many students + fee migration)
     const updatedTerm = await db.$transaction(async (prisma) => {
         // Find the currently active term
         const currentTerm = await prisma.term.findFirst({
@@ -557,36 +557,34 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
 
         for (let i = 0; i < studentsToUpdateAttendance.length; i += batchSize) {
             const batch = studentsToUpdateAttendance.slice(i, i + batchSize);
-            const updates = batch.map((student) =>
-                db.$transaction([
-                    db.studentTermAttendanceHistory.upsert({
-                        where: {
-                            studentId_termId: {
-                                studentId: student.id,
-                                termId: currentTermBeforeChange.id
-                            }
-                        },
-                        create: {
+            const updates = batch.map(async (student) => {
+                await prisma.studentTermAttendanceHistory.upsert({
+                    where: {
+                        studentId_termId: {
                             studentId: student.id,
-                            termId: currentTermBeforeChange.id,
-                            termName: currentTermBeforeChange.name,
-                            termAttendance: student.termAttendance
-                        },
-                        update: {
-                            termAttendance: student.termAttendance
+                            termId: currentTermBeforeChange.id
                         }
-                    }),
-                    prisma.student.update({
-                        where: {
-                            id: student.id
-                        },
-                        data: {
-                            termAttendance: 0,
-                            attendancePercentageValue: 0
-                        }
-                    })
-                ])
-            );
+                    },
+                    create: {
+                        studentId: student.id,
+                        termId: currentTermBeforeChange.id,
+                        termName: currentTermBeforeChange.name,
+                        termAttendance: student.termAttendance
+                    },
+                    update: {
+                        termAttendance: student.termAttendance
+                    }
+                });
+                await prisma.student.update({
+                    where: {
+                        id: student.id
+                    },
+                    data: {
+                        termAttendance: 0,
+                        attendancePercentageValue: 0
+                    }
+                });
+            });
             await Promise.all(updates);
         }
 
@@ -607,8 +605,147 @@ export async function makeCurrentTerm(id: FindUniqueTermSchema['params']['id']) 
             await Promise.all(updates);
         }
 
+        // Migrate previous term unpaid fees to the new term (for parent/student portal display)
+        const unpaidPaymentsFromPrevTerm = await prisma.feePayment.findMany({
+            where: {
+                feeTemplate: { termId: currentTermBeforeChange.id },
+                dueAmount: { gt: 0 },
+                studentTermFeeId: { not: null },
+                OR: [
+                    { status: 'PENDING' },
+                    { status: 'OVERDUE' }
+                ]
+            },
+            include: {
+                studentTermFee: {
+                    include: {
+                        termSubjectGroup: {
+                            select: {
+                                subjectGroupId: true,
+                                subjectGroup: { select: { groupName: true } }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Aggregate unpaid amount by (studentId, subjectGroupId)
+        const unpaidByStudentAndGroup = new Map<string, { totalUnpaid: number; groupName: string }>();
+        for (const fp of unpaidPaymentsFromPrevTerm) {
+            if (!fp.studentTermFee?.termSubjectGroup) continue;
+            const studentId = fp.studentTermFee.studentId;
+            const subjectGroupId = fp.studentTermFee.termSubjectGroup.subjectGroupId;
+            const groupName = fp.studentTermFee.termSubjectGroup.subjectGroup.groupName;
+            const key = `${studentId}_${subjectGroupId}`;
+            const existing = unpaidByStudentAndGroup.get(key);
+            const due = fp.dueAmount ?? 0;
+            if (existing) {
+                existing.totalUnpaid += due;
+            } else {
+                unpaidByStudentAndGroup.set(key, { totalUnpaid: due, groupName });
+            }
+        }
+
+        const prevTermStartDate = new Date(currentTermBeforeChange.startDate);
+        const newTermStartDate = new Date(updatedTerm.startDate);
+        const prevTermMonth = (prevTermStartDate.getMonth() + 1).toString().padStart(2, '0');
+        const prevTermYear = prevTermStartDate.getFullYear().toString();
+
+        for (const [key, { totalUnpaid, groupName }] of unpaidByStudentAndGroup) {
+            if (totalUnpaid <= 0) continue;
+            const [studentIdStr, subjectGroupIdStr] = key.split('_');
+            const studentId = parseInt(studentIdStr, 10);
+            const subjectGroupId = parseInt(subjectGroupIdStr, 10);
+
+            const newTermSubjectGroup = await prisma.termSubjectGroup.findFirst({
+                where: {
+                    termId: updatedTerm.id,
+                    subjectGroupId
+                },
+                include: { fee: true }
+            });
+            if (!newTermSubjectGroup) continue;
+
+            const newStudentTermFee = await prisma.studentTermFee.upsert({
+                where: {
+                    studentId_termSubjectGroupId_termId: {
+                        studentId,
+                        termSubjectGroupId: newTermSubjectGroup.id,
+                        termId: updatedTerm.id
+                    }
+                },
+                create: {
+                    studentId,
+                    termSubjectGroupId: newTermSubjectGroup.id,
+                    termId: updatedTerm.id
+                },
+                update: {},
+                select: { id: true }
+            });
+
+            const invoiceName = 'Previous term unpaid balance';
+            const dueDateForTemplate = new Date(newTermStartDate.getFullYear(), newTermStartDate.getMonth(), 1);
+            let prevTermBalanceTemplate = await prisma.feeTemplate.findFirst({
+                where: {
+                    termId: updatedTerm.id,
+                    termSubjectGroupId: newTermSubjectGroup.id,
+                    invoiceName,
+                    groupName,
+                    interval: 'TERM'
+                }
+            });
+            if (!prevTermBalanceTemplate) {
+                const monthNum = newTermStartDate.getMonth() + 1;
+                prevTermBalanceTemplate = await prisma.feeTemplate.create({
+                    data: {
+                        invoiceName,
+                        groupName,
+                        month: monthNum < 10 ? '0' + monthNum : String(monthNum),
+                        year: String(newTermStartDate.getFullYear()),
+                        termName: updatedTerm.name,
+                        amount: 0,
+                        dueDate: dueDateForTemplate,
+                        notes: `Unpaid balance carried over from ${currentTermBeforeChange.name} (${prevTermMonth}/${prevTermYear})`,
+                        interval: 'TERM',
+                        termId: updatedTerm.id,
+                        termSubjectGroupId: newTermSubjectGroup.id
+                    }
+                });
+            }
+
+            const existingMigratedPayment = await prisma.feePayment.findFirst({
+                where: {
+                    studentTermFeeId: newStudentTermFee.id,
+                    feeTemplateId: prevTermBalanceTemplate.id
+                }
+            });
+            if (existingMigratedPayment) continue;
+
+            const student = await prisma.student.findUnique({
+                where: { id: studentId },
+                select: { akaalId: true }
+            });
+            const invoiceId = `PREV_${student?.akaalId ?? studentId}_${newTermSubjectGroup.id}_${Date.now()}`;
+
+            await prisma.feePayment.create({
+                data: {
+                    invoiceId,
+                    studentTermFeeId: newStudentTermFee.id,
+                    feeTemplateId: prevTermBalanceTemplate.id,
+                    dueDate: newTermStartDate,
+                    dueAmount: totalUnpaid,
+                    status: 'OVERDUE',
+                    feeAmount: totalUnpaid,
+                    adjustedFeeAmount: totalUnpaid,
+                    hasDue: true,
+                    hasOverDue: true
+                }
+            });
+        }
+
         return updatedTerm;
-    });
+    }, { timeout: 120000 });
 
     // After successful transaction, send all emails
     if (emailTasks.length > 0) {

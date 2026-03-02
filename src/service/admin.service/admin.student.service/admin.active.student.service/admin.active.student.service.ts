@@ -1833,6 +1833,11 @@ export async function findActiveStudentByIdWithoutSubjects(id: string) {
 }
 
 export async function findStudentFeeDetails(studentId: number, termId: number) {
+    const actualCurrentTerm = await db.term.findFirst({
+        where: { currentTerm: true },
+        select: { id: true }
+    });
+
     const studentTermFees = await db.feePayment.findMany({
         where: {
             studentTermFee: {
@@ -1840,7 +1845,6 @@ export async function findStudentFeeDetails(studentId: number, termId: number) {
                 termId
             }
         },
-
         include: {
             feeTemplate: true,
             studentTermFee: {
@@ -1855,7 +1859,58 @@ export async function findStudentFeeDetails(studentId: number, termId: number) {
         }
     });
 
-    return studentTermFees;
+    // When viewing the current term, always include unpaid/overdue fees from the previous term
+    // so pending and overdue amounts are visible after a term change
+    const isViewingCurrentTerm = actualCurrentTerm?.id === termId;
+    let previousTermUnpaid: typeof studentTermFees = [];
+
+    if (isViewingCurrentTerm) {
+        // Previous term = the term we're not viewing with the latest endDate (the one we just left)
+        const previousTerm = await db.term.findFirst({
+            where: { id: { not: termId } },
+            orderBy: { endDate: 'desc' },
+            select: { id: true }
+        });
+
+        if (previousTerm) {
+            previousTermUnpaid = await db.feePayment.findMany({
+                where: {
+                    studentTermFee: {
+                        studentId,
+                        termId: previousTerm.id
+                    },
+                    dueAmount: { gt: 0 },
+                    OR: [
+                        { status: 'PENDING' },
+                        { status: 'OVERDUE' }
+                    ]
+                },
+                include: {
+                    feeTemplate: true,
+                    studentTermFee: {
+                        select: {
+                            student: {
+                                select: {
+                                    creditBalance: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    if (studentTermFees.length === 0 && previousTermUnpaid.length === 0) {
+        return studentTermFees;
+    }
+    if (studentTermFees.length === 0) {
+        return previousTermUnpaid;
+    }
+    if (previousTermUnpaid.length === 0) {
+        return studentTermFees;
+    }
+    return [...studentTermFees, ...previousTermUnpaid];
 }
 
 export async function findTermSubjectGroupIdEnrolledSubjects(id: string, termSubjectGroupId: string) {
