@@ -9,8 +9,8 @@ import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
 
 const studentHomeworkRoute = express.Router();
 studentHomeworkRoute.route('/fetch-student-homework/:studentId/:termSubjectLevelId/:sectionId')
-    .get(validate(fetchStudentHomeworkSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchStudentHomeworkHandler));
+    .get(validate(fetchStudentHomeworkSchema), protectRoute, restrict('ADMIN', 'STUDENT', 'PARENT'), asyncErrorHandler(fetchStudentHomeworkHandler));
 studentHomeworkRoute.route('/fetch-student-report/:studentId')
-    .get(validate(fetchStudentReportSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchStudentReportHandler));
+    .get(validate(fetchStudentReportSchema), protectRoute, restrict('ADMIN', 'STUDENT', 'PARENT'), asyncErrorHandler(fetchStudentReportHandler));
 
     export default studentHomeworkRoute;

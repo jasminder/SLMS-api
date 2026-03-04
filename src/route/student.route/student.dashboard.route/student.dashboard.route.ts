@@ -29,7 +29,7 @@ import {
 const studentDashboardRoute = express.Router();
 
 studentDashboardRoute.route('/students-by-email/:email').get(validate(findStudentsByEmailSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findStudentsByEmailHandler));
-studentDashboardRoute.route('/student-detail/:studentId').get(validate(findActiveStudentDetailsSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findStudentDetailsByIdHandler));
+studentDashboardRoute.route('/student-detail/:studentId').get(validate(findActiveStudentDetailsSchema), protectRoute, restrict('ADMIN', 'STUDENT', 'PARENT'), asyncErrorHandler(findStudentDetailsByIdHandler));
 studentDashboardRoute.route('/get-all-student-portal-notices/:studentId').get(protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getAllStudentPortalNoticesHandler));
 
 studentDashboardRoute
@@ -42,7 +42,7 @@ studentDashboardRoute
 // Assuming Express.js routing
 studentDashboardRoute
     .route('/fetch-student-assignments/:studentId')
-    .get(validate(fetchStudentAssignmentsSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(fetchStudentAssignmentsHandler));
+    .get(validate(fetchStudentAssignmentsSchema), protectRoute, restrict('ADMIN', 'STUDENT', 'PARENT'), asyncErrorHandler(fetchStudentAssignmentsHandler));
 
 studentDashboardRoute.route('/find-teacher/:termSubjectLevelId/:sectionId').get(validate(teacherAssignmentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), getTeacherAssignmentHandler);
 

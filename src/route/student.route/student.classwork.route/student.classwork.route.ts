@@ -12,6 +12,6 @@ import { fetchStudentClassworkHandler } from '../../../controller/student.contro
 const studentClassworkRoute = express.Router();
 // Assuming Express.js routing
 studentClassworkRoute.route('/fetch-student-classwork/:studentId/:termSubjectLevelId/:sectionId')
-    .get(validate(fetchStudentClassworkSchema), protectRoute, restrict('ADMIN', 'TEACHER','STUDENT'), asyncErrorHandler(fetchStudentClassworkHandler));
+    .get(validate(fetchStudentClassworkSchema), protectRoute, restrict('ADMIN', 'TEACHER', 'STUDENT', 'PARENT'), asyncErrorHandler(fetchStudentClassworkHandler));
 
     export default studentClassworkRoute;
