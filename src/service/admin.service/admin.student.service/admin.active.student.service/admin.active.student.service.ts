@@ -1955,6 +1955,7 @@ export async function findTermSubjectGroupIdEnrolledSubjects(id: string, termSub
 /*-----------------fee-----------------------*/
 /*find fee details by id*/
 export async function findFeePaymentById(id: string) {
+    await autoApplyCreditToFeePayment(id);
     const feePaymentById = await db.feePayment.findUnique({
         where: {
             id: +id
@@ -2227,6 +2228,91 @@ export async function updateAmountFeeDue(feePaymentId: string, newDueAmount: num
     });
 }
 
+type PrismaTransactionClient = Omit<typeof db, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
+
+/** Internal: apply credit to a fee payment (assumes creditToApply > 0 and within bounds). Used by applyStudentCredit and auto-apply. */
+async function applyCreditToFeePaymentInternal(
+    prisma: PrismaTransactionClient,
+    feePaymentId: number,
+    creditToApply: number,
+    remarks: string
+) {
+    const feePayment = await prisma.feePayment.findUnique({
+        where: { id: feePaymentId },
+        include: { studentTermFee: { include: { student: true } } }
+    });
+    if (!feePayment?.studentTermFee?.student) return null;
+    const student = feePayment.studentTermFee.student;
+    let updateStatus = feePayment.status as PaymentStatus;
+    let overDue = feePayment.hasOverDue ?? false;
+    let newDueAmount = feePayment.dueAmount - creditToApply;
+    const remainingCredit = student.creditBalance - creditToApply;
+
+    if (newDueAmount <= 0) {
+        newDueAmount = 0;
+        updateStatus = PaymentStatus.PAID;
+        overDue = false;
+    }
+
+    await prisma.feePayment.update({
+        where: { id: feePaymentId },
+        data: { dueAmount: newDueAmount, status: updateStatus, hasOverDue: overDue }
+    });
+    await prisma.student.update({
+        where: { id: student.id },
+        data: { creditBalance: remainingCredit, hasOverDue: overDue }
+    });
+    await prisma.paymentInstallment.create({
+        data: {
+            feePaymentId,
+            paidAmount: creditToApply,
+            paidDate: new Date(),
+            paymentMethod: PaymentMethod.CREDIT_BALANCE,
+            paymentStatus: updateStatus,
+            remarks,
+            receivedBy: 'ADMIN'
+        }
+    });
+    return { newDueAmount, remainingCredit };
+}
+
+/** Automatically apply available credit to a fee payment. If credit >= due, fee becomes PAID and remaining credit stays on student. If credit < due, deducts credit and leaves rest pending. */
+export async function autoApplyCreditToFeePayment(feePaymentId: string) {
+    return db.$transaction(async (prisma) => {
+        const feePayment = await prisma.feePayment.findUnique({
+            where: { id: +feePaymentId },
+            include: { studentTermFee: { include: { student: true } } }
+        });
+        if (!feePayment || !feePayment.studentTermFee?.student) return null;
+        if (feePayment.status === 'PAID' && feePayment.dueAmount === 0) return null;
+        if (feePayment.dueAmount <= 0) return null;
+        const student = feePayment.studentTermFee.student;
+        if (student.creditBalance <= 0) return null;
+        const creditToApply = Math.min(student.creditBalance, feePayment.dueAmount);
+        if (creditToApply <= 0) return null;
+        return applyCreditToFeePaymentInternal(prisma, +feePaymentId, creditToApply, 'Auto-applied credit');
+    });
+}
+
+/** Same as autoApplyCreditToFeePayment but runs inside an existing transaction (e.g. when creating fee payments). */
+export async function autoApplyCreditToFeePaymentInTransaction(
+    prisma: PrismaTransactionClient,
+    feePaymentId: number
+) {
+    const feePayment = await prisma.feePayment.findUnique({
+        where: { id: feePaymentId },
+        include: { studentTermFee: { include: { student: true } } }
+    });
+    if (!feePayment || !feePayment.studentTermFee?.student) return;
+    if (feePayment.status === 'PAID' && feePayment.dueAmount === 0) return;
+    if (feePayment.dueAmount <= 0) return;
+    const student = feePayment.studentTermFee.student;
+    if (student.creditBalance <= 0) return;
+    const creditToApply = Math.min(student.creditBalance, feePayment.dueAmount);
+    if (creditToApply <= 0) return;
+    await applyCreditToFeePaymentInternal(prisma, feePaymentId, creditToApply, 'Auto-applied credit');
+}
+
 /*apply credit balanc in student table*/
 export async function applyStudentCredit(feePaymentId: string, creditToApply: number, remarks: string) {
     if (creditToApply < 0) {
@@ -2260,48 +2346,13 @@ export async function applyStudentCredit(feePaymentId: string, creditToApply: nu
         if (creditToApply > feePayment.dueAmount) {
             throw customError('Cannot apply more credit than the due amount.', 'fail', 400, true);
         }
-        let updateStatus = feePayment.status as PaymentStatus;
-        let overDue = feePayment.hasOverDue;
-        let newDueAmount = feePayment.dueAmount - creditToApply;
-        let remainingCredit = student.creditBalance - creditToApply;
 
-        if (newDueAmount <= 0) {
-            newDueAmount = 0;
-            updateStatus = PaymentStatus.PAID;
-            // console.log(updateStatus);
-            overDue = false;
-        }
-
-        // Update FeePayment and Student records
-        const updatedFeePayment = await prisma.feePayment.update({
-            where: { id: +feePaymentId },
-            data: {
-                dueAmount: newDueAmount,
-                status: updateStatus,
-                hasOverDue: overDue
-            }
-        });
-
-        await prisma.student.update({
-            where: { id: student.id },
-            data: { creditBalance: remainingCredit, hasOverDue: overDue }
-        });
-        const paymentInstallment = await prisma.paymentInstallment.create({
-            data: {
-                feePaymentId: +feePaymentId,
-                paidAmount: creditToApply,
-                paidDate: new Date(),
-                paymentMethod: PaymentMethod.CREDIT_BALANCE,
-                paymentStatus: updateStatus,
-                remarks: remarks,
-                receivedBy: 'ADMIN'
-            }
-        });
-
+        const result = await applyCreditToFeePaymentInternal(prisma, +feePaymentId, creditToApply, remarks);
+        const updatedFeePayment = await prisma.feePayment.findUnique({ where: { id: +feePaymentId } });
         return {
             message: 'Credit applied successfully.',
             feePayment: updatedFeePayment,
-            remainingCredit
+            remainingCredit: result?.remainingCredit ?? student.creditBalance - creditToApply
         };
     });
 }
@@ -2430,6 +2481,7 @@ export async function updatePaymentInstallment(
 /*get invoice data for generating invoice*/
 
 export async function fetchFeePaymentByIdForInvoice(feePaymentId: string) {
+    await autoApplyCreditToFeePayment(feePaymentId);
     const feePayment = await db.feePayment.findUnique({
         where: { id: parseInt(feePaymentId) },
         include: {

@@ -2,6 +2,7 @@ import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
 import { NotificationType, PaymentType } from '@prisma/client';
+import { autoApplyCreditToFeePaymentInTransaction } from '../admin.student.service/admin.active.student.service/admin.active.student.service';
 
 export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
     const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
@@ -82,9 +83,12 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     })
                     .filter((task) => task !== null)
             ); // Filter out null tasks
+            for (const fp of feePayments) {
+                if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
+            }
             const notificationTransactions = await Promise.all(
                 studentIds.map((studentId) => {
-                    return db.notification.create({
+                    return prisma.notification.create({
                         data: {
                             studentId: +studentId,
                             type: NotificationType.FEE,
@@ -159,10 +163,12 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     })
                     .filter((task) => task !== null)
             ); // Filter out null tasks
-
+            for (const fp of feePayments) {
+                if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
+            }
             const notificationTransactions = await Promise.all(
                 studentIds.map((studentId) => {
-                    return db.notification.create({
+                    return prisma.notification.create({
                         data: {
                             studentId: +studentId,
                             type: NotificationType.FEE,

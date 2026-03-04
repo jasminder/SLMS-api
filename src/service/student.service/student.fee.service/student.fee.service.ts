@@ -2,6 +2,7 @@ import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
 import { PaymentType } from '@prisma/client';
+import { autoApplyCreditToFeePayment } from '../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
 
 export async function fetchFeePaymentsForCurrentTermByStudentId(studentId: string) {
     return db.feePayment.findMany({
@@ -34,6 +35,7 @@ export async function fetchFeePaymentsForCurrentTermByStudentId(studentId: strin
     });
 }
 export async function feePaymentByIdForStudentPortal(feePaymentId: string) {
+    await autoApplyCreditToFeePayment(feePaymentId);
     const feePaymentById = await db.feePayment.findUnique({
         where: {
             id: +feePaymentId
