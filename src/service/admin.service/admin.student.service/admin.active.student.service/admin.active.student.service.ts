@@ -2637,6 +2637,7 @@ export async function assignClassToStudent(studentId: string, termId: string, su
     if (!section) {
         throw customError(`section not found for ${subjectName} in ${levelName}`, 'fail', 404, true);
     }
+    const sectionId = section.id;
     // console.log(section);
     // Find SubjectEnrollment and Enrollment ID
     const subjectEnrollment = await db.subjectEnrollment.findFirst({
@@ -2658,39 +2659,57 @@ export async function assignClassToStudent(studentId: string, termId: string, su
         throw customError(`Enrollment not found for student ${studentId} in subject ${subjectName}`, 'fail', 404, true);
     }
 
-    // Find or create StudentClassAsstudentClassAssignment Record
+    // Deactivate any other section assignment for this student in the same termSubjectLevel
+    // so only one "current" section exists per (student, termSubjectLevel)
+    await db.studentClassAssignment.updateMany({
+        where: {
+            enrollmentId: subjectEnrollment.enrollment.id,
+            termSubjectLevelId: termSubjectLevel.id,
+            studentId: +studentId,
+            sectionId: { not: sectionId },
+            isCurrentlyAssigned: true
+        },
+        data: {
+            isCurrentlyAssigned: false
+        }
+    });
+
+    const now = new Date();
+    // Find or create StudentClassAssignment for the target section
     const existingRecord = await db.studentClassAssignment.findFirst({
         where: {
             enrollmentId: subjectEnrollment.enrollment.id,
             termSubjectLevelId: termSubjectLevel.id,
             studentId: +studentId,
-            sectionId: section.id
+            sectionId
         }
     });
-    // console.log(existingRecord);
+
+    let assignmentId: number;
     if (existingRecord) {
-        // Update if already assigned
         await db.studentClassAssignment.update({
-            where: {
-                id: existingRecord.id
-            },
+            where: { id: existingRecord.id },
             data: {
                 isCurrentlyAssigned: true,
-                sectionId: section.id // Update sectionId
+                sectionId,
+                changeDate: now
             }
         });
+        assignmentId = existingRecord.id;
     } else {
-        // Create new assignment
-        await db.studentClassAssignment.create({
+        const newAssignment = await db.studentClassAssignment.create({
             data: {
                 enrollmentId: subjectEnrollment.enrollment.id,
                 termSubjectLevelId: termSubjectLevel.id,
                 studentId: +studentId,
                 isCurrentlyAssigned: true,
-                sectionId: section.id // Assign sectionId
+                sectionId,
+                changeDate: now
             }
         });
+        assignmentId = newAssignment.id;
     }
+
     await db.enrollment.update({
         where: {
             id: subjectEnrollment.enrollment.id
@@ -2699,6 +2718,61 @@ export async function assignClassToStudent(studentId: string, termId: string, su
             termSubjectLevelId: termSubjectLevel.id
         }
     });
+
+    // Same-day: if report was already generated today, create ClassAttendance for the new section
+    // so the student shows up in the new section on the same day
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const schoolDayRecord = await db.schoolDay.findFirst({
+        where: {
+            schoolOperatedDate: todayStart
+        }
+    });
+
+    if (schoolDayRecord) {
+        const existingCheckIn = await db.schoolCheckInAttendance.findFirst({
+            where: {
+                studentId: +studentId,
+                date: { gte: todayStart, lte: todayEnd }
+            }
+        });
+
+        if (existingCheckIn) {
+            const leaveRecord = await db.leave.findFirst({
+                where: {
+                    studentId: +studentId,
+                    startDate: { lte: todayEnd },
+                    endDate: { gte: todayStart },
+                    status: 'APPROVED'
+                }
+            });
+            const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
+
+            const existingClassAttendance = await db.classAttendance.findUnique({
+                where: {
+                    studentClassAssignmentId_date: {
+                        studentClassAssignmentId: assignmentId,
+                        date: todayStart
+                    }
+                }
+            });
+
+            if (!existingClassAttendance) {
+                await db.classAttendance.create({
+                    data: {
+                        studentClassAssignmentId: assignmentId,
+                        date: todayStart,
+                        schoolCheckInAttendanceId: existingCheckIn.id,
+                        attendanceStatus,
+                        schoolDayId: schoolDayRecord.id
+                    }
+                });
+            }
+        }
+    }
 
     return { message: 'Class assigned successfully' };
 }

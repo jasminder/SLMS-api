@@ -58,7 +58,8 @@ export async function createWeekdaySchoolCheckInAttendanceForStudent(date: strin
                                 termSubjectLevelId: parseInt(termSubjectLevelId),
                                 section: {
                                     name: sectionName
-                                }
+                                },
+                                isCurrentlyAssigned: true
                             }
                         },
                         enrollments: {
