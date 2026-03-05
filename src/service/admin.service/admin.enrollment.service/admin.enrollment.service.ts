@@ -577,10 +577,22 @@ export async function enrollApplicantToStudent(id: number) {
         throw customError(`The applicant is already a student`, 'fail', 404, true);
     }
 
-    // Update the student's role to 'STUDENT'
+    // Assign next akaalId so the student is created as Active Student (not Late Enrollment)
+    const lastActiveStudent = await db.student.findFirst({
+        where: { isActive: true, role: 'STUDENT' },
+        orderBy: { akaalId: 'desc' }
+    });
+    const nextAkaalId = lastActiveStudent ? (lastActiveStudent.akaalId ?? 0) + 1 : 1;
+
+    // Create as Active Student: role STUDENT, isActive true, isAllowedLogin true, akaalId
     await db.student.update({
         where: { id },
-        data: { role: 'STUDENT' }
+        data: {
+            role: 'STUDENT',
+            isActive: true,
+            isAllowedLogin: true,
+            akaalId: nextAkaalId
+        }
     });
 
     return { message: `The applicant enrolled to Student successfully` };
