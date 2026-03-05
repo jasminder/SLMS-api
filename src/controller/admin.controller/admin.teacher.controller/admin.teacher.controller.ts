@@ -20,7 +20,8 @@ import {
     findAllAssignedClassesForTeachers,
     deleteTeacherSubject,
     deleteClassForTeacher,
-    findAllAssignedClasses
+    findAllAssignedClasses,
+    getClassRecordsForAdmin
 } from '../../../service/admin.service/admin.teacher.service/admin.teacher.service';
 
 //find all applicants
@@ -107,4 +108,10 @@ export const deleteClassForTeacherHandler = async (req: Request<DeleteClassToTea
 export const findAllAssignedClassesHandler = async (req: Request, res: Response, next: NextFunction) => {
     const allClasses = await findAllAssignedClasses();
     res.status(200).json(allClasses);
+};
+
+/** Get attendance, classwork, and homework for all classes (admin) */
+export const getClassRecordsForAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const records = await getClassRecordsForAdmin();
+    res.status(200).json(records);
 };

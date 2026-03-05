@@ -109,6 +109,46 @@ export async function findAllHomeworksBySubjectsList(termSubjectLevelIdsArray: s
     return homeworks;
 }
 
+/* Find all homework records for a termsubjectlevelid and sectionid (admin: no teacher filter) */
+export async function findAllHomeworkByTermAndSectionForAdmin(termSubjectLevelId: string, sectionId: string) {
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    const homeworks = await db.homework.findMany({
+        where: {
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId,
+            createdAt: {
+                gte: startDate,
+                lte: endDate
+            }
+        },
+        include: {
+            subject: true,
+            teacher: true,
+            termSubjectLevel: {
+                select: {
+                    level: {
+                        select: { name: true }
+                    }
+                }
+            },
+            section: {
+                select: {
+                    name: true
+                }
+            }
+        },
+        orderBy: {
+            createdAt: 'desc'
+        }
+    });
+
+    return homeworks;
+}
+
 /* Find all homework records for a termsubjectlevelid and sectionid */
 export async function findAllHomeworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
     const startDate = new Date();

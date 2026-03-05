@@ -112,6 +112,46 @@ export async function findAllClassworksBySubjectsList(termSubjectLevelIdsArray: 
     return classworks;
 }
 
+/* Find all classwork records for a termsubjectlevelid and sectionid (admin: no teacher filter) */
+export async function findAllClassworkByTermAndSectionForAdmin(termSubjectLevelId: string, sectionId: string) {
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    const classworks = await db.classwork.findMany({
+        where: {
+            termSubjectLevelId: +termSubjectLevelId,
+            sectionId: +sectionId,
+            createdAt: {
+                gte: startDate,
+                lte: endDate
+            }
+        },
+        include: {
+            subject: true,
+            teacher: true,
+            termSubjectLevel: {
+                select: {
+                    level: {
+                        select: { name: true }
+                    }
+                }
+            },
+            section: {
+                select: {
+                    name: true
+                }
+            }
+        },
+        orderBy: {
+            createdAt: 'desc'
+        }
+    });
+
+    return classworks;
+}
+
 /* Find all classwork records for a termsubjectlevelid and sectionid */
 export async function findAllClassworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
     const startDate = new Date();

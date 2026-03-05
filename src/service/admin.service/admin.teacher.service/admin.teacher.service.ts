@@ -1,5 +1,8 @@
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
+import { fetchCheckedInStudentsWithAttendance } from '../../teacher.service/teacher.attendance.service/teacher.attendance.service';
+import { findAllClassworkByTermAndSectionForAdmin } from '../../classwork.service/classwork.service';
+import { findAllHomeworkByTermAndSectionForAdmin } from '../../homework.service/homework.service';
 
 export async function findAllTeachers() {
     const approvedTeachers = await db.teacher.findMany({
@@ -594,4 +597,80 @@ export const findAllAssignedClasses = async () => {
     });
 
     return assignedClasses;
+};
+
+/** Get attendance, classwork, and homework for all classes in one place (admin) */
+export const getClassRecordsForAdmin = async () => {
+    const assignedClasses = await findAllAssignedClasses();
+    const classKey = (tslId: number, secId: number) => `${tslId}-${secId}`;
+    const seen = new Set<string>();
+    const uniqueClasses: Array<{
+        termSubjectLevelId: number;
+        sectionId: number;
+        teacherId: number;
+        className: string;
+        termSubjectLevel: (typeof assignedClasses)[0]['termSubjectLevel'];
+        section: (typeof assignedClasses)[0]['section'];
+        teacher: (typeof assignedClasses)[0]['teacher'];
+    }> = [];
+    for (const row of assignedClasses) {
+        const key = classKey(row.termSubjectLevelId, row.sectionId);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const className = `${row.termSubjectLevel.subject.name} ${row.termSubjectLevel.level.name} ${row.section.name}`;
+        uniqueClasses.push({
+            termSubjectLevelId: row.termSubjectLevelId,
+            sectionId: row.sectionId,
+            teacherId: row.teacherId,
+            className,
+            termSubjectLevel: row.termSubjectLevel,
+            section: row.section,
+            teacher: row.teacher
+        });
+    }
+
+    const results = await Promise.all(
+        uniqueClasses.map(async (cls) => {
+            const [attendanceData, classwork, homework] = await Promise.all([
+                fetchCheckedInStudentsWithAttendance(cls.termSubjectLevelId.toString(), cls.sectionId.toString()),
+                findAllClassworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString()),
+                findAllHomeworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString())
+            ]);
+
+            let total = attendanceData.length;
+            let present = 0;
+            let absent = 0;
+            let leave = 0;
+            let notCheckedIn = 0;
+            for (const row of attendanceData) {
+                if (row.classAttendance?.attendanceStatus === 'PRESENT') present++;
+                else if (row.classAttendance?.attendanceStatus === 'LEAVE') leave++;
+                else if (row.checkInData?.checkedIn) absent++;
+                else if (row.checkInData?.isMarked) absent++;
+                else notCheckedIn++;
+            }
+
+            return {
+                classInfo: {
+                    termSubjectLevelId: cls.termSubjectLevelId,
+                    sectionId: cls.sectionId,
+                    teacherId: cls.teacherId,
+                    className: cls.className,
+                    sectionName: cls.section.name,
+                    termId: cls.termSubjectLevel.term.id
+                },
+                attendanceSummary: {
+                    total,
+                    present,
+                    absent,
+                    leave,
+                    notCheckedIn
+                },
+                classwork,
+                homework
+            };
+        })
+    );
+
+    return results;
 };
