@@ -3010,7 +3010,7 @@ export async function createAttendanceForSingleStudent(studentId: string, date: 
     }
 }
 
-/****** * remove/ delete  class for  student*****/
+/****** * remove/ deactivate class for student (soft-delete to preserve attendance history) *****/
 export async function deleteClassAssignment(id: string) {
     // Check if the class assignment exists
     const classAssignment = await db.studentClassAssignment.findUnique({
@@ -3025,10 +3025,14 @@ export async function deleteClassAssignment(id: string) {
 
     const studentId = classAssignment.studentId;
 
-    // Delete the class assignment
-    await db.studentClassAssignment.delete({
+    // Soft-delete: deactivate the assignment so attendance records are preserved
+    await db.studentClassAssignment.update({
         where: {
             id: +id
+        },
+        data: {
+            isCurrentlyAssigned: false,
+            changeDate: new Date()
         }
     });
 
