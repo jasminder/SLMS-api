@@ -43,3 +43,16 @@ export async function getCommentsByStudentId(studentId: string) {
         }
     });
 }
+
+export async function updateComment(commentId: string, content: string, interactionType: InteractionType) {
+    const comment = await db.comment.findUnique({
+        where: { id: +commentId }
+    });
+    if (!comment) {
+        throw customError('Comment not found', 'fail', 404, true);
+    }
+    return await db.comment.update({
+        where: { id: +commentId },
+        data: { content, interactionType }
+    });
+}
