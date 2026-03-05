@@ -50,7 +50,21 @@ model Student {
   StudentNoticeAcknowledgement StudentNoticeAcknowledgement[]
   StudentTermAttendanceHistory StudentTermAttendanceHistory[]
   studentTermFee               StudentTermFee[]
+  studentProfileActivity      StudentProfileActivity[]
   user                         User?
+}
+
+model StudentProfileActivity {
+  id                 Int       @id @default(autoincrement())
+  studentId          Int
+  actionType         String
+  description        String
+  metadata           Json?
+  performedByUserId  Int?
+  performedByEmail   String
+  createdAt          DateTime  @default(now())
+  student            Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  performedBy        User?     @relation(fields: [performedByUserId], references: [id], onDelete: SetNull)
 }
 
 model StudentTermAttendanceHistory {
@@ -665,6 +679,7 @@ model User {
   admin                       Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
   student                     Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher                     Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  studentProfileActivity      StudentProfileActivity[]
 }
 
 model SchoolCheckInAttendance {

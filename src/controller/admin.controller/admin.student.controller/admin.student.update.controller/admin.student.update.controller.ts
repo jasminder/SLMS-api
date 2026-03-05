@@ -14,6 +14,7 @@ import {
     updateStudentParentsDetail,
     updateStudentPersonalDetail
 } from '../../../../service/admin.service/admin.student.service/admin.student.update.service/admin.student.update.service';
+import { recordStudentProfileActivity } from '../../../../service/admin.service/admin.student.service/admin.student.activity.service/admin.student.activity.service';
 
 // update student personal details service
 export const updateStudentPersonalDetailHandler = asyncErrorHandler(
@@ -23,6 +24,13 @@ export const updateStudentPersonalDetailHandler = asyncErrorHandler(
             const data = req.body.data;
             // console.log(data, "con");
             const updateStudent = await updateStudentPersonalDetail(id, data);
+            await recordStudentProfileActivity({
+                studentId: +id,
+                actionType: 'PERSONAL_DETAIL_UPDATE',
+                description: 'Personal details updated',
+                performedByUserId: req.user?.id,
+                performedByEmail: req.user?.email ?? 'System',
+            }).catch(() => {});
             res.status(200).json(updateStudent);
         } catch (err: any) {
             if (err.message == 'email or contact already exists') {
@@ -43,6 +51,13 @@ export const updateStudentParentsDetailHandler = asyncErrorHandler(
             const { id } = req.params;
             const data = req.body.data;
             const updateStudent = await updateStudentParentsDetail(id, data);
+            await recordStudentProfileActivity({
+                studentId: +id,
+                actionType: 'PARENTS_DETAIL_UPDATE',
+                description: 'Parents/guardian details updated',
+                performedByUserId: req.user?.id,
+                performedByEmail: req.user?.email ?? 'System',
+            }).catch(() => {});
             res.status(200).json(updateStudent);
         } catch (err: any) {
             if (err.message == 'student does not exist with given ID') {
@@ -63,6 +78,13 @@ export const updateStudentHealthInformationHandler = asyncErrorHandler(
             const { id } = req.params;
             const data = req.body;
             const updateStudent = await updateStudentHealthInformation(id, data);
+            await recordStudentProfileActivity({
+                studentId: +id,
+                actionType: 'HEALTH_DETAIL_UPDATE',
+                description: 'Health information updated',
+                performedByUserId: req.user?.id,
+                performedByEmail: req.user?.email ?? 'System',
+            }).catch(() => {});
             res.status(200).json(updateStudent);
         } catch (err: any) {
             if (err.message == 'student does not exist with given ID') {
@@ -81,6 +103,13 @@ export const updateStudentEmergencyContactHandler = asyncErrorHandler(async (req
         const { id } = req.params;
         const data = req.body;
         const updatedStudent = await updateStudentEmergencyContact(id, data);
+        await recordStudentProfileActivity({
+            studentId: +id,
+            actionType: 'EMERGENCY_CONTACT_UPDATE',
+            description: 'Emergency contact details updated',
+            performedByUserId: req.user?.id,
+            performedByEmail: req.user?.email ?? 'System',
+        }).catch(() => {});
         res.status(200).json(updatedStudent);
     } catch (err: any) {
         if (err.message == 'Student does not exist with given ID') {

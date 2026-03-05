@@ -44,6 +44,10 @@ import {
     updateStudentCreditBalance
 } from '../../../../service/admin.service/admin.student.service/admin.active.student.service/admin.active.student.service';
 import {
+    getStudentProfileActivities,
+    recordStudentProfileActivity
+} from '../../../../service/admin.service/admin.student.service/admin.student.activity.service/admin.student.activity.service';
+import {
     ActiveStudentEnrollDataSchema,
     AlumniStudentByIdSchema,
     ApplyCreditDataSchema,
@@ -74,7 +78,8 @@ import {
     UpdateAmountPaidAtSchoolSchema,
     UpdatePaymentInstallmentSchema,
     UpdateLeaveApplicationSchema,
-    UpdateStudentCreditBalanceSchema
+    UpdateStudentCreditBalanceSchema,
+    GetStudentProfileActivitySchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 
 // Find all students for the admin
@@ -264,6 +269,14 @@ export const assignClassToStudentHandler = async (req: Request<AssignClassToStud
     const { levelName, sectionName, subjectName } = req.body;
     if (studentId && termId && levelName && sectionName && subjectName) {
         const assignClass = await assignClassToStudent(studentId, termId, subjectName, levelName, sectionName);
+        await recordStudentProfileActivity({
+            studentId: +studentId,
+            actionType: 'SECTION_CHANGE',
+            description: `Class/section assigned: ${subjectName} - ${levelName} - ${sectionName}`,
+            metadata: { termId: +termId, subjectName, levelName, sectionName },
+            performedByUserId: req.user?.id,
+            performedByEmail: req.user?.email ?? 'System',
+        }).catch(() => {});
         res.status(200).json(assignClass);
     }
 };
@@ -271,6 +284,16 @@ export const assignClassToStudentHandler = async (req: Request<AssignClassToStud
 export const deleteClassAssignmentHandler = async (req: Request<DeleteClassAssignmentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const result = await deleteClassAssignment(id);
+    if (result.studentId) {
+        await recordStudentProfileActivity({
+            studentId: result.studentId,
+            actionType: 'CLASS_REMOVED',
+            description: 'Class/section assignment removed',
+            metadata: { assignmentId: +id },
+            performedByUserId: req.user?.id,
+            performedByEmail: req.user?.email ?? 'System',
+        }).catch(() => {});
+    }
     res.status(200).json(result);
 };
 
@@ -285,12 +308,28 @@ export const findUniqueStudentClassDetailsHandler = async (req: Request<FindUniq
 export const manageClassesHandler = async (req: Request<ManageClassSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const updatedStudentClassHistoryRecords = await manageClasses(id);
+    await recordStudentProfileActivity({
+        studentId: updatedStudentClassHistoryRecords.studentId,
+        actionType: 'CLASS_TOGGLE',
+        description: updatedStudentClassHistoryRecords.isCurrentlyAssigned ? 'Class marked as current' : 'Class marked as not current',
+        metadata: { assignmentId: +id },
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System',
+    }).catch(() => {});
     res.status(200).json(updatedStudentClassHistoryRecords);
 };
 // Enroll Active Student Handler
 export const enrollActiveStudentHandler = async (req: Request<{}, {}, ActiveStudentEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const enrollmentData = req.body;
     const enrollmentResult = await enrollActiveStudent(enrollmentData);
+    await recordStudentProfileActivity({
+        studentId: enrollmentData.activeStudentId,
+        actionType: 'ENROLLMENT',
+        description: 'Enrolled in subject(s)',
+        metadata: { enrollData: enrollmentData.enrollData },
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System',
+    }).catch(() => {});
     res.status(200).json(enrollmentResult);
 };
 
@@ -298,6 +337,14 @@ export const enrollActiveStudentHandler = async (req: Request<{}, {}, ActiveStud
 export const deEnrollActiveStudentHandler = async (req: Request<{}, {}, ActiveStudentEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const deEnrollmentData = req.body;
     const deEnrollmentResult = await deEnrollActiveStudent(deEnrollmentData);
+    await recordStudentProfileActivity({
+        studentId: deEnrollmentData.activeStudentId,
+        actionType: 'DE_ENROLLMENT',
+        description: 'De-enrolled from subject(s)',
+        metadata: { enrollData: deEnrollmentData.enrollData },
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System',
+    }).catch(() => {});
     res.status(200).json(deEnrollmentResult);
 };
 // findTermToEnrollForActiveStudent
@@ -405,4 +452,16 @@ export const updateStudentCreditBalanceHandler = async (
 export const getActiveStudentsCountHandler = async (req: Request<{}, {}, {}, {}>, res: Response, next: NextFunction) => {
     const activeStudentsCount = await getActiveStudentsCount();
     res.status(200).json(activeStudentsCount);
+};
+
+export const getStudentProfileActivityHandler = async (
+    req: Request<GetStudentProfileActivitySchema['params'], {}, {}, GetStudentProfileActivitySchema['query']>,
+    res: Response,
+    next: NextFunction
+) => {
+    const { id } = req.params;
+    const rawLimit = req.query?.limit;
+    const limit = rawLimit ? Math.min(parseInt(String(rawLimit), 10) || 100, 200) : 100;
+    const activities = await getStudentProfileActivities(id, limit);
+    res.status(200).json(activities);
 };

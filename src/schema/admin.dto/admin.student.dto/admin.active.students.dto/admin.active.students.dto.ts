@@ -328,3 +328,13 @@ export const updateStudentCreditBalanceSchema = z.object({
     })
 });
 export type UpdateStudentCreditBalanceSchema = z.infer<typeof updateStudentCreditBalanceSchema>;
+
+export const getStudentProfileActivitySchema = z.object({
+    params: z.object({
+        id: z.string().min(1, { message: 'Student ID is required' })
+    }),
+    query: z.object({
+        limit: z.string().optional()
+    })
+});
+export type GetStudentProfileActivitySchema = z.infer<typeof getStudentProfileActivitySchema>;

@@ -3023,6 +3023,8 @@ export async function deleteClassAssignment(id: string) {
         throw new Error('Class assignment not found with the given ID.');
     }
 
+    const studentId = classAssignment.studentId;
+
     // Delete the class assignment
     await db.studentClassAssignment.delete({
         where: {
@@ -3030,7 +3032,7 @@ export async function deleteClassAssignment(id: string) {
         }
     });
 
-    return { message: 'Class assignment deleted successfully' };
+    return { message: 'Class assignment deleted successfully', studentId };
 }
 
 /*get all classes for students*/

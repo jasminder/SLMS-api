@@ -36,7 +36,8 @@ import {
     updateAmountPaidAtSchoolSchema,
     updatePaymentInstallmentSchema,
     updateLeaveApplicationSchema,
-    updateStudentCreditBalanceSchema
+    updateStudentCreditBalanceSchema,
+    getStudentProfileActivitySchema
 } from '../../../../schema/admin.dto/admin.student.dto/admin.active.students.dto/admin.active.students.dto';
 import {
     alumniStudentByIdHandler,
@@ -79,7 +80,8 @@ import {
     updatePaymentInstallmentHandler,
     updateLeaveApplicationHandler,
     updateStudentCreditBalanceHandler,
-    findActiveStudentByIdWithoutSubjectsHandler
+    findActiveStudentByIdWithoutSubjectsHandler,
+    getStudentProfileActivityHandler
 } from '../../../../controller/admin.controller/admin.student.controller/admin.active.students.controller/admin.active.students.controller';
 
 import {
@@ -130,6 +132,9 @@ adminActiveStudentRoute
 /*find unqiue student*/
 adminActiveStudentRoute.route('/active-student-detail/:id').get(validate(findUniqueActiveStudentSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findActiveStudentByIdHandler));
 adminActiveStudentRoute.route('/active-student-detail-without-subjects/:id').get(validate(findUniqueActiveStudentWithoutSubjectsSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(findActiveStudentByIdWithoutSubjectsHandler));
+adminActiveStudentRoute
+    .route('/student-profile-activity/:id')
+    .get(validate(getStudentProfileActivitySchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(getStudentProfileActivityHandler));
 /*find unqiue active student fee details*/
 adminActiveStudentRoute.route('/active-student-fee-detail/:studentId').get(validate(findStudentFeeDetailsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findStudentFeeDetailsHandler));
 /* find subjects enrolled in a termSubject group*/
