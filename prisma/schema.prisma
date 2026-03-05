@@ -24,6 +24,7 @@ model Student {
   overDue                      Int?
   creditBalance                Int                            @default(0)
   hasSeenNewApplication        Boolean                        @default(false)
+  applicationStatus            String?
   previousTermAttendance       Int                            @default(0)
   AlumniRemarks                AlumniRemarks[]
   AutomatedMailForParents      AutomatedMailForParents[]

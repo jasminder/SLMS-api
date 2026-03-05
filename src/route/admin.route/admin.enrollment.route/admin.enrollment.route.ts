@@ -8,7 +8,8 @@ import {
     findStudentToDeleteSchema,
     findUniqueApplicantSchema,
     findUnseenApplicantSchema,
-    searchApplicantSchema
+    searchApplicantSchema,
+    updateApplicationStatusSchema
 } from '../../../schema/admin.dto/admin.enrollment.dto/admin.enrollment.dto';
 import {
     deEnrollApplicantHandler,
@@ -21,7 +22,8 @@ import {
     findCurrentTermToEnrollHandler,
     findPublishedTermToEnrollHandler,
     markApplicantAsSeenHandler,
-    searchApplicantHandler
+    searchApplicantHandler,
+    updateApplicationStatusHandler
 } from '../../../controller/admin.controller/admin.enrollment.controller/admin.enrollment.controller';
 import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
@@ -44,6 +46,7 @@ adminEnrollmentRoute.route('/enroll-applicant').post(validate(applicantEnrollDat
 /*find enrolled subject for applicants*/
 adminEnrollmentRoute.route('/find-enrolled-subjects-applicant/:id').get(validate(findUniqueApplicantSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findApplicantEnrolledSubjectsHandler));
 adminEnrollmentRoute.route('/update-has-seen-applicant/:studentId').get(validate(findUnseenApplicantSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(markApplicantAsSeenHandler));
+adminEnrollmentRoute.route('/update-application-status/:studentId').patch(validate(updateApplicationStatusSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateApplicationStatusHandler));
 adminEnrollmentRoute.route('/delete-application/:studentId').delete(validate(findStudentToDeleteSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteApplicationHandler));
 
 //***** */  NOT USED *****//

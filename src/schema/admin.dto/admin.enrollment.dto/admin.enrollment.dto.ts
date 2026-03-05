@@ -46,6 +46,17 @@ export const findUnseenApplicantSchema = z.object({
 });
 
 export type FindUnseenApplicantSchema = z.infer<typeof findUnseenApplicantSchema>;
+
+export const updateApplicationStatusSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'A valid student ID is required' })
+    }),
+    body: z.object({
+        applicationStatus: z.string().max(500).nullable().optional()
+    })
+});
+export type UpdateApplicationStatusSchema = z.infer<typeof updateApplicationStatusSchema>;
+
 export const findStudentToDeleteSchema = z.object({
     params: z.object({
         studentId: z.string().min(1, { message: 'A valid student ID is required' })

@@ -19,6 +19,7 @@ export async function findAllApplicants(page: number) {
             role: true,
             createdAt: true,
             hasSeenNewApplication: true,
+            applicationStatus: true,
             personalDetails: {
                 select: {
                     id: true,
@@ -130,6 +131,8 @@ export async function searchApplicants(search: string, page: number) {
             id: true,
             role: true,
             createdAt: true,
+            hasSeenNewApplication: true,
+            applicationStatus: true,
             personalDetails: {
                 select: {
                     id: true,
@@ -589,6 +592,21 @@ export async function markApplicantAsSeen(studentId: string) {
         data: {
             hasSeenNewApplication: true
         }
+    });
+}
+
+export async function updateApplicationStatus(studentId: string, applicationStatus: string | null) {
+    const id = parseInt(studentId, 10);
+    if (isNaN(id)) {
+        throw new Error('Invalid student ID');
+    }
+    const student = await db.student.findFirst({ where: { id, role: 'APPLICANT' } });
+    if (!student) {
+        throw customError('Applicant not found', 'fail', 404, true);
+    }
+    return await db.student.update({
+        where: { id },
+        data: { applicationStatus: applicationStatus ?? null }
     });
 }
 export async function deleteApplication(studentId: string) {

@@ -12,14 +12,16 @@ import {
     findCurrentTermToEnroll,
     findPublishedTermToEnroll,
     markApplicantAsSeen,
-    searchApplicants
+    searchApplicants,
+    updateApplicationStatus
 } from '../../../service/admin.service/admin.enrollment.service/admin.enrollment.service';
 import {
     ApplicantEnrollDataSchema,
     FindStudentToDeleteSchema,
     FindUniqueApplicantSchema,
     FindUnseenApplicantSchema,
-    SearchApplicantSchema
+    SearchApplicantSchema,
+    UpdateApplicationStatusSchema
 } from '../../../schema/admin.dto/admin.enrollment.dto/admin.enrollment.dto';
 
 export type FindAllApplicantSchema = FindAllEnrolledStudentsSchema;
@@ -94,4 +96,11 @@ export const deleteApplicationHandler = async (req: Request<FindStudentToDeleteS
     const { studentId } = req.params;
     const result = await deleteApplication(studentId);
     res.status(200).json(result);
+};
+
+export const updateApplicationStatusHandler = async (req: Request<UpdateApplicationStatusSchema['params'], {}, UpdateApplicationStatusSchema['body'], {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const { applicationStatus } = req.body;
+    const updated = await updateApplicationStatus(studentId, applicationStatus ?? null);
+    res.status(200).json(updated);
 };
