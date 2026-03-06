@@ -11,6 +11,10 @@ import { fileDisplayImageSchema } from '../../schema/aws.dto/aws.image.fileDispl
 
 const ImageDisplayRoute = express.Router();
 
+// Protected: for authenticated admin/teacher/student
 ImageDisplayRoute.route('/presignedUrl').get(validate(fileDisplayImageSchema), protectRoute, restrict('ADMIN', 'TEACHER','STUDENT'), asyncErrorHandler(getImageDisplayPresignedUrlHandler));
+
+// Public: for unauthenticated users (e.g. student application form draft resume)
+ImageDisplayRoute.route('/presignedUrl-public').get(validate(fileDisplayImageSchema), asyncErrorHandler(getImageDisplayPresignedUrlHandler));
 
 export default ImageDisplayRoute;
