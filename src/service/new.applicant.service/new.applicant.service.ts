@@ -5,6 +5,60 @@ import { sendEmail } from '../../utils/email';
 import { parseISO, startOfDay } from 'date-fns';
 import { toZonedTime, format } from 'date-fns-tz';
 
+export type CheckEmailApplicationType = 'teacher' | 'student';
+
+export type CheckEmailResult =
+    | { emailTaken: false }
+    | { emailTaken: true; reason: 'registered_user'; role: string }
+    | { emailTaken: true; reason: 'existing_application' };
+
+/**
+ * Check if email is already registered (User table) or has an existing application
+ * (TeacherPersonalDetails or PersonalDetails). Validates role type before allowing submission.
+ */
+export async function checkEmailForApplication(
+    email: string,
+    applicationType: CheckEmailApplicationType
+): Promise<CheckEmailResult> {
+    const normalizedEmail = email?.trim()?.toLowerCase();
+    if (!normalizedEmail) {
+        return { emailTaken: false };
+    }
+
+    // Check existing User (already has login / registered)
+    const existingUser = await db.user.findFirst({
+        where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
+        select: { role: true }
+    });
+    if (existingUser) {
+        return {
+            emailTaken: true,
+            reason: 'registered_user',
+            role: existingUser.role
+        };
+    }
+
+    if (applicationType === 'teacher') {
+        const existingTeacher = await db.teacherPersonalDetails.findUnique({
+            where: { email: normalizedEmail }
+        });
+        if (existingTeacher) {
+            return { emailTaken: true, reason: 'existing_application' };
+        }
+    }
+
+    if (applicationType === 'student') {
+        const existingStudent = await db.personalDetails.findFirst({
+            where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
+        });
+        if (existingStudent) {
+            return { emailTaken: true, reason: 'existing_application' };
+        }
+    }
+
+    return { emailTaken: false };
+}
+
 //  create new application
 export async function createApplicant(data: NewApplicantSchema['body']) {
     const {

@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+export const checkEmailQuerySchema = z.object({
+    query: z.object({
+        email: z.string().email('Invalid email address'),
+        applicationType: z.enum(['teacher', 'student'])
+    })
+});
+export type CheckEmailQuerySchema = z.infer<typeof checkEmailQuerySchema>;
+
 export const PersonalSchema = z.object({
     id: z.number().optional(),
     firstName: z.string({ required_error: 'First name is required' }).min(3, { message: 'Name should be minimum 3 Characters' }),
