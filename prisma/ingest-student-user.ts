@@ -21,8 +21,8 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-const DEFAULT_EMAIL = process.env.PARENT_EMAIL ?? 'parent@example.com';
-const DEFAULT_PASSWORD = process.env.PARENT_PASSWORD ?? 'Password123!';
+const DEFAULT_EMAIL = process.env.PARENT_EMAIL ?? 'wspqateam@gmail.com';
+const DEFAULT_PASSWORD = process.env.PARENT_PASSWORD ?? '123456';
 
 async function main() {
   const email = DEFAULT_EMAIL.trim().toLowerCase();

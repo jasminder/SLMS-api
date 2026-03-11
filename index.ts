@@ -59,6 +59,7 @@ import adminEmailTemplateRoute from './src/route/admin.route/admin.communication
 import adminNoticeRoute from './src/route/admin.route/admin.notice.route/admin.notice.route';
 import adminAlumniRoute from './src/route/admin.route/admin.alumni.route/admin.alumni.route';
 import studentDashboardRoute from './src/route/student.route/student.dashboard.route/student.dashboard.route';
+import studentsRoute from './src/route/student.route/students.route/students.route';
 import adminEventRoute from './src/route/admin.route/admin.events.route/admin.events.route';
 import adminCSVRouter from './src/route/admin.route/admin.csv.route/admin.csv.route';
 import { initSocket } from './src/sockets/socket';
@@ -209,6 +210,7 @@ app.use('/api/v1/send-mail', sendMailHomeWorkRouter);
 app.use('/api/v1/automated-mail', sendConsolidatedEmailsRouter);
 
 // student portal
+app.use('/api/v1/students', studentsRoute);
 app.use('/api/v1/student-portal', studentDashboardRoute);
 app.use('/api/v1/student-portal-fee', studentFeeRoute);
 app.use('/api/v1/student-portal-communication', studentCommunicationRoute);

@@ -46,22 +46,22 @@ export const protectRoute = asyncErrorHandler(async (req: Request, res: Response
         token = authHeadersValue.split(' ')[1] as string;
     }
     if (!authHeadersValue) {
-        // const error = customError('No Token available in header/authorize. This is because the user is not logged in or token is not present in the protected route. @ksm', 'fail', 400, true);
-        throw customError('TokenExpiredError', 'fail', 403, true);
+        throw customError('No token available', 'fail', 401, true);
     }
 
-    // 2. Validate the jwt token
-    let decodedToken!: DecodeToken;
+    // 2. Validate the jwt token (return 401 for expired/invalid so client can refresh)
     jwt.verify(token as string, process.env.SECRET_STR! as string, async (err: any, decoded: any) => {
         if (err) {
-            const error = customError('TokenExpiredError', 'fail', 403, true);
-            return next(err);
+            const statusCode = err.name === 'TokenExpiredError' || err.name === 'JsonWebTokenError' ? 401 : 403;
+            const error = customError(err.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token', 'fail', statusCode, true);
+            return next(error);
         }
-        decodedToken = decoded;
+        const decodedToken = decoded as DecodeToken;
         const existingUser = await existingAuthUser(decodedToken.email, decodedToken.role);
 
         if (!existingUser) {
-            throw customError('No such user with this token exists @ksm', 'fail', 400, true);
+            const error = customError('No such user with this token exists @ksm', 'fail', 401, true);
+            return next(error);
         }
         req.user = existingUser;
         next();

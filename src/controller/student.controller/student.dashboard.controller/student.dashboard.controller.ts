@@ -15,6 +15,7 @@ import {
     findStudentDetailsById,
     findStudentsByEmail,
     findTeacherByAssignment,
+    getStudentsForApp,
     getAllStudentPortalNotices,
     getAllUnreadStudentNotifications,
     getStudentPortalNotice,
@@ -26,6 +27,16 @@ export const findStudentsByEmailHandler = async (req: Request<FindStudentsByEmai
     const { email } = req.params;
     const students = await findStudentsByEmail(email);
     res.status(200).json(students);
+};
+
+/** GET /api/v1/students — current user's students (siblings) for app switcher. Requires auth. */
+export const getStudentsForAppHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const email = req.user?.email;
+    if (!email) {
+        return res.status(401).json({ message: 'Not authenticated' });
+    }
+    const students = await getStudentsForApp(email);
+    res.status(200).json({ students });
 };
 export const findStudentDetailsByIdHandler = async (req: Request<FindActiveStudentDetailsSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { studentId } = req.params;

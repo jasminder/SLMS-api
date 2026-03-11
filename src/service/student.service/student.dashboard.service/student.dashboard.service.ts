@@ -1,6 +1,5 @@
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
-
 export async function findStudentsByEmail(email: string) {
     const students = await db.student.findMany({
         where: {
@@ -19,6 +18,73 @@ export async function findStudentsByEmail(email: string) {
     }
 
     return students;
+}
+
+/** Returns current student + siblings for the app (student switcher). Does not throw when none found. */
+export async function getStudentsForApp(email: string) {
+    if (!email || typeof email !== 'string' || !email.trim()) {
+        return [];
+    }
+
+    const currentTerm = await db.term.findFirst({
+        where: { currentTerm: true },
+        select: { id: true }
+    });
+
+    const termId = currentTerm?.id;
+    const students = await db.student.findMany({
+        where: {
+            personalDetails: {
+                email: { equals: email.trim(), mode: 'insensitive' }
+            },
+            role: 'STUDENT'
+        },
+        include: {
+            personalDetails: true,
+            studentClassAssignment: {
+                where: {
+                    ...(termId != null && {
+                        termSubjectLevel: {
+                            term: { id: termId }
+                        }
+                    }),
+                    isCurrentlyAssigned: true
+                },
+                take: 1,
+                include: {
+                    section: true,
+                    termSubjectLevel: {
+                        select: {
+                            level: { select: { name: true } }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const result = await Promise.all(
+        students.map(async (s) => {
+            const pd = s.personalDetails;
+            const classAssignment = s.studentClassAssignment?.[0];
+            const className = classAssignment?.termSubjectLevel?.level?.name && classAssignment?.section?.name
+                ? `${classAssignment.termSubjectLevel.level.name} - ${classAssignment.section.name}`
+                : classAssignment?.termSubjectLevel?.level?.name ?? '—';
+            const rawImage = (pd?.image?.trim() ?? '').replace(/^\//, '');
+            return {
+                id: String(s.id),
+                name: {
+                    english: pd ? `${pd.firstName} ${pd.lastName}`.trim() : '',
+                    punjabi: pd?.punjabiName ?? ''
+                },
+                photo: rawImage,
+                studentId: String(pd?.studentId ?? s.id),
+                class: className,
+                attendance: s.attendancePercentageValue ?? 0
+            };
+        })
+    );
+    return result;
 }
 
 export async function findStudentDetailsById(studentId: string) {
