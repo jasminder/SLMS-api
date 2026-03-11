@@ -107,7 +107,16 @@ export async function fetchStudentReport(studentId: number) {
                     }
                 },
                 include: {
-                    homework: true
+                    homework: {
+                        include: {
+                            subject: true,
+                            teacher: {
+                                include: {
+                                    teacherPersonalDetails: true
+                                }
+                            }
+                        }
+                    }
                 }
             },
             studentClasswork: {
