@@ -172,8 +172,8 @@ adminActiveStudentRoute
     .route('/find-enrolled-subjects-active-student/:studentId/:termId')
     .get(validate(findActiveStudentEnrolledSubjectsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentEnrolledSubjectsHandler));
 
-// find current term for assign classes to active students
-adminActiveStudentRoute.route('/find-current-term-to-assign-class').get(protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findCurrentTermToAssignClassHandler));
+// find current term for assign classes to active students (STUDENT allowed for app attendance screen)
+adminActiveStudentRoute.route('/find-current-term-to-assign-class').get(protectRoute, restrict('ADMIN', 'TEACHER', 'STUDENT'), asyncErrorHandler(findCurrentTermToAssignClassHandler));
 
 // find current term for assign classes to active students by id
 adminActiveStudentRoute.route('/find-current-term-to-assign-class-by-id/:id').get(validate(findCurrentTermToAssignClassSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findCurrentTermToAssignClassByIdHandler));
