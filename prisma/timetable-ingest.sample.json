@@ -1,0 +1,47 @@
+[
+  {
+    "day": "MONDAY",
+    "totalRooms": 3,
+    "roomNames": ["Room 1", "Room 2", "Room 3"],
+    "data": {
+      "data": [
+        {
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "rooms": [
+            { "teacherId": "1", "classId": "1-1" },
+            { "teacherId": "2", "classId": "2-1" },
+            { "teacherId": "", "classId": "" }
+          ]
+        },
+        {
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "rooms": [
+            { "teacherId": "1", "classId": "1-1" },
+            { "teacherId": "", "classId": "" },
+            { "teacherId": "2", "classId": "2-1" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "day": "TUESDAY",
+    "totalRooms": 3,
+    "roomNames": ["Room 1", "Room 2", "Room 3"],
+    "data": {
+      "data": [
+        {
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "rooms": [
+            { "teacherId": "2", "classId": "2-1" },
+            { "teacherId": "1", "classId": "1-1" },
+            { "teacherId": "", "classId": "" }
+          ]
+        }
+      ]
+    }
+  }
+]

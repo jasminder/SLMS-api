@@ -106,7 +106,10 @@ export type FindTermSubjectGroupIdEnrolledSubjectsSchema = z.infer<typeof findTe
 export const findUniqueFeePaymentSchema = z.object({
     params: z.object({
         id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
-    })
+    }),
+    query: z.object({
+        skipAutoApply: z.enum(['true', 'false']).optional()
+    }).optional()
 });
 export type FindUniqueFeePaymentSchema = z.infer<typeof findUniqueFeePaymentSchema>;
 

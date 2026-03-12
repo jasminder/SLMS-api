@@ -1953,9 +1953,11 @@ export async function findTermSubjectGroupIdEnrolledSubjects(id: string, termSub
 }
 
 /*-----------------fee-----------------------*/
-/*find fee details by id*/
-export async function findFeePaymentById(id: string) {
-    await autoApplyCreditToFeePayment(id);
+/*find fee details by id. When skipAutoApply is true, credit is not auto-applied (for manage-fee UI so user can choose). */
+export async function findFeePaymentById(id: string, skipAutoApply?: boolean) {
+    if (!skipAutoApply) {
+        await autoApplyCreditToFeePayment(id);
+    }
     const feePaymentById = await db.feePayment.findUnique({
         where: {
             id: +id

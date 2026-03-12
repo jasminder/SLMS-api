@@ -199,9 +199,10 @@ export const findTermSubjectGroupIdEnrolledSubjectsHandler = async (
     }
 };
 // findFeePaymentById
-export const findFeePaymentByIdHandler = async (req: Request<FindUniqueFeePaymentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+export const findFeePaymentByIdHandler = async (req: Request<FindUniqueFeePaymentSchema['params'], {}, {}, FindUniqueFeePaymentSchema['query']>, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const student = await findFeePaymentById(id);
+    const skipAutoApply = req.query?.skipAutoApply === 'true';
+    const student = await findFeePaymentById(id, skipAutoApply);
     res.status(200).json(student);
 };
 
