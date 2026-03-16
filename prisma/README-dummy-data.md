@@ -65,3 +65,14 @@ For timetable data, run the timetable ingest separately (e.g. `npm run ingest-ti
 
 - Database migrated (`npx prisma migrate deploy`).
 - At least one **Admin** in the system if you want dummy student notices to be created.
+
+## Student list (Active Students) and StudentTermFee
+
+The **Active Students** list (Admin → Students → Active Students) only shows students that have at least one `StudentTermFee` record for the selected term. Filters used: `role = STUDENT`, `isActive = true`, and `studentTermFee.some(termId)`. If you ingest students with `ingest-student-user.ts` and they don’t appear:
+
+1. Ensure a **current term** exists and at least one **TermSubjectGroup** exists for that term (e.g. run term setup or seed first).
+2. For **already ingested** students with no term fee, run the backfill:
+   ```bash
+   BACKFILL_STUDENT_TERM_FEE=1 npx ts-node prisma/ingest-student-user.ts
+   ```
+   New runs of `ingest-student-user.ts` (without the env var) automatically create `StudentTermFee` for the current term so new students appear in the list.

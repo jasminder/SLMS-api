@@ -14,10 +14,12 @@
         "ingest-timetable": "ts-node prisma/ingest-timetable.ts",
         "recalc-last-2-days-attendance": "ts-node prisma/recalc-last-2-days-attendance.ts",
         "seed:teachers-homework": "ts-node prisma/seed-teachers-homework.ts",
+        "seed:homework": "ts-node prisma/seed-homework.ts",
         "seed:dummy-data": "ts-node prisma/seed-dummy-data.ts",
         "ingest-dummy-data": "ts-node prisma/ingest-dummy-data.ts",
         "ingest-dummy-data:reset": "ts-node prisma/ingest-dummy-data.ts --reset",
-        "ingest-dummy-data:full": "ts-node prisma/ingest-dummy-data.ts --full"
+        "ingest-dummy-data:full": "ts-node prisma/ingest-dummy-data.ts --full",
+        "ingest-notifications": "ts-node prisma/ingest-notifications.ts"
     },
     "nodemonConfig": {
         "watch": [

@@ -29,13 +29,16 @@ const prisma = new PrismaClient();
 const DUMMY_EMAIL_DOMAIN = '@slms-dummy.test';
 const DUMMY_TAG = 'Dummy ingest';
 const NUM_STUDENTS = 12;
+/** Active students with no enrollment for current term – show under "Students Without Subjects" tab. */
+const NUM_STUDENTS_WITHOUT_SUBJECTS = 3;
+const TOTAL_DUMMY_STUDENTS = NUM_STUDENTS + NUM_STUDENTS_WITHOUT_SUBJECTS;
 const TERM_FEE_AMOUNT = 350;
 const MONTHLY_FEE_AMOUNT = 120;
 const NUM_MONTHLY_INVOICES = 4;
 const PRESENT_PER_DAY = [6, 8, 7, 9, 5];
 
-const FIRST_NAMES = ['Arjun', 'Priya', 'Rohan', 'Ananya', 'Vikram', 'Sneha', 'Aditya', 'Kavya', 'Rahul', 'Isha', 'Neel', 'Diya'];
-const LAST_NAMES = ['Sharma', 'Patel', 'Singh', 'Kaur', 'Kumar', 'Reddy', 'Nair', 'Mehta', 'Gupta', 'Joshi', 'Iyer', 'Pillai'];
+const FIRST_NAMES = ['Arjun', 'Priya', 'Rohan', 'Ananya', 'Vikram', 'Sneha', 'Aditya', 'Kavya', 'Rahul', 'Isha', 'Neel', 'Diya', 'Ravi', 'Sana', 'Arnav'];
+const LAST_NAMES = ['Sharma', 'Patel', 'Singh', 'Kaur', 'Kumar', 'Reddy', 'Nair', 'Mehta', 'Gupta', 'Joshi', 'Iyer', 'Pillai', 'Verma', 'Shah', 'Desai'];
 const SUBURBS = ['Melbourne', 'Richmond', 'Footscray', 'Dandenong', 'Springvale', 'Clayton', 'Glen Waverley', 'Box Hill'];
 
 function parseArgs(): { reset: boolean; full: boolean } {
@@ -64,6 +67,7 @@ async function getDummyStudentIds(): Promise<number[]> {
   const students = await prisma.student.findMany({
     where: { personalDetails: { email: { endsWith: DUMMY_EMAIL_DOMAIN } } },
     select: { id: true },
+    orderBy: { id: 'asc' },
   });
   return students.map((s) => s.id);
 }
@@ -156,10 +160,11 @@ async function ensureTermAndStructure() {
   }
   if (!term.currentTerm || !term.isPublish) {
     await prisma.term.updateMany({ data: { currentTerm: false } });
-    term = await prisma.term.update({
+    await prisma.term.update({
       where: { id: term.id },
       data: { currentTerm: true, isPublish: true },
     });
+    term = (await prisma.term.findFirst({ where: { currentTerm: true } }))!;
   }
 
   const levelName = 'beginner';
@@ -224,7 +229,7 @@ async function createDummyStudents(): Promise<number[]> {
   console.log('2. Creating dummy students...');
   const dob = new Date('2012-06-15');
   const students: number[] = [];
-  for (let i = 0; i < NUM_STUDENTS; i++) {
+  for (let i = 0; i < TOTAL_DUMMY_STUDENTS; i++) {
     const email = `test.${FIRST_NAMES[i].toLowerCase()}.${i + 1}${DUMMY_EMAIL_DOMAIN}`;
     const existing = await prisma.student.findFirst({
       where: { personalDetails: { email } },
@@ -286,7 +291,7 @@ async function createDummyStudents(): Promise<number[]> {
     });
     students.push(s.id);
   }
-  console.log(`   ${students.length} students ready.`);
+  console.log(`   ${students.length} students ready (${NUM_STUDENTS} with subjects, ${NUM_STUDENTS_WITHOUT_SUBJECTS} without subjects for current term).`);
   return students;
 }
 
@@ -778,24 +783,73 @@ async function ingest() {
   console.log('Ingesting dummy data...\n');
   const { term, tsg, tsl, section, kirtanTermSubject } = await ensureTermAndStructure();
   const studentIds = await createDummyStudents();
+  const enrolledStudentIds = studentIds.slice(0, NUM_STUDENTS);
   await enrollAndAssign(
-    studentIds,
+    enrolledStudentIds,
     term.id,
     tsg.id,
     kirtanTermSubject.id,
     tsl.id,
     section.id
   );
-  await createInvoicesAndPayments(term, tsg, studentIds);
-  await createAttendance(studentIds, term.startDate, tsl.id, section.id);
+  await createInvoicesAndPayments(term, tsg, enrolledStudentIds);
+  await createAttendance(enrolledStudentIds, term.startDate, tsl.id, section.id);
   const admin = await prisma.admin.findFirst({ select: { id: true } });
-  await createLeaves(studentIds, admin?.id ?? null);
+  await createLeaves(enrolledStudentIds, admin?.id ?? null);
   await createNotices(studentIds);
   await createEvents();
   console.log('\nDummy data ingestion complete.');
-  console.log('You can test: Students, Invoices (Paid/Pending/Overdue), Payments, Attendance, Leaves, Notices, Events.');
+  console.log('You can test: Students With Subjects, Students Without Subjects, Invoices, Payments, Attendance, Leaves, Notices, Events.');
   console.log('To reset: npx ts-node prisma/ingest-dummy-data.ts --reset');
   console.log('To re-generate: npx ts-node prisma/ingest-dummy-data.ts --full');
+}
+
+/** Ensure given dummy students (or all if not specified) have StudentTermFee for current term so they show under "Students With Subjects". */
+async function ensureDummyStudentsHaveCurrentTermFee(onlyTheseIds?: number[]) {
+  const term = await prisma.term.findFirst({ where: { currentTerm: true } });
+  if (!term) {
+    console.warn('No current term. Active Students list requires termId – set a current term first.');
+    return;
+  }
+  const group = await prisma.subjectGroup.findFirst({ where: { groupName: 'main' } });
+  if (!group) {
+    console.warn('No subject group "main". Run full ingest first.');
+    return;
+  }
+  const tsg = await prisma.termSubjectGroup.findUnique({
+    where: { termId_subjectGroupId: { termId: term.id, subjectGroupId: group.id } },
+  });
+  if (!tsg) {
+    console.warn('No TermSubjectGroup for current term. Run full ingest so term structure exists.');
+    return;
+  }
+  const dummyIds = onlyTheseIds ?? (await getDummyStudentIds());
+  if (dummyIds.length === 0) return;
+  for (const studentId of dummyIds) {
+    await prisma.studentTermFee.upsert({
+      where: { studentId_termSubjectGroupId_termId: { studentId, termSubjectGroupId: tsg.id, termId: term.id } },
+      create: { studentId, termSubjectGroupId: tsg.id, termId: term.id },
+      update: {},
+    });
+  }
+  console.log(`Ensured ${dummyIds.length} dummy students have StudentTermFee for current term (id=${term.id}). They should now appear in Active Students → Students With Subjects when termId=${term.id} is selected.`);
+}
+
+/** Verify active students count for current term (same filter as API). */
+async function verifyActiveStudentsForCurrentTerm(): Promise<{ termId: number; termName: string; count: number } | null> {
+  const term = await prisma.term.findFirst({
+    where: { currentTerm: true },
+    select: { id: true, name: true },
+  });
+  if (!term) return null;
+  const count = await prisma.student.count({
+    where: {
+      role: 'STUDENT',
+      isActive: true,
+      studentTermFee: { some: { termId: term.id } },
+    },
+  });
+  return { termId: term.id, termName: term.name, count };
 }
 
 async function main() {
@@ -807,9 +861,36 @@ async function main() {
   const existing = await getDummyStudentIds();
   if (existing.length > 0 && !full) {
     console.log(`${existing.length} dummy students already exist. Use --full to reset and re-ingest.`);
+    await ensureDummyStudentsHaveCurrentTermFee();
+    const verified = await verifyActiveStudentsForCurrentTerm();
+    if (verified) {
+      console.log(`\n--- Verification ---`);
+      console.log(`Current term: id=${verified.termId}, name="${verified.termName}". Active students for this term: ${verified.count}.`);
+      if (verified.count === 0) {
+        console.warn(`\n⚠ No active students for current term. Set a current term in Administration, or run with --full to re-ingest.`);
+      }
+    }
     return;
   }
   await ingest();
+  const studentIds = await getDummyStudentIds();
+  const enrolledIds = studentIds.slice(0, NUM_STUDENTS);
+  await ensureDummyStudentsHaveCurrentTermFee(enrolledIds);
+
+  const verified = await verifyActiveStudentsForCurrentTerm();
+  if (verified) {
+    console.log(`\n--- Verification ---`);
+    console.log(`Current term: id=${verified.termId}, name="${verified.termName}".`);
+    console.log(`Active students (With Subjects) for this term: ${verified.count} (expected ${NUM_STUDENTS}).`);
+    console.log(`Active students (Without Subjects): ${NUM_STUDENTS_WITHOUT_SUBJECTS}.`);
+    if (verified.count === 0) {
+      console.warn(`\n⚠ No active students found for current term. The app uses termId=${verified.termId}.`);
+      console.warn(`  - Ensure the Admin Students page uses this term (refresh or re-select term).`);
+      console.warn(`  - If you have multiple terms, set this term as "Current term" in Administration.`);
+    } else {
+      console.log(`\nIn the app: Admin → Students → ensure term "${verified.termName}" (id ${verified.termId}) is selected.`);
+    }
+  }
 }
 
 main()

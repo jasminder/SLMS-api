@@ -31,7 +31,14 @@ adminTimetableRoute.route('/update-timetable/:id').put(validate(updateTimeTableS
 adminTimetableRoute.route('/find-active-timetable').get(protectRoute, restrict('ADMIN', 'TEACHER', 'STUDENT'), asyncErrorHandler(findActiveTimetableHandler));
 
 adminTimetableRoute.route('/create-school-timetable').post(validate(createSchoolTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createSchoolTimetableHandler));
-adminTimetableRoute.route('/fetch-active-timetable/:day').get(validate(fetchTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchActiveTimetableHandler));
+adminTimetableRoute
+  .route('/fetch-active-timetable/:day')
+  .get(
+    validate(fetchTimetableSchema),
+    protectRoute,
+    restrict('ADMIN', 'TEACHER', 'STUDENT'),
+    asyncErrorHandler(fetchActiveTimetableHandler),
+  );
 adminTimetableRoute.route('/fetch-edit-timetable/:day').get(validate(fetchTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchEditTimetableHandler));
 adminTimetableRoute.route('/update-school-timetable/:timetableId').post(validate(updateSchoolTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateSchoolTimetableHandler));
 adminTimetableRoute.route('/fetch-all-timetables').get(protectRoute, restrict('ADMIN', 'TEACHER', 'STUDENT'), asyncErrorHandler(fetchAllTimetablesDataHandler));

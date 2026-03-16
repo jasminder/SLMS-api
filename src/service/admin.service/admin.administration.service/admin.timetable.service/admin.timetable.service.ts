@@ -82,7 +82,7 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
             currentTerm: true
         }
     });
-    return db.$transaction(async (tx) => {
+    const createdTimetableId = await db.$transaction(async (tx) => {
         // Deactivate existing active timetables for the same day
         await tx.timetable.updateMany({
             where: {
@@ -186,24 +186,27 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
             }
         }
 
-        // Fetch the complete timetable with all related data
-        const completeTimetable = await tx.timetable.findUnique({
-            where: { id: timetable.id },
-            include: {
-                timetableSlots: {
-                    include: {
-                        classroom: true,
-                        timeSlot: true,
-                        termSubjectLevel: true,
-                        section: true,
-                        teacher: true
-                    }
+        // Return the new timetable id; fetch with relations after transaction completes
+        return timetable.id;
+    });
+
+    // Fetch the complete timetable with all related data outside the transaction
+    const completeTimetable = await db.timetable.findUnique({
+        where: { id: createdTimetableId },
+        include: {
+            timetableSlots: {
+                include: {
+                    classroom: true,
+                    timeSlot: true,
+                    termSubjectLevel: true,
+                    section: true,
+                    teacher: true
                 }
             }
-        });
-
-        return completeTimetable;
+        }
     });
+
+    return completeTimetable;
 }
 
 function formatTime(time: string): string {
@@ -230,8 +233,35 @@ function formatTime(time: string): string {
 }
 
 function adjustTimeToSpecifiedTimezone(dateTimeString: string, timezone: string): Date {
-    // Parse the date in the given timezone and then convert it to a JavaScript Date object
-    return moment.tz(dateTimeString, timezone).toDate();
+    /**
+     * Accepts either:
+     * - ISO datetime string (includes 'T'), or
+     * - time-only string like '09:00' / '09:00:00'
+     *
+     * For time-only values we parse using an explicit format in the given timezone,
+     * then convert to a JS Date. This avoids Moment's deprecated fallback and the
+     * "Invalid date" errors seen during timetable ingest.
+     */
+    try {
+        if (dateTimeString.includes('T')) {
+            return moment.tz(dateTimeString, timezone).toDate();
+        }
+
+        // Normalise to HH:mm:ss if only HH:mm is provided
+        const parts = dateTimeString.split(':');
+        let normalized = dateTimeString;
+        if (parts.length === 2) {
+            normalized = `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}:00`;
+        }
+
+        const m = moment.tz(normalized, 'HH:mm:ss', timezone);
+        if (!m.isValid()) {
+            throw new Error(`Invalid time: ${dateTimeString}`);
+        }
+        return m.toDate();
+    } catch (error) {
+        throw new Error(`Invalid time format for "${dateTimeString}"`);
+    }
 }
 
 interface Room {
