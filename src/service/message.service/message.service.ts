@@ -32,10 +32,21 @@ export async function sendMessage(content: string, senderId: string, receiverId:
             }
         });
     } else if (userType === 'STUDENT') {
+        // Resolve adminId: use receiverId if it's a valid admin, otherwise use first active admin (e.g. "send to school")
+        let adminId = +receiverId;
+        const adminExists = await db.admin.findUnique({ where: { id: adminId } });
+        if (!adminExists) {
+            const firstAdmin = await db.admin.findFirst({
+                where: { isActive: true },
+                orderBy: { id: 'asc' }
+            });
+            if (!firstAdmin) throw new Error('No active admin found to receive the message');
+            adminId = firstAdmin.id;
+        }
         studentAdminMessage = await db.studentAdminMessage.create({
             data: {
                 studentId: +senderId,
-                adminId: +receiverId,
+                adminId,
                 messageId: message.id
             }
         });
