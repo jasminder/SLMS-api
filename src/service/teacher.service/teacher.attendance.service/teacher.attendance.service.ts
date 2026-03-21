@@ -2,6 +2,8 @@ import { getIo } from '../../../sockets/socket';
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
 import { calculateSendDate } from '../../../utils/setSendDate';
+import { NotificationType } from '@prisma/client';
+import { createNotificationAndPush } from '../../notification.service/notification.service';
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
 
@@ -151,6 +153,12 @@ export async function markStudentAsPresent(studentId: string, classAttendanceId:
         status: 'PRESENT',
         date: new Date()
     });
+    await createNotificationAndPush({
+        studentId: +studentId,
+        type: NotificationType.ATTENDANCE,
+        content: 'Your class attendance has been marked as present.',
+        actionUrl: `/student/dashboard?studentId=${studentId}`
+    });
     return updatedClassAttendanceRecord;
 }
 export async function undoMarkStudentAsPresent(studentId: string, classAttendanceId: string) {
@@ -182,6 +190,12 @@ export async function undoMarkStudentAsPresent(studentId: string, classAttendanc
         studentId: studentId,
         status: 'ABSENT',
         date: new Date()
+    });
+    await createNotificationAndPush({
+        studentId: +studentId,
+        type: NotificationType.ATTENDANCE,
+        content: 'Your class attendance has been updated to absent.',
+        actionUrl: `/student/dashboard?studentId=${studentId}`
     });
 
     return updatedClassAttendanceRecord;

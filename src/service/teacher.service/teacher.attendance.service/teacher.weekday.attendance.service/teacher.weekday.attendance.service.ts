@@ -2,6 +2,8 @@ import { getIo } from '../../../../sockets/socket';
 import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
 import { updateStudentLastTwoDaysAttendance } from '../../../../service/admin.service/admin.checkin.service/admin.checkin.service';
+import { NotificationType } from '@prisma/client';
+import { createNotificationAndPush } from '../../../notification.service/notification.service';
 
 export async function markWeekdayStudentAsPresent(studentId: string, studentClassAssignmentId: string, remarks?: string) {
     // Update the existing ClassAttendance record to mark the student as "PRESENT"
@@ -71,6 +73,12 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
         status: 'ABSENT',
         date: new Date()
     });
+    await createNotificationAndPush({
+        studentId: +studentId,
+        type: NotificationType.ATTENDANCE,
+        content: 'Your attendance has been marked as present.',
+        actionUrl: `/student/dashboard?studentId=${studentId}`
+    });
     return { updatedClassAttendanceRecord, updatedAttendanceRecord };
 }
 export async function undoMarkWeekdayStudentAsPresent(studentId: string, studentClassAssignmentId: string) {
@@ -135,6 +143,12 @@ export async function undoMarkWeekdayStudentAsPresent(studentId: string, student
         studentId: studentId,
         status: 'ABSENT',
         date: new Date()
+    });
+    await createNotificationAndPush({
+        studentId: +studentId,
+        type: NotificationType.ATTENDANCE,
+        content: 'Your attendance has been updated to absent.',
+        actionUrl: `/student/dashboard?studentId=${studentId}`
     });
 
     return { updatedAttendanceRecord, updatedClassAttendanceRecords };

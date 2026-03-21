@@ -3,6 +3,7 @@ import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
 import { NotificationType, PaymentType } from '@prisma/client';
 import { autoApplyCreditToFeePaymentInTransaction } from '../admin.student.service/admin.active.student.service/admin.active.student.service';
+import { createManyNotificationsAndPush } from '../../notification.service/notification.service';
 
 export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
     const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
@@ -86,17 +87,13 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
             for (const fp of feePayments) {
                 if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
             }
-            const notificationTransactions = await Promise.all(
-                studentIds.map((studentId) => {
-                    return prisma.notification.create({
-                        data: {
-                            studentId: +studentId,
-                            type: NotificationType.FEE,
-                            content: `You have new Fee invoiced.`,
-                            actionUrl: `/student/fee-list?studentId=${studentId}`
-                        }
-                    });
-                })
+            await createManyNotificationsAndPush(
+                studentIds.map((studentId) => ({
+                    studentId: +studentId,
+                    type: NotificationType.FEE,
+                    content: `You have new Fee invoiced.`,
+                    actionUrl: `/student/fee-list?studentId=${studentId}`
+                }))
             );
             return {
                 message: 'FeeTemplate and FeePayments created successfully.',
@@ -166,17 +163,13 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
             for (const fp of feePayments) {
                 if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
             }
-            const notificationTransactions = await Promise.all(
-                studentIds.map((studentId) => {
-                    return prisma.notification.create({
-                        data: {
-                            studentId: +studentId,
-                            type: NotificationType.FEE,
-                            content: `You have new Fee invoiced.`,
-                            actionUrl: `/student/fee-list?studentId=${studentId}`
-                        }
-                    });
-                })
+            await createManyNotificationsAndPush(
+                studentIds.map((studentId) => ({
+                    studentId: +studentId,
+                    type: NotificationType.FEE,
+                    content: `You have new Fee invoiced.`,
+                    actionUrl: `/student/fee-list?studentId=${studentId}`
+                }))
             );
             return {
                 message: 'FeeTemplate and FeePayments created successfully.',

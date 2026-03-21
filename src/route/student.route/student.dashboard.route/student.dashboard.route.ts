@@ -12,6 +12,7 @@ import {
     getStudentNoticeSchema,
     getStudentNotificationsSchema,
     teacherAssignmentSchema,
+    upsertDeviceTokenSchema,
     updateNotificationSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
@@ -23,7 +24,8 @@ import {
     getAllUnreadStudentNotificationsHandler,
     getStudentNoticePortalHandler,
     getTeacherAssignmentHandler,
-    markNotificationAsReadHandler
+    markNotificationAsReadHandler,
+    upsertDeviceTokenHandler
 } from '../../../controller/student.controller/student.dashboard.controller/student.dashboard.controller';
 
 const studentDashboardRoute = express.Router();
@@ -52,5 +54,8 @@ studentDashboardRoute
 studentDashboardRoute
     .route('/notifications/read/:notificationId')
     .patch(validate(updateNotificationSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(markNotificationAsReadHandler));
+studentDashboardRoute
+    .route('/notifications/device-token')
+    .post(validate(upsertDeviceTokenSchema), protectRoute, asyncErrorHandler(upsertDeviceTokenHandler));
 
 export default studentDashboardRoute;

@@ -1,6 +1,7 @@
 import { MessageStatus, MessageType, NotificationType } from '@prisma/client';
 import { db } from '../../utils/db.server';
 import { getIo } from '../../sockets/socket';
+import { createNotificationAndPush } from '../notification.service/notification.service';
 
 export async function sendMessage(content: string, senderId: string, receiverId: string, userType: string) {
     // First, create the message entry
@@ -22,14 +23,12 @@ export async function sendMessage(content: string, senderId: string, receiverId:
                 messageId: message.id
             }
         });
-        await db.notification.create({
-            data: {
-                studentId: +receiverId,
-                type: NotificationType.MESSAGE,
-                title: 'New Message from Admin',
-                content: 'You have received a new message from an admin.',
-                actionUrl: `/student/communication?studentId=${receiverId}` // Adjust this URL as needed
-            }
+        await createNotificationAndPush({
+            studentId: +receiverId,
+            type: NotificationType.MESSAGE,
+            title: 'New Message from Admin',
+            content: 'You have received a new message from an admin.',
+            actionUrl: `/student/communication?studentId=${receiverId}` // Adjust this URL as needed
         });
     } else if (userType === 'STUDENT') {
         // Resolve adminId: use receiverId if it's a valid admin, otherwise use first active admin (e.g. "send to school")

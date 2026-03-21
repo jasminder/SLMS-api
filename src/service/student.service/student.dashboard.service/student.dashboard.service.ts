@@ -345,3 +345,28 @@ export async function markNotificationAsRead(notificationId: string) {
 
     return updatedNotification;
 }
+
+export async function upsertStudentDeviceToken(studentId: number, token: string, platform: string) {
+    return db.deviceToken.upsert({
+        where: { token },
+        create: {
+            studentId,
+            token,
+            platform,
+            lastSeen: new Date()
+        },
+        update: {
+            studentId,
+            platform,
+            lastSeen: new Date()
+        }
+    });
+}
+
+export async function resolveStudentIdFromUserId(userId: number) {
+    const user = await db.user.findUnique({
+        where: { id: userId },
+        select: { studentId: true }
+    });
+    return user?.studentId ?? null;
+}

@@ -5,6 +5,7 @@ import { CreateNewEventSchema, UpdateEventSchema } from '../../../schema/admin.d
 import { customError } from '../../../utils/customError';
 
 import { db } from '../../../utils/db.server';
+import { createManyNotificationsAndPush } from '../../notification.service/notification.service';
 
 export async function createEvent(start: string, end: string, data: CreateNewEventSchema['body']['data']) {
     const event = await db.event.create({
@@ -31,20 +32,15 @@ export async function createEvent(start: string, end: string, data: CreateNewEve
             id: true
         }
     });
-    const notificationPromises = activeStudents.map((student) =>
-        db.notification.create({
-            data: {
-                studentId: student.id,
-                type: NotificationType.EVENT,
-                title: 'New Event',
-                content: `A new event "${data.appointment.title}" has been added`,
-                actionUrl: `/student?studentId=${student.id}`
-            }
-        })
+    await createManyNotificationsAndPush(
+        activeStudents.map((student) => ({
+            studentId: student.id,
+            type: NotificationType.EVENT,
+            title: 'New Event',
+            content: `A new event "${data.appointment.title}" has been added`,
+            actionUrl: `/student?studentId=${student.id}`
+        }))
     );
-
-    // Execute all notification creations
-    await Promise.all(notificationPromises);
 
     return event;
 }

@@ -7,6 +7,7 @@ import {
     GetStudentNoticeSchema,
     GetStudentNotificationsSchema,
     TeacherAssignmentSchema,
+    UpsertDeviceTokenSchema,
     UpdateNotificationSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
@@ -19,7 +20,9 @@ import {
     getAllStudentPortalNotices,
     getAllUnreadStudentNotifications,
     getStudentPortalNotice,
-    markNotificationAsRead
+    markNotificationAsRead,
+    resolveStudentIdFromUserId,
+    upsertStudentDeviceToken
 } from '../../../service/student.service/student.dashboard.service/student.dashboard.service';
 import { GetStudentportalNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
 
@@ -93,4 +96,23 @@ export const markNotificationAsReadHandler = async (req: Request<UpdateNotificat
     const { notificationId } = req.params;
     const updatedNotification = await markNotificationAsRead(notificationId);
     res.status(200).json(updatedNotification);
+};
+
+export const upsertDeviceTokenHandler = async (req: Request<{}, {}, UpsertDeviceTokenSchema['body']>, res: Response) => {
+    const { token, platform, userId } = req.body;
+    const authUser = req.user;
+
+    const studentIdFromSession = authUser?.student?.id;
+    let studentId = studentIdFromSession;
+
+    if (!studentId && userId) {
+        studentId = (await resolveStudentIdFromUserId(userId)) ?? undefined;
+    }
+
+    if (!studentId) {
+        return res.status(400).json({ message: 'Unable to resolve student for this token.' });
+    }
+
+    const deviceToken = await upsertStudentDeviceToken(studentId, token, platform);
+    res.status(200).json({ message: 'Device token saved.', deviceTokenId: deviceToken.id });
 };

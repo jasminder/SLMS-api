@@ -1,9 +1,10 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
-import { InteractionType } from '@prisma/client';
+import { InteractionType, NotificationType } from '@prisma/client';
+import { createNotificationAndPush } from '../../notification.service/notification.service';
 
 export async function createComment(studentId: string, adminId: string, content: string, interactionType: InteractionType) {
-    return await db.$transaction(async (db) => {
+    const result = await db.$transaction(async (db) => {
         const comment = await db.comment.create({
             data: {
                 student: { connect: { id: +studentId } },
@@ -25,6 +26,18 @@ export async function createComment(studentId: string, adminId: string, content:
 
         return { comment, interaction };
     });
+
+    if (interactionType === InteractionType.MESSAGE) {
+        await createNotificationAndPush({
+            studentId: +studentId,
+            type: NotificationType.MESSAGE,
+            title: 'New Message from School',
+            content: content.length > 160 ? `${content.slice(0, 157)}...` : content,
+            actionUrl: `/student/communication?studentId=${studentId}`
+        });
+    }
+
+    return result;
 }
 
 export async function getCommentsByStudentId(studentId: string) {

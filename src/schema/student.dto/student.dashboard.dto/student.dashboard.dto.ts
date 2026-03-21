@@ -72,3 +72,13 @@ export const updateNotificationSchema = z.object({
 });
 
 export type UpdateNotificationSchema = z.infer<typeof updateNotificationSchema>;
+
+export const upsertDeviceTokenSchema = z.object({
+    body: z.object({
+        token: z.string().min(1, { message: 'Token is required' }),
+        platform: z.string().min(1, { message: 'Platform is required' }),
+        userId: z.number().int().positive().optional()
+    })
+});
+
+export type UpsertDeviceTokenSchema = z.infer<typeof upsertDeviceTokenSchema>;

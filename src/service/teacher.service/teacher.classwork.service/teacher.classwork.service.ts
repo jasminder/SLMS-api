@@ -2,6 +2,7 @@ import { NotificationType } from '@prisma/client';
 import { customError } from '../../../utils/customError';
 
 import { db } from '../../../utils/db.server';
+import { createManyNotificationsAndPush } from '../../notification.service/notification.service';
 import { calculateSendDate } from '../../../utils/setSendDate';
 
 export async function createGroupClasswork(
@@ -41,19 +42,17 @@ export async function createGroupClasswork(
             include: { subject: true }
         });
         const subject = termSubjectLevel?.subject;
-        const notificationTransactions = studentIds.map((studentId) => {
-            return db.notification.create({
-                data: {
-                    studentId: +studentId,
-                    type: NotificationType.CLASSWORK,
-                    content: `A new classwork has been posted for ${subject?.name || 'your subject'}.`,
-                    actionUrl: `/student/homework-classwork?studentId=${studentId}`,
-                    termSubjectLevelId: +termSubjectLevelId,
-                    sectionId: +sectionId
-                }
-            });
-        });
-        await db.$transaction([...transactions, ...notificationTransactions]);
+        await db.$transaction([...transactions]);
+        await createManyNotificationsAndPush(
+            studentIds.map((studentId) => ({
+                studentId: +studentId,
+                type: NotificationType.CLASSWORK,
+                content: `A new classwork has been posted for ${subject?.name || 'your subject'}.`,
+                actionUrl: `/student/homework-classwork?studentId=${studentId}`,
+                termSubjectLevelId: +termSubjectLevelId,
+                sectionId: +sectionId
+            }))
+        );
     }
     for (const studentId of numericStudentIds) {
         const existingAutomatedMail = await db.automatedMailForParents.findFirst({
