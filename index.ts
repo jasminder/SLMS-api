@@ -250,6 +250,6 @@ process.on('unhandledRejection', (err: Err) => {
     console.log(err);
 
     server.close(() => {
-        // process.exit(1);
+        process.exit(1);
     });
 });
