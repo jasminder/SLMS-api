@@ -9,11 +9,31 @@ function initializeFirebaseAdmin() {
         return;
     }
 
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const projectId = process.env.FIREBASE_PROJECT_ID?.trim();
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
     const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
-    if (!projectId || !clientEmail || !privateKey) {
+    const missing: string[] = [];
+    if (!projectId) missing.push('FIREBASE_PROJECT_ID');
+    if (!clientEmail) missing.push('FIREBASE_CLIENT_EMAIL');
+    if (!privateKey) missing.push('FIREBASE_PRIVATE_KEY');
+
+    if (missing.length > 0) {
+        console.error(
+            `[PushNotification] Firebase Admin not initialized. Missing env: ${missing.join(', ')}`
+        );
+        return;
+    }
+
+    // At this point TypeScript can't infer non-null automatically, so assert explicitly.
+    if (!projectId || !clientEmail || !privateKey) return;
+
+    const hasBegin = privateKey.includes('-----BEGIN PRIVATE KEY-----');
+    const hasEnd = privateKey.includes('-----END PRIVATE KEY-----');
+    if (!hasBegin || !hasEnd) {
+        console.error(
+            `[PushNotification] FIREBASE_PRIVATE_KEY format looks wrong: hasBegin=${hasBegin} hasEnd=${hasEnd} len=${privateKey.length}`
+        );
         return;
     }
 
@@ -34,6 +54,9 @@ export async function sendPushToStudents(studentIds: number[], title: string, bo
 
     initializeFirebaseAdmin();
     if (!initialized) {
+        console.error(
+            `[PushNotification] Firebase Admin init failed; not sending push. studentCount=${studentIds.length}`
+        );
         return;
     }
 
@@ -46,35 +69,58 @@ export async function sendPushToStudents(studentIds: number[], title: string, bo
         }
     });
 
-    const registrationTokens = Array.from(new Set(tokens.map((entry) => entry.token).filter(Boolean)));
+    // Defensive: remove accidental whitespace/newlines from stored tokens.
+    const registrationTokens = Array.from(
+        new Set(
+            tokens
+                .map((entry) => entry.token?.trim())
+                .filter((t): t is string => Boolean(t))
+        )
+    );
     if (registrationTokens.length === 0) {
         return;
     }
 
-    const response = await admin.messaging().sendEachForMulticast({
-        tokens: registrationTokens,
-        notification: {
-            title,
-            body
-        },
-        data
-    });
+    try {
+        const response = await admin.messaging().sendEachForMulticast({
+            tokens: registrationTokens,
+            notification: {
+                title,
+                body
+            },
+            data
+        });
 
-    const invalidTokens: string[] = [];
-    response.responses.forEach((result, idx) => {
-        if (!result.success) {
-            const code = result.error?.code;
+        console.log(
+            `[PushNotification] Sent push. title="${title}" tokens=${registrationTokens.length} success=${response.successCount} failure=${response.failureCount}`
+        );
+
+        const invalidTokens: string[] = [];
+        response.responses.forEach((result, idx) => {
+            if (result.success) return;
+
+            const token = registrationTokens[idx];
+            const code = result.error?.code ?? 'unknown';
+            const message = result.error?.message ?? '';
+
+            console.error(
+                `[PushNotification] Failed delivery for token suffix="${token.slice(Math.max(0, token.length - 6))}". code="${code}" message="${message}"`
+            );
+
+            // Only delete tokens when we are confident they are invalid on FCM.
             if (code === 'messaging/invalid-registration-token' || code === 'messaging/registration-token-not-registered') {
-                invalidTokens.push(registrationTokens[idx]);
-            }
-        }
-    });
-
-    if (invalidTokens.length > 0) {
-        await db.deviceToken.deleteMany({
-            where: {
-                token: { in: invalidTokens }
+                invalidTokens.push(token);
             }
         });
+
+        if (invalidTokens.length > 0) {
+            await db.deviceToken.deleteMany({
+                where: {
+                    token: { in: invalidTokens }
+                }
+            });
+        }
+    } catch (err) {
+        console.error('[PushNotification] Error sending FCM push:', err);
     }
 }
