@@ -3,6 +3,7 @@ import express from 'express';
 import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
 import validate from '../../../middleware/validateResource';
 import {
+    createPaymentIntentSchema,
     feePaymentIdParamSchema,
     fetchFeePaymentsForCurrentTermByStudentIdSchema,
     getPaymentsByFeePaymentIdStudentSchema
@@ -10,6 +11,7 @@ import {
 import { protectRoute } from '../../../middleware/protectRoutes';
 import { restrict } from '../../../middleware/restrict';
 import {
+    createPaymentIntentForStudentPortalHandler,
     fetchCurrentTermFeePaymentsHandler,
     feePaymentByIdForStudentPortaleHandler,
     getPaymentsByFeePaymentIdStudentHandler
@@ -32,6 +34,14 @@ studentFeeRoute.get(
     protectRoute,
     restrict('ADMIN', 'STUDENT'),
     asyncErrorHandler(getPaymentsByFeePaymentIdStudentHandler)
+);
+
+studentFeeRoute.post(
+    '/create-payment-intent',
+    validate(createPaymentIntentSchema),
+    protectRoute,
+    restrict('ADMIN', 'STUDENT'),
+    asyncErrorHandler(createPaymentIntentForStudentPortalHandler)
 );
 
 export default studentFeeRoute;

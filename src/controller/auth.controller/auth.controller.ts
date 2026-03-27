@@ -15,6 +15,29 @@ import { customError } from '../../utils/customError';
 import { DecodeToken } from '../../types/type';
 import { sendEmail } from '../../utils/email';
 
+const isPlaceholderClientUrl = (value: string): boolean => {
+    try {
+        const host = new URL(value).hostname.toLowerCase();
+        return host.endsWith('.test.org') || host === 'test.org' || host === 'localhost';
+    } catch (_) {
+        return true;
+    }
+};
+
+const resolveClientUrl = (req: Request): string => {
+    const rawClientUrl = process.env.CLIENT_URL?.trim();
+    if (rawClientUrl && !isPlaceholderClientUrl(rawClientUrl)) {
+        return rawClientUrl.replace(/\/+$/, '');
+    }
+
+    const host = req.get('host');
+    if (host) {
+        return `${req.protocol}://${host}`.replace(/\/+$/, '');
+    }
+
+    return 'https://akaal.wspclients.com';
+};
+
 export const signUpUserHandler = async (req: Request<{}, {}, SignupUserSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { confirmPassword, email, password } = req.body;
     const newUser = await signUpUser(email, password, confirmPassword);
@@ -136,7 +159,7 @@ export const refreshHandler = async (req: Request, res: Response, next: NextFunc
                 existingAuthUser(decodedRefreshToken.email, decodedRefreshToken.role)
                     .then((existingUser) => {
                         const newAccessToken = jwt.sign({ email: existingUser.email, role: existingUser.role, id: existingUser.id }, process.env.SECRET_STR!, {
-                            expiresIn: '10s' // Adjust the expiration as needed
+                            expiresIn: '600s'
                         });
 
                         res.status(200).json({
@@ -168,7 +191,8 @@ export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordS
     const existingUser = await existingUserForgotPassword(email, resetToken);
 
     // 3. send email to user with the reset token and the reset URL or api? to reset password
-    const resetUrl = `${process.env.CLIENT_URL}/forgot-password/${resetToken}`;
+    const clientUrl = resolveClientUrl(req);
+    const resetUrl = `${clientUrl}/forgot-password/${resetToken}`;
 
     const subject = `Reset your Password at Akal Shaouni`;
     const text = `We have received a request to reset your password. Please visit ${resetUrl} to complete the reset. This link is valid for 1 hour.`;
