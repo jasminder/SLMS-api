@@ -21,6 +21,12 @@ import {
 
 export const createFeeTemplateHandler = async (req: Request<{}, {}, FeeTemplateDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const feeTemplateData = req.body;
+    console.info('[admin.fee.controller] createFeeTemplateHandler', {
+        studentCount: feeTemplateData.studentIds?.length ?? 0,
+        termId: feeTemplateData.termId,
+        termSubjectGroupId: feeTemplateData.termSubjectGroupId,
+        invoiceName: feeTemplateData.invoiceName
+    });
     const result = await createFeeTemplateAndPayments(feeTemplateData);
     res.status(201).json(result);
 };
@@ -58,6 +64,12 @@ export const defaultSelectActiveStudentsForFeeCreationHandler = async (req: Requ
 };
 export const searchActiveStudentsForFeeCreationHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsForfeeCreationSchema['query']>, res: Response, next: NextFunction) => {
     const { search, page = 0, termId, termSubjectGroupId } = req.query;
+    console.info('[admin.fee.controller] searchActiveStudentsForFeeCreationHandler', {
+        search,
+        page,
+        termId,
+        termSubjectGroupId
+    });
 
     const searchResult = await searchActiveStudentsForFeeCreation(search, +page, +termId, +termSubjectGroupId);
     res.status(200).json(searchResult);

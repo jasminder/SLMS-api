@@ -1,0 +1,219 @@
+[
+  {
+    "day": "MONDAY",
+    "totalRooms": 1,
+    "roomNames": [
+      "Room 1"
+    ],
+    "data": {
+      "data": [
+        {
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        },
+        {
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "day": "TUESDAY",
+    "totalRooms": 1,
+    "roomNames": [
+      "Room 1"
+    ],
+    "data": {
+      "data": [
+        {
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        },
+        {
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "day": "WEDNESDAY",
+    "totalRooms": 1,
+    "roomNames": [
+      "Room 1"
+    ],
+    "data": {
+      "data": [
+        {
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        },
+        {
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "day": "THURSDAY",
+    "totalRooms": 1,
+    "roomNames": [
+      "Room 1"
+    ],
+    "data": {
+      "data": [
+        {
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        },
+        {
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "day": "FRIDAY",
+    "totalRooms": 1,
+    "roomNames": [
+      "Room 1"
+    ],
+    "data": {
+      "data": [
+        {
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        },
+        {
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "day": "SATURDAY",
+    "totalRooms": 1,
+    "roomNames": [
+      "Room 1"
+    ],
+    "data": {
+      "data": [
+        {
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        },
+        {
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "day": "SUNDAY",
+    "totalRooms": 1,
+    "roomNames": [
+      "Room 1"
+    ],
+    "data": {
+      "data": [
+        {
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        },
+        {
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "rooms": [
+            {
+              "teacherId": "",
+              "classId": "1-1"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

@@ -7,6 +7,14 @@ import { createManyNotificationsAndPush } from '../../notification.service/notif
 
 export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
     const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
+    console.info('[admin.fee] createFeeTemplateAndPayments:start', {
+        studentCount: studentIds.length,
+        termId,
+        termSubjectGroupId,
+        invoiceName,
+        interval,
+        dueDate
+    });
 
     // Execute all operations in a transaction
     return db.$transaction(async (prisma) => {
@@ -431,6 +439,14 @@ export async function defaultSelectActiveStudentsForFeeCreation(page: number, te
 export async function searchActiveStudentsForFeeCreation(search = '', page: number, termId: number, termSubjectGroupId = 999) {
     const take = 10;
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+    const termFeeFilter =
+        termSubjectGroupId === 999 ? { termId: +termId } : { termId: +termId, termSubjectGroupId: +termSubjectGroupId };
+    console.info('[admin.fee] searchActiveStudentsForFeeCreation', {
+        search,
+        page,
+        termId,
+        termSubjectGroupId
+    });
     if (searchAsNumber) {
         const pageNum: number = page ?? 0;
         const skip = pageNum * take;
@@ -446,19 +462,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 isActive: true,
                 studentTermFee: {
                     some: {
-                        term: {
-                            currentTerm: true
-                        },
-                        termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            term: {
-                                currentTerm: true
-                            }
-                        }
+                        ...termFeeFilter
                     }
                 },
 
@@ -561,9 +565,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 },
                 studentTermFee: {
                     where: {
-                        term: {
-                            currentTerm: true
-                        }
+                        termId: +termId
                     },
                     select: {
                         termSubjectGroup: {
@@ -582,13 +584,6 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                     }
                 },
                 enrollments: {
-                    where: {
-                        termSubjectLevel: {
-                            term: {
-                                currentTerm: true
-                            }
-                        }
-                    },
                     select: {
                         subjectEnrollment: {
                             select: {
@@ -614,19 +609,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 isActive: true,
                 studentTermFee: {
                     some: {
-                        term: {
-                            currentTerm: true
-                        },
-                        termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            term: {
-                                currentTerm: true
-                            }
-                        }
+                        ...termFeeFilter
                     }
                 },
 
@@ -671,19 +654,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 isActive: true,
                 studentTermFee: {
                     some: {
-                        term: {
-                            currentTerm: true
-                        },
-                        termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            term: {
-                                currentTerm: true
-                            }
-                        }
+                        ...termFeeFilter
                     }
                 },
 
@@ -785,9 +756,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 },
                 studentTermFee: {
                     where: {
-                        term: {
-                            currentTerm: true
-                        }
+                        termId: +termId
                     },
                     select: {
                         termSubjectGroup: {
@@ -806,13 +775,6 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                     }
                 },
                 enrollments: {
-                    where: {
-                        termSubjectLevel: {
-                            term: {
-                                currentTerm: true
-                            }
-                        }
-                    },
                     select: {
                         subjectEnrollment: {
                             select: {
@@ -838,19 +800,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                 isActive: true,
                 studentTermFee: {
                     some: {
-                        term: {
-                            currentTerm: true
-                        },
-                        termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
-                    }
-                },
-                enrollments: {
-                    some: {
-                        termSubjectLevel: {
-                            term: {
-                                currentTerm: true
-                            }
-                        }
+                        ...termFeeFilter
                     }
                 },
 
@@ -884,6 +834,14 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
 }
 export async function selectActiveStudentsForFeeCreation(search = '', page: number, termId: number, termSubjectGroupId: number) {
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
+    const termFeeFilter =
+        termSubjectGroupId === 999 ? { termId: +termId } : { termId: +termId, termSubjectGroupId: +termSubjectGroupId };
+    console.info('[admin.fee] selectActiveStudentsForFeeCreation', {
+        search,
+        page,
+        termId,
+        termSubjectGroupId
+    });
 
     if (searchAsNumber) {
         const activeStudents = await db.student.findMany({
@@ -896,8 +854,7 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
 
                 studentTermFee: {
                     some: {
-                        termId: +termId,
-                        termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
+                        ...termFeeFilter
                     }
                 },
 
@@ -957,8 +914,7 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
                 isActive: true,
                 studentTermFee: {
                     some: {
-                        termId: +termId,
-                        termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
+                        ...termFeeFilter
                     }
                 },
 
@@ -1000,8 +956,7 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
 
                 studentTermFee: {
                     some: {
-                        termId: +termId,
-                        termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
+                        ...termFeeFilter
                     }
                 },
 
@@ -1061,8 +1016,7 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
 
                 studentTermFee: {
                     some: {
-                        termId: +termId,
-                        termSubjectGroupId: termSubjectGroupId === 999 ? {} : termSubjectGroupId
+                        ...termFeeFilter
                     }
                 },
 
