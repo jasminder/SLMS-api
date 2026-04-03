@@ -499,7 +499,18 @@ export async function fetchSchoolCheckInAttendance() {
                         select: {
                             firstName: true,
                             lastName: true,
-                            email: true
+                            email: true,
+                            contact: true
+                        }
+                    },
+                    parentsDetails: {
+                        select: {
+                            parentContact: true
+                        }
+                    },
+                    emergencyContact: {
+                        select: {
+                            contactNumber: true
                         }
                     },
                     schoolCheckInAttendance: {
