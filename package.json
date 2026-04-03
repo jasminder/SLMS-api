@@ -11,6 +11,7 @@
         "ingest-student-fee": "ts-node prisma/ingest-student-fee.ts",
         "ingest-student-user": "ts-node prisma/ingest-student-user.ts",
         "ingest-attendance-last-2-days": "ts-node prisma/ingest-attendance-last-2-days.ts",
+        "ingest-scanner-test-attendance": "ts-node prisma/ingest-scanner-test-attendance.ts",
         "ingest-timetable": "ts-node prisma/ingest-timetable.ts",
         "recalc-last-2-days-attendance": "ts-node prisma/recalc-last-2-days-attendance.ts",
         "seed:teachers-homework": "ts-node prisma/seed-teachers-homework.ts",
