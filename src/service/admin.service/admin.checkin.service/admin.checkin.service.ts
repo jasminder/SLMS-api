@@ -563,8 +563,6 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
     const attendanceRecord = await db.schoolCheckInAttendance.findFirst({
         where: {
             studentId: +studentId,
-            checkedIn: false,
-            isMarked: false,
             date: {
                 gte: startDate,
                 lte: endDate
