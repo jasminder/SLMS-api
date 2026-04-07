@@ -6,6 +6,7 @@ import {
     FindStudentsByEmailSchema,
     GetStudentNoticeSchema,
     GetStudentNotificationsSchema,
+    UpdateStudentProfileForAppSchema,
     TeacherAssignmentSchema,
     UpsertDeviceTokenSchema,
     UpdateNotificationSchema
@@ -22,7 +23,8 @@ import {
     getStudentPortalNotice,
     markNotificationAsRead,
     resolveStudentIdFromUserId,
-    upsertStudentDeviceToken
+    upsertStudentDeviceToken,
+    updateStudentProfileForApp
 } from '../../../service/student.service/student.dashboard.service/student.dashboard.service';
 import { GetStudentportalNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
 
@@ -115,4 +117,13 @@ export const upsertDeviceTokenHandler = async (req: Request<{}, {}, UpsertDevice
 
     const deviceToken = await upsertStudentDeviceToken(studentId, token, platform);
     res.status(200).json({ message: 'Device token saved.', deviceTokenId: deviceToken.id });
+};
+
+export const updateStudentProfileForAppHandler = async (
+    req: Request<UpdateStudentProfileForAppSchema['params'], {}, UpdateStudentProfileForAppSchema['body']>,
+    res: Response
+) => {
+    const { studentId } = req.params;
+    const updated = await updateStudentProfileForApp(studentId, req.user, req.body);
+    res.status(200).json(updated);
 };

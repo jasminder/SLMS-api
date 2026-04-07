@@ -370,3 +370,68 @@ export async function resolveStudentIdFromUserId(userId: number) {
     });
     return user?.studentId ?? null;
 }
+
+type StudentProfilePatch = {
+    email?: string;
+    contact?: string;
+    address?: string;
+    image?: string;
+};
+
+export async function updateStudentProfileForApp(studentId: string, user: any, data: StudentProfilePatch) {
+    const targetStudentId = +studentId;
+    const student = await db.student.findUnique({
+        where: { id: targetStudentId },
+        select: {
+            id: true,
+            personalDetails: {
+                select: { email: true }
+            }
+        }
+    });
+
+    if (!student) {
+        throw customError('Student not found', 'fail', 404, true);
+    }
+
+    const role = (user?.role ?? '').toString().toUpperCase();
+    const actorEmail = (user?.email ?? '').toString().trim().toLowerCase();
+    const studentEmail = (student.personalDetails?.email ?? '').toString().trim().toLowerCase();
+    const isOwnerByStudentId = Number(user?.student?.id) == targetStudentId;
+    const isOwnerByEmail = actorEmail !== '' && studentEmail !== '' && actorEmail === studentEmail;
+
+    const canEdit = role === 'ADMIN' || (role === 'STUDENT' && (isOwnerByStudentId || isOwnerByEmail)) || (role === 'PARENT' && isOwnerByEmail);
+    if (!canEdit) {
+        throw customError('Not allowed to update this student profile', 'fail', 403, true);
+    }
+
+    const updateData: Record<string, string> = {};
+    if (typeof data.email === 'string' && data.email.trim().length > 0) {
+        updateData.email = data.email.trim().toLowerCase();
+    }
+    if (typeof data.contact === 'string' && data.contact.trim().length > 0) {
+        updateData.contact = data.contact.trim();
+    }
+    if (typeof data.address === 'string' && data.address.trim().length > 0) {
+        updateData.address = data.address.trim();
+    }
+    if (typeof data.image === 'string' && data.image.trim().length > 0) {
+        updateData.image = data.image.trim();
+    }
+
+    if (Object.keys(updateData).length === 0) {
+        throw customError('No valid profile fields to update', 'fail', 400, true);
+    }
+
+    return db.student.update({
+        where: { id: targetStudentId },
+        data: {
+            personalDetails: {
+                update: updateData
+            }
+        },
+        include: {
+            personalDetails: true
+        }
+    });
+}

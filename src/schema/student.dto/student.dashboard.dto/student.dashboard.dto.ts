@@ -82,3 +82,21 @@ export const upsertDeviceTokenSchema = z.object({
 });
 
 export type UpsertDeviceTokenSchema = z.infer<typeof upsertDeviceTokenSchema>;
+
+export const updateStudentProfileForAppSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1, { message: 'Student ID is required' }).regex(/^\d+$/, 'Student ID must be a number')
+    }),
+    body: z
+        .object({
+            email: z.string().email().optional(),
+            contact: z.string().min(1).optional(),
+            address: z.string().min(1).optional(),
+            image: z.string().min(1).optional()
+        })
+        .refine((body) => Object.keys(body).length > 0, {
+            message: 'At least one field is required'
+        })
+});
+
+export type UpdateStudentProfileForAppSchema = z.infer<typeof updateStudentProfileForAppSchema>;
