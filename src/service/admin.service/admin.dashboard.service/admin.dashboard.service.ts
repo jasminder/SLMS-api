@@ -86,7 +86,7 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
     const recentSchoolDay = await db.schoolDay.findFirst({
         where: {
             schoolOperatedDate: {
-                lte: startDate // Less than or equal to the query date
+                lte: endDate // Use end of AEST day so today's school day is included
             }
         },
         orderBy: {
