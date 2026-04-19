@@ -1,14 +1,15 @@
 import { db } from '../../../utils/db.server';
 import { Day, SchoolDay } from '@prisma/client';
 import { getCurrentDay } from '../../../utils/getCurrentDay';
+import moment from 'moment-timezone';
+
+const TIMEZONE = process.env.TIMEZONE || 'Australia/Sydney';
 
 export async function fetchActiveCheckedInStudents(dateString: string) {
-    const date = new Date(dateString);
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
-    const endDate = new Date(date);
-    endDate.setHours(23, 59, 59, 999);
+    // Always compute date boundaries in Australian timezone regardless of server TZ
+    const aestDate = moment.tz(dateString, TIMEZONE);
+    const startDate = aestDate.clone().startOf('day').toDate();
+    const endDate = aestDate.clone().endOf('day').toDate();
     const currentTerm = await db.term.findFirst({
         where: {
             currentTerm: true
@@ -115,10 +116,8 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
     const fetchAttendance = async (schoolDay: SchoolDay | null) => {
         if (!schoolDay) return { totalCheckedIn: [], totalCheckedOut: [], totalAbsent: [], totalLeave: [], totalPresent: [] };
 
-        const startDate = new Date(schoolDay.schoolOperatedDate);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(schoolDay.schoolOperatedDate);
-        endDate.setHours(23, 59, 59, 999);
+        const startDate = moment.tz(schoolDay.schoolOperatedDate, TIMEZONE).startOf('day').toDate();
+        const endDate = moment.tz(schoolDay.schoolOperatedDate, TIMEZONE).endOf('day').toDate();
 
         const totalCheckedIn = await db.schoolCheckInAttendance.findMany({
             where: {

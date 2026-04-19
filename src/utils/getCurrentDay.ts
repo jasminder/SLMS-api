@@ -1,3 +1,7 @@
+import moment from 'moment-timezone';
+
+const TIMEZONE = process.env.TIMEZONE || 'Australia/Sydney';
+
 export function getCurrentDay(): string {
     const days = [
       "SUNDAY",
@@ -8,6 +12,6 @@ export function getCurrentDay(): string {
       "FRIDAY",
       "SATURDAY",
     ]
-    const currentDate = new Date()
-    return days[currentDate.getDay()]
+    const currentDate = moment.tz(TIMEZONE);
+    return days[currentDate.day()]
   }
