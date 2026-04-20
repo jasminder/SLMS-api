@@ -910,7 +910,7 @@ export async function fetchKirtanAttendanceStudents(dateString: string) {
                 some: {
                     termSubjectLevel: {
                         subject: {
-                            name: 'Kirtan'
+                            name: { equals: 'Kirtan', mode: 'insensitive' }
                         }
                     }
                 }
@@ -931,7 +931,7 @@ export async function fetchKirtanAttendanceStudents(dateString: string) {
                         some: {
                             studentClassAssignment: {
                                 termSubjectLevel: {
-                                    subject: { name: 'Kirtan' }
+                                    subject: { name: { equals: 'Kirtan', mode: 'insensitive' } }
                                 }
                             }
                         }
