@@ -244,7 +244,20 @@ export async function loginUser(email: string, password: string) {
         isAllowedLogin = teacher?.isAllowedLogin ?? false;
         isActive = teacher?.isActive ?? false;
     } else if (user.role === 'STUDENT' && user.studentId) {
-        const student = await db.student.findUnique({ where: { id: user.studentId } });
+        // const student = await db.student.findUnique({ where: { id: user.studentId } });
+        // isAllowedLogin = student?.isAllowedLogin ?? false;
+        // isActive = student?.isActive ?? false;
+        let student = await db.student.findUnique({ where: { id: user.studentId } });
+        if (!student?.isActive || !student?.isAllowedLogin) {
+            // fallback: find an active sibling sharing the same personal email
+            student = await db.student.findFirst({
+                where: {
+                    isActive: true,
+                    isAllowedLogin: true,
+                    personalDetails: { email: { equals: user.email, mode: 'insensitive' } }
+                }
+            });
+        }
         isAllowedLogin = student?.isAllowedLogin ?? false;
         isActive = student?.isActive ?? false;
     }
