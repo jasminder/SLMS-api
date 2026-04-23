@@ -119,4 +119,19 @@ export const fetchStudentsInSameClassForTimetableSchema = z.object({
 });
 export type FetchStudentsInSameClassForTimetableSchema = z.infer<typeof fetchStudentsInSameClassForTimetableSchema>;
 
+export const fetchStudentTimetableSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1),
+        day: DayEnum
+    })
+});
+export type FetchStudentTimetableSchema = z.infer<typeof fetchStudentTimetableSchema>;
+
+export const fetchStudentAllTimetablesSchema = z.object({
+    params: z.object({
+        studentId: z.string().min(1)
+    })
+});
+export type FetchStudentAllTimetablesSchema = z.infer<typeof fetchStudentAllTimetablesSchema>;
+
 // ------------------- for school time table ------------------- //

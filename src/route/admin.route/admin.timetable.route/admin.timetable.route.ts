@@ -9,6 +9,8 @@ import {
     fetchAllTimetablesDataHandler,
     fetchEditTimetableHandler,
     fetchStudentsInSameClassForTimetableHandler,
+    fetchStudentAllTimetablesHandler,
+    fetchStudentTimetableHandler,
     findActiveTimetableHandler,
     updateSchoolTimetableHandler,
     updateTimetableHandler
@@ -16,6 +18,8 @@ import {
 import {
     createSchoolTimetableSchema,
     fetchStudentsInSameClassForTimetableSchema,
+    fetchStudentAllTimetablesSchema,
+    fetchStudentTimetableSchema,
     fetchTimetableSchema,
     timeTableSchema,
     updateSchoolTimetableSchema,
@@ -43,4 +47,6 @@ adminTimetableRoute.route('/fetch-edit-timetable/:day').get(validate(fetchTimeta
 adminTimetableRoute.route('/update-school-timetable/:timetableId').post(validate(updateSchoolTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateSchoolTimetableHandler));
 adminTimetableRoute.route('/fetch-all-timetables').get(protectRoute, restrict('ADMIN', 'TEACHER', 'STUDENT'), asyncErrorHandler(fetchAllTimetablesDataHandler));
 adminTimetableRoute.route('/fetch-students-in-same-class-for-timetable/:termSubjectLevelId/:sectionId').get(validate(fetchStudentsInSameClassForTimetableSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchStudentsInSameClassForTimetableHandler));
+adminTimetableRoute.route('/fetch-student-timetable/:studentId/:day').get(validate(fetchStudentTimetableSchema), protectRoute, restrict('ADMIN', 'TEACHER', 'STUDENT'), asyncErrorHandler(fetchStudentTimetableHandler));
+adminTimetableRoute.route('/fetch-student-timetable-all/:studentId').get(validate(fetchStudentAllTimetablesSchema), protectRoute, restrict('ADMIN', 'TEACHER', 'STUDENT'), asyncErrorHandler(fetchStudentAllTimetablesHandler));
 export default adminTimetableRoute;

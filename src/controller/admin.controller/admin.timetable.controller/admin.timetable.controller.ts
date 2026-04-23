@@ -8,11 +8,15 @@ import {
     updateSchoolTimetable,
     updateTimetable,
     fetchAllTimetablesData,
-    fetchStudentsInSameClassForTimetable
+    fetchStudentsInSameClassForTimetable,
+    fetchStudentTimetable,
+    fetchStudentAllTimetables
 } from '../../../service/admin.service/admin.administration.service/admin.timetable.service/admin.timetable.service';
 import {
     CreateSchoolTimetableSchema,
     FetchStudentsInSameClassForTimetableSchema,
+    FetchStudentAllTimetablesSchema,
+    FetchStudentTimetableSchema,
     FetchTimetableSchema,
     TimeTableSchema,
     UpdateSchoolTimetableSchema,
@@ -90,6 +94,26 @@ export const fetchStudentsInSameClassForTimetableHandler = async (req: Request<F
     res.status(200).json(students);
 };
 // ------------------- for time table ------------------- //
+
+export const fetchStudentAllTimetablesHandler = async (req: Request<FetchStudentAllTimetablesSchema['params']>, res: Response, next: NextFunction) => {
+    try {
+        const { studentId } = req.params;
+        const timetables = await fetchStudentAllTimetables(studentId);
+        res.status(200).json(timetables);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const fetchStudentTimetableHandler = async (req: Request<FetchStudentTimetableSchema['params']>, res: Response, next: NextFunction) => {
+    try {
+        const { studentId, day } = req.params;
+        const timetable = await fetchStudentTimetable(studentId, day as import('@prisma/client').Day);
+        res.status(200).json(timetable);
+    } catch (error) {
+        next(error);
+    }
+};
 
 // New controller function to fetch all timetables data
 export const fetchAllTimetablesDataHandler = async (req: Request, res: Response, next: NextFunction) => {
