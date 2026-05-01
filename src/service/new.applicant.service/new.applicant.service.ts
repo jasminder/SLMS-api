@@ -47,15 +47,6 @@ export async function checkEmailForApplication(
         }
     }
 
-    if (applicationType === 'student') {
-        const existingStudent = await db.personalDetails.findFirst({
-            where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
-        });
-        if (existingStudent) {
-            return { emailTaken: true, reason: 'existing_application' };
-        }
-    }
-
     return { emailTaken: false };
 }
 
