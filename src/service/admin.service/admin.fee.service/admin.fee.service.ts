@@ -331,6 +331,9 @@ export async function findActiveStudentsForFeeCreation(page: number, termId: num
                 take: 3
             },
             studentTermFee: {
+                where: {
+                    termId: +termId
+                },
                 select: {
                     termSubjectGroup: {
                         select: {
@@ -348,6 +351,13 @@ export async function findActiveStudentsForFeeCreation(page: number, termId: num
                 }
             },
             enrollments: {
+                where: {
+                    subjectEnrollment: {
+                        termSubject: {
+                            termId: +termId
+                        }
+                    }
+                },
                 select: {
                     subjectEnrollment: {
                         select: {
