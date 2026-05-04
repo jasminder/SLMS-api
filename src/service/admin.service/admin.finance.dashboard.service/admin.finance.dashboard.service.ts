@@ -81,6 +81,7 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
                         select: {
                             id: true,
                             akaalId: true,
+                            creditBalance: true,
                             personalDetails: true
                         }
                     }
@@ -229,6 +230,7 @@ export async function selectAllFeePayments(search = '', page: number, termId: nu
                         select: {
                             id: true,
                             akaalId: true,
+                            creditBalance: true,
                             personalDetails: {
                                 select: {
                                     email: true

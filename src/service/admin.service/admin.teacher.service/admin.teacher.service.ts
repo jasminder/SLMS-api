@@ -601,7 +601,34 @@ export const findAllAssignedClasses = async () => {
 
 /** Get attendance, classwork, and homework for all classes in one place (admin) */
 export const getClassRecordsForAdmin = async () => {
-    const assignedClasses = await findAllAssignedClasses();
+    // Fetch all current-term class assignments without subject-day filtering
+    // so every subject (including Kirtan, weekday-only classes, etc.) is included.
+    const assignedClasses = await db.teacherClassAssignment.findMany({
+        where: {
+            termSubjectLevel: {
+                term: { currentTerm: true }
+            }
+        },
+        include: {
+            termSubjectLevel: {
+                include: {
+                    subject: {
+                        include: {
+                            termSubject: {
+                                select: { isOnSunday: true, isOnWeekday: true }
+                            }
+                        }
+                    },
+                    level: true,
+                    term: true
+                }
+            },
+            section: true,
+            teacher: {
+                include: { teacherPersonalDetails: true }
+            }
+        }
+    });
     const classKey = (tslId: number, secId: number) => `${tslId}-${secId}`;
     const seen = new Set<string>();
     const uniqueClasses: Array<{
@@ -609,6 +636,7 @@ export const getClassRecordsForAdmin = async () => {
         sectionId: number;
         teacherId: number;
         className: string;
+        timeSlot: string | null;
         termSubjectLevel: (typeof assignedClasses)[0]['termSubjectLevel'];
         section: (typeof assignedClasses)[0]['section'];
         teacher: (typeof assignedClasses)[0]['teacher'];
@@ -623,14 +651,30 @@ export const getClassRecordsForAdmin = async () => {
             sectionId: row.sectionId,
             teacherId: row.teacherId,
             className,
+            timeSlot: row.timeSlot,
             termSubjectLevel: row.termSubjectLevel,
             section: row.section,
             teacher: row.teacher
         });
     }
 
-    const results = await Promise.all(
-        uniqueClasses.map(async (cls) => {
+    // Fetch timetable slots once to resolve timing for each class
+    const timetableSlots = await db.timetableSlot.findMany({
+        where: {
+            termSubjectLevelId: { in: uniqueClasses.map(c => c.termSubjectLevelId) },
+        },
+        include: { timeSlot: true }
+    });
+    const timingMap = new Map<string, string>();
+    for (const slot of timetableSlots) {
+        if (!slot.termSubjectLevelId || !slot.sectionId) continue;
+        const key = classKey(slot.termSubjectLevelId, slot.sectionId);
+        if (!timingMap.has(key)) {
+            timingMap.set(key, slot.timeSlot.timeRange);
+        }
+    }
+
+    const processClass = async (cls: (typeof uniqueClasses)[0]) => {
             const [attendanceData, classwork, homework] = await Promise.all([
                 fetchCheckedInStudentsWithAttendance(cls.termSubjectLevelId.toString(), cls.sectionId.toString()),
                 findAllClassworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString()),
@@ -650,6 +694,12 @@ export const getClassRecordsForAdmin = async () => {
                 else notCheckedIn++;
             }
 
+            const teacherName = cls.teacher?.teacherPersonalDetails
+                ? `${cls.teacher.teacherPersonalDetails.firstName} ${cls.teacher.teacherPersonalDetails.lastName}`
+                : null;
+
+            const timing = timingMap.get(classKey(cls.termSubjectLevelId, cls.sectionId)) ?? null;
+
             return {
                 classInfo: {
                     termSubjectLevelId: cls.termSubjectLevelId,
@@ -657,7 +707,9 @@ export const getClassRecordsForAdmin = async () => {
                     teacherId: cls.teacherId,
                     className: cls.className,
                     sectionName: cls.section.name,
-                    termId: cls.termSubjectLevel.term.id
+                    termId: cls.termSubjectLevel.term.id,
+                    teacherName,
+                    timing
                 },
                 attendanceSummary: {
                     total,
@@ -669,8 +721,16 @@ export const getClassRecordsForAdmin = async () => {
                 classwork,
                 homework
             };
-        })
-    );
+    };
+
+    // Process in batches of 5 to avoid exhausting the DB connection pool
+    const BATCH_SIZE = 5;
+    const results = [];
+    for (let i = 0; i < uniqueClasses.length; i += BATCH_SIZE) {
+        const batch = uniqueClasses.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(batch.map(processClass));
+        results.push(...batchResults);
+    }
 
     return results;
 };
