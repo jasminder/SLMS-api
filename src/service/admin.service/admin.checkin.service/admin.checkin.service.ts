@@ -601,19 +601,30 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
     });
     await updateStudentLastTwoDaysAttendance(db, +studentId);
 
+    const student = await db.student.findUnique({
+        where: { id: +studentId },
+        select: { hasOverDue: true, overDue: true }
+    });
+
     const io = getIo();
     io.emit('markSchoolCheckInAttendanceForStudent', {
         studentId: studentId,
         status: 'CheckedIn',
         date: new Date()
     });
+    if (student?.hasOverDue) {
+        io.emit('feeOverdueAlert', {
+            studentId: studentId,
+            overDueAmount: student.overDue
+        });
+    }
     await createNotificationAndPush({
         studentId: +studentId,
         type: NotificationType.ATTENDANCE,
         content: 'Your school attendance has been marked as present.',
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
-    return updatedAttendanceRecord;
+    return { attendanceRecord: updatedAttendanceRecord, hasOverDue: student?.hasOverDue ?? false, overDueAmount: student?.overDue ?? 0 };
 }
 
 /*undo checkin for a student*/
