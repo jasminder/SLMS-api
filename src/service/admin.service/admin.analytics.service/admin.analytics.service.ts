@@ -157,7 +157,12 @@ export async function getPresentAttendances() {
             // }
         },
         include: {
-            SchoolDay: true
+            SchoolDay: true,
+            student: {
+                include: {
+                    personalDetails: true
+                }
+            }
         }
     });
 }
