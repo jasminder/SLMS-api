@@ -78,7 +78,7 @@ export async function getStudentsForApp(email: string) {
                     punjabi: pd?.punjabiName ?? ''
                 },
                 photo: rawImage,
-                studentId: String(pd?.studentId ?? s.id),
+                studentId: String(s.akaalId ?? s.id),
                 class: className,
                 attendance: s.attendancePercentageValue ?? 0
             };
