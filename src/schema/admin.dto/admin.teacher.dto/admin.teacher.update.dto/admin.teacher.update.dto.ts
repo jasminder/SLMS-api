@@ -33,3 +33,14 @@ export const findUniqueTeacherSchema = z.object({
     })
 });
 export type FindUniqueTeacherSchema = z.infer<typeof findUniqueTeacherSchema>;
+
+export const updateTeacherPasswordSchema = z.object({
+    body: z.object({
+        newPassword: z.string().min(8, { message: 'Password must be at least 8 characters' }),
+        confirmPassword: z.string().min(8, { message: 'Password must be at least 8 characters' })
+    }),
+    params: z.object({
+        id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    })
+});
+export type UpdateTeacherPasswordSchema = z.infer<typeof updateTeacherPasswordSchema>;

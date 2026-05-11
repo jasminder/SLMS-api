@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import bcrypt from 'bcrypt';
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
 import {
@@ -112,6 +113,24 @@ export async function updateStudentHealthInformation(id: string, data: UpdateStu
         throw customError(`Failed to update student health and emergency details @ksm${e}`, 'fail', 400, true);
     }
 }
+// Update student password (admin direct change)
+export async function updateStudentPassword(id: string, newPassword: string, confirmPassword: string) {
+    if (newPassword !== confirmPassword) {
+        throw customError('Passwords do not match', 'fail', 400, true);
+    }
+    const user = await db.user.findFirst({
+        where: { studentId: +id }
+    });
+    if (!user) {
+        throw customError('Student user account not found', 'fail', 404, true);
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await db.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword }
+    });
+}
+
 // Update Emergency Details
 export async function updateStudentEmergencyContact(id: string, data: UpdateStudentEmergencyDetailSchema['body']) {
     const { contactNumber, contactPerson, relationship } = data.emergencyContact;
