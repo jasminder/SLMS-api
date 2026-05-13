@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import {
     getActiveStudentsPerSubject,
+    getExpectedStudentCountPerWeekday,
     getGenderDistributionForCurrentTerm,
     getPresentAttendances,
     getStudentsCountPerTerm,
@@ -28,4 +29,8 @@ export const getGenderDistributionForCurrentTermHandler = async (req: Request, r
 export const getWeekdayPresentAttendancesHandler = async (req: Request, res: Response, next: NextFunction) => {
     const presentAttendances = await getWeekdayPresentAttendances();
     res.status(200).json(presentAttendances);
+};
+export const getExpectedStudentCountPerWeekdayHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const counts = await getExpectedStudentCountPerWeekday();
+    res.status(200).json(counts);
 };

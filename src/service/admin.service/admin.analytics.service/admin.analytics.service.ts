@@ -246,3 +246,53 @@ export async function getGenderDistributionForCurrentTerm(): Promise<GenderDistr
 
     return genderDistribution;
 }
+
+export async function getExpectedStudentCountForDay(day: string): Promise<number> {
+    const currentTerm = await db.term.findFirst({
+        where: { currentTerm: true },
+        select: { id: true }
+    });
+
+    const timetable = await db.timetable.findFirst({
+        where: { isActive: true, day: day as any },
+        include: { timetableSlots: true }
+    });
+
+    const slotMappings = timetable?.timetableSlots
+        .filter((slot) => slot.termSubjectLevelId !== null && slot.sectionId !== null)
+        .map((slot) => ({
+            termSubjectLevelId: slot.termSubjectLevelId!,
+            sectionId: slot.sectionId!
+        }));
+
+    if (!slotMappings || slotMappings.length === 0) return 0;
+
+    const activeStudents = await db.student.findMany({
+        where: {
+            isActive: true,
+            studentClassAssignment: {
+                some: {
+                    OR: slotMappings.map((slot) => ({
+                        AND: {
+                            termSubjectLevelId: slot.termSubjectLevelId,
+                            sectionId: slot.sectionId,
+                            isCurrentlyAssigned: true
+                        }
+                    }))
+                }
+            },
+            studentTermFee: {
+                some: { termId: currentTerm?.id }
+            }
+        },
+        select: { id: true }
+    });
+
+    return activeStudents.length;
+}
+
+export async function getExpectedStudentCountPerWeekday(): Promise<Record<string, number>> {
+    const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+    const counts = await Promise.all(days.map((day) => getExpectedStudentCountForDay(day)));
+    return Object.fromEntries(days.map((day, i) => [day, counts[i]]));
+}
