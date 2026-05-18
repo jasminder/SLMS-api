@@ -111,10 +111,13 @@ export const findActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {
 export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
     const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, sort, sort_dir } = req.query;
 
-    if (termId) {
-        const searchResult = await searchActiveStudents(search, +page, +termId, subjectOption, levelOption, sectionOption, attendanceOption, sort, sort_dir);
-        res.status(200).json(searchResult);
+    let activeTermId = termId ? +termId : null;
+    if (!activeTermId) {
+        const currentTerm = await findCurrentTermToAssignClass();
+        activeTermId = currentTerm.id;
     }
+    const searchResult = await searchActiveStudents(search, +page, activeTermId, subjectOption, levelOption, sectionOption, attendanceOption, sort, sort_dir);
+    res.status(200).json(searchResult);
 };
 export const searchActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
     const { search, subjectOption, levelOption, sectionOption, page = 0, termId, attendanceOption, sort, sort_dir } = req.query;

@@ -14,8 +14,8 @@ export const AdminPersonalDetailsSchema = z.object({
     postcode: z.string({ required_error: 'Post code is required' }).min(4, { message: 'Post code is minimum 4 digits' }).max(4, { message: 'Post code is maximum 4 digits' }),
     image: z
         .any()
-        .refine((file) => !file || file.size <= 400000, {
-            message: 'Max image size is 4MB.'
+        .refine((file) => !file || file.size <= 20971520, {
+            message: 'Max image size is 20MB.'
         })
         .refine((file) => !file || ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type), {
             message: 'Only .jpg, .jpeg and .png formats are supported.'
@@ -34,8 +34,8 @@ export const AdminWWCHealthInformationSchema = z.object({
     workingWithChildrenCheckExpiry: z.string(),
     workingwithChildrenCheckCardPhotoImage: z
         .any()
-        .refine((file) => !file || file.size <= 400000, {
-            message: 'Max image size is 4MB.'
+        .refine((file) => !file || file.size <= 20971520, {
+            message: 'Max image size is 20MB.'
         })
         .refine((file) => !file || ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type), {
             message: 'Only .jpg, .jpeg and .png formats are supported.'
