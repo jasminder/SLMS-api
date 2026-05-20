@@ -26,7 +26,7 @@ export const checkAndMarkOverduePayments = async () => {
     const updates = templates
         .filter((template) => !template.lastCronJobRun || template.lastCronJobRun <= template.dueDate)
         .map((template) => {
-            const overduePayments = template.feePayments.filter((payment) => payment.dueAmount > 0 && new Date(payment.dueDate).getTime() === currentDate.getTime());
+            const overduePayments = template.feePayments.filter((payment) => payment.dueAmount > 0 && new Date(payment.dueDate).getTime() <= currentDate.getTime());
 
             if (overduePayments.length > 0) {
                 return db.$transaction(async (prisma) => {
@@ -91,7 +91,7 @@ export const checkAndMarkOverduePayments1 = async () => {
     const updates = templates
         .filter((template) => !template.lastCronJobRun || template.lastCronJobRun <= template.dueDate)
         .map((template) => {
-            const overduePayments = template.feePayments.filter((payment) => payment.dueAmount > 0 && new Date(payment.dueDate).getTime() === currentDate.getTime());
+            const overduePayments = template.feePayments.filter((payment) => payment.dueAmount > 0 && new Date(payment.dueDate).getTime() <= currentDate.getTime());
 
             if (overduePayments.length > 0) {
                 return db.$transaction(async (prisma) => {
