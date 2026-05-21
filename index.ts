@@ -87,7 +87,17 @@ app.use(cookieParser());
 const origin =
     process.env.NODE_ENV === 'development'
         ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8080', 'https://slms-client-2aam.vercel.app']
-        : ['https://SLMS.com', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://slms-client-2aam.vercel.app', 'https://akaalshaouni.org','https://stg.akaalshaouni.org'];
+        : [
+              'https://SLMS.com',
+              'http://localhost:5173',
+              'http://localhost:5174',
+              'http://localhost:5175',
+              'https://slms-client-2aam.vercel.app',
+              'https://akaalshaouni.org',
+              'https://www.akaalshaouni.org',
+              'https://stg.akaalshaouni.org',
+              'https://www.stg.akaalshaouni.org'
+          ];
 
 app.use(
     cors({
