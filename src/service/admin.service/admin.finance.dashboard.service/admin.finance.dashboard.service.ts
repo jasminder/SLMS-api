@@ -555,43 +555,65 @@ export async function feeDashboardQuery() {
 }
 
 
-export async function filteredFeeDashboardQuery(termId: number, invoiceId?: number, paymentStatus?: PaymentStatus) {
-    console.log(termId, invoiceId, paymentStatus, "hello");
-    const whereClause = {
+/**
+ * Filtered-dashboard totals scoped to a term + optional invoice.
+ *
+ * Each metric uses its own hard-coded status filter so that the
+ * status dropdown (which only filters table rows) never distorts
+ * unrelated totals.
+ *
+ *   totalInvoiced  – feeAmount  for ALL records in scope  (no status filter)
+ *   totalPaid      – paidAmount from installments on PAID records only
+ *   totalDue       – dueAmount  for ALL records in scope  (PAID rows carry 0)
+ *   totalOverdue   – dueAmount  for OVERDUE records only
+ *   totalDiscount  – discountAmount for ALL records in scope
+ *
+ * NOTE: `paymentStatus` from the filter dropdown is intentionally NOT
+ * accepted — it belongs only to the paginated table query.
+ */
+export async function filteredFeeDashboardQuery(termId: number, invoiceId?: number) {
+    // Shared base scope — term + optional invoice, no status restriction
+    const baseWhere = {
         feeTemplate: {
-            termId: termId,
+            termId,
             ...(invoiceId && { id: invoiceId })
-        },
-        ...(paymentStatus && { status: paymentStatus })
+        }
     };
 
+    // 1. totalInvoiced / totalDue / totalDiscount — all records in scope
     const aggregation = await db.feePayment.aggregate({
         _sum: {
             feeAmount: true,
             dueAmount: true,
             discountAmount: true
         },
-        where: whereClause
+        where: baseWhere
     });
 
-    const paidAmount = await db.paymentInstallment.aggregate({
+    // 2. totalPaid — sum of installment payments on PAID fee-payments only
+    //    Exclude DISCOUNT-method entries so credits aren't double-counted.
+    const paidAggregation = await db.paymentInstallment.aggregate({
         _sum: {
             paidAmount: true
         },
         where: {
-            feePayment: whereClause,
+            feePayment: {
+                ...baseWhere,
+                status: PaymentStatus.PAID
+            },
             NOT: {
                 paymentMethod: PaymentMethod.DISCOUNT
             }
         }
     });
 
+    // 3. totalOverdue — dueAmount of genuinely overdue records only
     const overdueAggregation = await db.feePayment.aggregate({
         _sum: {
             dueAmount: true
         },
         where: {
-            ...whereClause,
+            ...baseWhere,
             hasOverDue: true,
             status: PaymentStatus.OVERDUE
         }
@@ -602,6 +624,6 @@ export async function filteredFeeDashboardQuery(termId: number, invoiceId?: numb
         totalDue: aggregation._sum.dueAmount || 0,
         totalDiscount: aggregation._sum.discountAmount || 0,
         totalOverdue: overdueAggregation._sum.dueAmount || 0,
-        totalPaid: paidAmount._sum.paidAmount || 0
+        totalPaid: paidAggregation._sum.paidAmount || 0
     };
 }

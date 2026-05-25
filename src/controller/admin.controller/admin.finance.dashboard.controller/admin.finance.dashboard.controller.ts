@@ -56,7 +56,11 @@ export const feeDashboardQueryHandler = async (req: Request, res: Response, next
 };
 
 export const filteredFeeDashboardQueryHandler = async (req: Request<{}, {}, {}, FilteredFeeDashboardQuerySchema['query']>, res: Response, next: NextFunction) => {
-    const { termId, invoiceId, paymentStatus } = req.query;
+    // Note: `paymentStatus` is accepted in the query string for backward
+    // compatibility but is intentionally NOT forwarded to the service.
+    // Dashboard totals are always calculated independently per metric;
+    // the status filter only applies to the paginated table rows.
+    const { termId, invoiceId } = req.query;
     if (!termId) {
         return res.status(400).json({ error: 'TermId is required' });
     }
@@ -71,12 +75,7 @@ export const filteredFeeDashboardQueryHandler = async (req: Request<{}, {}, {}, 
         return res.status(400).json({ error: 'Invalid invoiceId' });
     }
 
-    const validPaymentStatuses = ['PAID', 'UNPAID', 'OVERDUE', 'PENDING'];
-    if (paymentStatus && !validPaymentStatuses.includes(paymentStatus as string)) {
-        return res.status(400).json({ error: 'Invalid paymentStatus' });
-    }
-
-    const feeDashboardDetails = await filteredFeeDashboardQuery(parsedTermId, parsedInvoiceId, paymentStatus as PaymentStatus | undefined);
+    const feeDashboardDetails = await filteredFeeDashboardQuery(parsedTermId, parsedInvoiceId);
 
     res.status(200).json({ feeDashboardDetails });
 };

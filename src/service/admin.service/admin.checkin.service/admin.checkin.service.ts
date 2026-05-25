@@ -236,13 +236,17 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
 
         return transaction;
     } catch (error: any) {
-        console.log(error.message);
-        if (error.message === 'Attendance-already-created-for-today') {
+        // error.cause?.message covers cases where Prisma wraps the thrown error
+        const msg: string = error?.message ?? error?.cause?.message ?? '';
+        console.log('createSchoolCheckInAttendance error:', msg);
+        if (msg.includes('Attendance-already-created-for-today')) {
             throw customError('Attendance already created for today', 'fail', 400, true);
-        } else if (error.message === 'No active timetable found for today') {
-            throw customError('No active timetable found for today', 'fail', 400, true);
-        } else if (error.message === 'No classes scheduled in timetable for today') {
-            throw customError('No classes scheduled in timetable for today', 'fail', 400, true);
+        } else if (msg.includes('No active timetable found for')) {
+            throw customError(msg, 'fail', 404, true);
+        } else if (msg.includes('No classes scheduled in timetable for')) {
+            throw customError(msg, 'fail', 400, true);
+        } else if (msg.includes('No students are enrolled for')) {
+            throw customError(msg, 'fail', 400, true);
         } else {
             throw customError('Generating report cannot be completed. Please check your network and try again after one minute.', 'error', 500, true);
         }
