@@ -607,7 +607,7 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
 
     const student = await db.student.findUnique({
         where: { id: +studentId },
-        select: { hasOverDue: true, overDue: true }
+        select: { hasOverDue: true, overDue: true, akaalId: true }
     });
 
     const io = getIo();
@@ -628,7 +628,7 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
         content: 'Your school attendance has been marked as present.',
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
-    return { attendanceRecord: updatedAttendanceRecord, hasOverDue: student?.hasOverDue ?? false, overDueAmount: student?.overDue ?? 0 };
+    return { attendanceRecord: updatedAttendanceRecord, hasOverDue: student?.hasOverDue ?? false, overDueAmount: student?.overDue ?? 0, akaalId: student?.akaalId ?? null };
 }
 
 /*undo checkin for a student*/

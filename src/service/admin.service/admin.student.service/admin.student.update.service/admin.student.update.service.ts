@@ -118,13 +118,38 @@ export async function updateStudentPassword(id: string, newPassword: string, con
     if (newPassword !== confirmPassword) {
         throw customError('Passwords do not match', 'fail', 400, true);
     }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
     const user = await db.user.findFirst({
         where: { studentId: +id }
     });
+
     if (!user) {
-        throw customError('Student user account not found', 'fail', 404, true);
+        // Student has no User account yet (never self-registered).
+        // Create one now using the email from personalDetails so the admin
+        // can always manage student credentials regardless of signup status.
+        const student = await db.student.findUnique({
+            where: { id: +id },
+            include: { personalDetails: true }
+        });
+
+        if (!student || !student.personalDetails?.email) {
+            throw customError('Student not found or has no email on file', 'fail', 404, true);
+        }
+
+        await db.user.create({
+            data: {
+                email: student.personalDetails.email.toLowerCase(),
+                password: hashedPassword,
+                role: student.role,
+                studentId: +id,
+                isEmailVerified: true
+            }
+        });
+        return;
     }
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
     await db.user.update({
         where: { id: user.id },
         data: { password: hashedPassword }
