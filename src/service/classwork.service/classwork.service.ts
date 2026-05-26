@@ -152,22 +152,15 @@ export async function findAllClassworkByTermAndSectionForAdmin(termSubjectLevelI
     return classworks;
 }
 
-/* Find all classwork records for a termsubjectlevelid and sectionid */
+/* Find all classwork records for a termsubjectlevelid and sectionid — no date restriction */
 export async function findAllClassworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
-    const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
     const classworks = await db.classwork.findMany({
         where: {
             termSubjectLevelId: +termSubjectLevelId,
             sectionId: +sectionId,
             teacherId: +teacherId,
-            createdAt: {
-                gte: startDate,
-                lte: endDate
-            }
+            // Date restriction removed: admin must be able to view/edit/delete
+            // classwork from any date (past, current, future).
         },
         include: {
             subject: true,
@@ -275,11 +268,18 @@ export async function editClasswork(
         throw customError('Uploader not found', 'fail', 404, true);
     }
 
+    // Preserve the original subjectId — do not overwrite it with a hardcoded value.
+    const existingClasswork = await db.classwork.findUnique({ where: { id: +classworkId } });
+    if (!existingClasswork) {
+        throw customError('Classwork not found', 'fail', 404, true);
+    }
+    const subjectId = existingClasswork.subjectId;
+
     // Prepare data for updating
     let data;
     if (uploadedUserRole === 'TEACHER') {
         data = {
-            subjectId: 1,
+            subjectId,
             sectionId: +sectionId,
             teacherId: +uploaderId,
             adminId: null,
@@ -292,7 +292,7 @@ export async function editClasswork(
         };
     } else if (uploadedUserRole === 'ADMIN') {
         data = {
-            subjectId: 1,
+            subjectId,
             sectionId: +sectionId,
             teacherId: null,
             adminId: +uploaderId,

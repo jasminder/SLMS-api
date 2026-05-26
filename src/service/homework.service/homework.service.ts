@@ -149,22 +149,15 @@ export async function findAllHomeworkByTermAndSectionForAdmin(termSubjectLevelId
     return homeworks;
 }
 
-/* Find all homework records for a termsubjectlevelid and sectionid */
+/* Find all homework records for a termsubjectlevelid and sectionid — no date restriction */
 export async function findAllHomeworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
-    const startDate = new Date();
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
     const homeworks = await db.homework.findMany({
         where: {
             termSubjectLevelId: +termSubjectLevelId,
             sectionId: +sectionId,
             teacherId: +teacherId,
-            createdAt: {
-                gte: startDate,
-                lte: endDate
-            }
+            // Date restriction removed: admin must be able to view/edit/delete
+            // homework from any date (past, current, future).
         },
         include: {
             subject: true,
@@ -189,7 +182,7 @@ export async function findAllHomeworkByTermAndSection(termSubjectLevelId: string
 
     return homeworks;
 }
-export async function findAllAssignedHomeworkByTermAndSection(termSubjectLevelId: string, sectionId: string, teacherId: string) {
+export async function findAllAssignedHomeworkByTermAndSection(termSubjectLevelId: string, sectionId: string, _teacherId: string) {
     const homeworks = await db.homework.findMany({
         where: {
             termSubjectLevelId: +termSubjectLevelId,
@@ -272,11 +265,18 @@ export async function editHomework(
         throw customError('Uploader not found', 'fail', 404, true);
     }
 
+    // Preserve the original subjectId — do not overwrite it with a hardcoded value.
+    const existingHomework = await db.homework.findUnique({ where: { id: +homeworkId } });
+    if (!existingHomework) {
+        throw customError('Homework not found', 'fail', 404, true);
+    }
+    const subjectId = existingHomework.subjectId;
+
     // Prepare data for updating
     let data;
     if (uploadedUserRole === 'TEACHER') {
         data = {
-            subjectId: 1,
+            subjectId,
             sectionId: +sectionId,
             teacherId: +uploaderId,
             adminId: null,
@@ -289,7 +289,7 @@ export async function editHomework(
         };
     } else if (uploadedUserRole === 'ADMIN') {
         data = {
-            subjectId: 1,
+            subjectId,
             sectionId: +sectionId,
             teacherId: null,
             adminId: +uploaderId,
