@@ -1603,7 +1603,6 @@ export async function findActiveStudentById(id: string, termId: string) {
             }
         }
     });
-    console.log(activeStudent);
     const siblings = await db.student.findMany({
         where: {
             personalDetails: {
