@@ -2,7 +2,7 @@ import { NotificationType } from '@prisma/client';
 import { customError } from '../../../utils/customError';
 
 import { db } from '../../../utils/db.server';
-import { createManyNotificationsAndPush } from '../../notification.service/notification.service';
+import { createManyNotificationsAndPush, getStudentNamesMap } from '../../notification.service/notification.service';
 import { calculateSendDate } from '../../../utils/setSendDate';
 
 function normalizeSendDate(date: Date): Date {
@@ -51,11 +51,12 @@ export async function createGroupHomework(
         const subject = termSubjectLevel?.subject;
 
         await db.$transaction([...transactions]);
+        const hwNames = await getStudentNamesMap(studentIds.map(Number));
         await createManyNotificationsAndPush(
             studentIds.map((studentId) => ({
                 studentId: +studentId,
                 type: NotificationType.HOMEWORK,
-                content: `A new homework has been posted for ${subject?.name || 'your subject'}.`,
+                content: `${hwNames.get(+studentId) ?? 'Student'}, a new homework has been posted for ${subject?.name || 'your subject'}.`,
                 actionUrl: `/student/homework-classwork?studentId=${studentId}`,
                 termSubjectLevelId: +termSubjectLevelId,
                 sectionId: +sectionId

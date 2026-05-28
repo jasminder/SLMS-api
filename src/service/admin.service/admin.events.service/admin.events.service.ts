@@ -24,22 +24,20 @@ export async function createEvent(start: string, end: string, data: CreateNewEve
     });
 
     const activeStudents = await db.student.findMany({
-        where: {
-            role: 'STUDENT',
-            isActive: true
-        },
-        select: {
-            id: true
-        }
+        where: { role: 'STUDENT', isActive: true },
+        select: { id: true, personalDetails: { select: { firstName: true } } }
     });
     await createManyNotificationsAndPush(
-        activeStudents.map((student) => ({
-            studentId: student.id,
-            type: NotificationType.EVENT,
-            title: 'New Event',
-            content: `A new event "${data.appointment.title}" has been added`,
-            actionUrl: `/student?studentId=${student.id}`
-        }))
+        activeStudents.map((student) => {
+            const name = student.personalDetails?.firstName?.trim() || 'Student';
+            return {
+                studentId: student.id,
+                type: NotificationType.EVENT,
+                title: 'New Event',
+                content: `${name}, a new event "${data.appointment.title}" has been added.`,
+                actionUrl: `/student?studentId=${student.id}`
+            };
+        })
     );
 
     return event;

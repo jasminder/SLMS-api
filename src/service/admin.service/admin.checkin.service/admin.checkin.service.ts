@@ -2,7 +2,7 @@ import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { getIo } from '../../../sockets/socket';
 import { Day, NotificationType } from '@prisma/client';
-import { createManyNotificationsAndPush, createNotificationAndPush } from '../../notification.service/notification.service';
+import { createManyNotificationsAndPush, createNotificationAndPush, getStudentFirstName, getStudentNamesMap } from '../../notification.service/notification.service';
 
 /** DB type: works with both global db and transaction client (Omit<PrismaClient, ...>) */
 type DbClient = Parameters<Parameters<typeof db.$transaction>[0]>[0];
@@ -607,8 +607,14 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
 
     const student = await db.student.findUnique({
         where: { id: +studentId },
-        select: { hasOverDue: true, overDue: true, akaalId: true }
+        select: {
+            hasOverDue: true,
+            overDue: true,
+            akaalId: true,
+            personalDetails: { select: { firstName: true } }
+        }
     });
+    const name = student?.personalDetails?.firstName?.trim() || 'Student';
 
     const io = getIo();
     io.emit('markSchoolCheckInAttendanceForStudent', {
@@ -625,7 +631,7 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
     await createNotificationAndPush({
         studentId: +studentId,
         type: NotificationType.ATTENDANCE,
-        content: 'Your school attendance has been marked as present.',
+        content: `${name}, your school attendance has been marked as present.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
     return { attendanceRecord: updatedAttendanceRecord, hasOverDue: student?.hasOverDue ?? false, overDueAmount: student?.overDue ?? 0, akaalId: student?.akaalId ?? null };
@@ -666,6 +672,7 @@ export async function undoCheckIn(studentId: string) {
         }
     });
     await updateStudentLastTwoDaysAttendance(db, +studentId);
+    const undoName = await getStudentFirstName(+studentId);
     const io = getIo();
     io.emit('markSchoolCheckInAttendanceForStudent', {
         studentId: studentId,
@@ -675,7 +682,7 @@ export async function undoCheckIn(studentId: string) {
     await createNotificationAndPush({
         studentId: +studentId,
         type: NotificationType.ATTENDANCE,
-        content: 'Your school attendance has been updated to absent.',
+        content: `${undoName}, your school attendance has been updated to absent.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
     return updatedRecord;
@@ -813,10 +820,11 @@ export async function markStudentAsNotCheckedIn(studentId: string) {
         }
     });
     await updateStudentLastTwoDaysAttendance(db, +studentId);
+    const absentName = await getStudentFirstName(+studentId);
     await createNotificationAndPush({
         studentId: +studentId,
         type: NotificationType.ATTENDANCE,
-        content: 'Your school attendance has been marked as absent.',
+        content: `${absentName}, your school attendance has been marked as absent.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
 
@@ -852,11 +860,12 @@ export async function markCheckInTrueForSelectedStudents(studentIds: string[]) {
     );
     const distinctStudentIds = [...new Set(checkInRecords.map((r) => r.studentId))];
     await Promise.all(distinctStudentIds.map((id) => updateStudentLastTwoDaysAttendance(db, id)));
+    const bulkPresentNames = await getStudentNamesMap(distinctStudentIds);
     await createManyNotificationsAndPush(
         distinctStudentIds.map((id) => ({
             studentId: id,
             type: NotificationType.ATTENDANCE,
-            content: 'Your school attendance has been marked as present.',
+            content: `${bulkPresentNames.get(id) ?? 'Student'}, your school attendance has been marked as present.`,
             actionUrl: `/student/dashboard?studentId=${id}`
         }))
     );
@@ -892,11 +901,12 @@ export async function markCheckInFalseForSelectedStudents(studentIds: string[]) 
     );
     const distinctStudentIds = [...new Set(checkInRecords.map((r) => r.studentId))];
     await Promise.all(distinctStudentIds.map((id) => updateStudentLastTwoDaysAttendance(db, id)));
+    const bulkAbsentNames = await getStudentNamesMap(distinctStudentIds);
     await createManyNotificationsAndPush(
         distinctStudentIds.map((id) => ({
             studentId: id,
             type: NotificationType.ATTENDANCE,
-            content: 'Your school attendance has been marked as absent.',
+            content: `${bulkAbsentNames.get(id) ?? 'Student'}, your school attendance has been marked as absent.`,
             actionUrl: `/student/dashboard?studentId=${id}`
         }))
     );

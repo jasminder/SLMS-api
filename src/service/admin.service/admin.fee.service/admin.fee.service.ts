@@ -3,7 +3,7 @@ import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
 import { NotificationType, PaymentType } from '@prisma/client';
 import { autoApplyCreditToFeePaymentInTransaction } from '../admin.student.service/admin.active.student.service/admin.active.student.service';
-import { createManyNotificationsAndPush } from '../../notification.service/notification.service';
+import { createManyNotificationsAndPush, getStudentNamesMap } from '../../notification.service/notification.service';
 
 export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
     const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
@@ -62,7 +62,7 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
             const feePayments = await Promise.all(
                 studentIds
                     .map(async (studentId) => {
-                        const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
+                        const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) }, include: { personalDetails: { select: { firstName: true } } } });
                         if (!student) return null; // Continue if no student is found
 
                         const studentTermFee = await prisma.studentTermFee.findFirst({
@@ -95,11 +95,12 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
             for (const fp of feePayments) {
                 if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
             }
+            const feeNames = await getStudentNamesMap(studentIds.map(Number));
             await createManyNotificationsAndPush(
                 studentIds.map((studentId) => ({
                     studentId: +studentId,
                     type: NotificationType.FEE,
-                    content: `You have new Fee invoiced.`,
+                    content: `${feeNames.get(+studentId) ?? 'Student'}, you have a new fee invoice. Please check your fee details.`,
                     actionUrl: `/student/fee-list?studentId=${studentId}`
                 }))
             );
@@ -138,7 +139,7 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
             const feePayments = await Promise.all(
                 studentIds
                     .map(async (studentId) => {
-                        const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
+                        const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) }, include: { personalDetails: { select: { firstName: true } } } });
                         if (!student) return null; // Continue if no student is found
 
                         const studentTermFee = await prisma.studentTermFee.findFirst({
@@ -171,11 +172,12 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
             for (const fp of feePayments) {
                 if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
             }
+            const feeNames = await getStudentNamesMap(studentIds.map(Number));
             await createManyNotificationsAndPush(
                 studentIds.map((studentId) => ({
                     studentId: +studentId,
                     type: NotificationType.FEE,
-                    content: `You have new Fee invoiced.`,
+                    content: `${feeNames.get(+studentId) ?? 'Student'}, you have a new fee invoice. Please check your fee details.`,
                     actionUrl: `/student/fee-list?studentId=${studentId}`
                 }))
             );

@@ -2,7 +2,7 @@ import { NotificationType } from '@prisma/client';
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
 import { calculateSendDate } from '../../../utils/setSendDate';
-import { createNotificationAndPush } from '../../notification.service/notification.service';
+import { createNotificationAndPush, getStudentFirstName } from '../../notification.service/notification.service';
 
 export async function createFeedback(
     studentId: string,
@@ -72,10 +72,11 @@ export async function createFeedback(
             isSent: false
         }
     });
+    const fbName = await getStudentFirstName(+studentId);
     await createNotificationAndPush({
         studentId: +studentId,
         type: NotificationType.FEEDBACK,
-        content: `There is a new feedback.`,
+        content: `${fbName}, your teacher has posted new feedback for you.`,
         actionUrl: `/student/homework-classwork?studentId=${studentId}`
     });
     return feedback;

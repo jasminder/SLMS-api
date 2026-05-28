@@ -3,7 +3,7 @@ import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
 import { calculateSendDate } from '../../../utils/setSendDate';
 import { NotificationType } from '@prisma/client';
-import { createNotificationAndPush } from '../../notification.service/notification.service';
+import { createNotificationAndPush, getStudentFirstName } from '../../notification.service/notification.service';
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
 
@@ -150,8 +150,9 @@ export async function markStudentAsPresent(studentId: string, classAttendanceId:
 
     const student = await db.student.findUnique({
         where: { id: +studentId },
-        select: { hasOverDue: true, overDue: true }
+        select: { hasOverDue: true, overDue: true, personalDetails: { select: { firstName: true } } }
     });
+    const presentName = student?.personalDetails?.firstName?.trim() || 'Student';
 
     const io = getIo();
     io.emit('markStudentAsPresentInClass', {
@@ -168,7 +169,7 @@ export async function markStudentAsPresent(studentId: string, classAttendanceId:
     await createNotificationAndPush({
         studentId: +studentId,
         type: NotificationType.ATTENDANCE,
-        content: 'Your class attendance has been marked as present.',
+        content: `${presentName}, your class attendance has been marked as present.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
     return { attendanceRecord: updatedClassAttendanceRecord, hasOverDue: student?.hasOverDue ?? false, overDueAmount: student?.overDue ?? 0 };
@@ -197,6 +198,7 @@ export async function undoMarkStudentAsPresent(studentId: string, classAttendanc
         throw customError(`Failed to undo mark student as PRESENT.`, 'fail', 400, true);
     }
 
+    const absentName = await getStudentFirstName(+studentId);
     const io = getIo();
     io.emit('markStudentAsPresentInClass', {
         studentId: studentId,
@@ -206,7 +208,7 @@ export async function undoMarkStudentAsPresent(studentId: string, classAttendanc
     await createNotificationAndPush({
         studentId: +studentId,
         type: NotificationType.ATTENDANCE,
-        content: 'Your class attendance has been updated to absent.',
+        content: `${absentName}, your class attendance has been updated to absent.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
 

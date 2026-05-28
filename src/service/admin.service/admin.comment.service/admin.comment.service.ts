@@ -1,7 +1,7 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { InteractionType, NotificationType } from '@prisma/client';
-import { createNotificationAndPush } from '../../notification.service/notification.service';
+import { createNotificationAndPush, getStudentFirstName } from '../../notification.service/notification.service';
 
 export async function createComment(studentId: string, adminId: string, content: string, interactionType: InteractionType) {
     const result = await db.$transaction(async (db) => {
@@ -28,11 +28,13 @@ export async function createComment(studentId: string, adminId: string, content:
     });
 
     if (interactionType === InteractionType.MESSAGE) {
+        const cmtName = await getStudentFirstName(+studentId);
+        const preview = content.length > 150 ? `${content.slice(0, 147)}...` : content;
         await createNotificationAndPush({
             studentId: +studentId,
             type: NotificationType.MESSAGE,
-            title: 'New Message from School',
-            content: content.length > 160 ? `${content.slice(0, 157)}...` : content,
+            title: `New Message from School`,
+            content: `${cmtName}, ${preview}`,
             actionUrl: `/student/communication?studentId=${studentId}`
         });
     }

@@ -3,7 +3,7 @@ import { customError } from '../../../../utils/customError';
 import { db } from '../../../../utils/db.server';
 import { updateStudentLastTwoDaysAttendance } from '../../../../service/admin.service/admin.checkin.service/admin.checkin.service';
 import { NotificationType } from '@prisma/client';
-import { createNotificationAndPush } from '../../../notification.service/notification.service';
+import { createNotificationAndPush, getStudentFirstName } from '../../../notification.service/notification.service';
 
 export async function markWeekdayStudentAsPresent(studentId: string, studentClassAssignmentId: string, remarks?: string) {
     // Update the existing ClassAttendance record to mark the student as "PRESENT"
@@ -67,6 +67,7 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
         throw customError(`Failed to mark student as PRESENT.`, 'fail', 400, true);
     }
     await updateStudentLastTwoDaysAttendance(db, +studentId);
+    const presentName = await getStudentFirstName(+studentId);
     const io = getIo();
     io.emit('studentAttendanceUpdated', {
         studentId: studentId,
@@ -76,7 +77,7 @@ export async function markWeekdayStudentAsPresent(studentId: string, studentClas
     await createNotificationAndPush({
         studentId: +studentId,
         type: NotificationType.ATTENDANCE,
-        content: 'Your attendance has been marked as present.',
+        content: `${presentName}, your school attendance has been marked as present.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
     return { updatedClassAttendanceRecord, updatedAttendanceRecord };
@@ -138,6 +139,7 @@ export async function undoMarkWeekdayStudentAsPresent(studentId: string, student
     if (!updatedClassAttendanceRecords) {
         throw customError(`Failed to revert attendance status for student.`, 'fail', 400, true);
     }
+    const absentName = await getStudentFirstName(+studentId);
     const io = getIo();
     io.emit('studentAttendanceUpdated', {
         studentId: studentId,
@@ -147,7 +149,7 @@ export async function undoMarkWeekdayStudentAsPresent(studentId: string, student
     await createNotificationAndPush({
         studentId: +studentId,
         type: NotificationType.ATTENDANCE,
-        content: 'Your attendance has been updated to absent.',
+        content: `${absentName}, your school attendance has been updated to absent.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
 
