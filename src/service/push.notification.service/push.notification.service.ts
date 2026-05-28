@@ -88,6 +88,21 @@ export async function sendPushToStudents(studentIds: number[], title: string, bo
                 title,
                 body
             },
+            // Android: target the channel Flutter creates ('slms_high_importance') and
+            // mark as high-priority so the message wakes the device immediately.
+            android: {
+                priority: 'high',
+                notification: {
+                    channelId: 'slms_high_importance',
+                    priority: 'high',
+                    sound: 'default'
+                }
+            },
+            // iOS: wake from background and play the default sound.
+            apns: {
+                headers: { 'apns-priority': '10' },
+                payload: { aps: { sound: 'default' } }
+            },
             data
         });
 
