@@ -84,20 +84,23 @@ const server = http.createServer(app);
 initSocket(server);
 app.use(cookieParser());
 
-const origin =
-    process.env.NODE_ENV === 'development'
-        ? ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8080', 'https://slms-client-2aam.vercel.app']
-        : [
-              'https://SLMS.com',
-              'http://localhost:5173',
-              'http://localhost:5174',
-              'http://localhost:5175',
-              'https://slms-client-2aam.vercel.app',
-              'https://akaalshaouni.org',
-              'https://www.akaalshaouni.org',
-              'https://stg.akaalshaouni.org',
-              'https://www.stg.akaalshaouni.org'
-          ];
+// Single flat allowlist — intentionally NOT branched on NODE_ENV.
+// We were getting bitten by NODE_ENV being silently set to "development" on
+// production deploys, which silently swapped the allowlist and broke CORS for
+// www.akaalshaouni.org without any other symptom. Keeping localhost entries
+// here in prod is harmless (nobody is exploiting CORS from http://localhost).
+const origin = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:8080',
+    'https://slms-client-2aam.vercel.app',
+    'https://SLMS.com',
+    'https://akaalshaouni.org',
+    'https://www.akaalshaouni.org',
+    'https://stg.akaalshaouni.org',
+    'https://www.stg.akaalshaouni.org'
+];
 
 app.use(
     cors({

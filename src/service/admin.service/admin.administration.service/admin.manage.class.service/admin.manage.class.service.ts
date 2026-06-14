@@ -82,6 +82,7 @@ export const getAllSections = async () => {
         ...section,
         hasStudentClassAssignments: section.StudentClassAssignment.length > 0,
         hasTeacherClassAssignments: section.TeacherClassAssignment.length > 0,
+        studentCount: section.StudentClassAssignment.length,
         StudentClassAssignment: undefined,
         TeacherClassAssignment: undefined
     }));
@@ -90,13 +91,14 @@ export const getAllSections = async () => {
 };
 
 export const deleteSection = async (sectionId: string) => {
- 
-
-    await db.section.delete({
-        where: {
-            id: +sectionId
-        }
-    });
+    await db.$transaction([
+        db.teacherClassAssignment.deleteMany({
+            where: { sectionId: +sectionId }
+        }),
+        db.section.delete({
+            where: { id: +sectionId }
+        })
+    ]);
 };
 
 export const findPublishTermForManageClass = async () => {
