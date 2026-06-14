@@ -262,19 +262,21 @@ model TermSubjectLevel {
 }
 
 model StudentClassAssignment {
-  id                  Int               @id @default(autoincrement())
-  enrollmentId        Int
-  studentId           Int
-  termSubjectLevelId  Int
-  sectionId           Int
-  isCurrentlyAssigned Boolean           @default(true)
-  changeDate          DateTime          @default(now())
-  note                String?
-  classAttendance     ClassAttendance[]
-  enrollment          Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  section             Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  student             Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  termSubjectLevel    TermSubjectLevel  @relation(fields: [termSubjectLevelId], references: [id], onDelete: Cascade)
+  id                     Int               @id @default(autoincrement())
+  enrollmentId           Int
+  studentId              Int
+  termSubjectLevelId     Int
+  sectionId              Int
+  isCurrentlyAssigned    Boolean           @default(true)
+  changeDate             DateTime          @default(now())
+  note                   String?
+  migratedToAssignmentId Int?
+  migratedAt             DateTime?
+  classAttendance        ClassAttendance[]
+  enrollment             Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  section                Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  student                Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  termSubjectLevel       TermSubjectLevel  @relation(fields: [termSubjectLevelId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, termSubjectLevelId, isCurrentlyAssigned, sectionId])
 }

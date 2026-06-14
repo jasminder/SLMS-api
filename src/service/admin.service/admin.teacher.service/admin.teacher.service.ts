@@ -609,6 +609,7 @@ export const getClassRecordsForAdmin = async () => {
                 term: { currentTerm: true }
             }
         },
+        orderBy: { id: 'desc' },
         include: {
             termSubjectLevel: {
                 include: {

@@ -291,6 +291,7 @@ export async function findTeacherByAssignment(termSubjectLevelId: string, sectio
             termSubjectLevelId: +termSubjectLevelId,
             sectionId: +sectionId
         },
+        orderBy: { id: 'desc' },
         include: {
             teacher: {
                 select: {

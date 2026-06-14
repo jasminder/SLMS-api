@@ -220,6 +220,15 @@ export const deleteClassAssignmentSchema = z.object({
 });
 export type DeleteClassAssignmentSchema = z.infer<typeof deleteClassAssignmentSchema>;
 
+/*Migrate ClassAttendance between assignments*/
+export const migrateClassAttendanceSchema = z.object({
+    params: z.object({
+        fromAssignmentId: z.string().min(1, { message: 'fromAssignmentId is required' }),
+        toAssignmentId: z.string().min(1, { message: 'toAssignmentId is required' }),
+    })
+});
+export type MigrateClassAttendanceSchema = z.infer<typeof migrateClassAttendanceSchema>;
+
 // last two schoolattendanace
 export const fetchRecentSchoolAttendanceSchema = z.object({
     params: z.object({

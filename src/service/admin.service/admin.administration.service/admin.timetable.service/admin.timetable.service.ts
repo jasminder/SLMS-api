@@ -166,6 +166,13 @@ export async function createSchoolTimetable(timetableData: CreateSchoolTimetable
                 // Sync teacher allocation: upsert TeacherClassAssignment so teacher's assigned classes stay in sync
                 if (slotTeacherId && termSubjectLevelId != null && sectionId != null) {
                     const timeRangeStr = `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
+                    await tx.teacherClassAssignment.deleteMany({
+                        where: {
+                            termSubjectLevelId,
+                            sectionId,
+                            NOT: { teacherId: slotTeacherId }
+                        }
+                    });
                     await tx.teacherClassAssignment.upsert({
                         where: {
                             teacherId_termSubjectLevelId_sectionId: {
@@ -552,6 +559,13 @@ export async function updateSchoolTimetable(timetableId: string, timetableData: 
                     // Sync teacher allocation: upsert TeacherClassAssignment so teacher's assigned classes stay in sync
                     if (slotTeacherId && termSubjectLevelId != null && sectionId != null) {
                         const timeRangeStr = `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
+                        await tx.teacherClassAssignment.deleteMany({
+                            where: {
+                                termSubjectLevelId,
+                                sectionId,
+                                NOT: { teacherId: slotTeacherId }
+                            }
+                        });
                         await tx.teacherClassAssignment.upsert({
                             where: {
                                 teacherId_termSubjectLevelId_sectionId: {

@@ -9,6 +9,7 @@ import {
     defaultSelectActiveStudents,
     defaultSelectActiveStudentsWIthNoSubjects,
     deleteClassAssignment,
+    migrateClassAttendance,
     deleteLeaveApplication,
     enrollActiveStudent,
     fetchFeePaymentByIdForInvoice,
@@ -322,6 +323,13 @@ export const manageClassesHandler = async (req: Request<ManageClassSchema['param
     }).catch(() => {});
     res.status(200).json(updatedStudentClassHistoryRecords);
 };
+/*migrate ClassAttendance from deactivated assignment to active one*/
+export const migrateClassAttendanceHandler = async (req: Request<{ fromAssignmentId: string; toAssignmentId: string }, {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { fromAssignmentId, toAssignmentId } = req.params;
+    const result = await migrateClassAttendance(fromAssignmentId, toAssignmentId);
+    res.status(200).json(result);
+};
+
 // Enroll Active Student Handler
 export const enrollActiveStudentHandler = async (req: Request<{}, {}, ActiveStudentEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const enrollmentData = req.body;

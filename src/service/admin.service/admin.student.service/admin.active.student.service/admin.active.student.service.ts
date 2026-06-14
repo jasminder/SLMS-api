@@ -3040,6 +3040,51 @@ export async function deleteClassAssignment(id: string) {
     return { message: 'Class assignment deleted successfully', studentId };
 }
 
+/****** migrate ClassAttendance records from a deactivated assignment to the new active one *****/
+export async function migrateClassAttendance(fromAssignmentId: string, toAssignmentId: string) {
+    const [fromAssignment, toAssignment] = await Promise.all([
+        db.studentClassAssignment.findUnique({ where: { id: +fromAssignmentId }, include: { classAttendance: true } }),
+        db.studentClassAssignment.findUnique({ where: { id: +toAssignmentId } }),
+    ]);
+
+    if (!fromAssignment) throw customError('Source assignment not found', 'fail', 404, true);
+    if (!toAssignment) throw customError('Target assignment not found', 'fail', 404, true);
+    if (fromAssignment.studentId !== toAssignment.studentId) throw customError('Assignments belong to different students', 'fail', 400, true);
+    if (fromAssignment.termSubjectLevelId !== toAssignment.termSubjectLevelId) throw customError('Assignments are for different subjects/levels', 'fail', 400, true);
+
+    if (fromAssignment.migratedToAssignmentId !== null) {
+        return { alreadyMigrated: true, migratedToAssignmentId: fromAssignment.migratedToAssignmentId, migratedAt: fromAssignment.migratedAt };
+    }
+
+    const existingDates = new Set(
+        (await db.classAttendance.findMany({
+            where: { studentClassAssignmentId: +toAssignmentId },
+            select: { date: true },
+        })).map((r) => r.date.toISOString())
+    );
+
+    let migrated = 0;
+    let skipped = 0;
+    for (const record of fromAssignment.classAttendance) {
+        if (existingDates.has(record.date.toISOString())) {
+            skipped++;
+        } else {
+            await db.classAttendance.update({
+                where: { id: record.id },
+                data: { studentClassAssignmentId: +toAssignmentId },
+            });
+            migrated++;
+        }
+    }
+
+    await db.studentClassAssignment.update({
+        where: { id: +fromAssignmentId },
+        data: { migratedToAssignmentId: +toAssignmentId, migratedAt: new Date() },
+    });
+
+    return { alreadyMigrated: false, migrated, skipped, migratedToAssignmentId: +toAssignmentId };
+}
+
 /*get all classes for students*/
 export async function findUniqueStudentClassDetails(studentId: string, termId: string) {
     const studentClassAssignmentRecords = await db.studentClassAssignment.findMany({

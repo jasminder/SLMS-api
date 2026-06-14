@@ -19,8 +19,7 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
             studentHomework: {
                 where: {
                     homework: {
-                        termSubjectLevelId: termSubjectLevelId,
-                        sectionId: sectionId
+                        termSubjectLevelId: termSubjectLevelId
                     }
                 },
                 include: {
@@ -30,8 +29,7 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
             studentClasswork: {
                 where: {
                     classwork: {
-                        termSubjectLevelId: termSubjectLevelId,
-                        sectionId: sectionId
+                        termSubjectLevelId: termSubjectLevelId
                     }
                 },
                 include: {
@@ -40,8 +38,7 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
             },
             feedback: {
                 where: {
-                    termSubjectLevelId: termSubjectLevelId,
-                    sectionId: sectionId
+                    termSubjectLevelId: termSubjectLevelId
                 }
             }
         }
@@ -58,15 +55,13 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
     const schoolCA = await db.schoolCheckInAttendance.findMany({
         where: {
             studentId,
-            
         },
         select: {
             date: true,
             classAttendance: {
                 where: {
                     studentClassAssignment: {
-                        termSubjectLevelId,
-                        sectionId
+                        termSubjectLevelId
                     }
                 },
                 select: {

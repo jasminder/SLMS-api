@@ -65,6 +65,7 @@ export const getAllSections = async () => {
                 }
             },
             StudentClassAssignment: {
+                where: { isCurrentlyAssigned: true },
                 select: {
                     id: true
                 }

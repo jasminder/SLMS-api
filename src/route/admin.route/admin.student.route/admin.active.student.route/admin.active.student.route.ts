@@ -12,6 +12,7 @@ import {
     createLeaveApplicationSchema,
     defaultSelectActiveStudentsSchema,
     deleteClassAssignmentSchema,
+    migrateClassAttendanceSchema,
     deleteLeaveApplicationSchema,
     fetchFeePaymentByIdForInvoiceSchema,
     fetchLeavesForStudentSchema,
@@ -69,6 +70,7 @@ import {
     getPaymentsByFeePaymentIdHandler,
     getStudentAttendanceByIdHandler,
     manageClassesHandler,
+    migrateClassAttendanceHandler,
     markAbsentByEditSchoolCheckInAttendanceForStudentHandler,
     markPresentByEditSchoolCheckInAttendanceForStudentHandler,
     searchActiveStudentsHandler,
@@ -236,5 +238,10 @@ adminActiveStudentRoute
     .patch(validate(updateStudentCreditBalanceSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateStudentCreditBalanceHandler));
 
 adminActiveStudentRoute.route('/get-active-students-count-without-subject').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(getActiveStudentsCountHandler));
+
+/****** migrate ClassAttendance from one section assignment to another *****/
+adminActiveStudentRoute
+    .route('/migrate-class-attendance/:fromAssignmentId/:toAssignmentId')
+    .post(validate(migrateClassAttendanceSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(migrateClassAttendanceHandler));
 
 export default adminActiveStudentRoute;
