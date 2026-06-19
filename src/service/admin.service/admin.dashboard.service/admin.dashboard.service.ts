@@ -1,6 +1,5 @@
 import { db } from '../../../utils/db.server';
-import { Day, SchoolDay } from '@prisma/client';
-import { getCurrentDay } from '../../../utils/getCurrentDay';
+import { Day } from '@prisma/client';
 
 export async function fetchActiveCheckedInStudents(dateString: string) {
     const date = new Date(dateString);
@@ -17,7 +16,12 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
             id: true
         }
     });
-    const currentDay = getCurrentDay();
+    // Expected, checked-in and the attendance % are all measured for TODAY (the
+    // viewed date). The timetable weekday is derived from the query date itself
+    // (not server `new Date()`), so the roster always matches the day whose
+    // check-ins we count — keeping checked-in <= expected and % <= 100%.
+    const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const currentDay = dayNames[startDate.getDay()];
     const currentTimetable = await db.timetable.findFirst({
         where: {
             isActive: true,
@@ -82,28 +86,12 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
         }
     });
 
-    const recentSchoolDay = await db.schoolDay.findFirst({
-        where: {
-            schoolOperatedDate: {
-                lte: startDate // Less than or equal to the query date
-            }
-        },
-        orderBy: {
-            schoolOperatedDate: 'desc'
-        }
-    });
-
-    // here
-
-    // if (!recentSchoolDay) {
-    //     throw new Error('No recent school day found.');
-    // }
-
-    // Find the immediate previous SchoolDay
+    // For the day-over-day delta: the most recent operated school day strictly
+    // before today (so "today vs last school day", not literal yesterday).
     const previousSchoolDay = await db.schoolDay.findFirst({
         where: {
             schoolOperatedDate: {
-                lt: recentSchoolDay?.schoolOperatedDate
+                lt: startDate
             }
         },
         orderBy: {
@@ -111,13 +99,13 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
         }
     });
 
-    // Function to fetch attendance for a given school day
-    const fetchAttendance = async (schoolDay: SchoolDay | null) => {
-        if (!schoolDay) return { totalCheckedIn: [], totalCheckedOut: [], totalAbsent: [], totalLeave: [], totalPresent: [] };
+    // Function to fetch attendance for a given calendar day.
+    const fetchAttendance = async (targetDate: Date | null) => {
+        if (!targetDate) return { totalCheckedIn: [], totalCheckedOut: [], totalAbsent: [], totalLeave: [], totalPresent: [] };
 
-        const startDate = new Date(schoolDay.schoolOperatedDate);
+        const startDate = new Date(targetDate);
         startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(schoolDay.schoolOperatedDate);
+        const endDate = new Date(targetDate);
         endDate.setHours(23, 59, 59, 999);
 
         const totalCheckedIn = await db.schoolCheckInAttendance.findMany({
@@ -195,10 +183,9 @@ export async function fetchActiveCheckedInStudents(dateString: string) {
         return { totalCheckedIn, totalCheckedOut, totalAbsent, totalLeave, totalPresent };
     };
 
-    // Fetch attendance for the most recent school day and the previous school day
-    // if (previousSchoolDay && recentSchoolDay) {
-    const recentAttendance = await fetchAttendance(recentSchoolDay);
-    const previousAttendance = await fetchAttendance(previousSchoolDay);
+    // Recent = today (the viewed date); previous = the last operated school day.
+    const recentAttendance = await fetchAttendance(startDate);
+    const previousAttendance = await fetchAttendance(previousSchoolDay?.schoolOperatedDate ?? null);
     return {
         activeStudents,
         recentAttendance,

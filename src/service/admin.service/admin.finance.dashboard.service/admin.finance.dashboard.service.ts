@@ -5,12 +5,23 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
     const take = 10;
     const pageNum = page ?? 0;
     const skip = pageNum * take;
+    // CREDIT is a student-level attribute, not a per-invoice status: filter by the
+    // student's creditBalance and ignore the invoice scope so the set stays the
+    // same regardless of the invoice dropdown.
+    const isCredit = paymentStatus === 'CREDIT';
     const feePayments = await db.feePayment.findMany({
         where: {
             feeTemplate: {
                 termId,
-                id: invoiceId ? +invoiceId : undefined
+                id: !isCredit && invoiceId ? +invoiceId : undefined
             },
+            ...(isCredit && {
+                studentTermFee: {
+                    student: {
+                        creditBalance: { gt: 0 }
+                    }
+                }
+            }),
             OR: [
                 {
                     invoiceId: {
@@ -94,8 +105,15 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
         where: {
             feeTemplate: {
                 termId,
-                id: invoiceId ? +invoiceId : undefined
+                id: !isCredit && invoiceId ? +invoiceId : undefined
             },
+            ...(isCredit && {
+                studentTermFee: {
+                    student: {
+                        creditBalance: { gt: 0 }
+                    }
+                }
+            }),
             OR: [
                 {
                     invoiceId: {

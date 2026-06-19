@@ -110,11 +110,14 @@ export async function findAllHomeworksBySubjectsList(termSubjectLevelIdsArray: s
 }
 
 /* Find all homework records for a termsubjectlevelid and sectionid (admin: no teacher filter) */
-export async function findAllHomeworkByTermAndSectionForAdmin(termSubjectLevelId: string, sectionId: string) {
-    const startDate = new Date();
+export async function findAllHomeworkByTermAndSectionForAdmin(termSubjectLevelId: string, sectionId: string, date?: string) {
+    const base = date ? new Date(date) : new Date();
+    const day = isNaN(base.getTime()) ? new Date() : base;
+
+    const startDate = new Date(day);
     startDate.setHours(0, 0, 0, 0);
 
-    const endDate = new Date();
+    const endDate = new Date(day);
     endDate.setHours(23, 59, 59, 999);
     const homeworks = await db.homework.findMany({
         where: {

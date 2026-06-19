@@ -600,7 +600,7 @@ export const findAllAssignedClasses = async () => {
 };
 
 /** Get attendance, classwork, and homework for all classes in one place (admin) */
-export const getClassRecordsForAdmin = async () => {
+export const getClassRecordsForAdmin = async (date?: string) => {
     // Fetch all current-term class assignments without subject-day filtering
     // so every subject (including Kirtan, weekday-only classes, etc.) is included.
     const assignedClasses = await db.teacherClassAssignment.findMany({
@@ -678,8 +678,8 @@ export const getClassRecordsForAdmin = async () => {
     const processClass = async (cls: (typeof uniqueClasses)[0]) => {
             const [attendanceData, classwork, homework] = await Promise.all([
                 fetchCheckedInStudentsWithAttendance(cls.termSubjectLevelId.toString(), cls.sectionId.toString()),
-                findAllClassworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString()),
-                findAllHomeworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString())
+                findAllClassworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString(), date),
+                findAllHomeworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString(), date)
             ]);
 
             let total = attendanceData.length;

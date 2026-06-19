@@ -23,7 +23,13 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
                     }
                 },
                 include: {
-                    homework: true
+                    homework: {
+                        include: {
+                            teacher: {
+                                include: { teacherPersonalDetails: true }
+                            }
+                        }
+                    }
                 }
             },
             studentClasswork: {
@@ -33,7 +39,13 @@ export async function fetchStudentHomework(studentId: number, termSubjectLevelId
                     }
                 },
                 include: {
-                    classwork: true
+                    classwork: {
+                        include: {
+                            teacher: {
+                                include: { teacherPersonalDetails: true }
+                            }
+                        }
+                    }
                 }
             },
             feedback: {
@@ -126,7 +138,13 @@ export async function fetchStudentReport(studentId: number) {
                     }
                 },
                 include: {
-                    classwork: true
+                    classwork: {
+                        include: {
+                            teacher: {
+                                include: { teacherPersonalDetails: true }
+                            }
+                        }
+                    }
                 }
             },
             feedback: {

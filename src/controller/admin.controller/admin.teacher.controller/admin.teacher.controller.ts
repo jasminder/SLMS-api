@@ -112,6 +112,7 @@ export const findAllAssignedClassesHandler = async (req: Request, res: Response,
 
 /** Get attendance, classwork, and homework for all classes (admin) */
 export const getClassRecordsForAdminHandler = async (req: Request, res: Response, next: NextFunction) => {
-    const records = await getClassRecordsForAdmin();
+    const date = typeof req.query.date === 'string' ? req.query.date : undefined;
+    const records = await getClassRecordsForAdmin(date);
     res.status(200).json(records);
 };
