@@ -59,6 +59,15 @@ export const searchActiveStudentsSchema = z.object({
     })
 });
 export type SearchActiveStudentsSchema = z.infer<typeof searchActiveStudentsSchema>;
+
+// global student search (all students incl. inactive/alumni/applicants)
+export const searchAllStudentsSchema = z.object({
+    query: z.object({
+        search: z.string().optional()
+    })
+});
+export type SearchAllStudentsSchema = z.infer<typeof searchAllStudentsSchema>;
+
 export const selectActiveStudentsSchema = z.object({
     query: z.object({
         search: z.string().optional(),

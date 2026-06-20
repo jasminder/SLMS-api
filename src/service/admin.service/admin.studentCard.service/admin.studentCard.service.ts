@@ -123,6 +123,8 @@ export async function searchActiveStudentsWithoutPagination(search = '', termId:
                             { lastName: { contains: search, mode: 'insensitive' } },
                             { email: { contains: search, mode: 'insensitive' } },
                             { contact: { contains: search, mode: 'insensitive' } },
+                            { address: { contains: search, mode: 'insensitive' } },
+                            { suburb: { contains: search, mode: 'insensitive' } },
                             { postcode: { contains: search, mode: 'insensitive' } }
                         ]
                     }

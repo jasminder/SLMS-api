@@ -364,6 +364,8 @@ export async function searchActiveStudents(
                         { lastName: { contains: search, mode: 'insensitive' } },
                         { email: { contains: search, mode: 'insensitive' } },
                         { contact: { contains: search, mode: 'insensitive' } },
+                        { address: { contains: search, mode: 'insensitive' } },
+                        { suburb: { contains: search, mode: 'insensitive' } },
                         { postcode: { contains: search, mode: 'insensitive' } }
                     ]
                 }
@@ -985,6 +987,8 @@ export async function selectActiveStudents(
                         { lastName: { contains: search, mode: 'insensitive' } },
                         { email: { contains: search, mode: 'insensitive' } },
                         { contact: { contains: search, mode: 'insensitive' } },
+                        { address: { contains: search, mode: 'insensitive' } },
+                        { suburb: { contains: search, mode: 'insensitive' } },
                         { postcode: { contains: search, mode: 'insensitive' } }
                     ]
                 }
@@ -2574,6 +2578,52 @@ export async function findActiveStudentEnrolledSubjects(studentId: string, termI
     return enrolledSubjects;
 }
 
+// Annotate each section of a term with `isFromOldTermOnly`: true when the section
+// has NO student assigned in this term's TermSubjectLevel but DOES have students in
+// another term. These are old-term sections that got re-linked to the current term
+// (sections are shared by name) and should be hidden from the assign-class dropdown.
+// A genuinely new, still-empty section has no students anywhere, so it stays visible.
+type TermWithSections = {
+    id: number;
+    termSubjectLevel: { id: number; sections: { id: number; name: string }[] }[];
+};
+const annotateOldTermSections = async <T extends TermWithSections>(term: T) => {
+    const currentTslIds = term.termSubjectLevel.map((tsl) => tsl.id);
+    const allSectionIds = [
+        ...new Set(term.termSubjectLevel.flatMap((tsl) => tsl.sections.map((s) => s.id)))
+    ];
+
+    const [activeThisTermRows, oldTermRows] = await Promise.all([
+        db.studentClassAssignment.findMany({
+            where: { termSubjectLevelId: { in: currentTslIds } },
+            select: { termSubjectLevelId: true, sectionId: true }
+        }),
+        db.studentClassAssignment.findMany({
+            where: {
+                sectionId: { in: allSectionIds },
+                termSubjectLevel: { termId: { not: term.id } }
+            },
+            select: { sectionId: true }
+        })
+    ]);
+
+    const activeThisTerm = new Set(activeThisTermRows.map((r) => `${r.termSubjectLevelId}:${r.sectionId}`));
+    const oldTermSectionIds = new Set(oldTermRows.map((r) => r.sectionId));
+
+    return {
+        ...term,
+        termSubjectLevel: term.termSubjectLevel.map((tsl) => ({
+            ...tsl,
+            sections: tsl.sections.map((section) => ({
+                ...section,
+                isFromOldTermOnly:
+                    !activeThisTerm.has(`${tsl.id}:${section.id}`) &&
+                    oldTermSectionIds.has(section.id)
+            }))
+        }))
+    };
+};
+
 // find current term for assign classes to active students
 export const findCurrentTermToAssignClass = async () => {
     const currentTerm = await db.term.findFirst({
@@ -2613,7 +2663,7 @@ export const findCurrentTermToAssignClass = async () => {
         throw customError(`Current Term could not found. Please try again later`, 'fail', 404, true);
     }
 
-    return currentTerm;
+    return annotateOldTermSections(currentTerm);
 };
 
 //find current term for assign classes to active students based on ID
@@ -2655,7 +2705,7 @@ export const findCurrentTermToAssignClassById = async (id: string) => {
         throw customError(`Current Term could not found. Please try again later`, 'fail', 404, true);
     }
 
-    return currentTerm;
+    return annotateOldTermSections(currentTerm);
 };
 
 /****** * assign class to student*****/
@@ -3958,4 +4008,105 @@ export async function getActiveStudentsCount() {
         }
     });
     return studentsCount;
+}
+
+/**
+ * Global student search across ALL students regardless of role/isActive/term.
+ * Covers active STUDENTs, ALUMNI, APPLICANT and WAITLISTED. Searches student name,
+ * parent names, email/parentEmail, contact/parentContact, address, suburb, postcode,
+ * and numeric akaalId / db id. Returns a lightweight payload for a dashboard quick-jump.
+ */
+export async function searchAllStudents(search = '') {
+    const trimmed = search.trim();
+    if (!trimmed) {
+        return { students: [], count: 0 };
+    }
+
+    const take = 30;
+    const like = `%${trimmed}%`;
+    // space-stripped query, so a glued "EkamSingh" matches firstName "Ekam" + lastName "Singh"
+    const noSpace = `%${trimmed.toLowerCase().replace(/\s+/g, '')}%`;
+    const searchAsNumber = isNaN(Number(trimmed)) ? null : parseInt(trimmed);
+
+    // Prisma `where` can't concat columns, so we match IDs via raw (parameterised) SQL,
+    // then hydrate the payload through Prisma. Covers active STUDENTs, ALUMNI,
+    // APPLICANT and WAITLISTED — never ADMIN/TEACHER accounts.
+    const numericClause = searchAsNumber !== null ? Prisma.sql`s."akaalId" = ${searchAsNumber} OR s.id = ${searchAsNumber} OR` : Prisma.empty;
+
+    const whereSql = Prisma.sql`
+        s.role IN ('STUDENT', 'ALUMNI', 'APPLICANT', 'WAITLISTED')
+        AND (
+            ${numericClause}
+            p."firstName" ILIKE ${like}
+            OR p."lastName" ILIKE ${like}
+            OR p.email ILIKE ${like}
+            OR p.contact ILIKE ${like}
+            OR p.address ILIKE ${like}
+            OR p.suburb ILIKE ${like}
+            OR p.postcode ILIKE ${like}
+            OR pa."fatherName" ILIKE ${like}
+            OR pa."motherName" ILIKE ${like}
+            OR pa."parentEmail" ILIKE ${like}
+            OR pa."parentContact" ILIKE ${like}
+            OR REPLACE(LOWER(COALESCE(p."firstName", '') || COALESCE(p."lastName", '')), ' ', '') LIKE ${noSpace}
+        )`;
+
+    const idRows = await db.$queryRaw<{ id: number }[]>`
+        SELECT s.id
+        FROM "Student" s
+        LEFT JOIN "PersonalDetails" p ON p."studentId" = s.id
+        LEFT JOIN "ParentsDetails" pa ON pa."studentId" = s.id
+        WHERE ${whereSql}
+        ORDER BY s."isActive" DESC, p."firstName" ASC, s.id ASC
+        LIMIT ${take}`;
+
+    const countRows = await db.$queryRaw<{ count: number }[]>`
+        SELECT COUNT(*)::int AS count
+        FROM "Student" s
+        LEFT JOIN "PersonalDetails" p ON p."studentId" = s.id
+        LEFT JOIN "ParentsDetails" pa ON pa."studentId" = s.id
+        WHERE ${whereSql}`;
+
+    const ids = idRows.map((r) => r.id);
+    const count = countRows[0]?.count ?? 0;
+
+    if (ids.length === 0) {
+        return { students: [], count };
+    }
+
+    const rows = await db.student.findMany({
+        where: { id: { in: ids } },
+        select: {
+            id: true,
+            akaalId: true,
+            role: true,
+            isActive: true,
+            personalDetails: {
+                select: {
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    contact: true,
+                    address: true,
+                    suburb: true,
+                    postcode: true,
+                    image: true
+                }
+            },
+            parentsDetails: {
+                select: {
+                    fatherName: true,
+                    motherName: true,
+                    parentEmail: true,
+                    parentContact: true
+                }
+            }
+        }
+    });
+
+    // preserve the ranked order from the raw query (findMany ignores it)
+    const orderIndex = new Map(ids.map((id, i) => [id, i]));
+    const students = rows.sort((a, b) => (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0));
+
+    return { students, count };
 }

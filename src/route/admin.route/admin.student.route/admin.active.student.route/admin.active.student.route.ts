@@ -32,6 +32,7 @@ import {
     markAbsentByEditSchoolCheckInAttendanceForStudentSchema,
     markPresentByEditSchoolCheckInAttendanceForStudentSchema,
     searchActiveStudentsSchema,
+    searchAllStudentsSchema,
     selectActiveStudentsSchema,
     updateAmountFeeDueSchema,
     updateAmountPaidAtSchoolSchema,
@@ -74,6 +75,7 @@ import {
     markAbsentByEditSchoolCheckInAttendanceForStudentHandler,
     markPresentByEditSchoolCheckInAttendanceForStudentHandler,
     searchActiveStudentsHandler,
+    searchAllStudentsHandler,
     searchActiveStudentsWithNoSubjectsHandler,
     selectActiveStudentsHandler,
     selectActiveStudentsWithNoSubjectsHandler,
@@ -100,6 +102,9 @@ adminActiveStudentRoute.route('/get-all-active-students').get(validate(findAllAc
 adminActiveStudentRoute
     .route('/get-all-active-students-with-no-subjects')
     .get(validate(findAllActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(findActiveStudentsWithNoSubjectsHandler));
+
+/*global student search (all students incl. inactive/alumni/applicants)*/
+adminActiveStudentRoute.route('/search-all-students').get(validate(searchAllStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchAllStudentsHandler));
 
 /*search active students*/
 adminActiveStudentRoute.route('/search-active-students').get(validate(searchActiveStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(searchActiveStudentsHandler));

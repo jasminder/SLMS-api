@@ -35,6 +35,7 @@ import {
     markAbsentByEditSchoolCheckInAttendanceForStudent,
     markPresentByEditSchoolCheckInAttendanceForStudent,
     searchActiveStudents,
+    searchAllStudents,
     searchActiveStudentsWithNoSubjects,
     selectActiveStudents,
     selectActiveStudentsWithNoSubjects,
@@ -74,6 +75,7 @@ import {
     MarkAbsentByEditSchoolCheckInAttendanceForStudentSchema,
     MarkPresentByEditSchoolCheckInAttendanceForStudentSchema,
     SearchActiveStudentsSchema,
+    SearchAllStudentsSchema,
     SelectActiveStudentsSchema,
     UpdateAmountFeeDueSchema,
     UpdateAmountPaidAtSchoolSchema,
@@ -118,6 +120,11 @@ export const searchActiveStudentsHandler = async (req: Request<{}, {}, {}, Searc
         activeTermId = currentTerm.id;
     }
     const searchResult = await searchActiveStudents(search, +page, activeTermId, subjectOption, levelOption, sectionOption, attendanceOption, sort, sort_dir);
+    res.status(200).json(searchResult);
+};
+export const searchAllStudentsHandler = async (req: Request<{}, {}, {}, SearchAllStudentsSchema['query']>, res: Response, next: NextFunction) => {
+    const { search = '' } = req.query;
+    const searchResult = await searchAllStudents(search);
     res.status(200).json(searchResult);
 };
 export const searchActiveStudentsWithNoSubjectsHandler = async (req: Request<{}, {}, {}, SearchActiveStudentsSchema['query']>, res: Response, next: NextFunction) => {
