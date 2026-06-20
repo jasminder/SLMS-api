@@ -124,7 +124,7 @@ export async function signUpUser(email: string, password: string, confirmPasswor
     const accessToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.SECRET_STR!, { expiresIn: '1h' });
 
     // Generate JWT tokens- refresh token token
-    const refreshToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.REFRESH_SECRET_STR!, { expiresIn: '1d' });
+    const refreshToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.REFRESH_SECRET_STR!, { expiresIn: '90d' });
 
     // Return new user data and tokens
 
@@ -312,7 +312,7 @@ export async function loginUser(email: string, password: string) {
     const accessToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.SECRET_STR!, { expiresIn: '600s' });
 
     // Generate JWT tokens- refresh token token
-    const refreshToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.REFRESH_SECRET_STR!, { expiresIn: '72000s' });
+    const refreshToken = jwt.sign({ email: user.email, role: user.role, id: user.id }, process.env.REFRESH_SECRET_STR!, { expiresIn: '90d' });
 
     return { loggedInUser, accessToken, refreshToken };
 }

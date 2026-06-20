@@ -47,7 +47,7 @@ export const signUpUserHandler = async (req: Request<{}, {}, SignupUserSchema['b
         // signed:true,
         secure: process.env.NODE_ENV === 'production', // Ensure this aligns with your cookie settings
         sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'none', // Ensure this aligns with your cookie settings
-        maxAge: 1 * 24 * 60 * 60 * 1000 // this should match with the refresh token's expiry
+        maxAge: 90 * 24 * 60 * 60 * 1000 // 90d — must match the refresh token's expiry
         // maxAge: 20 * 1000000000
     });
     res.status(201).json({
@@ -76,7 +76,7 @@ export const loginUserHandler = async (req: Request<{}, {}, LoginUserSchema['bod
         secure: process.env.NODE_ENV != 'development', //https
         // signed:true,
         sameSite: 'strict', //cross-site cookie
-        maxAge: 72000 * 1000 // this should match with the refresh token's expiry
+        maxAge: 90 * 24 * 60 * 60 * 1000 // 90d — must match the refresh token's expiry
     });
     res.status(201).json({
         status: 'Success',
@@ -160,6 +160,17 @@ export const refreshHandler = async (req: Request, res: Response, next: NextFunc
                     .then((existingUser) => {
                         const newAccessToken = jwt.sign({ email: existingUser.email, role: existingUser.role, id: existingUser.id }, process.env.SECRET_STR!, {
                             expiresIn: '600s'
+                        });
+
+                        // Rotate the refresh token so an active session keeps sliding the 90d window
+                        const newRefreshToken = jwt.sign({ email: existingUser.email, role: existingUser.role, id: existingUser.id }, process.env.REFRESH_SECRET_STR!, {
+                            expiresIn: '90d'
+                        });
+                        res.cookie('refreshToken', newRefreshToken, {
+                            httpOnly: true,
+                            secure: process.env.NODE_ENV != 'development',
+                            sameSite: 'strict',
+                            maxAge: 90 * 24 * 60 * 60 * 1000 // 90d — must match the refresh token's expiry
                         });
 
                         res.status(200).json({
