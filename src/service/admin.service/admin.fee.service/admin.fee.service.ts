@@ -92,9 +92,12 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     })
                     .filter((task) => task !== null)
             ); // Filter out null tasks
-            for (const fp of feePayments) {
-                if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
-            }
+            // AUTO-CREDIT DISABLED (2026-06): credit must no longer be auto-applied on invoice creation.
+            // May & June invoices silently spent students' creditBalance. Credit is now applied manually only
+            // via PATCH /api/v1/apply-credit-balance-to-student-feePayment-by-id. See docs/gotchas.md.
+            // for (const fp of feePayments) {
+            //     if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
+            // }
             const feeNames = await getStudentNamesMap(studentIds.map(Number));
             await createManyNotificationsAndPush(
                 studentIds.map((studentId) => ({
@@ -169,9 +172,12 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     })
                     .filter((task) => task !== null)
             ); // Filter out null tasks
-            for (const fp of feePayments) {
-                if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
-            }
+            // AUTO-CREDIT DISABLED (2026-06): credit must no longer be auto-applied on invoice creation.
+            // May & June invoices silently spent students' creditBalance. Credit is now applied manually only
+            // via PATCH /api/v1/apply-credit-balance-to-student-feePayment-by-id. See docs/gotchas.md.
+            // for (const fp of feePayments) {
+            //     if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
+            // }
             const feeNames = await getStudentNamesMap(studentIds.map(Number));
             await createManyNotificationsAndPush(
                 studentIds.map((studentId) => ({

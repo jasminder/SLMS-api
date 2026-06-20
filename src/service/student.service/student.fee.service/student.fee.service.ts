@@ -54,7 +54,10 @@ export async function fetchFeePaymentsForCurrentTermByStudentId(studentId: strin
     });
 }
 export async function feePaymentByIdForStudentPortal(feePaymentId: string) {
-    await autoApplyCreditToFeePayment(feePaymentId);
+    // AUTO-CREDIT DISABLED (2026-06): credit must no longer be auto-applied when a parent/student
+    // views a fee on the portal. It silently spent creditBalance (May & June). Apply manually only
+    // via PATCH /api/v1/apply-credit-balance-to-student-feePayment-by-id. See docs/gotchas.md.
+    // await autoApplyCreditToFeePayment(feePaymentId);
     const feePaymentById = await db.feePayment.findUnique({
         where: {
             id: +feePaymentId

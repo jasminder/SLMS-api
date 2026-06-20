@@ -1954,9 +1954,12 @@ export async function findTermSubjectGroupIdEnrolledSubjects(id: string, termSub
 /*-----------------fee-----------------------*/
 /*find fee details by id. When skipAutoApply is true, credit is not auto-applied (for manage-fee UI so user can choose). */
 export async function findFeePaymentById(id: string, skipAutoApply?: boolean) {
-    if (!skipAutoApply) {
-        await autoApplyCreditToFeePayment(id);
-    }
+    // AUTO-CREDIT DISABLED (2026-06): credit must no longer be auto-applied on fee view.
+    // It silently spent students' creditBalance (May & June). Apply credit manually only
+    // via PATCH /api/v1/apply-credit-balance-to-student-feePayment-by-id. See docs/gotchas.md.
+    // if (!skipAutoApply) {
+    //     await autoApplyCreditToFeePayment(id);
+    // }
     const feePaymentById = await db.feePayment.findUnique({
         where: {
             id: +id
@@ -2482,7 +2485,8 @@ export async function updatePaymentInstallment(
 /*get invoice data for generating invoice*/
 
 export async function fetchFeePaymentByIdForInvoice(feePaymentId: string) {
-    await autoApplyCreditToFeePayment(feePaymentId);
+    // AUTO-CREDIT DISABLED (2026-06): see findFeePaymentById above. Apply credit manually only. docs/gotchas.md.
+    // await autoApplyCreditToFeePayment(feePaymentId);
     const feePayment = await db.feePayment.findUnique({
         where: { id: parseInt(feePaymentId) },
         include: {
