@@ -677,7 +677,7 @@ export const getClassRecordsForAdmin = async (date?: string) => {
 
     const processClass = async (cls: (typeof uniqueClasses)[0]) => {
             const [attendanceData, classwork, homework] = await Promise.all([
-                fetchCheckedInStudentsWithAttendance(cls.termSubjectLevelId.toString(), cls.sectionId.toString()),
+                fetchCheckedInStudentsWithAttendance(cls.termSubjectLevelId.toString(), cls.sectionId.toString(), date),
                 findAllClassworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString(), date),
                 findAllHomeworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString(), date)
             ]);

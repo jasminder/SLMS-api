@@ -60,9 +60,33 @@ export async function sendPushToStudents(studentIds: number[], title: string, bo
         return;
     }
 
+    // Siblings are separate Student rows that share one email and one device/login,
+    // but a device token is only ever registered under a single sibling. Expand the
+    // target student ids to their siblings (same email) so a push reaches the family's
+    // registered device regardless of which sibling holds the token. (Emails in prod are
+    // stored lowercase/trimmed, so a plain `in` match is reliable.)
+    const targets = await db.student.findMany({
+        where: { id: { in: studentIds } },
+        select: { personalDetails: { select: { email: true } } }
+    });
+    const emails = Array.from(
+        new Set(
+            targets
+                .map((t) => t.personalDetails?.email?.trim().toLowerCase())
+                .filter((e): e is string => Boolean(e))
+        )
+    );
+    const siblings = emails.length
+        ? await db.student.findMany({
+              where: { role: 'STUDENT', personalDetails: { is: { email: { in: emails } } } },
+              select: { id: true }
+          })
+        : [];
+    const expandedIds = Array.from(new Set([...studentIds, ...siblings.map((s) => s.id)]));
+
     const tokens = await db.deviceToken.findMany({
         where: {
-            studentId: { in: studentIds }
+            studentId: { in: expandedIds }
         },
         select: {
             token: true

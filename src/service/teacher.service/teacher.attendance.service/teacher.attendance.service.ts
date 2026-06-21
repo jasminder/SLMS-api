@@ -7,7 +7,7 @@ import { createNotificationAndPush, getStudentFirstName } from '../../notificati
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
 
-export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: string, sectionId: string) {
+export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: string, sectionId: string, date?: string) {
     const numericTermSubjectLevelId = parseInt(termSubjectLevelId);
 
     // Find students who are currently assigned to the specified class and are active
@@ -58,10 +58,15 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
         } //
     });
 
-    const startDate = new Date();
+    // Default to today when no date is supplied (keeps the teacher's live flow today-only);
+    // Class Records passes a chosen date to view that day's attendance.
+    const base = date ? new Date(date) : new Date();
+    const day = isNaN(base.getTime()) ? new Date() : base;
+
+    const startDate = new Date(day);
     startDate.setHours(0, 0, 0, 0);
 
-    const endDate = new Date();
+    const endDate = new Date(day);
     endDate.setHours(23, 59, 59, 999);
 
     // Fetch SchoolCheckInAttendance for each student in the same class

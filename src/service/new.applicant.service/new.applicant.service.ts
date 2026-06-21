@@ -30,7 +30,10 @@ export async function checkEmailForApplication(
         where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
         select: { role: true }
     });
-    if (existingUser) {
+    // Siblings intentionally share one email: a student application on an email that
+    // already belongs to a STUDENT account is the sibling flow, so allow it. Only block
+    // when the email belongs to a TEACHER/ADMIN (staff email can't become a student).
+    if (existingUser && !(applicationType === 'student' && existingUser.role === 'STUDENT')) {
         return {
             emailTaken: true,
             reason: 'registered_user',
