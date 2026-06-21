@@ -58,16 +58,31 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
         } //
     });
 
-    // Default to today when no date is supplied (keeps the teacher's live flow today-only);
-    // Class Records passes a chosen date to view that day's attendance.
-    const base = date ? new Date(date) : new Date();
-    const day = isNaN(base.getTime()) ? new Date() : base;
+    // Resolve which attendance records belong to the requested day.
+    // The whole attendance subsystem keys off SchoolDay (the `date` columns carry a
+    // legacy UTC/Sydney offset, so they can't be filtered as plain calendar days).
+    // When Class Records requests a specific date, match by the canonical SchoolDay
+    // — mirroring the dashboard/analytics views. When no date is supplied (the
+    // teacher's live "today" flow), keep the original today-window untouched.
+    let checkInDayFilter: Record<string, unknown>;
 
-    const startDate = new Date(day);
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date(day);
-    endDate.setHours(23, 59, 59, 999);
+    if (date) {
+        // schoolOperatedDate is Sydney-midnight stored as a naive UTC timestamp, so the
+        // real calendar day is (value interpreted as UTC) converted to Sydney. DST-safe.
+        const schoolDays = await db.$queryRaw<Array<{ id: number }>>`
+            SELECT id FROM "SchoolDay"
+            WHERE ("schoolOperatedDate" AT TIME ZONE 'UTC' AT TIME ZONE 'Australia/Sydney')::date = ${date}::date
+        `;
+        const schoolDayIds = schoolDays.map((d) => Number(d.id));
+        // [-1] forces an empty match when the date has no SchoolDay (instead of matching all).
+        checkInDayFilter = { schoolDayId: { in: schoolDayIds.length ? schoolDayIds : [-1] } };
+    } else {
+        const startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date();
+        endDate.setHours(23, 59, 59, 999);
+        checkInDayFilter = { date: { gte: startDate, lte: endDate } };
+    }
 
     // Fetch SchoolCheckInAttendance for each student in the same class
     const studentsWithCheckInAndAttendance = await Promise.all(
@@ -75,10 +90,7 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
             const checkInData = await db.schoolCheckInAttendance.findFirst({
                 where: {
                     studentId: assignment.student.id,
-                    date: {
-                        gte: startDate,
-                        lte: endDate
-                    }
+                    ...checkInDayFilter
                     // checkedIn: true,
                     // isMarked: true
                 }
@@ -89,10 +101,7 @@ export async function fetchCheckedInStudentsWithAttendance(termSubjectLevelId: s
                 where: {
                     schoolCheckInAttendanceId: checkInData?.id,
                     studentClassAssignmentId: assignment.id,
-                    date: {
-                        gte: startDate,
-                        lte: endDate
-                    }
+                    ...checkInDayFilter
                 }
             });
 
