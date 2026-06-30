@@ -3,6 +3,21 @@ import { db } from '../../../utils/db.server';
 import { fetchCheckedInStudentsWithAttendance } from '../../teacher.service/teacher.attendance.service/teacher.attendance.service';
 import { findAllClassworkByTermAndSectionForAdmin } from '../../classwork.service/classwork.service';
 import { findAllHomeworkByTermAndSectionForAdmin } from '../../homework.service/homework.service';
+import { Day } from '@prisma/client';
+
+const DAYS_OF_WEEK: Day[] = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+/** Resolve a `YYYY-MM-DD` date string to its Day enum using the date's own calendar
+ *  parts (not a UTC parse), so the result doesn't depend on server process timezone. */
+const resolveDayOfWeek = (date?: string): Day => {
+    if (date) {
+        const [year, month, day] = date.split('-').map(Number);
+        if (year && month && day) {
+            return DAYS_OF_WEEK[new Date(year, month - 1, day).getDay()];
+        }
+    }
+    return DAYS_OF_WEEK[new Date().getDay()];
+};
 
 export async function findAllTeachers() {
     const approvedTeachers = await db.teacher.findMany({
@@ -601,8 +616,28 @@ export const findAllAssignedClasses = async () => {
 
 /** Get attendance, classwork, and homework for all classes in one place (admin) */
 export const getClassRecordsForAdmin = async (date?: string) => {
-    // Fetch all current-term class assignments without subject-day filtering
-    // so every subject (including Kirtan, weekday-only classes, etc.) is included.
+    // Resolve which classes are actually scheduled on the picked date's weekday
+    // (defaults to today), via the active Timetable for that Day.
+    const day = resolveDayOfWeek(date);
+    const dayTimetable = await db.timetable.findFirst({
+        where: { day, isActive: true },
+        include: { timetableSlots: { include: { timeSlot: true } } }
+    });
+    const scheduledKey = (tslId: number | null, secId: number | null) => `${tslId}-${secId}`;
+    const scheduledToday = new Set(
+        (dayTimetable?.timetableSlots ?? []).map(slot => scheduledKey(slot.termSubjectLevelId, slot.sectionId))
+    );
+    const timingMap = new Map<string, string>();
+    for (const slot of dayTimetable?.timetableSlots ?? []) {
+        if (!slot.termSubjectLevelId || !slot.sectionId) continue;
+        const key = scheduledKey(slot.termSubjectLevelId, slot.sectionId);
+        if (!timingMap.has(key)) {
+            timingMap.set(key, slot.timeSlot.timeRange);
+        }
+    }
+
+    // Fetch all current-term class assignments, then narrow to the ones
+    // scheduled on `day` via `scheduledToday` below.
     const assignedClasses = await db.teacherClassAssignment.findMany({
         where: {
             termSubjectLevel: {
@@ -659,23 +694,12 @@ export const getClassRecordsForAdmin = async (date?: string) => {
         });
     }
 
-    // Fetch timetable slots once to resolve timing for each class
-    const timetableSlots = await db.timetableSlot.findMany({
-        where: {
-            termSubjectLevelId: { in: uniqueClasses.map(c => c.termSubjectLevelId) },
-        },
-        include: { timeSlot: true }
-    });
-    const timingMap = new Map<string, string>();
-    for (const slot of timetableSlots) {
-        if (!slot.termSubjectLevelId || !slot.sectionId) continue;
-        const key = classKey(slot.termSubjectLevelId, slot.sectionId);
-        if (!timingMap.has(key)) {
-            timingMap.set(key, slot.timeSlot.timeRange);
-        }
-    }
+    // Keep only classes actually scheduled on `day` per the active Timetable.
+    const scheduledClasses = uniqueClasses.filter(cls =>
+        scheduledToday.has(classKey(cls.termSubjectLevelId, cls.sectionId))
+    );
 
-    const processClass = async (cls: (typeof uniqueClasses)[0]) => {
+    const processClass = async (cls: (typeof scheduledClasses)[0]) => {
             const [attendanceData, classwork, homework] = await Promise.all([
                 fetchCheckedInStudentsWithAttendance(cls.termSubjectLevelId.toString(), cls.sectionId.toString(), date),
                 findAllClassworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString(), date),
@@ -727,8 +751,8 @@ export const getClassRecordsForAdmin = async (date?: string) => {
     // Process in batches of 5 to avoid exhausting the DB connection pool
     const BATCH_SIZE = 5;
     const results = [];
-    for (let i = 0; i < uniqueClasses.length; i += BATCH_SIZE) {
-        const batch = uniqueClasses.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < scheduledClasses.length; i += BATCH_SIZE) {
+        const batch = scheduledClasses.slice(i, i + BATCH_SIZE);
         const batchResults = await Promise.all(batch.map(processClass));
         results.push(...batchResults);
     }
