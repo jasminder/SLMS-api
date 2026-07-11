@@ -1,5 +1,6 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
+import { sendEmail } from '../../../utils/email';
 import { ApplicantEnrollDataSchema } from '../../../schema/admin.dto/admin.enrollment.dto/admin.enrollment.dto';
 
 export async function findAllApplicants(page: number) {
@@ -555,9 +556,11 @@ export async function findApplicantEnrolledSubjects(id: string) {
 }
 
 export async function enrollApplicantToStudent(id: number) {
-    // Fetch the student record
+    // Fetch the student record (include personalDetails so we have the email for the
+    // enrollment confirmation sent below)
     const student = await db.student.findUnique({
-        where: { id }
+        where: { id },
+        include: { personalDetails: true }
     });
 
     // Check if student record exists
@@ -594,6 +597,28 @@ export async function enrollApplicantToStudent(id: number) {
             akaalId: nextAkaalId
         }
     });
+
+    // Send the enrollment confirmation email. This mirrors the (now UI-removed) late
+    // enrollment flow. Best-effort only: the enrollment is already committed above, so a
+    // mail failure must never surface as an error or undo the enrollment.
+    const email = student.personalDetails?.email;
+    if (email) {
+        const template = await db.enrollmentConfirmationEmailTemplate.findFirst({
+            orderBy: { createdAt: 'desc' }
+        });
+        if (template) {
+            try {
+                await sendEmail({ email, subject: template.subject, text: template.text });
+                console.log(`Enrollment confirmation email sent to ${email}`);
+            } catch (error) {
+                console.error(`Failed to send enrollment confirmation email to ${email}:`, error);
+            }
+        } else {
+            console.log('No enrollment confirmation email template found; skipping enrollment confirmation email.');
+        }
+    } else {
+        console.log(`Applicant ${id} has no email on file; skipping enrollment confirmation email.`);
+    }
 
     return { message: `The applicant enrolled to Student successfully` };
 }
