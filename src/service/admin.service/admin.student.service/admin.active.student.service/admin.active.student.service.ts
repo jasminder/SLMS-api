@@ -2578,11 +2578,22 @@ export async function findActiveStudentEnrolledSubjects(studentId: string, termI
     return enrolledSubjects;
 }
 
-// Annotate each section of a term with `isFromOldTermOnly`: true when the section
-// has NO student assigned in this term's TermSubjectLevel but DOES have students in
-// another term. These are old-term sections that got re-linked to the current term
-// (sections are shared by name) and should be hidden from the assign-class dropdown.
-// A genuinely new, still-empty section has no students anywhere, so it stays visible.
+// Annotate each section of a term with `isFromOldTermOnly`: true when the section is a
+// stale leftover — one that got re-linked to the current term (sections are shared by
+// name) but was never actually set up for this term. Such sections are hidden from the
+// assign-class dropdown.
+//
+// A section counts as intended-for-this-term (and therefore stays visible) if EITHER:
+//   - it already has a student assigned in this term's TermSubjectLevel, OR
+//   - it is scheduled in this term's timetable (a TimetableSlot on this term's TSL).
+// The timetable check is essential: an admin can add a brand-new section to the current
+// term's timetable and then assign students to it — at that point it has 0 students yet
+// but IS deliberately part of the term, so it must not be hidden. (Without this check the
+// student-count-only heuristic wrongly hid freshly re-created sections like "ਪੰਜਾਬੀ ਰਾਵੀ 4".)
+//
+// Only sections that are intended for NEITHER (no students this term, not on this term's
+// timetable) but DO have students in another term are treated as leftovers. A genuinely
+// new, still-empty section has no students anywhere, so it also stays visible.
 type TermWithSections = {
     id: number;
     termSubjectLevel: { id: number; sections: { id: number; name: string }[] }[];
@@ -2593,9 +2604,16 @@ const annotateOldTermSections = async <T extends TermWithSections>(term: T) => {
         ...new Set(term.termSubjectLevel.flatMap((tsl) => tsl.sections.map((s) => s.id)))
     ];
 
-    const [activeThisTermRows, oldTermRows] = await Promise.all([
+    const [activeThisTermRows, scheduledThisTermRows, oldTermRows] = await Promise.all([
         db.studentClassAssignment.findMany({
             where: { termSubjectLevelId: { in: currentTslIds } },
+            select: { termSubjectLevelId: true, sectionId: true }
+        }),
+        db.timetableSlot.findMany({
+            where: {
+                termSubjectLevelId: { in: currentTslIds },
+                sectionId: { in: allSectionIds }
+            },
             select: { termSubjectLevelId: true, sectionId: true }
         }),
         db.studentClassAssignment.findMany({
@@ -2608,6 +2626,11 @@ const annotateOldTermSections = async <T extends TermWithSections>(term: T) => {
     ]);
 
     const activeThisTerm = new Set(activeThisTermRows.map((r) => `${r.termSubjectLevelId}:${r.sectionId}`));
+    const scheduledThisTerm = new Set(
+        scheduledThisTermRows
+            .filter((r) => r.termSubjectLevelId != null && r.sectionId != null)
+            .map((r) => `${r.termSubjectLevelId}:${r.sectionId}`)
+    );
     const oldTermSectionIds = new Set(oldTermRows.map((r) => r.sectionId));
 
     return {
@@ -2618,6 +2641,7 @@ const annotateOldTermSections = async <T extends TermWithSections>(term: T) => {
                 ...section,
                 isFromOldTermOnly:
                     !activeThisTerm.has(`${tsl.id}:${section.id}`) &&
+                    !scheduledThisTerm.has(`${tsl.id}:${section.id}`) &&
                     oldTermSectionIds.has(section.id)
             }))
         }))
