@@ -113,6 +113,11 @@ export async function fetchStudentReport(studentId: number) {
                         gte: startDate
                     }
                 },
+                // Without an explicit order Postgres returns heap order, which can change
+                // between requests. Consumers that group these rows would otherwise pick an
+                // arbitrary row as the group's representative. sendDate is nullable, and a
+                // plain DESC would sort NULLs first in Postgres, so pin them last.
+                orderBy: [{ sendDate: { sort: 'desc', nulls: 'last' } }, { id: 'asc' }],
                 include: {
                     homework: {
                         include: {
@@ -137,9 +142,13 @@ export async function fetchStudentReport(studentId: number) {
                         gte: startDate
                     }
                 },
+                orderBy: [{ sendDate: { sort: 'desc', nulls: 'last' } }, { id: 'asc' }],
                 include: {
                     classwork: {
                         include: {
+                            // Mirrors the homework include so clients can resolve a
+                            // classwork item's subject the same way.
+                            subject: true,
                             teacher: {
                                 include: { teacherPersonalDetails: true }
                             }

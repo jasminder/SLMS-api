@@ -20,6 +20,53 @@ export async function findStudentsByEmail(email: string) {
     return students;
 }
 
+/** Prisma include used by every "student shaped for the app" query. */
+const studentForAppInclude = (termId?: number) => ({
+    personalDetails: true,
+    studentClassAssignment: {
+        where: {
+            ...(termId != null && {
+                termSubjectLevel: {
+                    term: { id: termId }
+                }
+            }),
+            isCurrentlyAssigned: true
+        },
+        take: 1,
+        include: {
+            section: true,
+            termSubjectLevel: {
+                select: {
+                    level: { select: { name: true } }
+                }
+            }
+        }
+    }
+});
+
+type StudentForAppRow = Awaited<ReturnType<typeof db.student.findMany<{ include: ReturnType<typeof studentForAppInclude> }>>>[number];
+
+/** Shapes a student row into the payload the mobile app's student switcher expects. */
+function mapStudentForApp(s: StudentForAppRow) {
+    const pd = s.personalDetails;
+    const classAssignment = s.studentClassAssignment?.[0];
+    const className = classAssignment?.termSubjectLevel?.level?.name && classAssignment?.section?.name
+        ? `${classAssignment.termSubjectLevel.level.name} - ${classAssignment.section.name}`
+        : classAssignment?.termSubjectLevel?.level?.name ?? '—';
+    const rawImage = (pd?.image?.trim() ?? '').replace(/^\//, '');
+    return {
+        id: String(s.id),
+        name: {
+            english: pd ? `${pd.firstName} ${pd.lastName}`.trim() : '',
+            punjabi: pd?.punjabiName ?? ''
+        },
+        photo: rawImage,
+        studentId: String(s.akaalId ?? s.id),
+        class: className,
+        attendance: s.attendancePercentageValue ?? 0
+    };
+}
+
 /** Returns current student + siblings for the app (student switcher). Does not throw when none found. */
 export async function getStudentsForApp(email: string) {
     if (!email || typeof email !== 'string' || !email.trim()) {
@@ -31,7 +78,6 @@ export async function getStudentsForApp(email: string) {
         select: { id: true }
     });
 
-    const termId = currentTerm?.id;
     const students = await db.student.findMany({
         where: {
             personalDetails: {
@@ -39,52 +85,32 @@ export async function getStudentsForApp(email: string) {
             },
             role: 'STUDENT'
         },
-        include: {
-            personalDetails: true,
-            studentClassAssignment: {
-                where: {
-                    ...(termId != null && {
-                        termSubjectLevel: {
-                            term: { id: termId }
-                        }
-                    }),
-                    isCurrentlyAssigned: true
-                },
-                take: 1,
-                include: {
-                    section: true,
-                    termSubjectLevel: {
-                        select: {
-                            level: { select: { name: true } }
-                        }
-                    }
-                }
-            }
-        }
+        include: studentForAppInclude(currentTerm?.id)
     });
 
-    const result = await Promise.all(
-        students.map(async (s) => {
-            const pd = s.personalDetails;
-            const classAssignment = s.studentClassAssignment?.[0];
-            const className = classAssignment?.termSubjectLevel?.level?.name && classAssignment?.section?.name
-                ? `${classAssignment.termSubjectLevel.level.name} - ${classAssignment.section.name}`
-                : classAssignment?.termSubjectLevel?.level?.name ?? '—';
-            const rawImage = (pd?.image?.trim() ?? '').replace(/^\//, '');
-            return {
-                id: String(s.id),
-                name: {
-                    english: pd ? `${pd.firstName} ${pd.lastName}`.trim() : '',
-                    punjabi: pd?.punjabiName ?? ''
-                },
-                photo: rawImage,
-                studentId: String(s.akaalId ?? s.id),
-                class: className,
-                attendance: s.attendancePercentageValue ?? 0
-            };
-        })
-    );
-    return result;
+    return students.map(mapStudentForApp);
+}
+
+/**
+ * Returns a single student in the same shape as [getStudentsForApp], addressed by id
+ * rather than by the caller's own email. Backs the admin "view as student" mode, so the
+ * route that exposes it is ADMIN-only. Returns [] when the id matches no student.
+ */
+export async function getStudentForAppById(studentId: string) {
+    const id = Number(studentId);
+    if (!Number.isInteger(id) || id <= 0) return [];
+
+    const currentTerm = await db.term.findFirst({
+        where: { currentTerm: true },
+        select: { id: true }
+    });
+
+    const student = await db.student.findFirst({
+        where: { id, role: 'STUDENT' },
+        include: studentForAppInclude(currentTerm?.id)
+    });
+
+    return student ? [mapStudentForApp(student)] : [];
 }
 
 export async function findStudentDetailsById(studentId: string) {

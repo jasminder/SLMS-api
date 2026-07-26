@@ -297,11 +297,21 @@ export const deleteClassAssignmentHandler = async (req: Request<DeleteClassAssig
     const { id } = req.params;
     const result = await deleteClassAssignment(id);
     if (result.studentId) {
+        // Name the class in both the description and the metadata. Storing the names (not
+        // just the id) keeps the entry readable even if the assignment row is ever purged.
+        const classLabel = [result.subjectName, result.levelName, result.sectionName]
+            .filter(Boolean)
+            .join(' - ');
         await recordStudentProfileActivity({
             studentId: result.studentId,
             actionType: 'CLASS_REMOVED',
-            description: 'Class/section assignment removed',
-            metadata: { assignmentId: +id },
+            description: classLabel ? `Class/section assignment removed: ${classLabel}` : 'Class/section assignment removed',
+            metadata: {
+                assignmentId: +id,
+                subjectName: result.subjectName,
+                levelName: result.levelName,
+                sectionName: result.sectionName,
+            },
             performedByUserId: req.user?.id,
             performedByEmail: req.user?.email ?? 'System',
         }).catch(() => {});

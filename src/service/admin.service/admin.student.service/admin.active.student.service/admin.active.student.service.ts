@@ -267,6 +267,79 @@ export async function findActiveStudentsWithNoSubjects(page: number, termId: num
     return { activeStudents, count, studentsWithNoSubjects };
 }
 
+/**
+ * Builds the subject / level / section conditions shared by the admin students list
+ * (`searchActiveStudents`, which renders the table) and its select-all companion
+ * (`selectActiveStudents`). Keeping one implementation is deliberate: these two drifted
+ * apart before, so "select all" could tick students the table never showed.
+ *
+ * Level and section must be satisfied by the SAME class assignment — applying them
+ * independently matched students whose level and section came from two unrelated
+ * classes. Only currently-assigned rows in the selected term count, so a deactivated
+ * assignment no longer makes a student look like they are still in the class.
+ *
+ * Subject joins that same assignment only when a level or section is also chosen. On its
+ * own it keeps its enrollment-based meaning, so students enrolled in a subject but not
+ * yet assigned to a class still appear.
+ */
+function buildStudentClassFilters(
+    termId: number,
+    subjectOption: string,
+    levelOption: string,
+    sectionOption: string
+): Pick<Prisma.StudentWhereInput, 'enrollments' | 'studentClassAssignment'> {
+    const conditions: Pick<Prisma.StudentWhereInput, 'enrollments' | 'studentClassAssignment'> = {};
+
+    if (subjectOption) {
+        conditions.enrollments = {
+            some: {
+                AND: [
+                    {
+                        subjectEnrollment: {
+                            termSubject: {
+                                subjectId: +subjectOption,
+                                termId
+                            }
+                        }
+                    },
+                    {
+                        termSubjectGroup: {
+                            termId
+                        }
+                    }
+                ]
+            }
+        };
+    }
+
+    const termSubjectLevel: Prisma.TermSubjectLevelWhereInput = { termId };
+    const assignmentFilter: Prisma.StudentClassAssignmentWhereInput = {
+        isCurrentlyAssigned: true,
+        termSubjectLevel
+    };
+    let hasAssignmentFilter = false;
+
+    if (levelOption) {
+        termSubjectLevel.levelId = +levelOption;
+        hasAssignmentFilter = true;
+    }
+
+    if (sectionOption) {
+        assignmentFilter.sectionId = +sectionOption;
+        hasAssignmentFilter = true;
+    }
+
+    if (subjectOption && hasAssignmentFilter) {
+        termSubjectLevel.subjectId = +subjectOption;
+    }
+
+    if (hasAssignmentFilter) {
+        conditions.studentClassAssignment = { some: assignmentFilter };
+    }
+
+    return conditions;
+}
+
 export async function searchActiveStudents(
     search = '',
     page: number,
@@ -304,54 +377,7 @@ export async function searchActiveStudents(
         whereCondition.attendancePercentageValue = +attendanceOption;
     }
 
-    // Add subject filter - Modified to be more precise
-    if (subjectOption) {
-        whereCondition.enrollments = {
-            some: {
-                AND: [
-                    {
-                        subjectEnrollment: {
-                            termSubject: {
-                                subjectId: +subjectOption,
-                                termId: +termId
-                            }
-                        }
-                    },
-                    {
-                        termSubjectGroup: {
-                            termId: +termId
-                        }
-                    }
-                ]
-            }
-        };
-    }
-
-    // Add level filter
-    if (levelOption) {
-        whereCondition.studentClassAssignment = {
-            some: {
-                termSubjectLevel: {
-                    levelId: +levelOption,
-                    termId: +termId
-                },
-                isCurrentlyAssigned: true
-            }
-        };
-    }
-
-    // Add section filter
-    if (sectionOption) {
-        whereCondition.studentClassAssignment = {
-            some: {
-                sectionId: +sectionOption,
-                isCurrentlyAssigned: true,
-                termSubjectLevel: {
-                    termId: +termId
-                }
-            }
-        };
-    }
+    Object.assign(whereCondition, buildStudentClassFilters(+termId, subjectOption, levelOption, sectionOption));
 
     // Add search conditions
     if (search) {
@@ -933,48 +959,20 @@ export async function selectActiveStudents(
 ) {
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
 
-    let classAssignmentFilters: Prisma.StudentClassAssignmentWhereInput[] = [];
-
-    if (subjectOption) {
-        classAssignmentFilters.push({
-            termSubjectLevel: {
-                subject: {
-                    id: +subjectOption
-                }
-            }
-        });
-    }
-
-    if (levelOption) {
-        classAssignmentFilters.push({
-            termSubjectLevel: {
-                level: {
-                    id: +levelOption
-                }
-            }
-        });
-    }
-    if (sectionOption) {
-        classAssignmentFilters.push({
-            sectionId: +sectionOption
-        });
-    }
-
-    // Base where condition
+    // Base where condition. Mirrors searchActiveStudents (which renders the table) so
+    // "select all" can never tick a student the table did not show.
     let whereCondition: Prisma.StudentWhereInput = {
         role: 'STUDENT',
         isActive: true,
-        attendancePercentageValue: attendanceOption ? +attendanceOption : undefined
+        attendancePercentageValue: attendanceOption ? +attendanceOption : undefined,
+        studentTermFee: {
+            some: {
+                termId: +termId
+            }
+        }
     };
 
-    // Only add studentClassAssignment condition if there are filters
-    if (classAssignmentFilters.length > 0) {
-        whereCondition.studentClassAssignment = {
-            some: {
-                AND: classAssignmentFilters
-            }
-        };
-    }
+    Object.assign(whereCondition, buildStudentClassFilters(+termId, subjectOption, levelOption, sectionOption));
 
     // Add search conditions
     if (search) {
@@ -2612,7 +2610,12 @@ const annotateOldTermSections = async <T extends TermWithSections>(term: T) => {
         db.timetableSlot.findMany({
             where: {
                 termSubjectLevelId: { in: currentTslIds },
-                sectionId: { in: allSectionIds }
+                sectionId: { in: allSectionIds },
+                // Only the LIVE timetable counts. Editing a day's timetable leaves the
+                // previous version behind as an inactive Timetable whose slots still
+                // point at sections that were dropped — without this, those retired
+                // sections looked "scheduled this term" and stayed in the dropdown.
+                timetable: { isActive: true }
             },
             select: { termSubjectLevelId: true, sectionId: true }
         }),
@@ -3091,10 +3094,21 @@ export async function createAttendanceForSingleStudent(studentId: string, date: 
 
 /****** * remove/ deactivate class for student (soft-delete to preserve attendance history) *****/
 export async function deleteClassAssignment(id: string) {
-    // Check if the class assignment exists
+    // Check if the class assignment exists. The subject/level/section come along so the
+    // caller can record WHICH class was removed in the activity log — logging only the
+    // assignment id left admins with "Class/section assignment removed" and no idea what.
     const classAssignment = await db.studentClassAssignment.findUnique({
         where: {
             id: +id
+        },
+        include: {
+            section: { select: { name: true } },
+            termSubjectLevel: {
+                select: {
+                    subject: { select: { name: true } },
+                    level: { select: { name: true } }
+                }
+            }
         }
     });
 
@@ -3115,7 +3129,13 @@ export async function deleteClassAssignment(id: string) {
         }
     });
 
-    return { message: 'Class assignment deleted successfully', studentId };
+    return {
+        message: 'Class assignment deleted successfully',
+        studentId,
+        subjectName: classAssignment.termSubjectLevel?.subject?.name ?? null,
+        levelName: classAssignment.termSubjectLevel?.level?.name ?? null,
+        sectionName: classAssignment.section?.name ?? null
+    };
 }
 
 /****** migrate ClassAttendance records from a deactivated assignment to the new active one *****/

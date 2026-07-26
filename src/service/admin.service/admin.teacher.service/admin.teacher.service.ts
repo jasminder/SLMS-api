@@ -731,6 +731,8 @@ export const getClassRecordsForAdmin = async (date?: string) => {
                     sectionId: cls.sectionId,
                     teacherId: cls.teacherId,
                     className: cls.className,
+                    subjectName: cls.termSubjectLevel.subject.name,
+                    levelName: cls.termSubjectLevel.level.name,
                     sectionName: cls.section.name,
                     termId: cls.termSubjectLevel.term.id,
                     teacherName,

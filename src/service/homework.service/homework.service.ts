@@ -102,6 +102,12 @@ export async function findAllHomeworksBySubjectsList(termSubjectLevelIdsArray: s
                 select: {
                     name: true
                 }
+            },
+            // Recipient count, so the teacher panel can flag work that was created but
+            // never sent to any student (it is otherwise invisible — such homework still
+            // shows in Class Records but reaches nobody's report).
+            _count: {
+                select: { StudentHomework: true }
             }
         }
     });

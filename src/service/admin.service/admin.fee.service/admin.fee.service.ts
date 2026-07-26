@@ -16,6 +16,10 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
         dueDate
     });
 
+    // Students dropped because they are no longer enrolled in this group. Reported back to
+    // the caller so a silent skip can never be mistaken for a successful bill.
+    const skippedDeEnrolled: { studentId: number; akaalId: number | null }[] = [];
+
     // Execute all operations in a transaction
     return db.$transaction(async (prisma) => {
         // Parse the dueDate and set it to the start of the day for comparison
@@ -74,6 +78,29 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                             throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
                         }
 
+                        // StudentTermFee alone is NOT proof of enrolment: de-enrolling keeps it
+                        // so fee history and outstanding dues survive. Without this check a
+                        // student de-enrolled in June still had a July invoice generated.
+                        //
+                        // SKIP rather than throw. This runs inside db.$transaction over the whole
+                        // batch, so throwing would roll back every other student's invoice too —
+                        // one stale id would mean nobody gets billed that month. Fee generation is
+                        // business-critical, so a bad row is dropped and reported, never fatal.
+                        const liveEnrollment = await prisma.enrollment.findFirst({
+                            where: { studentId: +studentId, termSubjectGroupId: +termSubjectGroupId },
+                            select: { id: true }
+                        });
+                        if (!liveEnrollment) {
+                            console.warn('[admin.fee] skipping de-enrolled student', {
+                                studentId: +studentId,
+                                akaalId: student.akaalId,
+                                termSubjectGroupId: +termSubjectGroupId,
+                                termSubjectGroupName
+                            });
+                            skippedDeEnrolled.push({ studentId: +studentId, akaalId: student.akaalId });
+                            return null;
+                        }
+
                         const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
                         const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
 
@@ -98,19 +125,24 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
             // for (const fp of feePayments) {
             //     if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
             // }
-            const feeNames = await getStudentNamesMap(studentIds.map(Number));
+            // Only notify students who actually got an invoice — a skipped (de-enrolled)
+            // student must not be told they have a new fee.
+            const skippedIds = new Set(skippedDeEnrolled.map((s) => s.studentId));
+            const notifiedIds = studentIds.map(Number).filter((id) => !skippedIds.has(id));
+            const feeNames = await getStudentNamesMap(notifiedIds);
             await createManyNotificationsAndPush(
-                studentIds.map((studentId) => ({
-                    studentId: +studentId,
+                notifiedIds.map((studentId) => ({
+                    studentId,
                     type: NotificationType.FEE,
-                    content: `${feeNames.get(+studentId) ?? 'Student'}, you have a new fee invoice. Please check your fee details.`,
+                    content: `${feeNames.get(studentId) ?? 'Student'}, you have a new fee invoice. Please check your fee details.`,
                     actionUrl: `/student/fee-list?studentId=${studentId}`
                 }))
             );
             return {
                 message: 'FeeTemplate and FeePayments created successfully.',
                 feeTemplate,
-                feePayments
+                feePayments: feePayments.filter(Boolean),
+                skippedDeEnrolled
             };
         }
 
@@ -154,6 +186,29 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                             throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
                         }
 
+                        // StudentTermFee alone is NOT proof of enrolment: de-enrolling keeps it
+                        // so fee history and outstanding dues survive. Without this check a
+                        // student de-enrolled in June still had a July invoice generated.
+                        //
+                        // SKIP rather than throw. This runs inside db.$transaction over the whole
+                        // batch, so throwing would roll back every other student's invoice too —
+                        // one stale id would mean nobody gets billed that month. Fee generation is
+                        // business-critical, so a bad row is dropped and reported, never fatal.
+                        const liveEnrollment = await prisma.enrollment.findFirst({
+                            where: { studentId: +studentId, termSubjectGroupId: +termSubjectGroupId },
+                            select: { id: true }
+                        });
+                        if (!liveEnrollment) {
+                            console.warn('[admin.fee] skipping de-enrolled student', {
+                                studentId: +studentId,
+                                akaalId: student.akaalId,
+                                termSubjectGroupId: +termSubjectGroupId,
+                                termSubjectGroupName
+                            });
+                            skippedDeEnrolled.push({ studentId: +studentId, akaalId: student.akaalId });
+                            return null;
+                        }
+
                         const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
                         const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
 
@@ -178,19 +233,24 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
             // for (const fp of feePayments) {
             //     if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
             // }
-            const feeNames = await getStudentNamesMap(studentIds.map(Number));
+            // Only notify students who actually got an invoice — a skipped (de-enrolled)
+            // student must not be told they have a new fee.
+            const skippedIds = new Set(skippedDeEnrolled.map((s) => s.studentId));
+            const notifiedIds = studentIds.map(Number).filter((id) => !skippedIds.has(id));
+            const feeNames = await getStudentNamesMap(notifiedIds);
             await createManyNotificationsAndPush(
-                studentIds.map((studentId) => ({
-                    studentId: +studentId,
+                notifiedIds.map((studentId) => ({
+                    studentId,
                     type: NotificationType.FEE,
-                    content: `${feeNames.get(+studentId) ?? 'Student'}, you have a new fee invoice. Please check your fee details.`,
+                    content: `${feeNames.get(studentId) ?? 'Student'}, you have a new fee invoice. Please check your fee details.`,
                     actionUrl: `/student/fee-list?studentId=${studentId}`
                 }))
             );
             return {
                 message: 'FeeTemplate and FeePayments created successfully.',
                 feeTemplate,
-                feePayments
+                feePayments: feePayments.filter(Boolean),
+                skippedDeEnrolled
             };
         }
     });
@@ -459,6 +519,14 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     const termFeeFilter =
         termSubjectGroupId === 999 ? { termId: +termId } : { termId: +termId, termSubjectGroupId: +termSubjectGroupId };
+    // De-enrolling deliberately keeps StudentTermFee so fee history and outstanding dues
+    // survive. That means selecting on StudentTermFee alone kept offering de-enrolled
+    // students for NEW invoices indefinitely — a student removed from kirtan in June was
+    // still billed for kirtan in July. Require a live enrollment as well.
+    const enrollmentFilter =
+        termSubjectGroupId === 999
+            ? { some: { termSubjectGroup: { termId: +termId } } }
+            : { some: { termSubjectGroupId: +termSubjectGroupId } };
     console.info('[admin.fee] searchActiveStudentsForFeeCreation', {
         search,
         page,
@@ -483,6 +551,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                         ...termFeeFilter
                     }
                 },
+                enrollments: enrollmentFilter,
 
                 OR: [
                     { akaalId: searchAsNumber },
@@ -630,6 +699,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                         ...termFeeFilter
                     }
                 },
+                enrollments: enrollmentFilter,
 
                 OR: [
                     { akaalId: searchAsNumber },
@@ -675,6 +745,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                         ...termFeeFilter
                     }
                 },
+                enrollments: enrollmentFilter,
 
                 OR: [
                     {
@@ -821,6 +892,7 @@ export async function searchActiveStudentsForFeeCreation(search = '', page: numb
                         ...termFeeFilter
                     }
                 },
+                enrollments: enrollmentFilter,
 
                 OR: [
                     {
@@ -854,6 +926,14 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
     const searchAsNumber = isNaN(Number(search)) ? undefined : parseInt(search);
     const termFeeFilter =
         termSubjectGroupId === 999 ? { termId: +termId } : { termId: +termId, termSubjectGroupId: +termSubjectGroupId };
+    // De-enrolling deliberately keeps StudentTermFee so fee history and outstanding dues
+    // survive. That means selecting on StudentTermFee alone kept offering de-enrolled
+    // students for NEW invoices indefinitely — a student removed from kirtan in June was
+    // still billed for kirtan in July. Require a live enrollment as well.
+    const enrollmentFilter =
+        termSubjectGroupId === 999
+            ? { some: { termSubjectGroup: { termId: +termId } } }
+            : { some: { termSubjectGroupId: +termSubjectGroupId } };
     console.info('[admin.fee] selectActiveStudentsForFeeCreation', {
         search,
         page,
@@ -875,6 +955,7 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
                         ...termFeeFilter
                     }
                 },
+                enrollments: enrollmentFilter,
 
                 OR: [
                     { akaalId: searchAsNumber },
@@ -935,6 +1016,7 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
                         ...termFeeFilter
                     }
                 },
+                enrollments: enrollmentFilter,
 
                 OR: [
                     { akaalId: searchAsNumber },
@@ -977,6 +1059,7 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
                         ...termFeeFilter
                     }
                 },
+                enrollments: enrollmentFilter,
 
                 OR: [
                     {
@@ -1037,6 +1120,7 @@ export async function selectActiveStudentsForFeeCreation(search = '', page: numb
                         ...termFeeFilter
                     }
                 },
+                enrollments: enrollmentFilter,
 
                 OR: [
                     {

@@ -18,6 +18,7 @@ import {
     findStudentsByEmail,
     findTeacherByAssignment,
     getStudentsForApp,
+    getStudentForAppById,
     getAllStudentPortalNotices,
     getAllUnreadStudentNotifications,
     getStudentPortalNotice,
@@ -43,6 +44,21 @@ export const getStudentsForAppHandler = async (req: Request, res: Response, next
     const students = await getStudentsForApp(email);
     res.status(200).json({ students });
 };
+/**
+ * GET /api/v1/students/view-as/:studentId — one student in the same shape as
+ * GET /api/v1/students, addressed by id. Backs the admin "view as student" mode.
+ * ADMIN-only (enforced on the route); never reachable by a STUDENT or PARENT token,
+ * so it cannot widen what a normal student login can read.
+ */
+export const getStudentForViewAsHandler = async (req: Request<{ studentId: string }, {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    const students = await getStudentForAppById(studentId);
+    if (students.length === 0) {
+        return res.status(404).json({ message: 'Student not found' });
+    }
+    res.status(200).json({ students });
+};
+
 export const findStudentDetailsByIdHandler = async (req: Request<FindActiveStudentDetailsSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { studentId } = req.params;
     const student = await findStudentDetailsById(studentId);

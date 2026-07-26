@@ -105,6 +105,10 @@ export async function findAllClassworksBySubjectsList(termSubjectLevelIdsArray: 
                 select: {
                     name: true
                 }
+            },
+            // See the matching comment in findAllHomeworksBySubjectsList.
+            _count: {
+                select: { StudentClasswork: true }
             }
         }
     });
