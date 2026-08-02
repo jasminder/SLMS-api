@@ -4,6 +4,7 @@ import { ActiveStudentEnrollDataSchema } from '../../../../schema/admin.dto/admi
 import { Day, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import { getIo } from '../../../../sockets/socket';
 import { updateStudentLastTwoDaysAttendance } from '../../admin.checkin.service/admin.checkin.service';
+import { syncLeaveAttendance } from '../../../../utils/syncLeaveAttendance';
 
 type AttendanceFilter = {
     attendancePercentageValue?: number;
@@ -3508,55 +3509,11 @@ export async function createLeaveApplication(studentId: string, appliedById: str
             approverId: status === 'APPROVED' ? +appliedById : null
         }
     });
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-    const currentEndDate = new Date();
-    currentEndDate.setHours(23, 59, 59, 999);
-    if (formattedStartDate <= currentEndDate && formattedEndDate >= currentDate && status === 'APPROVED') {
-        // Find the schoolCheckInAttendance record for the current day
-        const schoolAttendanceRecord = await db.schoolCheckInAttendance.findFirst({
-            where: {
-                studentId: +studentId,
-                date: {
-                    gte: currentDate,
-                    lte: currentEndDate
-                }
-            }
-        });
+    // Sync the whole leave range, not just today. The previous version matched
+    // `date: currentDate`, so a multi-day or future-dated leave only ever corrected the
+    // single day it was filed on.
+    await syncLeaveAttendance(+studentId, formattedStartDate, formattedEndDate, leaveApplication.status === 'APPROVED');
 
-        if (schoolAttendanceRecord) {
-            await db.schoolCheckInAttendance.update({
-                where: {
-                    id: schoolAttendanceRecord.id
-                },
-                data: {
-                    isOnLeave: true
-                }
-            });
-            await updateStudentLastTwoDaysAttendance(db, +studentId);
-        }
-
-        // Find and update classAttendance records for the current day
-        const classAttendanceRecords = await db.classAttendance.findMany({
-            where: {
-                studentClassAssignment: {
-                    studentId: +studentId
-                },
-                date: currentDate
-            }
-        });
-
-        classAttendanceRecords.forEach(async (record) => {
-            await db.classAttendance.update({
-                where: {
-                    id: record.id
-                },
-                data: {
-                    attendanceStatus: 'LEAVE'
-                }
-            });
-        });
-    }
     const io = getIo();
     io.emit('LeaveMarked', {
         studentId: studentId,
@@ -3603,60 +3560,17 @@ export async function updateLeaveApplication(leaveId: string, updatedById: strin
             approverId: status === 'APPROVED' ? +updatedById : null
         }
     });
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-    const currentEndDate = new Date();
-    currentEndDate.setHours(23, 59, 59, 999);
-
-    // console.log("ioutside'");
-    // console.log(formattedStartDate, currentEndDate);
-    // console.log(formattedEndDate, currentDate);
-    // console.log(status);
-
-    const isCurrentDateWithinLeave = formattedStartDate <= currentEndDate && formattedEndDate >= currentDate;
-
-    // Update the schoolCheckInAttendance and classAttendance records based on the condition
-    const schoolAttendanceRecord = await db.schoolCheckInAttendance.findFirst({
-        where: {
-            studentId: currentLeave.studentId,
-            date: {
-                gte: currentDate,
-                lte: currentEndDate
-            }
-        }
-    });
-
-    if (schoolAttendanceRecord) {
-        await db.schoolCheckInAttendance.update({
-            where: {
-                id: schoolAttendanceRecord.id
-            },
-            data: {
-                isOnLeave: isCurrentDateWithinLeave && status === 'APPROVED'
-            }
-        });
-        await updateStudentLastTwoDaysAttendance(db, schoolAttendanceRecord.studentId);
+    // An edit can move the dates, so clear attendance over the leave's OLD range before
+    // applying the new one — otherwise a leave shortened from 5 days to 2 leaves the
+    // dropped days still marked LEAVE.
+    const previousStart = new Date(currentLeave.startDate);
+    const previousEnd = new Date(currentLeave.endDate);
+    if (previousStart.getTime() !== formattedStartDate.getTime() || previousEnd.getTime() !== formattedEndDate.getTime()) {
+        await syncLeaveAttendance(currentLeave.studentId, previousStart, previousEnd, false);
     }
 
-    const classAttendanceRecords = await db.classAttendance.findMany({
-        where: {
-            studentClassAssignment: {
-                studentId: currentLeave.studentId
-            },
-            date: currentDate
-        }
-    });
+    await syncLeaveAttendance(currentLeave.studentId, formattedStartDate, formattedEndDate, updatedLeaveApplication.status === 'APPROVED');
 
-    for (const record of classAttendanceRecords) {
-        await db.classAttendance.update({
-            where: {
-                id: record.id
-            },
-            data: {
-                attendanceStatus: isCurrentDateWithinLeave && status === 'APPROVED' ? 'LEAVE' : 'ABSENT'
-            }
-        });
-    }
     const io = getIo();
     io.emit('LeaveMarked', {
         leaveId: leaveId,
@@ -3681,62 +3595,13 @@ export async function deleteLeaveApplication(leaveId: string) {
     }
 
     const { studentId, startDate, endDate } = leaveApplication;
-    const formattedStartDate = new Date(startDate);
-    formattedStartDate.setHours(0, 0, 0, 0);
-    const formattedEndDate = new Date(endDate);
-    formattedEndDate.setHours(23, 59, 59, 999);
 
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-    const currentEndDate = new Date();
-    currentEndDate.setHours(23, 59, 59, 999);
-
-    const isCurrentDateWithinLeave = formattedStartDate <= currentEndDate && formattedEndDate >= currentDate;
-
-    // Update schoolCheckInAttendance and classAttendance if current date is within leave period
-    if (isCurrentDateWithinLeave) {
-        const schoolAttendanceRecord = await db.schoolCheckInAttendance.findFirst({
-            where: {
-                studentId: studentId,
-                date: {
-                    gte: currentDate,
-                    lte: currentEndDate
-                }
-            }
-        });
-
-        if (schoolAttendanceRecord) {
-            await db.schoolCheckInAttendance.update({
-                where: {
-                    id: schoolAttendanceRecord.id
-                },
-                data: {
-                    isOnLeave: false
-                }
-            });
-            await updateStudentLastTwoDaysAttendance(db, studentId);
-        }
-
-        const classAttendanceRecords = await db.classAttendance.findMany({
-            where: {
-                studentClassAssignment: {
-                    studentId: studentId
-                },
-                date: currentDate
-            }
-        });
-
-        for (const record of classAttendanceRecords) {
-            await db.classAttendance.update({
-                where: {
-                    id: record.id
-                },
-                data: {
-                    attendanceStatus: 'ABSENT'
-                }
-            });
-        }
-    }
+    // Use the stored boundaries as-is. They were already normalised to start/end of day
+    // when the leave was written; re-applying setHours() here would re-normalise them
+    // against *this* process's timezone and shift the range off the stored attendance rows.
+    // Revoke across the whole leave range, not just today — a deleted multi-day leave
+    // previously left every day but the current one still marked LEAVE.
+    await syncLeaveAttendance(studentId, startDate, endDate, false);
 
     // Finally, delete the leave application
     await db.leave.delete({

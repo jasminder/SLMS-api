@@ -1,5 +1,6 @@
 import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
+import { syncLeaveAttendance } from '../../../utils/syncLeaveAttendance';
 
 export async function createLeaveApplicationByStudent(
     studentId: string,
@@ -38,58 +39,11 @@ export async function createLeaveApplicationByStudent(
             status: 'APPROVED'
         }
     });
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-    const currentEndDate = new Date();
-    currentEndDate.setHours(23, 59, 59, 999);
-    if (formattedStartDate <= currentEndDate && formattedEndDate >= currentDate && status === 'APPROVED') {
-        // Find the schoolCheckInAttendance record for the current day
-        const schoolAttendanceRecord = await db.schoolCheckInAttendance.findFirst({
-            where: {
-                studentId: +studentId,
-                date: {
-                    gte: currentDate,
-                    lte: currentEndDate
-                }
-            }
-        });
-
-        if (schoolAttendanceRecord) {
-            await db.schoolCheckInAttendance.update({
-                where: {
-                    id: schoolAttendanceRecord.id
-                },
-                data: {
-                    isOnLeave: true
-                }
-            });
-            const { updateStudentLastTwoDaysAttendance } = await import(
-                '../../admin.service/admin.checkin.service/admin.checkin.service'
-            );
-            await updateStudentLastTwoDaysAttendance(db, +studentId);
-        }
-
-        // Find and update classAttendance records for the current day
-        const classAttendanceRecords = await db.classAttendance.findMany({
-            where: {
-                studentClassAssignment: {
-                    studentId: +studentId
-                },
-                date: currentDate
-            }
-        });
-
-        classAttendanceRecords.forEach(async (record) => {
-            await db.classAttendance.update({
-                where: {
-                    id: record.id
-                },
-                data: {
-                    attendanceStatus: 'LEAVE'
-                }
-            });
-        });
-    }
+    // The row above is created APPROVED unconditionally — this path has no approval step.
+    // The old guard here read `status === 'APPROVED'` off the *parameter*, and every client
+    // (Flutter `leave_repository.dart`, web `StudentLeave.tsx`) posts 'PENDING', so the
+    // guard never matched and attendance was never corrected. Sync off the row we wrote.
+    await syncLeaveAttendance(+studentId, formattedStartDate, formattedEndDate, leaveApplication.status === 'APPROVED');
 
     return leaveApplication;
 }
