@@ -146,6 +146,22 @@ export async function markStudentAsPresent(studentId: string, classAttendanceId:
 
     const endDate = new Date();
     endDate.setHours(23, 59, 59, 999);
+
+    const classAttendanceRecord = await db.classAttendance.findFirst({
+        where: {
+            id: +classAttendanceId,
+            studentClassAssignment: {
+                studentId: +studentId
+            }
+        },
+        include: {
+            schoolCheckInAttendance: { select: { isCheckedOut: true } }
+        }
+    });
+    if (classAttendanceRecord?.schoolCheckInAttendance?.isCheckedOut) {
+        throw customError('Student has been checked out for the day and cannot be marked present.', 'fail', 400, true);
+    }
+
     const updatedClassAttendanceRecord = await db.classAttendance.updateMany({
         where: {
             id: +classAttendanceId,
@@ -164,9 +180,19 @@ export async function markStudentAsPresent(studentId: string, classAttendanceId:
 
     const student = await db.student.findUnique({
         where: { id: +studentId },
-        select: { hasOverDue: true, overDue: true, personalDetails: { select: { firstName: true } } }
+        select: { personalDetails: { select: { firstName: true } } }
     });
     const presentName = student?.personalDetails?.firstName?.trim() || 'Student';
+
+    const overdueAggregation = await db.feePayment.aggregate({
+        _sum: { dueAmount: true },
+        where: {
+            studentTermFee: { studentId: +studentId },
+            status: 'OVERDUE'
+        }
+    });
+    const overDueAmount = overdueAggregation._sum.dueAmount ?? 0;
+    const hasOverDue = overDueAmount > 0;
 
     const io = getIo();
     io.emit('markStudentAsPresentInClass', {
@@ -174,10 +200,10 @@ export async function markStudentAsPresent(studentId: string, classAttendanceId:
         status: 'PRESENT',
         date: new Date()
     });
-    if (student?.hasOverDue) {
+    if (hasOverDue) {
         io.emit('feeOverdueAlert', {
             studentId: studentId,
-            overDueAmount: student.overDue
+            overDueAmount
         });
     }
     await createNotificationAndPush({
@@ -186,7 +212,7 @@ export async function markStudentAsPresent(studentId: string, classAttendanceId:
         content: `${presentName}, your class attendance has been marked as present.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
-    return { attendanceRecord: updatedClassAttendanceRecord, hasOverDue: student?.hasOverDue ?? false, overDueAmount: student?.overDue ?? 0 };
+    return { attendanceRecord: updatedClassAttendanceRecord, hasOverDue, overDueAmount };
 }
 export async function undoMarkStudentAsPresent(studentId: string, classAttendanceId: string) {
     const startDate = new Date();

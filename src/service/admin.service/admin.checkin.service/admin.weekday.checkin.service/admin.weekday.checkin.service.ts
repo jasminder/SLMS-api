@@ -247,31 +247,19 @@ export async function createWeekdaySchoolCheckInAttendanceForStudent(date: strin
                             isOnLeave = true;
                         }
                         const attendanceStatus = leaveRecord ? 'LEAVE' : 'ABSENT';
-                        // Find all current studentClassAssignments for the student
+                        // Find current studentClassAssignments for the student, scoped to the
+                        // class this check-in call is actually for — matching the sibling branch
+                        // above. Without this scope, every other currently-assigned weekday class
+                        // the student has (including stale ones from a class they were moved off
+                        // of) would get a spurious ClassAttendance row seeded here too.
                         const studentClassAssignments = await db.studentClassAssignment.findMany({
-                            // where: {
-                            //     studentId: student.id,
-                            //     isCurrentlyAssigned: true,
-                            //     enrollment: {
-                            //         subjectEnrollment: {
-                            //             termSubject: {
-                            //                 isOnWeekday: true
-                            //             }
-                            //         }
-                            //     }
-                            // },
                             where: {
                                 studentId: student.id,
-                                isCurrentlyAssigned: true,
-                                termSubjectLevel: {
-                                    subject: {
-                                        termSubject: {
-                                            every: {
-                                                isOnWeekday: true
-                                            }
-                                        }
-                                    }
-                                }
+                                termSubjectLevelId: +termSubjectLevelId,
+                                section: {
+                                    name: sectionName
+                                },
+                                isCurrentlyAssigned: true
                             },
                             include: {
                                 enrollment: {

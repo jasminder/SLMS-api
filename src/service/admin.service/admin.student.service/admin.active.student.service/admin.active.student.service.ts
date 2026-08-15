@@ -2794,15 +2794,20 @@ export async function assignClassToStudent(studentId: string, termId: string, su
         throw customError(`Enrollment not found for student ${studentId} in subject ${subjectName}`, 'fail', 404, true);
     }
 
-    // Deactivate any other section assignment for this student in the same termSubjectLevel
-    // so only one "current" section exists per (student, termSubjectLevel)
+    // Deactivate every other currently-assigned class for this student under this same
+    // subject enrollment, regardless of which day/termSubjectLevel it's on — so moving a
+    // student from e.g. "Kirtan Monday" to "Kirtan Wednesday" (a different termSubjectLevel
+    // but the same subject) correctly turns off the old assignment instead of leaving it
+    // active and still generating attendance records.
     await db.studentClassAssignment.updateMany({
         where: {
             enrollmentId: subjectEnrollment.enrollment.id,
-            termSubjectLevelId: termSubjectLevel.id,
             studentId: +studentId,
-            sectionId: { not: sectionId },
-            isCurrentlyAssigned: true
+            isCurrentlyAssigned: true,
+            NOT: {
+                termSubjectLevelId: termSubjectLevel.id,
+                sectionId
+            }
         },
         data: {
             isCurrentlyAssigned: false

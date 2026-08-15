@@ -608,13 +608,21 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
     const student = await db.student.findUnique({
         where: { id: +studentId },
         select: {
-            hasOverDue: true,
-            overDue: true,
             akaalId: true,
             personalDetails: { select: { firstName: true } }
         }
     });
     const name = student?.personalDetails?.firstName?.trim() || 'Student';
+
+    const overdueAggregation = await db.feePayment.aggregate({
+        _sum: { dueAmount: true },
+        where: {
+            studentTermFee: { studentId: +studentId },
+            status: 'OVERDUE'
+        }
+    });
+    const overDueAmount = overdueAggregation._sum.dueAmount ?? 0;
+    const hasOverDue = overDueAmount > 0;
 
     const io = getIo();
     io.emit('markSchoolCheckInAttendanceForStudent', {
@@ -622,10 +630,10 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
         status: 'CheckedIn',
         date: new Date()
     });
-    if (student?.hasOverDue) {
+    if (hasOverDue) {
         io.emit('feeOverdueAlert', {
             studentId: studentId,
-            overDueAmount: student.overDue
+            overDueAmount
         });
     }
     await createNotificationAndPush({
@@ -634,7 +642,7 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
         content: `${name}, your school attendance has been marked as present.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
-    return { attendanceRecord: updatedAttendanceRecord, hasOverDue: student?.hasOverDue ?? false, overDueAmount: student?.overDue ?? 0, akaalId: student?.akaalId ?? null };
+    return { attendanceRecord: updatedAttendanceRecord, hasOverDue, overDueAmount, akaalId: student?.akaalId ?? null };
 }
 
 /*undo checkin for a student*/
