@@ -87,6 +87,7 @@ export async function createSchoolCheckInAttendanceForStudent(date: string) {
                         },
                         studentClassAssignment: {
                             some: {
+                                isCurrentlyAssigned: true,
                                 OR: timetableSlots.map((slot) => ({
                                     AND: [{ termSubjectLevelId: slot.termSubjectLevelId ?? undefined }, { sectionId: slot.sectionId ?? undefined }]
                                 }))
@@ -475,6 +476,7 @@ export async function fetchSchoolCheckInAttendance() {
             student: {
                 include: {
                     studentClassAssignment: {
+                        where: { isCurrentlyAssigned: true },
                         include: {
                             section: true,
                             termSubjectLevel: {
