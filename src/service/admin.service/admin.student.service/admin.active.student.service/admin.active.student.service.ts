@@ -380,34 +380,38 @@ export async function searchActiveStudents(
 
     Object.assign(whereCondition, buildStudentClassFilters(+termId, subjectOption, levelOption, sectionOption));
 
-    // Add search conditions
+    // Add search conditions. A purely numeric search is treated as a Student ID
+    // lookup — exact match only — so e.g. "5500" doesn't also surface unrelated
+    // students whose phone/postcode/address happens to contain "5500".
     if (search) {
-        whereCondition.OR = [
-            ...(searchAsNumber ? [{ akaalId: searchAsNumber }] : []),
-            {
-                personalDetails: {
-                    OR: [
-                        { firstName: { contains: search, mode: 'insensitive' } },
-                        { lastName: { contains: search, mode: 'insensitive' } },
-                        { email: { contains: search, mode: 'insensitive' } },
-                        { contact: { contains: search, mode: 'insensitive' } },
-                        { address: { contains: search, mode: 'insensitive' } },
-                        { suburb: { contains: search, mode: 'insensitive' } },
-                        { postcode: { contains: search, mode: 'insensitive' } }
-                    ]
-                }
-            },
-            {
-                parentsDetails: {
-                    OR: [
-                        { fatherName: { contains: search, mode: 'insensitive' } },
-                        { motherName: { contains: search, mode: 'insensitive' } },
-                        { parentEmail: { contains: search, mode: 'insensitive' } },
-                        { parentContact: { contains: search, mode: 'insensitive' } }
-                    ]
-                }
-            }
-        ];
+        whereCondition.OR =
+            searchAsNumber !== undefined
+                ? [{ akaalId: searchAsNumber }]
+                : [
+                      {
+                          personalDetails: {
+                              OR: [
+                                  { firstName: { contains: search, mode: 'insensitive' } },
+                                  { lastName: { contains: search, mode: 'insensitive' } },
+                                  { email: { contains: search, mode: 'insensitive' } },
+                                  { contact: { contains: search, mode: 'insensitive' } },
+                                  { address: { contains: search, mode: 'insensitive' } },
+                                  { suburb: { contains: search, mode: 'insensitive' } },
+                                  { postcode: { contains: search, mode: 'insensitive' } }
+                              ]
+                          }
+                      },
+                      {
+                          parentsDetails: {
+                              OR: [
+                                  { fatherName: { contains: search, mode: 'insensitive' } },
+                                  { motherName: { contains: search, mode: 'insensitive' } },
+                                  { parentEmail: { contains: search, mode: 'insensitive' } },
+                                  { parentContact: { contains: search, mode: 'insensitive' } }
+                              ]
+                          }
+                      }
+                  ];
     }
 
     const activeStudents = await db.student.findMany({
@@ -975,34 +979,38 @@ export async function selectActiveStudents(
 
     Object.assign(whereCondition, buildStudentClassFilters(+termId, subjectOption, levelOption, sectionOption));
 
-    // Add search conditions
+    // Add search conditions. A purely numeric search is treated as a Student ID
+    // lookup — exact match only — so e.g. "5500" doesn't also surface unrelated
+    // students whose phone/postcode/address happens to contain "5500".
     if (search) {
-        whereCondition.OR = [
-            ...(searchAsNumber ? [{ akaalId: searchAsNumber }] : []),
-            {
-                personalDetails: {
-                    OR: [
-                        { firstName: { contains: search, mode: 'insensitive' } },
-                        { lastName: { contains: search, mode: 'insensitive' } },
-                        { email: { contains: search, mode: 'insensitive' } },
-                        { contact: { contains: search, mode: 'insensitive' } },
-                        { address: { contains: search, mode: 'insensitive' } },
-                        { suburb: { contains: search, mode: 'insensitive' } },
-                        { postcode: { contains: search, mode: 'insensitive' } }
-                    ]
-                }
-            },
-            {
-                parentsDetails: {
-                    OR: [
-                        { fatherName: { contains: search, mode: 'insensitive' } },
-                        { motherName: { contains: search, mode: 'insensitive' } },
-                        { parentEmail: { contains: search, mode: 'insensitive' } },
-                        { parentContact: { contains: search, mode: 'insensitive' } }
-                    ]
-                }
-            }
-        ];
+        whereCondition.OR =
+            searchAsNumber !== undefined
+                ? [{ akaalId: searchAsNumber }]
+                : [
+                      {
+                          personalDetails: {
+                              OR: [
+                                  { firstName: { contains: search, mode: 'insensitive' } },
+                                  { lastName: { contains: search, mode: 'insensitive' } },
+                                  { email: { contains: search, mode: 'insensitive' } },
+                                  { contact: { contains: search, mode: 'insensitive' } },
+                                  { address: { contains: search, mode: 'insensitive' } },
+                                  { suburb: { contains: search, mode: 'insensitive' } },
+                                  { postcode: { contains: search, mode: 'insensitive' } }
+                              ]
+                          }
+                      },
+                      {
+                          parentsDetails: {
+                              OR: [
+                                  { fatherName: { contains: search, mode: 'insensitive' } },
+                                  { motherName: { contains: search, mode: 'insensitive' } },
+                                  { parentEmail: { contains: search, mode: 'insensitive' } },
+                                  { parentContact: { contains: search, mode: 'insensitive' } }
+                              ]
+                          }
+                      }
+                  ];
     }
 
     const activeStudents = await db.student.findMany({
@@ -3758,7 +3766,9 @@ export async function markPresentByEditSchoolCheckInAttendanceForStudent(student
         throw customError('Attendance record not found for today.', 'fail', 404, true);
     }
 
-    // Update the check-in time, set checkedIn to true, and mark attendance
+    // Update the check-in time, set checkedIn to true, and mark attendance.
+    // Does not stamp a checkout — we don't actually know when the student left
+    // that day, so recording one at the same instant as check-in is misleading.
     const updatedAttendanceRecord = await db.schoolCheckInAttendance.update({
         where: {
             id: attendanceRecord.id
@@ -3767,9 +3777,7 @@ export async function markPresentByEditSchoolCheckInAttendanceForStudent(student
             checkInTime: new Date(),
             checkedIn: true,
             remarks: remarks || null,
-            isMarked: true,
-            checkOutTime: new Date(),
-            isCheckedOut: true
+            isMarked: true
         }
     });
 

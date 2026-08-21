@@ -611,10 +611,15 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
         where: { id: +studentId },
         select: {
             akaalId: true,
-            personalDetails: { select: { firstName: true } }
+            personalDetails: { select: { firstName: true, lastName: true } }
         }
     });
     const name = student?.personalDetails?.firstName?.trim() || 'Student';
+    const studentName =
+        [student?.personalDetails?.firstName, student?.personalDetails?.lastName]
+            .filter((part) => part && part.trim())
+            .join(' ')
+            .trim() || null;
 
     const overdueAggregation = await db.feePayment.aggregate({
         _sum: { dueAmount: true },
@@ -644,7 +649,7 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
         content: `${name}, your school attendance has been marked as present.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
-    return { attendanceRecord: updatedAttendanceRecord, hasOverDue, overDueAmount, akaalId: student?.akaalId ?? null };
+    return { attendanceRecord: updatedAttendanceRecord, hasOverDue, overDueAmount, akaalId: student?.akaalId ?? null, studentName };
 }
 
 /*undo checkin for a student*/
