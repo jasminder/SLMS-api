@@ -109,7 +109,10 @@ export async function findAllHomeworksBySubjectsList(termSubjectLevelIdsArray: s
             _count: {
                 select: { StudentHomework: true }
             }
-        }
+        },
+        // Issue 13: newest first by creation date, the higher id first when two were created at the same moment.
+        // Without this the database returned the rows in whatever order they happened to be stored.
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }]
     });
 
     return homeworks;
