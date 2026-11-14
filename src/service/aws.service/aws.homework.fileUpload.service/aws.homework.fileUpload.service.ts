@@ -1,6 +1,7 @@
 import S3 from 'aws-sdk/clients/s3';
 import { randomUUID } from 'crypto';
 import { customError } from '../../../utils/customError';
+import { attachmentKeyExtension } from './attachment.key.rules';
 
 const s3 = new S3({
     apiVersion: '2006-03-01',
@@ -19,7 +20,8 @@ export const getHomeWorkPresignedUrl = async (fileName: string, fileType: string
     if (fileTypeParts.length !== 2 || !fileTypeParts[1]) {
         throw customError('Invalid fileType format. Expected format: type/extension', 'fail', 400, true);
     }
-    const extension = fileTypeParts[1];
+    // Issue 12: the original file name's extension when it is a plain 1-10 character one, otherwise the MIME subtype (as before).
+    const extension = attachmentKeyExtension(fileName, fileTypeParts[1]);
 
     const Key = `${fileName}-${randomUUID()}.${extension}`;
 
