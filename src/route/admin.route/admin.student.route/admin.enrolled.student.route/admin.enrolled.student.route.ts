@@ -44,7 +44,8 @@ adminEnrolledStudentRoute
 /*enroll applicant to subject*/
 adminEnrolledStudentRoute.route('/enroll-enrolled-student').post(validate(enrolledStudentEnrollDataSchema), asyncErrorHandler(enrollStudentEnrolledToSubjectsHandler));
 /* de-enroll enrolled student to subjects */
-adminEnrolledStudentRoute.route('/de-enroll-enrolled-student').post(validate(enrolledStudentEnrollDataSchema), asyncErrorHandler(deEnrollStudentEnrolledToSubjectsHandler));
+/* Was reachable WITHOUT logging in. Same pattern as the other de-enrol routes: signed-in ADMIN only (Issue 10). */
+adminEnrolledStudentRoute.route('/de-enroll-enrolled-student').post(validate(enrolledStudentEnrollDataSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deEnrollStudentEnrolledToSubjectsHandler));
 // enroll enrolled-student to active student for the current term
 adminEnrolledStudentRoute.route('/enrolled-student-to-current-term/:id').post(validate(findUniqueEnrolledStudentSchema), asyncErrorHandler(enrollToCurrenTermHandler));
 // adminEnrolledStudentRoute.route('/deleteAllStudents');

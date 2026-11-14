@@ -1,3 +1,5 @@
+import { endEnrollmentWithHistory } from '../admin.enrollment.history.service/enrollment.history.service';
+import type { DeEnrollActor } from '../admin.enrollment.history.service/enrollment.history.service';
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { AlumniEnrollDataSchema } from '../../../schema/admin.dto/admin.alumni.dto/admin.alumni.dto';
@@ -564,87 +566,27 @@ export async function enrollAlumniToSubjects(enrollData: AlumniEnrollDataSchema[
 }
 
 /* de-enroll enrolled student to subjects */
-export async function deEnrollAlumniEnrolledToSubjects(deEnrollData: AlumniEnrollDataSchema['body']) {
-    // Check total number of subjects enrolled in the term
-    const termId = deEnrollData.enrollData[0].termId;
-    const totalEnrollments = await db.enrollment.count({
-        where: {
-            studentId: deEnrollData.alumniId,
-            termSubjectGroup: {
-                termId: termId
-            }
-        }
-    });
-
-    // if (totalEnrollments <= deEnrollData.enrollData.length) {
-    //     throw customError('The student must be enrolled in at least one subject.', 'fail', 404, true);
-    // }
-
-    let deEnrolledSubjects = [];
-
-    for (const deEnrollItem of deEnrollData.enrollData) {
-        // Find the SubjectEnrollment record
-        const subjectEnrollment = await db.subjectEnrollment.findFirst({
-            where: {
-                termSubjectId: deEnrollItem.termSubjectId,
-                enrollment: {
-                    studentId: deEnrollData.alumniId,
-                    termSubjectGroupId: deEnrollItem.termSubjectGroupId
+export async function deEnrollAlumniEnrolledToSubjects(deEnrollData: AlumniEnrollDataSchema['body'], actor?: DeEnrollActor) {
+    const deEnrolledSubjects: string[] = [];
+    const history: { subject: string; enrollmentHistoryId: number; attendanceArchived: number }[] = [];
+    await db.$transaction(
+        async (tx) => {
+            for (const deEnrollItem of deEnrollData.enrollData) {
+                const ended = await endEnrollmentWithHistory(tx, { studentId: deEnrollData.alumniId, item: deEnrollItem, source: 'ALUMNI', actor });
+                if (!ended) {
+                    throw customError(`Not enrolled in subject: ${deEnrollItem.subject}`, 'fail', 404, true);
                 }
+                history.push({ subject: deEnrollItem.subject, enrollmentHistoryId: ended.enrollmentHistoryId, attendanceArchived: ended.attendanceArchived });
+                deEnrolledSubjects.push(deEnrollItem.subject);
             }
-        });
-
-        if (!subjectEnrollment) {
-            throw customError(`Not enrolled in subject: ${deEnrollItem.subject}`, 'fail', 404, true);
-        }
-
-        // Delete the SubjectEnrollment record
-        await db.subjectEnrollment.delete({
-            where: { id: subjectEnrollment.id }
-        });
-
-        // Delete the Enrollment record
-        await db.enrollment.delete({
-            where: { id: subjectEnrollment.enrollmentId }
-        });
-        // Do not delete StudentTermFee or FeePayment when de-enrolling. Preserve fee history and due fees.
-        // // Check for remaining enrollments in the same TermSubjectGroup
-        // const remainingEnrollments = await db.enrollment.count({
-        //     where: {
-        //         studentId: deEnrollData.alumniId,
-        //         termSubjectGroupId: deEnrollItem.termSubjectGroupId
-        //     }
-        // });
-
-        // // If no remaining enrollments, handle StudentTermFee and FeePayment records
-        // if (remainingEnrollments === 0) {
-        //     const studentTermFee = await db.studentTermFee.findFirst({
-        //         where: {
-        //             studentId: deEnrollData.alumniId,
-        //             termSubjectGroupId: deEnrollItem.termSubjectGroupId,
-        //             termId: deEnrollItem.termId
-        //         }
-        //     });
-
-        //     if (studentTermFee) {
-        //         // Delete associated FeePayment records
-        //         await db.feePayment.deleteMany({
-        //             where: { studentTermFeeId: studentTermFee.id }
-        //         });
-
-        //         // Delete the StudentTermFee record
-        //         await db.studentTermFee.delete({
-        //             where: { id: studentTermFee.id }
-        //         });
-        //     }
-        // }
-
-        deEnrolledSubjects.push(deEnrollItem.subject);
-    }
-
+        },
+        { timeout: 60000 }
+    );
+    // History and attendance archive are written in the same transaction as the delete: all or nothing.
     return {
         message: 'De-enrollment process completed',
-        deEnrolledSubjects
+        deEnrolledSubjects,
+        history
     };
 }
 export async function makeAlumniToActiveById(alumniId: string) {

@@ -365,7 +365,7 @@ export const enrollActiveStudentHandler = async (req: Request<{}, {}, ActiveStud
 // De-enroll Active Student Handler
 export const deEnrollActiveStudentHandler = async (req: Request<{}, {}, ActiveStudentEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const deEnrollmentData = req.body;
-    const deEnrollmentResult = await deEnrollActiveStudent(deEnrollmentData);
+    const deEnrollmentResult = await deEnrollActiveStudent(deEnrollmentData, { userId: req.user?.id, email: req.user?.email });
     await recordStudentProfileActivity({
         studentId: deEnrollmentData.activeStudentId,
         actionType: 'DE_ENROLLMENT',

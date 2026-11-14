@@ -1,3 +1,5 @@
+import { endEnrollmentWithHistory } from '../admin.enrollment.history.service/enrollment.history.service';
+import type { DeEnrollActor } from '../admin.enrollment.history.service/enrollment.history.service';
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { sendEmail } from '../../../utils/email';
@@ -450,72 +452,45 @@ export async function enrollApplicant(enrollData: ApplicantEnrollDataSchema['bod
 }
 
 /* de-enroll applicant to subjects */
-export async function deEnrollApplicant(deEnrollData: ApplicantEnrollDataSchema['body']) {
-    let deEnrolledSubjects = [];
+export async function deEnrollApplicant(deEnrollData: ApplicantEnrollDataSchema['body'], actor?: DeEnrollActor) {
+    const deEnrolledSubjects: string[] = [];
+    const history: { subject: string; enrollmentHistoryId: number; attendanceArchived: number }[] = [];
+    const financialRecordsPreserved: { subject: string; termSubjectGroupId: number; invoices: number }[] = [];
+    await db.$transaction(
+        async (tx) => {
+            for (const deEnrollItem of deEnrollData.enrollData) {
+                const ended = await endEnrollmentWithHistory(tx, { studentId: deEnrollData.applicantId, item: deEnrollItem, source: 'APPLICANT', actor });
+                if (!ended) {
+                    throw new Error(`Not enrolled in subject: ${deEnrollItem.subject}`);
+                }
+                history.push({ subject: deEnrollItem.subject, enrollmentHistoryId: ended.enrollmentHistoryId, attendanceArchived: ended.attendanceArchived });
+                deEnrolledSubjects.push(deEnrollItem.subject);
 
-    for (const deEnrollItem of deEnrollData.enrollData) {
-        // Find the SubjectEnrollment record
-        const subjectEnrollment = await db.subjectEnrollment.findFirst({
-            where: {
-                termSubjectId: deEnrollItem.termSubjectId,
-                enrollment: {
-                    studentId: deEnrollData.applicantId,
-                    termSubjectGroupId: deEnrollItem.termSubjectGroupId
+            // Financial records are NEVER destroyed here (Issue 9/10): invoices, payments and their audit trail are kept.
+            // Only a fee record that holds no invoice at all (an empty placeholder) is removed, as before.
+            const remainingEnrollments = await tx.enrollment.count({ where: { studentId: deEnrollData.applicantId, termSubjectGroupId: deEnrollItem.termSubjectGroupId } });
+            if (remainingEnrollments === 0) {
+                const studentTermFee = await tx.studentTermFee.findFirst({
+                    where: { studentId: deEnrollData.applicantId, termSubjectGroupId: deEnrollItem.termSubjectGroupId, termId: deEnrollItem.termId }
+                });
+                if (studentTermFee) {
+                    const invoiceCount = await tx.feePayment.count({ where: { studentTermFeeId: studentTermFee.id } });
+                    if (invoiceCount === 0) {
+                        await tx.studentTermFee.delete({ where: { id: studentTermFee.id } });
+                    } else {
+                        financialRecordsPreserved.push({ subject: deEnrollItem.subject, termSubjectGroupId: deEnrollItem.termSubjectGroupId, invoices: invoiceCount });
+                    }
                 }
             }
-        });
-
-        if (!subjectEnrollment) {
-            throw new Error(`Not enrolled in subject: ${deEnrollItem.subject}`);
-        }
-
-        // Delete the SubjectEnrollment record
-        await db.subjectEnrollment.delete({
-            where: { id: subjectEnrollment.id }
-        });
-
-        // Delete the Enrollment record
-        await db.enrollment.delete({
-            where: { id: subjectEnrollment.enrollmentId }
-        });
-
-        // Check for remaining enrollments in the same TermSubjectGroup
-        const remainingEnrollments = await db.enrollment.count({
-            where: {
-                studentId: deEnrollData.applicantId,
-                termSubjectGroupId: deEnrollItem.termSubjectGroupId
             }
-        });
-
-        // If no remaining enrollments, handle StudentTermFee and FeePayment records
-        if (remainingEnrollments === 0) {
-            const studentTermFee = await db.studentTermFee.findFirst({
-                where: {
-                    studentId: deEnrollData.applicantId,
-                    termSubjectGroupId: deEnrollItem.termSubjectGroupId,
-                    termId: deEnrollItem.termId
-                }
-            });
-
-            if (studentTermFee) {
-                // Delete associated FeePayment records
-                await db.feePayment.deleteMany({
-                    where: { studentTermFeeId: studentTermFee.id }
-                });
-
-                // Delete the StudentTermFee record
-                await db.studentTermFee.delete({
-                    where: { id: studentTermFee.id }
-                });
-            }
-        }
-
-        deEnrolledSubjects.push(deEnrollItem.subject);
-    }
-
+        },
+        { timeout: 60000 }
+    );
+    // History and attendance archive are written in the same transaction as the delete: all or nothing.
     return {
         message: 'De-enrollment process completed',
-        deEnrolledSubjects
+        deEnrolledSubjects,
+        history, financialRecordsPreserved
     };
 }
 

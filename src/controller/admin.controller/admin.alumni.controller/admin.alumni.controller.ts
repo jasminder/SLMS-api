@@ -1,3 +1,4 @@
+import { recordStudentProfileActivity } from '../../../service/admin.service/admin.student.service/admin.student.activity.service/admin.student.activity.service';
 import { NextFunction, Request, Response } from 'express';
 import { deEnrollAlumniEnrolledToSubjects, enrollAlumniToSubjects, findAllAlumni, findAlumniById, findAlumniEnrolledSubjects, findTermToEnrollForAlumni, makeAlumniToActiveById, searchAlumni } from '../../../service/admin.service/admin.alumni.service/admin.alumni.service';
 import { AlumniEnrollDataSchema, FindAllAlumniSchema, FindAlumniSubjectsSchema, FindUniqueAlumniSchema, MakeAlumniToActiveByIdSchema, SearchAlumniSchema } from '../../../schema/admin.dto/admin.alumni.dto/admin.alumni.dto';
@@ -45,8 +46,17 @@ export const enrollAlumniToSubjectsHandler = async (req: Request<{}, {}, AlumniE
 };
 export const deEnrollAlumniEnrolledToSubjectsHandler = async (req: Request<{}, {}, AlumniEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const enrollData = req.body;
-    const message = await deEnrollAlumniEnrolledToSubjects(enrollData);
-    res.status(200).json(message);
+    const result = await deEnrollAlumniEnrolledToSubjects(enrollData, { userId: req.user?.id, email: req.user?.email });
+    // Same activity-log entry the active-student flow already writes (best effort: never blocks the de-enrolment).
+    await recordStudentProfileActivity({
+        studentId: enrollData.alumniId,
+        actionType: 'DE_ENROLLMENT',
+        description: 'De-enrolled from subject(s)',
+        metadata: { enrollData: enrollData.enrollData },
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System'
+    }).catch(() => {});
+    res.status(200).json(result);
 };
 export const makeAlumniToActiveByIdHandler = async (req: Request<MakeAlumniToActiveByIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { alumniId} = req.params;

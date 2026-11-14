@@ -95,6 +95,9 @@ import {
 import { findAllActiveStudentsWOPaginatonSchema, searchActiveStudentsWOPaginatonSchema } from '../../../../schema/admin.dto/admin.studentCard.dto/admin.studentCard.dto';
 import { markSchoolCheckInAttendanceForStudentHandler } from '../../../../controller/admin.controller/admin.checkin.controller/admin.checkin.controller';
 
+import { getArchivedClassAttendanceHandler, getStudentEnrollmentHistoryHandler } from '../../../../controller/admin.controller/admin.enrollment.history.controller/admin.enrollment.history.controller';
+import { studentEnrollmentHistorySchema } from '../../../../schema/admin.dto/admin.enrollment.history.dto/admin.enrollment.history.dto';
+
 const adminActiveStudentRoute = express.Router();
 
 /*find all enrolled students*/
@@ -248,5 +251,9 @@ adminActiveStudentRoute.route('/get-active-students-count-without-subject').get(
 adminActiveStudentRoute
     .route('/migrate-class-attendance/:fromAssignmentId/:toAssignmentId')
     .post(validate(migrateClassAttendanceSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(migrateClassAttendanceHandler));
+
+/* Issue 10: read-only history of subjects a student has left, and the class attendance kept for them (ADMIN only) */
+adminActiveStudentRoute.route('/enrollment-history/:id').get(validate(studentEnrollmentHistorySchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(getStudentEnrollmentHistoryHandler));
+adminActiveStudentRoute.route('/archived-class-attendance/:id').get(validate(studentEnrollmentHistorySchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(getArchivedClassAttendanceHandler));
 
 export default adminActiveStudentRoute;

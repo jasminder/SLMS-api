@@ -32,6 +32,8 @@ model Student {
   EmailContent                 EmailContent[]
   emergencyContact             EmergencyContact?
   enrollments                  Enrollment[]
+  enrollmentHistory            EnrollmentHistory[]
+  classAttendanceArchive       ClassAttendanceArchive[]
   feedback                     Feedback[]
   GroupClasswork               GroupClasswork[]
   GroupHomework                GroupHomework[]
@@ -1356,4 +1358,76 @@ enum NotificationType {
   HOMEWORK
   FEEDBACK
   FEEOVERDUE
+}
+
+/// Permanent record that a student's subject enrolment ended (written in the SAME transaction that deletes the live
+/// Enrollment, so it survives the delete). It deliberately has NO foreign key to Enrollment, SubjectEnrollment,
+/// TermSubject, TermSubjectGroup or Term: those rows are deleted or changed over time and this history must outlive them,
+/// so it also stores readable names. `enrollmentId` is the deleted Enrollment's id and is unique, so an enrolment can be
+/// recorded as ended only once (a student who leaves and later re-enrols gets a NEW Enrollment and so a NEW history row).
+/// `enrolledAt` is the Enrollment row's createdAt (null if unknown); it is never invented for older de-enrolments.
+model EnrollmentHistory {
+  id                      Int                      @id @default(autoincrement())
+  studentId               Int
+  enrollmentId            Int                      @unique
+  subjectEnrollmentId     Int?
+  termId                  Int
+  termName                String
+  termSubjectGroupId      Int
+  groupName               String
+  termSubjectId           Int?
+  subjectId               Int?
+  subjectName             String
+  enrolledAt              DateTime?
+  endedAt                 DateTime                 @default(now())
+  endedByUserId           Int?
+  endedByEmail            String
+  /// ACTIVE_STUDENT | ENROLLED_STUDENT | LATE_ENROLLED_STUDENT | ALUMNI | APPLICANT
+  source                  String
+  studentRoleAtEnd        String?
+  studentIsActiveAtEnd    Boolean?
+  /// other live enrolments left in the same fee group right after this one ended (0 = the student left the fee group)
+  remainingInGroup        Int?
+  /// snapshot of the class assignments (subject, level, section) that were removed with the enrolment
+  classAssignments        Json?
+  attendanceArchivedCount Int                      @default(0)
+  createdAt               DateTime                 @default(now())
+  student                 Student                  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attendanceArchive       ClassAttendanceArchive[]
+
+  @@index([studentId])
+  @@index([studentId, termSubjectGroupId, endedAt])
+  @@index([termSubjectGroupId, endedAt])
+}
+
+/// Copy of a ClassAttendance row taken just before its enrolment (and, by cascade, its class assignment and attendance) is
+/// deleted. Keeps enough class detail (subject, level, section, term) to report attendance for the term the student attended.
+/// `classAttendanceId` is unique so the same attendance row can never be archived twice. Only ids that no longer
+/// exist elsewhere are kept as plain integers (no foreign keys), so the archive survives the original rows being deleted.
+model ClassAttendanceArchive {
+  id                        Int               @id @default(autoincrement())
+  enrollmentHistoryId       Int
+  studentId                 Int
+  classAttendanceId         Int               @unique
+  studentClassAssignmentId  Int
+  schoolCheckInAttendanceId Int
+  schoolDayId               Int?
+  date                      DateTime
+  attendanceStatus          AttendanceStatus
+  remarks                   String?
+  termId                    Int?
+  termName                  String?
+  termSubjectLevelId        Int?
+  subjectId                 Int?
+  subjectName               String?
+  levelName                 String?
+  sectionId                 Int?
+  sectionName               String?
+  assignmentWasCurrent      Boolean?
+  archivedAt                DateTime          @default(now())
+  enrollmentHistory         EnrollmentHistory @relation(fields: [enrollmentHistoryId], references: [id], onDelete: Cascade)
+  student                   Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, date])
+  @@index([enrollmentHistoryId])
 }
