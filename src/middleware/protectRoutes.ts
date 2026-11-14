@@ -4,6 +4,8 @@ import { customError } from '../utils/customError';
 import { DecodeToken } from '../types/type';
 import { asyncErrorHandler } from '../utils/asyncErrorHandler';
 import { existingAuthUser } from '../service/auth.service/auth.service';
+import { readAppContext } from '../service/app.install.service/app.install.rules';
+import { trackSeen } from '../service/app.install.service/app.install.service';
 
 type Admin = {
     id: number | undefined;
@@ -68,6 +70,8 @@ export const protectRoute = asyncErrorHandler(async (req: Request, res: Response
                 return next(error);
             }
             req.user = existingUser;
+            // Item 25: remember the account was seen (at most once an hour). Best effort, never blocks or fails the request.
+            trackSeen(existingUser.id, readAppContext(req.headers));
             next();
         } catch (error) {
             next(error);

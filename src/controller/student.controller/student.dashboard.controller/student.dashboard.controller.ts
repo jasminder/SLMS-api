@@ -1,3 +1,5 @@
+import { readAppContext } from '../../../service/app.install.service/app.install.rules';
+import { recordAppActivitySafely } from '../../../service/app.install.service/app.install.service';
 import { NextFunction, Request, Response } from 'express';
 import {
     AcknowledgeStudentNoticeSchema,
@@ -132,6 +134,10 @@ export const upsertDeviceTokenHandler = async (req: Request<{}, {}, UpsertDevice
     }
 
     const deviceToken = await upsertStudentDeviceToken(studentId, token, platform);
+    // Item 25: a token registration is also a sign the app is installed, with the platform the app reported.
+    const reported = String(platform ?? '').toLowerCase();
+    const appContext = readAppContext(req.headers);
+    await recordAppActivitySafely(authUser?.id, reported === 'ios' || reported === 'android' ? { ...appContext, platform: reported } : appContext, 'token');
     res.status(200).json({ message: 'Device token saved.', deviceTokenId: deviceToken.id });
 };
 

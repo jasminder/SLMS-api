@@ -686,6 +686,8 @@ model User {
   student                     Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher                     Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   studentProfileActivity      StudentProfileActivity[]
+  appInstalls                 AppInstall[]
+  appVersionHistory           AppVersionHistory[]
 }
 
 model SchoolCheckInAttendance {
@@ -1430,4 +1432,53 @@ model ClassAttendanceArchive {
 
   @@index([studentId, date])
   @@index([enrollmentHistoryId])
+}
+
+/// Scope of Work item 25 (who has the app). One row per account per platform ('ios', 'android', 'app' when the app did not say
+/// which, or 'web'): when the account first appeared, its last login, last app open, last seen and last logout, and the app
+/// build it is on now. Written by the server on login, on every authenticated request (at most once an hour), on app open and
+/// on logout. Nothing here is deleted when a notification token is released, so "has the app" survives item 8.
+model AppInstall {
+  id               Int       @id @default(autoincrement())
+  userId           Int
+  platform         String
+  firstSeenAt      DateTime  @default(now())
+  lastLoginAt      DateTime?
+  lastOpenedAt     DateTime?
+  lastSeenAt       DateTime?
+  lastLogoutAt     DateTime?
+  appVersion       String?
+  appBuild         Int?
+  buildFirstSeenAt DateTime?
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+  @@index([platform])
+}
+
+/// The first time each account was seen on each app build, so "who updated, and when" can be answered.
+model AppVersionHistory {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  platform    String
+  appVersion  String?
+  appBuild    Int
+  firstSeenAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform, appBuild])
+  @@index([platform, appBuild])
+}
+
+/// Our own list of app releases (typed in by an admin), so the report can show how many users are on the latest build.
+model AppRelease {
+  id         Int      @id @default(autoincrement())
+  platform   String
+  version    String
+  build      Int
+  releasedAt DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  @@unique([platform, build])
 }

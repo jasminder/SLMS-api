@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import { readAppContext } from '../../service/app.install.service/app.install.rules';
+import { recordAppActivitySafely } from '../../service/app.install.service/app.install.service';
 import {
     existingAuthUser,
     existingUserForgotPassword,
@@ -79,6 +81,8 @@ export const loginUserHandler = async (req: Request<{}, {}, LoginUserSchema['bod
         sameSite: 'strict', //cross-site cookie
         maxAge: 90 * 24 * 60 * 60 * 1000 // 90d — must match the refresh token's expiry
     });
+    // Item 25: record the login (time, app or web, platform, build). Best effort: a failure here never fails the login.
+    await recordAppActivitySafely(user?.id, readAppContext(req.headers), 'login');
     res.status(201).json({
         status: 'Success',
         user: user,
@@ -91,6 +95,13 @@ export const loginUserHandler = async (req: Request<{}, {}, LoginUserSchema['bod
 export const logout = async (req: Request, res: Response) => {
     // Check for the presence of the refreshToken cookie
     const cookie = req.cookies['refreshToken'];
+    // Item 25: record the logout against the account the cookie belongs to. The install record itself is kept.
+    try {
+        const decoded = cookie ? (jwt.verify(cookie, process.env.REFRESH_SECRET_STR!) as { id?: number }) : null;
+        await recordAppActivitySafely(decoded?.id, readAppContext(req.headers), 'logout');
+    } catch {
+        // an expired or invalid cookie is simply not recorded
+    }
     if (process.env.NODE_ENV === 'development') console.log({ cookie });
     if (!cookie) {
         return res.status(204).json({ message: 'No cookie available' });
