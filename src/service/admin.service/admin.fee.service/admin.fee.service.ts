@@ -4,7 +4,36 @@ import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/a
 import { NotificationType, PaymentType } from '@prisma/client';
 import { autoApplyCreditToFeePaymentInTransaction } from '../admin.student.service/admin.active.student.service/admin.active.student.service';
 import { createManyNotificationsAndPush, getStudentNamesMap } from '../../notification.service/notification.service';
+import { enrollmentHistoryTableExists } from '../admin.enrollment.history.service/enrollment.history.service';
+import { SKIP_REASON_TEXT, decideInvoiceEligibility, parseBillingPeriod, periodWarning } from './fee.eligibility.rules';
+import type { SkipCode } from './fee.eligibility.rules';
 
+export type SkippedStudent = {
+    studentId: number;
+    akaalId: number | null;
+    name: string;
+    code: SkipCode;
+    reason: string;
+    evidence?: { leftOn?: string; reEnrolledOn?: string };
+};
+
+/**
+ * Creates the monthly/term invoices for the selected students of ONE fee group.
+ *
+ * Issue 9 rules:
+ *  - A student is billed only with a live subject enrolment in the fee group (at least one subject of the group; leaving
+ *    one subject but staying in another keeps the group fee unchanged). The fee record alone (StudentTermFee) is not proof
+ *    of enrolment: de-enrolling keeps it so fee history survives.
+ *  - When a de-enrolment history record exists, a billing period that falls inside a proven gap (left before the period,
+ *    enrolled again only after it) is skipped too. Older de-enrolments have no date; they are reported, never guessed.
+ *  - One unusable student never fails the batch: each is skipped with a reason, and the result lists who was created and
+ *    who was skipped. Everything else is still one transaction (a real database error rolls the whole batch back).
+ *  - An invoice that already exists for a student under the same template is skipped (never duplicated); the template is
+ *    locked per fee group + invoice name so two simultaneous requests cannot both bill the same student.
+ *  - Only students who really got an invoice are notified, after the transaction has committed.
+ *  - The amount, the fee-group rules and the billing-period/backdating behaviour are unchanged. The month/year the browser
+ *    sends are validated here, and a billing period that is not the current month is reported as a warning (not blocked).
+ */
 export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateDataSchema['body']) {
     const { studentIds, month, year, termId, termSubjectGroupId, dueDate, amount, termName, termSubjectGroupName, interval, notes, invoiceName } = feeTemplateData;
     console.info('[admin.fee] createFeeTemplateAndPayments:start', {
@@ -16,119 +45,146 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
         dueDate
     });
 
-    // Students dropped because they are no longer enrolled in this group. Reported back to
-    // the caller so a silent skip can never be mistaken for a successful bill.
-    const skippedDeEnrolled: { studentId: number; akaalId: number | null }[] = [];
+    // ---- server-side validation of what the browser sent
+    const parsed = parseBillingPeriod(month, year);
+    if (!parsed.ok) throw customError(parsed.error, 'fail', 400, true);
+    const dueDateValue = new Date(dueDate);
+    if (Number.isNaN(dueDateValue.getTime())) throw customError('The due date is not a valid date.', 'fail', 400, true);
+    const groupId = Number(termSubjectGroupId);
+    const termIdNumber = Number(termId);
+    const amountNumber = Number(amount);
+    if (!Number.isInteger(groupId) || !Number.isInteger(termIdNumber)) throw customError('The term and fee group must be whole numbers.', 'fail', 400, true);
+    if (!Number.isInteger(amountNumber) || amountNumber < 0) throw customError('The invoice amount must be a whole number of dollars.', 'fail', 400, true);
+    const requestedIds = studentIds.map((id) => Number(id));
+    if (requestedIds.length === 0 || !requestedIds.every((id) => Number.isInteger(id) && id > 0)) throw customError('Select at least one student (student ids must be whole numbers).', 'fail', 400, true);
+    const uniqueIds = Array.from(new Set(requestedIds));
+    const billingPeriod = parsed.period;
+    const warning = periodWarning(billingPeriod);
+    const paymentInterval = interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM;
+    // De-enrolment history only exists once the Issue 10 migration has been applied. Without it the live-enrolment rule still protects billing.
+    const historyAvailable = await enrollmentHistoryTableExists();
+    if (!historyAvailable) console.warn('[admin.fee] EnrollmentHistory table not found: invoices are checked against live enrolments only');
 
-    // Execute all operations in a transaction
-    return db.$transaction(async (prisma) => {
-        // Parse the dueDate and set it to the start of the day for comparison
-        const startDate = new Date(dueDate);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(dueDate);
-        endDate.setHours(23, 59, 59, 999);
-        // Check if a FeeTemplate with the same dueDate, termSubjectGroupId, and interval already exists
-        let feeTemplate = await prisma.feeTemplate.findFirst({
-            where: {
-                termSubjectGroupId: +termSubjectGroupId,
-                // dueDate: {
-                //     gte: startDate,
-                //     lte: endDate
-                // },
-                invoiceName,
-                interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM
-            }
-        });
-        if (feeTemplate) {
-            // Check for existing FeePayment records for the provided studentIds
-            const existingFeePayments = await prisma.feePayment.findMany({
-                where: {
-                    feeTemplateId: feeTemplate.id,
-                    studentTermFee: {
-                        studentId: {
-                            in: studentIds.map((id) => parseInt(id))
-                        }
-                    }
-                },
-                select: {
-                    studentTermFee: {
-                        select: {
-                            studentId: true
-                        }
-                    }
-                }
+    const outcome = await db.$transaction(
+        async (prisma) => {
+            // One generation per fee group + invoice name at a time: a second, simultaneous request waits here and then
+            // sees the invoices of the first as "already billed" instead of creating them again.
+            await prisma.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`fee-template:${groupId}:${invoiceName}`}))`;
+
+            let templateCreated = false;
+            let feeTemplate = await prisma.feeTemplate.findFirst({
+                where: { termSubjectGroupId: groupId, invoiceName, interval: paymentInterval }
             });
-            if (existingFeePayments.length > 0) {
-                // Extract studentIds from existing payments
-                const existingStudentIds = existingFeePayments.map((fp) => fp.studentTermFee?.studentId);
-                throw customError(`Fee payments already exist for these student IDs under the specified fee template: ${existingStudentIds.join(', ')}`, 'fail', 400, true);
+            if (!feeTemplate) {
+                const existingInvoice = await prisma.feeTemplate.findFirst({ where: { invoiceName } });
+                if (existingInvoice) {
+                    throw customError(`A FeeTemplate with invoice name '${invoiceName}' already exists`, 'fail', 400, true);
+                }
+                feeTemplate = await prisma.feeTemplate.create({
+                    data: {
+                        groupName: termSubjectGroupName,
+                        month,
+                        year,
+                        termName,
+                        termId: termIdNumber,
+                        termSubjectGroupId: groupId,
+                        amount: amountNumber,
+                        dueDate: dueDateValue,
+                        interval: paymentInterval,
+                        invoiceName,
+                        notes
+                    }
+                });
+                templateCreated = true;
             }
-            const feePayments = await Promise.all(
-                studentIds
-                    .map(async (studentId) => {
-                        const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) }, include: { personalDetails: { select: { firstName: true } } } });
-                        if (!student) return null; // Continue if no student is found
 
-                        const studentTermFee = await prisma.studentTermFee.findFirst({
-                            where: { studentId: +studentId, termId: +termId, termSubjectGroupId: +termSubjectGroupId }
-                        });
+            // Everything needed to decide, loaded once for the whole batch.
+            const [students, studentTermFees, liveEnrollments, historyRows] = await Promise.all([
+                prisma.student.findMany({ where: { id: { in: uniqueIds } }, select: { id: true, akaalId: true, personalDetails: { select: { firstName: true, lastName: true } } } }),
+                prisma.studentTermFee.findMany({ where: { studentId: { in: uniqueIds }, termId: termIdNumber, termSubjectGroupId: groupId }, select: { id: true, studentId: true } }),
+                prisma.enrollment.findMany({ where: { studentId: { in: uniqueIds }, termSubjectGroupId: groupId }, select: { studentId: true, createdAt: true } }),
+                historyAvailable
+                    ? prisma.enrollmentHistory.findMany({ where: { studentId: { in: uniqueIds }, termSubjectGroupId: groupId }, select: { studentId: true, enrolledAt: true, endedAt: true, subjectName: true } })
+                    : Promise.resolve([] as { studentId: number; enrolledAt: Date | null; endedAt: Date; subjectName: string }[])
+            ]);
+            const alreadyBilled = await prisma.feePayment.findMany({
+                where: { feeTemplateId: feeTemplate.id, studentTermFeeId: { in: studentTermFees.map((fee) => fee.id) } },
+                select: { studentTermFeeId: true }
+            });
+            const studentById = new Map(students.map((student) => [student.id, student] as const));
+            const feeByStudent = new Map(studentTermFees.map((fee) => [fee.studentId, fee] as const));
+            const billedFeeIds = new Set(alreadyBilled.map((payment) => payment.studentTermFeeId));
 
-                        if (!studentTermFee) {
-                            // Throw an error if the student is not enrolled in the specified term subject group
-                            throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
-                        }
+            const skipped: SkippedStudent[] = [];
+            const created: { id: number; studentId: number }[] = [];
+            const skip = (studentId: number, code: SkipCode, reason: string, evidence?: SkippedStudent['evidence']) => {
+                const student = studentById.get(studentId);
+                const name = `${student?.personalDetails?.firstName ?? ''} ${student?.personalDetails?.lastName ?? ''}`.trim();
+                skipped.push({ studentId, akaalId: student?.akaalId ?? null, name: name || `Student ${studentId}`, code, reason, ...(evidence ? { evidence } : {}) });
+            };
 
-                        // StudentTermFee alone is NOT proof of enrolment: de-enrolling keeps it
-                        // so fee history and outstanding dues survive. Without this check a
-                        // student de-enrolled in June still had a July invoice generated.
-                        //
-                        // SKIP rather than throw. This runs inside db.$transaction over the whole
-                        // batch, so throwing would roll back every other student's invoice too —
-                        // one stale id would mean nobody gets billed that month. Fee generation is
-                        // business-critical, so a bad row is dropped and reported, never fatal.
-                        const liveEnrollment = await prisma.enrollment.findFirst({
-                            where: { studentId: +studentId, termSubjectGroupId: +termSubjectGroupId },
-                            select: { id: true }
-                        });
-                        if (!liveEnrollment) {
-                            console.warn('[admin.fee] skipping de-enrolled student', {
-                                studentId: +studentId,
-                                akaalId: student.akaalId,
-                                termSubjectGroupId: +termSubjectGroupId,
-                                termSubjectGroupName
-                            });
-                            skippedDeEnrolled.push({ studentId: +studentId, akaalId: student.akaalId });
-                            return null;
-                        }
+            for (const studentId of uniqueIds) {
+                const student = studentById.get(studentId);
+                if (!student) {
+                    skip(studentId, 'STUDENT_NOT_FOUND', SKIP_REASON_TEXT.STUDENT_NOT_FOUND);
+                    continue;
+                }
+                const studentTermFee = feeByStudent.get(studentId);
+                if (!studentTermFee) {
+                    skip(studentId, 'NO_FEE_RECORD', SKIP_REASON_TEXT.NO_FEE_RECORD);
+                    continue;
+                }
+                const decision = decideInvoiceEligibility({
+                    live: liveEnrollments.filter((enrollment) => enrollment.studentId === studentId),
+                    history: historyRows.filter((row) => row.studentId === studentId),
+                    period: billingPeriod
+                });
+                if (!decision.eligible) {
+                    console.warn('[admin.fee] skipping ineligible student', { studentId, akaalId: student.akaalId, termSubjectGroupId: groupId, code: decision.code });
+                    skip(studentId, decision.code, decision.reason, decision.evidence);
+                    continue;
+                }
+                if (student.akaalId === null) {
+                    skip(studentId, 'NO_AKAAL_ID', SKIP_REASON_TEXT.NO_AKAAL_ID);
+                    continue;
+                }
+                if (billedFeeIds.has(studentTermFee.id)) {
+                    skip(studentId, 'ALREADY_BILLED', SKIP_REASON_TEXT.ALREADY_BILLED);
+                    continue;
+                }
+                const invoiceId = `${student.akaalId}${groupId}${String(parsed.monthNumber).padStart(2, '0')}`;
+                const payment = await prisma.feePayment.create({
+                    data: {
+                        invoiceId,
+                        studentTermFeeId: studentTermFee.id,
+                        feeTemplateId: feeTemplate.id,
+                        dueDate: dueDateValue,
+                        dueAmount: amountNumber,
+                        status: 'PENDING',
+                        feeAmount: amountNumber,
+                        adjustedFeeAmount: amountNumber
+                    }
+                });
+                created.push({ id: payment.id, studentId });
+            }
 
-                        const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
-                        const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
-
-                        return prisma.feePayment.create({
-                            data: {
-                                invoiceId,
-                                studentTermFeeId: studentTermFee.id,
-                                feeTemplateId: feeTemplate?.id,
-                                dueDate: new Date(dueDate),
-                                dueAmount: +amount,
-                                status: 'PENDING',
-                                feeAmount: +amount,
-                                adjustedFeeAmount: +amount
-                            }
-                        });
-                    })
-                    .filter((task) => task !== null)
-            ); // Filter out null tasks
+            // Nobody was billed and this call made the template: do not leave an empty template behind.
+            if (created.length === 0 && templateCreated) {
+                await prisma.feeTemplate.delete({ where: { id: feeTemplate.id } });
+                return { feeTemplate: null, created, skipped };
+            }
             // AUTO-CREDIT DISABLED (2026-06): credit must no longer be auto-applied on invoice creation.
             // May & June invoices silently spent students' creditBalance. Credit is now applied manually only
             // via PATCH /api/v1/apply-credit-balance-to-student-feePayment-by-id. See docs/gotchas.md.
-            // for (const fp of feePayments) {
-            //     if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
-            // }
-            // Only notify students who actually got an invoice — a skipped (de-enrolled)
-            // student must not be told they have a new fee.
-            const skippedIds = new Set(skippedDeEnrolled.map((s) => s.studentId));
-            const notifiedIds = studentIds.map(Number).filter((id) => !skippedIds.has(id));
+            return { feeTemplate, created, skipped };
+        },
+        { timeout: 120000, maxWait: 10000 }
+    );
+
+    // Notify ONLY students who really got an invoice, and only after the transaction has committed.
+    if (outcome.created.length > 0) {
+        try {
+            const notifiedIds = outcome.created.map((entry) => entry.studentId);
             const feeNames = await getStudentNamesMap(notifiedIds);
             await createManyNotificationsAndPush(
                 notifiedIds.map((studentId) => ({
@@ -138,122 +194,29 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                     actionUrl: `/student/fee-list?studentId=${studentId}`
                 }))
             );
-            return {
-                message: 'FeeTemplate and FeePayments created successfully.',
-                feeTemplate,
-                feePayments: feePayments.filter(Boolean),
-                skippedDeEnrolled
-            };
+        } catch (error) {
+            // The invoices are saved; a notification problem must not turn that into a failure.
+            console.error('[admin.fee] invoice notifications failed', error);
         }
+    }
 
-        if (!feeTemplate) {
-            const existingInvoice = await prisma.feeTemplate.findFirst({
-                where: {
-                    invoiceName: invoiceName
-                }
-            });
-
-            if (existingInvoice) {
-                throw customError(`A FeeTemplate with invoice name '${invoiceName}' already exists`, 'fail', 400, true);
-            }
-            feeTemplate = await prisma.feeTemplate.create({
-                data: {
-                    groupName: termSubjectGroupName,
-                    month,
-                    year,
-                    termName,
-                    termId: +termId,
-                    termSubjectGroupId: +termSubjectGroupId,
-                    amount: +amount,
-                    dueDate: new Date(dueDate),
-                    interval: interval === 'MONTHLY' ? PaymentType.MONTHLY : PaymentType.TERM,
-                    invoiceName,
-                    notes
-                }
-            });
-            const feePayments = await Promise.all(
-                studentIds
-                    .map(async (studentId) => {
-                        const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) }, include: { personalDetails: { select: { firstName: true } } } });
-                        if (!student) return null; // Continue if no student is found
-
-                        const studentTermFee = await prisma.studentTermFee.findFirst({
-                            where: { studentId: +studentId, termId: +termId, termSubjectGroupId: +termSubjectGroupId }
-                        });
-
-                        if (!studentTermFee) {
-                            // Throw an error if the student is not enrolled in the specified term subject group
-                            throw new Error(`Student with ID ${studentId} is not enrolled in the specified term subject group: ${termSubjectGroupName}`);
-                        }
-
-                        // StudentTermFee alone is NOT proof of enrolment: de-enrolling keeps it
-                        // so fee history and outstanding dues survive. Without this check a
-                        // student de-enrolled in June still had a July invoice generated.
-                        //
-                        // SKIP rather than throw. This runs inside db.$transaction over the whole
-                        // batch, so throwing would roll back every other student's invoice too —
-                        // one stale id would mean nobody gets billed that month. Fee generation is
-                        // business-critical, so a bad row is dropped and reported, never fatal.
-                        const liveEnrollment = await prisma.enrollment.findFirst({
-                            where: { studentId: +studentId, termSubjectGroupId: +termSubjectGroupId },
-                            select: { id: true }
-                        });
-                        if (!liveEnrollment) {
-                            console.warn('[admin.fee] skipping de-enrolled student', {
-                                studentId: +studentId,
-                                akaalId: student.akaalId,
-                                termSubjectGroupId: +termSubjectGroupId,
-                                termSubjectGroupName
-                            });
-                            skippedDeEnrolled.push({ studentId: +studentId, akaalId: student.akaalId });
-                            return null;
-                        }
-
-                        const monthNumber = (new Date(`${month} 1, ${year}`).getMonth() + 1).toString().padStart(2, '0');
-                        const invoiceId = `${student.akaalId}${termSubjectGroupId}${monthNumber}`;
-
-                        return prisma.feePayment.create({
-                            data: {
-                                invoiceId,
-                                studentTermFeeId: studentTermFee.id,
-                                feeTemplateId: feeTemplate?.id,
-                                dueDate: new Date(dueDate),
-                                dueAmount: +amount,
-                                status: 'PENDING',
-                                feeAmount: +amount,
-                                adjustedFeeAmount: +amount
-                            }
-                        });
-                    })
-                    .filter((task) => task !== null)
-            ); // Filter out null tasks
-            // AUTO-CREDIT DISABLED (2026-06): credit must no longer be auto-applied on invoice creation.
-            // May & June invoices silently spent students' creditBalance. Credit is now applied manually only
-            // via PATCH /api/v1/apply-credit-balance-to-student-feePayment-by-id. See docs/gotchas.md.
-            // for (const fp of feePayments) {
-            //     if (fp) await autoApplyCreditToFeePaymentInTransaction(prisma, fp.id);
-            // }
-            // Only notify students who actually got an invoice — a skipped (de-enrolled)
-            // student must not be told they have a new fee.
-            const skippedIds = new Set(skippedDeEnrolled.map((s) => s.studentId));
-            const notifiedIds = studentIds.map(Number).filter((id) => !skippedIds.has(id));
-            const feeNames = await getStudentNamesMap(notifiedIds);
-            await createManyNotificationsAndPush(
-                notifiedIds.map((studentId) => ({
-                    studentId,
-                    type: NotificationType.FEE,
-                    content: `${feeNames.get(studentId) ?? 'Student'}, you have a new fee invoice. Please check your fee details.`,
-                    actionUrl: `/student/fee-list?studentId=${studentId}`
-                }))
-            );
-            return {
-                message: 'FeeTemplate and FeePayments created successfully.',
-                feeTemplate,
-                feePayments: feePayments.filter(Boolean),
-                skippedDeEnrolled
-            };
-        }
-    });
+    const legacySkippedDeEnrolled = outcome.skipped
+        .filter((entry) => entry.code === 'LEFT_FEE_GROUP' || entry.code === 'NO_ENROLLMENT_NO_HISTORY' || entry.code === 'NOT_ENROLLED_IN_BILLING_PERIOD')
+        .map((entry) => ({ studentId: entry.studentId, akaalId: entry.akaalId }));
+    console.info('[admin.fee] createFeeTemplateAndPayments:done', { requested: uniqueIds.length, created: outcome.created.length, skipped: outcome.skipped.length });
+    return {
+        message: outcome.created.length > 0 ? 'FeeTemplate and FeePayments created successfully.' : 'No invoices were created.',
+        feeTemplate: outcome.feeTemplate,
+        feePayments: outcome.created,
+        requestedCount: uniqueIds.length,
+        createdCount: outcome.created.length,
+        skippedCount: outcome.skipped.length,
+        skipped: outcome.skipped,
+        skippedDeEnrolled: legacySkippedDeEnrolled,
+        billingPeriod: { label: billingPeriod.label, month: parsed.monthNumber, year: parsed.year },
+        periodWarning: warning,
+        historyAvailable
+    };
 }
 // undoCreateFeeTemplateAndPayments(18)
 
@@ -319,7 +282,9 @@ export async function findActiveStudentsForFeeCreation(page: number, termId: num
                 some: {
                     termId: +termId
                 }
-            }
+            },
+            // Same rule as invoice generation: de-enrolling keeps the fee record, so also require a live enrolment this term.
+            enrollments: { some: { termSubjectGroup: { termId: +termId } } }
         },
         skip,
         take,
@@ -454,7 +419,9 @@ export async function findActiveStudentsForFeeCreation(page: number, termId: num
                 some: {
                     termId: +termId
                 }
-            }
+            },
+            // Same rule as invoice generation: de-enrolling keeps the fee record, so also require a live enrolment this term.
+            enrollments: { some: { termSubjectGroup: { termId: +termId } } }
         }
     });
 
@@ -470,7 +437,9 @@ export async function defaultSelectActiveStudentsForFeeCreation(page: number, te
                 some: {
                     termId: +termId
                 }
-            }
+            },
+            // Same rule as invoice generation: de-enrolling keeps the fee record, so also require a live enrolment this term.
+            enrollments: { some: { termSubjectGroup: { termId: +termId } } }
         },
         orderBy: {
             akaalId: 'desc'
@@ -508,7 +477,9 @@ export async function defaultSelectActiveStudentsForFeeCreation(page: number, te
                 some: {
                     termId: +termId
                 }
-            }
+            },
+            // Same rule as invoice generation: de-enrolling keeps the fee record, so also require a live enrolment this term.
+            enrollments: { some: { termSubjectGroup: { termId: +termId } } }
         }
     });
 
