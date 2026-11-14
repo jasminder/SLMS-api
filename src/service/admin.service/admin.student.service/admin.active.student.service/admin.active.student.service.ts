@@ -8,6 +8,7 @@ import { syncLeaveAttendance } from '../../../../utils/syncLeaveAttendance';
 
 type AttendanceFilter = {
     attendancePercentageValue?: number;
+import { calculateOverdueAmount } from '../../../fee.service/fee.overdue.service';
 };
 
 async function updateEmailsToLowercase() {
@@ -1689,7 +1690,14 @@ export async function findActiveStudentById(id: string, termId: string) {
         }
     });
 
-    return { activeStudent, siblings };
+    return { activeStudent: await withLiveOverdue(activeStudent), siblings };
+}
+
+/** Replaces the stale stored student.overDue / hasOverDue with the shared live calculation. */
+async function withLiveOverdue<T extends { id: number } | null>(student: T) {
+    if (!student) return student;
+    const overDue = await calculateOverdueAmount(student.id);
+    return { ...student, overDue, hasOverDue: overDue > 0 };
 }
 
 export async function findActiveStudentByIdWithoutSubjects(id: string) {
@@ -1839,7 +1847,7 @@ export async function findActiveStudentByIdWithoutSubjects(id: string) {
         }
     });
 
-    return { activeStudent, siblings };
+    return { activeStudent: await withLiveOverdue(activeStudent), siblings };
 }
 
 export async function findStudentFeeDetails(studentId: number, termId: number) {

@@ -4,6 +4,7 @@ import { db } from '../../../utils/db.server';
 import { calculateSendDate } from '../../../utils/setSendDate';
 import { NotificationType } from '@prisma/client';
 import { createNotificationAndPush, getStudentFirstName } from '../../notification.service/notification.service';
+import { calculateOverdueAmount } from '../../fee.service/fee.overdue.service';
 
 /* fetching the check-in record for students who have checked in with default class-attendance */
 
@@ -184,14 +185,7 @@ export async function markStudentAsPresent(studentId: string, classAttendanceId:
     });
     const presentName = student?.personalDetails?.firstName?.trim() || 'Student';
 
-    const overdueAggregation = await db.feePayment.aggregate({
-        _sum: { dueAmount: true },
-        where: {
-            studentTermFee: { studentId: +studentId },
-            status: 'OVERDUE'
-        }
-    });
-    const overDueAmount = overdueAggregation._sum.dueAmount ?? 0;
+    const overDueAmount = await calculateOverdueAmount(+studentId);
     const hasOverDue = overDueAmount > 0;
 
     const io = getIo();

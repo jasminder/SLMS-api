@@ -3,6 +3,7 @@ import { customError } from '../../../utils/customError';
 import { getIo } from '../../../sockets/socket';
 import { Day, NotificationType } from '@prisma/client';
 import { createManyNotificationsAndPush, createNotificationAndPush, getStudentFirstName, getStudentNamesMap } from '../../notification.service/notification.service';
+import { calculateOverdueAmount, calculateOverdueAmounts } from '../../fee.service/fee.overdue.service';
 
 /** DB type: works with both global db and transaction client (Omit<PrismaClient, ...>) */
 type DbClient = Parameters<Parameters<typeof db.$transaction>[0]>[0];
@@ -554,7 +555,16 @@ export async function fetchSchoolCheckInAttendance() {
         }
     });
 
-    return records;
+    return withLiveOverdue(records);
+}
+
+/** Replaces the stale stored student.overDue / hasOverDue with the shared live calculation. */
+async function withLiveOverdue<T extends { studentId: number; student: object | null }>(records: T[]) {
+    const overdueByStudent = await calculateOverdueAmounts([...new Set(records.map((record) => record.studentId))]);
+    return records.map((record) => {
+        const overDue = overdueByStudent.get(record.studentId) ?? 0;
+        return record.student ? { ...record, student: { ...record.student, overDue, hasOverDue: overDue > 0 } } : record;
+    });
 }
 
 /*mark check in true for a single studentid*/
@@ -621,14 +631,7 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
             .join(' ')
             .trim() || null;
 
-    const overdueAggregation = await db.feePayment.aggregate({
-        _sum: { dueAmount: true },
-        where: {
-            studentTermFee: { studentId: +studentId },
-            status: 'OVERDUE'
-        }
-    });
-    const overDueAmount = overdueAggregation._sum.dueAmount ?? 0;
+    const overDueAmount = await calculateOverdueAmount(+studentId);
     const hasOverDue = overDueAmount > 0;
 
     const io = getIo();
