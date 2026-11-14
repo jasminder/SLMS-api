@@ -4,6 +4,7 @@ import { fetchCheckedInStudentsWithAttendance } from '../../teacher.service/teac
 import { findAllClassworkByTermAndSectionForAdmin } from '../../classwork.service/classwork.service';
 import { findAllHomeworkByTermAndSectionForAdmin } from '../../homework.service/homework.service';
 import { Day } from '@prisma/client';
+import { summariseClassAttendance } from './class.attendance.counts';
 
 const DAYS_OF_WEEK: Day[] = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
 
@@ -706,18 +707,8 @@ export const getClassRecordsForAdmin = async (date?: string) => {
                 findAllHomeworkByTermAndSectionForAdmin(cls.termSubjectLevelId.toString(), cls.sectionId.toString(), date)
             ]);
 
-            let total = attendanceData.length;
-            let present = 0;
-            let absent = 0;
-            let leave = 0;
-            let notCheckedIn = 0;
-            for (const row of attendanceData) {
-                if (row.classAttendance?.attendanceStatus === 'PRESENT') present++;
-                else if (row.classAttendance?.attendanceStatus === 'LEAVE') leave++;
-                else if (row.checkInData?.checkedIn) absent++;
-                else if (row.checkInData?.isMarked) absent++;
-                else notCheckedIn++;
-            }
+            // Item 14: one shared count. Every student is in exactly one bucket, so the buckets add up to the roll.
+            const attendanceSummary = summariseClassAttendance(attendanceData);
 
             const teacherName = cls.teacher?.teacherPersonalDetails
                 ? `${cls.teacher.teacherPersonalDetails.firstName} ${cls.teacher.teacherPersonalDetails.lastName}`
@@ -738,13 +729,7 @@ export const getClassRecordsForAdmin = async (date?: string) => {
                     teacherName,
                     timing
                 },
-                attendanceSummary: {
-                    total,
-                    present,
-                    absent,
-                    leave,
-                    notCheckedIn
-                },
+                attendanceSummary,
                 classwork,
                 homework
             };
