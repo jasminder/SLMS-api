@@ -4,6 +4,7 @@ import validate from '../../../middleware/validateResource';
 import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
 import {
     approveTeacherApplicationHandler,
+    reviewTeacherApplicationHandler,
     assignSubjectToTeacherHandler,
     findAllSubjectsToAssignApplicantHandler,
     findAllTeacherApplicantsHandler,
@@ -36,5 +37,6 @@ adminTeacherApproveRoute.route('/assign-subject-to-applicant/:teacherId').post(v
 // /*find subject assigned applicant*/ assign-subject-to-applicant
 adminTeacherApproveRoute.route('/find-assigned-subjects-to-applicant/:id').get(validate(findUniqueTeacherApplicantSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(findSubjectsAssignedToTeacherHandler));
 /*Approve teacherapplication*/
+adminTeacherApproveRoute.route('/review-application/:id').get(validate(findUniqueTeacherApplicantSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(reviewTeacherApplicationHandler));
 adminTeacherApproveRoute.route('/approve-application/:id').post(validate(findUniqueTeacherApplicantSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(approveTeacherApplicationHandler));
 export default adminTeacherApproveRoute;

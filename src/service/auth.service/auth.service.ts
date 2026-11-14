@@ -5,6 +5,9 @@ import crypto from 'crypto';
 
 import { db } from '../../utils/db.server';
 import { customError } from '../../utils/customError';
+import type { SignupRole } from './signup.role.rules';
+import { AMBIGUOUS_SIGNUP_MESSAGE, decideSignupRole } from './signup.role.rules';
+import { PENDING_SETUP_LOGIN_MESSAGE, isPendingSetupPassword } from '../account.status.service/pending.setup.rules';
 
 export async function signUpUser(email: string, password: string, confirmPassword: string) {
     // Validate the input
@@ -132,8 +135,8 @@ export async function signUpUser(email: string, password: string, confirmPasswor
 }
 
 async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole: Role; isAllowedLogin: boolean }> {
-    let userRole: Role | null = null;
-    let isAllowedLogin = false;
+    // Every profile type this email is ELIGIBLE for. More than one means the role is ambiguous (see decideSignupRole).
+    const eligibleRoles: SignupRole[] = [];
 
     // Check in AdminPersonalDetails
     const adminDetails = await db.adminPersonalDetails.findUnique({ where: { email } });
@@ -142,8 +145,7 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
             where: { id: adminDetails.adminId }
         });
         if (existingAdmin && existingAdmin.isAllowedLogin) {
-            userRole = Role.ADMIN;
-            isAllowedLogin = existingAdmin.isAllowedLogin;
+            eligibleRoles.push('ADMIN');
         }
     }
 
@@ -154,8 +156,7 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
             where: { id: teacherDetails.teacherId }
         });
         if (existingTeacher && existingTeacher.isAllowedLogin) {
-            userRole = Role.TEACHER;
-            isAllowedLogin = existingTeacher.isAllowedLogin;
+            eligibleRoles.push('TEACHER');
         }
     }
     const studentDetail = await db.student.findFirst({
@@ -186,27 +187,20 @@ async function findUserRoleAndLoginPermission(email: string): Promise<{ userRole
         });
 
         if (existingStudent && existingStudent.isAllowedLogin) {
-            userRole = Role.STUDENT;
-            isAllowedLogin = existingStudent.isAllowedLogin;
+            eligibleRoles.push('STUDENT');
         }
     }
 
-    /******RE CONSIDER THIS IF ADMIN SHOULD NOT REGISTER*******/
-
-    // if (userRole === Role.STUDENT) {
-    //     throw customError('Registration as student is not allowed. Please check with school', 'fail', 400, true);
-    // }
-
-    /******RE CONSIDER THIS IF ADMIN SHOULD NOT REGISTER*******/
-    if (!isAllowedLogin) {
+    const decision = decideSignupRole(eligibleRoles);
+    if (decision.kind === 'AMBIGUOUS') {
+        // Never silently pick a role (previously the last match, STUDENT, won).
+        throw customError(AMBIGUOUS_SIGNUP_MESSAGE, 'fail', 409, true);
+    }
+    if (decision.kind === 'NONE') {
         throw customError('User is not allowed to sign up. Contact School  ', 'fail', 400, true);
     }
-    // Ensure a valid role is found, otherwise throw an error
-    if (!userRole) {
-        throw customError('There is no such user. Please contact school', 'fail', 400, true);
-    }
 
-    return { userRole, isAllowedLogin };
+    return { userRole: Role[decision.role], isAllowedLogin: true };
 }
 
 /*Login user*/
@@ -223,6 +217,12 @@ export async function loginUser(email: string, password: string) {
 
     if (!user) {
         throw customError('User not found', 'fail', 404, true);
+    }
+
+    // An admin-created teacher login that has not finished the emailed "Set your password" step stores an exact marker
+    // instead of a password hash. It never authenticates; only that exact marker is treated this way.
+    if (isPendingSetupPassword(user.password)) {
+        throw customError(PENDING_SETUP_LOGIN_MESSAGE, 'fail', 403, true);
     }
 
     // Verify the password
@@ -329,6 +329,8 @@ export const existingAuthUser = async (email: string, role: string) => {
             updatedAt: true,
             isActive: true,
             isEmailVerified: true,
+            // Read only to refuse a login that is still pending password setup; removed again before returning.
+            password: true,
             admin:
                 role === 'ADMIN'
                     ? {
@@ -363,7 +365,13 @@ export const existingAuthUser = async (email: string, role: string) => {
     if (!existingUser) {
         throw customError('Session expired login again', 'fail', 404, true);
     }
-    return existingUser;
+    // Session restoration (protectRoute) and token refresh both come through here: a login that has not finished
+    // password setup never gets a session, even if an old token for the same email exists.
+    const { password: storedPassword, ...safeUser } = existingUser;
+    if (isPendingSetupPassword(storedPassword)) {
+        throw customError(PENDING_SETUP_LOGIN_MESSAGE, 'fail', 403, true);
+    }
+    return safeUser;
 };
 
 //************** Forgot Password **************
@@ -371,15 +379,6 @@ export const existingAuthUser = async (email: string, role: string) => {
 /** Password reset link validity in seconds (1 hour). Was 10 min; extended for parents resetting multiple children. */
 const RESET_TOKEN_VALIDITY_SECONDS = 60 * 60;
 
-export const existingUserForgotPassword = async (email: string, resetToken: string) => {
-    const existingUser = await db.user.findUnique({
-        where: { email: email.trim().toLowerCase() },
-        select: {
-            id: true,
-            email: true,
-            role: true,
-            createdAt: true,
-            updatedAt: true,
 /** True when a student, teacher or admin record carries this email (case-insensitive) but has no login account for it. */
 export const hasProfileWithoutLogin = async (email: string) => {
     const normalizedEmail = email.trim();
@@ -393,6 +392,15 @@ export const hasProfileWithoutLogin = async (email: string) => {
 };
 
             isActive: true,
+export const existingUserForgotPassword = async (email: string, resetToken: string) => {
+    const existingUser = await db.user.findUnique({
+        where: { email: email.trim().toLowerCase() },
+        select: {
+            id: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
             isEmailVerified: true,
             resetPasswordToken: true,
             resetPasswordTokenExpiresAt: true

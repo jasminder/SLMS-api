@@ -1,5 +1,7 @@
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
+import type { DuplicateReader } from '../../teacher.duplicate.service/teacher.duplicate.service';
+import { TeacherDuplicateError, describeConflict, findTeacherConflicts, findTeacherWarnings, identityKey, lockIdentity } from '../../teacher.duplicate.service/teacher.duplicate.service';
 
 export async function findAllTeacherApplicants(page: number) {
     const take = 10;
@@ -361,12 +363,51 @@ export async function findSubjectsAssignedToTeacher(id: string) {
     }));
 }
 
+type ApplicantDetails = {
+    firstName: string;
+    lastName: string;
+    DOB: Date;
+    email: string;
+    contact: string;
+    address: string;
+    postcode: string;
+};
+
+/**
+ * Duplicate review for one teacher application (read-only).
+ *  - `blocking`: another teacher already uses the email, a TEACHER/ADMIN login uses it, or another teacher has the
+ *    same normalised name + DOB (all statuses are compared; the applicant's own record is excluded).
+ *  - `warnings`: shared phone, possible duplicate (e.g. Teachers 41/47), and an email shared with a student/family
+ *    record or a STUDENT login. Warnings never block approval.
+ */
+async function buildApplicationReview(teacherId: number, details: ApplicantDetails, client: DuplicateReader) {
+    const blocking = await findTeacherConflicts(details, { excludeTeacherId: teacherId }, client);
+    const bank = await client.teacherBankDetails.findUnique({ where: { teacherId }, select: { BSB: true, accountNumber: true } });
+    const warnings = await findTeacherWarnings({ ...details, bankBsb: bank?.BSB, bankAccount: bank?.accountNumber }, { excludeTeacherId: teacherId }, client);
+    // Ready-to-display reasons (teacher ids only; no personal values), identical wording to the 409 returned on approval.
+    const blockingMessages = Array.from(new Set(blocking.map(describeConflict)));
+    return { blocking, blockingMessages, warnings };
+}
+
+const APPLICANT_DETAILS_SELECT = { firstName: true, lastName: true, DOB: true, email: true, contact: true, address: true, postcode: true } as const;
+
+/** Read-only preview shown on the admin approval screen before the admin approves. */
+export async function reviewTeacherApplication(id: string) {
+    const teacherId = +id;
+    const details = await db.teacherPersonalDetails.findUnique({ where: { teacherId }, select: APPLICANT_DETAILS_SELECT });
+    if (!details) {
+        throw customError('This application has no personal details and cannot be reviewed.', 'fail', 400, true);
+    }
+    return buildApplicationReview(teacherId, details, db);
+}
+
 /*Approve teacherapplication*/
 export async function approveTeacherApplication(id: string) {
+    const teacherId = +id;
     // Check if the teacher has at least one subject assigned
     const assignedSubjects = await db.teacherSubject.count({
         where: {
-            teacherId: +id
+            teacherId
         }
     });
 
@@ -375,17 +416,37 @@ export async function approveTeacherApplication(id: string) {
         throw customError('Teacher does not have any subjects assigned and cannot be approved.', 'fail', 400, true);
     }
 
-    // Update the teacher's role and status
-    const updatedTeacher = await db.teacher.update({
-        where: {
-            id: +id
-        },
-        data: {
-            role: 'TEACHER',
-            isActive: true,
-            isAllowedLogin: true
-        }
-    });
+    return db.$transaction(
+        async (tx) => {
+            const details = await tx.teacherPersonalDetails.findUnique({ where: { teacherId }, select: APPLICANT_DETAILS_SELECT });
+            if (!details) {
+                // Never approve a record we cannot check.
+                throw customError('This application has no personal details and cannot be approved.', 'fail', 400, true);
+            }
 
-    return updatedTeacher;
+            // Serialise with any registration/edit for the same identity, then re-check on the BACKEND (not just the UI).
+            const identity = identityKey(details.firstName, details.lastName, details.DOB);
+            if (identity) await lockIdentity(tx, identity);
+            const review = await buildApplicationReview(teacherId, details, tx);
+            if (review.blocking.length > 0) {
+                throw new TeacherDuplicateError(review.blocking, review.warnings, 'approval');
+            }
+
+            // Update the teacher's role and status
+            const updatedTeacher = await tx.teacher.update({
+                where: {
+                    id: teacherId
+                },
+                data: {
+                    role: 'TEACHER',
+                    isActive: true,
+                    isAllowedLogin: true
+                }
+            });
+
+            // Warnings (shared phone, possible duplicate, shared student/family email) do not block approval.
+            return { ...updatedTeacher, warnings: review.warnings };
+        },
+        { timeout: 15000 }
+    );
 }

@@ -20,11 +20,13 @@ import {
 import {
     assignClassToTeacherSchema,
     assignSubjectToApprovedTeacherSchema,
+    createTeacherLoginSchema,
     deleteClassToTeacherSchema,
     deleteSubjectToApprovedTeacherSchema,
     findUniqueTeacherSchema,
     searchTeachersSchema
 } from '../../../../schema/admin.dto/admin.teacher.dto/admin.teacher.dto';
+import { createTeacherLoginHandler, getTeacherAccountStatusHandler, sendTeacherPasswordResetHandler } from '../../../../controller/admin.controller/admin.teacher.controller/admin.teacher.account.controller';
 import { restrict } from '../../../../middleware/restrict';
 import { protectRoute } from '../../../../middleware/protectRoutes';
 
@@ -32,6 +34,10 @@ const adminTeacherRoute = express.Router();
 //find all teachers
 adminTeacherRoute.route('/get-all-teachers').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findAllTeachersHandler));
 adminTeacherRoute.route('/search-teachers').get(validate(searchTeachersSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(searchTeachersHandler));
+/* login-account status of a teacher (ADMIN only) and the password-reset email action (ADMIN only) */
+adminTeacherRoute.route('/account-status/:id').get(validate(findUniqueTeacherSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(getTeacherAccountStatusHandler));
+adminTeacherRoute.route('/create-login/:id').post(validate(createTeacherLoginSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(createTeacherLoginHandler));
+adminTeacherRoute.route('/send-password-reset/:id').post(validate(findUniqueTeacherSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(sendTeacherPasswordResetHandler));
 /* find unique teacher by id*/
 adminTeacherRoute.route('/teacher-detail/:id').get(validate(findUniqueTeacherSchema), protectRoute, restrict('ADMIN'),asyncErrorHandler(findTeacherByIdHandler));
 /* find  subjects to assign */

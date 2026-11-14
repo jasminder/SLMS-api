@@ -16,6 +16,19 @@ export const findUniqueTeacherSchema = z.object({
 
 export type FindUniqueTeacherSchema = z.infer<typeof findUniqueTeacherSchema>;
 
+/*admin creates a teacher login on a separate, school-confirmed email*/
+export const createTeacherLoginSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+    }),
+    body: z.object({
+        loginEmail: z.string().min(1, { message: 'Login email is required' }),
+        confirmLoginEmail: z.string().min(1, { message: 'Please enter the login email twice' }),
+        ownershipConfirmed: z.literal(true, { errorMap: () => ({ message: 'Please confirm the email belongs to this teacher' }) })
+    })
+});
+export type CreateTeacherLoginSchema = z.infer<typeof createTeacherLoginSchema>;
+
 /*Assign a subject to assign teacher*/
 export const assignSubjectToApprovedTeacherSchema = z.object({
     params: z.object({

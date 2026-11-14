@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AccountActionError } from '../../../../service/account.status.service/account.action.error';
 import { asyncErrorHandler } from '../../../../utils/asyncErrorHandler';
 import { customError } from '../../../../utils/customError';
 import { FindUniqueEnrolledStudentSchema } from '../../../../schema/admin.dto/admin.student.dto/admin.enrolledstudent/admin.enrolled.student.dto';
@@ -102,10 +103,10 @@ export const updateStudentPasswordHandler = asyncErrorHandler(
             await updateStudentPassword(id, newPassword, confirmPassword);
             res.status(200).json({ message: 'Password updated successfully' });
         } catch (err: any) {
-            if (err.message === 'Passwords do not match') {
+            if (err instanceof AccountActionError) {
+                res.status(err.statusCode).json({ message: err.message, code: err.code });
+            } else if (err.message === 'Passwords do not match') {
                 res.status(400).json({ message: 'Passwords do not match' });
-            } else if (err.message === 'Student user account not found') {
-                res.status(404).json({ message: 'Student user account not found' });
             } else {
                 res.status(500).json({ message: 'Internal server error' });
             }

@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import {
     approveTeacherApplication,
+    reviewTeacherApplication,
     assignSubjectToTeacher,
     findAllSubjectsToAssignApplicant,
     findAllTeacherApplicants,
@@ -8,6 +9,7 @@ import {
     findTeacherApplicantById,
     searchTeacherApplicants
 } from '../../../service/admin.service/admin.teacher.approve.service/admin.teacher.approve.service';
+import { TeacherDuplicateError } from '../../../service/teacher.duplicate.service/teacher.duplicate.service';
 import {
     AssignSubjectToApplicantSchema,
     FindAllTeacherApplicationsSchema,
@@ -61,9 +63,23 @@ export const findSubjectsAssignedToTeacherHandler = async (req: Request<FindUniq
     const allSubjects = await findSubjectsAssignedToTeacher(id);
     res.status(200).json(allSubjects);
 };
+/*Read-only duplicate review shown on the approval screen*/
+export const reviewTeacherApplicationHandler = async (req: Request<FindUniqueTeacherApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const review = await reviewTeacherApplication(id);
+    res.status(200).json(review);
+};
 /*Approve teacherapplication*/
 export const approveTeacherApplicationHandler = async (req: Request<FindUniqueTeacherApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const approveAppllication = await approveTeacherApplication(id);
-    res.status(200).json(approveAppllication);
+    try {
+        const approveAppllication = await approveTeacherApplication(id);
+        res.status(200).json(approveAppllication);
+    } catch (err) {
+        if (err instanceof TeacherDuplicateError) {
+            // Backend-enforced block: 409 with the reason and the conflicting teacher ids (admin-only route).
+            return res.status(409).json(err.toResponse());
+        }
+        next(err);
+    }
 };

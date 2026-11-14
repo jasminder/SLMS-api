@@ -2,15 +2,18 @@ import { NewApplicantSchema } from '../../schema/new.applicant.dto/new.applicant
 import { customError } from '../../utils/customError';
 import { db } from '../../utils/db.server';
 import { sendEmail } from '../../utils/email';
+import { findTeacherConflicts } from '../teacher.duplicate.service/teacher.duplicate.service';
 import { parseISO, startOfDay } from 'date-fns';
 import { toZonedTime, format } from 'date-fns-tz';
 
 export type CheckEmailApplicationType = 'teacher' | 'student';
 
-export type CheckEmailResult =
-    | { emailTaken: false }
-    | { emailTaken: true; reason: 'registered_user'; role: string }
-    | { emailTaken: true; reason: 'existing_application' };
+/**
+ * PUBLIC (unauthenticated) response. Deliberately minimal: it says only whether the email cannot be used for this
+ * form. It never says why, and never which kind of record or role (teacher, student, admin, application or login)
+ * is behind it, so the endpoint cannot be used to learn who an email belongs to.
+ */
+export type CheckEmailResult = { emailTaken: boolean };
 
 /**
  * Check if email is already registered (User table) or has an existing application
@@ -30,23 +33,23 @@ export async function checkEmailForApplication(
         where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
         select: { role: true }
     });
-    // Siblings intentionally share one email: a student application on an email that
-    // already belongs to a STUDENT account is the sibling flow, so allow it. Only block
-    // when the email belongs to a TEACHER/ADMIN (staff email can't become a student).
-    if (existingUser && !(applicationType === 'student' && existingUser.role === 'STUDENT')) {
-        return {
-            emailTaken: true,
-            reason: 'registered_user',
-            role: existingUser.role
-        };
+    // Siblings intentionally share one email: a student application on an email that already belongs
+    // to a STUDENT account is the sibling flow, so allow it. A student application is blocked when the
+    // email belongs to a TEACHER/ADMIN login (staff email can't become a student).
+    // A TEACHER application is blocked only by a TEACHER/ADMIN login or another teacher record. A STUDENT
+    // login or student record on the same email is a legitimate family contact email: it is allowed here
+    // and shown to admins as a warning at approval (the signup step never auto-assigns a role for it).
+    const isStaffLogin = existingUser?.role === 'TEACHER' || existingUser?.role === 'ADMIN';
+    const blockedByLogin = applicationType === 'student' ? existingUser !== null && existingUser.role !== 'STUDENT' : isStaffLogin;
+    if (blockedByLogin) {
+        return { emailTaken: true };
     }
 
     if (applicationType === 'teacher') {
-        const existingTeacher = await db.teacherPersonalDetails.findUnique({
-            where: { email: normalizedEmail }
-        });
-        if (existingTeacher) {
-            return { emailTaken: true, reason: 'existing_application' };
+        // Case-insensitive, any status (active, inactive, pending). Name + DOB is checked when the form is submitted.
+        const conflicts = await findTeacherConflicts({ email: normalizedEmail }, { checkIdentity: false });
+        if (conflicts.some((conflict) => conflict.kind === 'EMAIL')) {
+            return { emailTaken: true };
         }
     }
 
