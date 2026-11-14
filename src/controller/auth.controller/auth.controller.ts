@@ -6,6 +6,7 @@ import {
     existingUserForgotPassword,
     existingUserForgotPasswordSendMailError,
     findUserByResetToken,
+    hasProfileWithoutLogin,
     loginUser,
     resetUserPassword,
     signUpUser
@@ -195,34 +196,42 @@ export const refreshHandler = async (req: Request, res: Response, next: NextFunc
 };
 //************** Forgot Password **************
 export const forgotPasswordHandler = async (req: Request<{}, {}, ForgotPasswordSchema['body'], {}>, res: Response, next: NextFunction) => {
-    // 1. Get the user's email from req.user.email
+    // Used by the parent "Forgot Password" pages (web + app) AND the admin/portal "Send Password Reset Email" buttons.
+    // 1. Normalise the email the user typed (trim + lowercase)
     // 2. Create a random password reset token
-    const { email } = req.body;
+    const email = req.body.email.trim().toLowerCase();
     const resetToken = crypto.randomBytes(32).toString('hex');
     const existingUser = await existingUserForgotPassword(email, resetToken);
-
-    // 3. send email to user with the reset token and the reset URL or api? to reset password
     const clientUrl = resolveClientUrl(req);
-    const resetUrl = `${clientUrl}/forgot-password/${resetToken}`;
 
+    if (!existingUser) {
+        // Be honest with the caller instead of pretending a link was sent.
+        if (await hasProfileWithoutLogin(email)) {
+            throw customError(
+                `No account found for this email yet. If this is your first time, please sign up at ${clientUrl}/signup, or contact the school office.`,
+                'fail',
+                404,
+                true
+            );
+        }
+        throw customError('No account found for this email. Please check the address or contact the school office.', 'fail', 404, true);
+    }
+
+    // 3. send email to user with the reset token and the reset URL to reset password
+    const resetUrl = `${clientUrl}/forgot-password/${resetToken}`;
     const subject = `Reset your Password at Akal Shaouni`;
     const text = `We have received a request to reset your password. Please visit ${resetUrl} to complete the reset. This link is valid for 1 hour.`;
-    try {
-        if (existingUser) {
-            const resonse = await sendEmail({
-                email: existingUser?.email,
-                subject,
-                text
-            });
-            res.status(201).json({ status: 'success', message: 'Reset Password link send' });
-        } else {
-            res.json('no such user');
-        }
-    } catch (err) {
-        console.log(err);
-        existingUserForgotPasswordSendMailError(email);
-        throw customError('Connot reset password. try again later.', 'fail', 404, true);
+    const sent = await sendEmail({
+        email: existingUser.email,
+        subject,
+        text
+    });
+    if (!sent) {
+        // Mail never left: drop the unused token so the user can simply try again.
+        await existingUserForgotPasswordSendMailError(email);
+        throw customError('We could not send the reset email right now. Please try again later or contact the school office.', 'fail', 503, true);
     }
+    res.status(201).json({ status: 'success', message: 'Reset Password link send' });
 };
 export const resetPasswordHandler = async (req: Request<ResetPasswordSchema['params'], {}, ResetPasswordSchema['body'], {}>, res: Response, next: NextFunction) => {
     const token = req.params.token;

@@ -373,13 +373,25 @@ const RESET_TOKEN_VALIDITY_SECONDS = 60 * 60;
 
 export const existingUserForgotPassword = async (email: string, resetToken: string) => {
     const existingUser = await db.user.findUnique({
-        where: { email: email.toLowerCase() },
+        where: { email: email.trim().toLowerCase() },
         select: {
             id: true,
             email: true,
             role: true,
             createdAt: true,
             updatedAt: true,
+/** True when a student, teacher or admin record carries this email (case-insensitive) but has no login account for it. */
+export const hasProfileWithoutLogin = async (email: string) => {
+    const normalizedEmail = email.trim();
+    const insensitive = { equals: normalizedEmail, mode: 'insensitive' as const };
+    const [student, teacher, admin] = await Promise.all([
+        db.personalDetails.findFirst({ where: { email: insensitive }, select: { id: true } }),
+        db.teacherPersonalDetails.findFirst({ where: { email: insensitive }, select: { id: true } }),
+        db.adminPersonalDetails.findFirst({ where: { email: insensitive }, select: { id: true } })
+    ]);
+    return Boolean(student || teacher || admin);
+};
+
             isActive: true,
             isEmailVerified: true,
             resetPasswordToken: true,
@@ -407,7 +419,7 @@ export const existingUserForgotPassword = async (email: string, resetToken: stri
 
 export const existingUserForgotPasswordSendMailError = async (email: string) => {
     const existingUser = await db.user.findUnique({
-        where: { email: email.toLowerCase() },
+        where: { email: email.trim().toLowerCase() },
         select: {
             id: true,
             email: true,

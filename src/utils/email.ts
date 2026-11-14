@@ -7,7 +7,12 @@ type optionType = {
     subject: string;
     text: string;
 };
-export const sendEmail = async (option: optionType) => {
+/**
+ * Sends an email through the configured SMTP relay.
+ * Never throws (callers rely on that). Returns true only when the relay accepted the message
+ * for every recipient, false on any error or rejected recipient.
+ */
+export const sendEmail = async (option: optionType): Promise<boolean> => {
     try {
         const transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST,
@@ -27,9 +32,16 @@ export const sendEmail = async (option: optionType) => {
             text: option.text
         };
 
-        await transporter.sendMail(emailOptions);
+        const info = await transporter.sendMail(emailOptions);
+        if (info?.rejected?.length) {
+            console.log(`Email "${option.subject}" rejected by the mail server (messageId ${info.messageId}):`, info.rejected.length, 'recipient(s) rejected');
+            return false;
+        }
+        console.log(`Email "${option.subject}" accepted by the mail server (messageId ${info?.messageId})`);
+        return true;
     } catch (err) {
         console.log(err);
+        return false;
     }
     // create a transporter using mailtrap credentials
 };
