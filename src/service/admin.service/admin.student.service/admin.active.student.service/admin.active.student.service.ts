@@ -1,4 +1,5 @@
 import { endEnrollmentWithHistory } from '../../admin.enrollment.history.service/enrollment.history.service';
+import { sortInvoicesOldestFirst } from '../../admin.fee.service/invoice.order.rules';
 import type { DeEnrollActor } from '../../admin.enrollment.history.service/enrollment.history.service';
 import { db } from '../../../../utils/db.server';
 import { customError } from '../../../../utils/customError';
@@ -7,10 +8,10 @@ import { Day, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import { getIo } from '../../../../sockets/socket';
 import { updateStudentLastTwoDaysAttendance } from '../../admin.checkin.service/admin.checkin.service';
 import { syncLeaveAttendance } from '../../../../utils/syncLeaveAttendance';
+import { calculateOverdueAmount } from '../../../fee.service/fee.overdue.service';
 
 type AttendanceFilter = {
     attendancePercentageValue?: number;
-import { calculateOverdueAmount } from '../../../fee.service/fee.overdue.service';
 };
 
 async function updateEmailsToLowercase() {
@@ -1921,16 +1922,9 @@ export async function findStudentFeeDetails(studentId: number, termId: number) {
         }
     }
 
-    if (studentTermFees.length === 0 && previousTermUnpaid.length === 0) {
-        return studentTermFees;
-    }
-    if (studentTermFees.length === 0) {
-        return previousTermUnpaid;
-    }
-    if (previousTermUnpaid.length === 0) {
-        return studentTermFees;
-    }
-    return [...studentTermFees, ...previousTermUnpaid];
+    // Issue 11: the queries above have no ORDER BY, so the database returns rows in whatever order they are stored.
+    // The fee page must list invoices oldest first (by creation date) and newest last, whichever term they came from.
+    return sortInvoicesOldestFirst([...studentTermFees, ...previousTermUnpaid]);
 }
 
 export async function findTermSubjectGroupIdEnrolledSubjects(id: string, termSubjectGroupId: string) {
