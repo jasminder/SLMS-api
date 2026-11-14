@@ -42,6 +42,7 @@ import './src/cron/sendConsolidatedEmailForParents';
 import './src/cron/calculateTermAttendance';
 import './src/cron/checkAndMarkOverduePayments';
 import './src/cron/createAutomatedSchoolCheckInAttendance';
+import './src/cron/weeklyAbsenceWatchlist';
 import commentRoute from './src/route/admin.route/admin.comment.route/admin.comment.route';
 import interactionRoute from './src/route/admin.route/admin.interactions.route/admin.interactions.route';
 import adminInstitutionRoute from './src/route/admin.route/admin.institution.route/admin.institution.route';

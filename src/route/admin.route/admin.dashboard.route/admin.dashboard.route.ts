@@ -15,6 +15,7 @@ import {
 import {
     fetchActiveCheckedInStudentsHandler,
     fetchCheckedOutStudentsHandler,
+    fetchAbsenceWatchlistHandler,
     fetchKirtanAttendanceStudentsHandler,
     fetchPendingLeavesHandler,
     fetchStudentsOnAbsentHandler,
@@ -45,5 +46,6 @@ adminDashboardRoute
     .get(validate(fetchActiveCheckedInStudentsSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchKirtanAttendanceStudentsHandler));
 adminDashboardRoute.route('/new-students-leaves/pending').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchPendingLeavesHandler));
 adminDashboardRoute.route('/applicants/unviewed').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchUnviewedApplicantsHandler));
+adminDashboardRoute.route('/absence-watchlist').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(fetchAbsenceWatchlistHandler));
 
 export default adminDashboardRoute;

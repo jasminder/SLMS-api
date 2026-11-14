@@ -22,6 +22,7 @@ import {
     FindAllActiveStudentsWithFlagsSchema,
     SearchActiveStudentsWithFlagsSchema
 } from '../../../schema/admin.dto/admin.dashboard.dto/admin.dashboard.dto';
+import { listAbsenceWatchlist } from '../../../service/attendance.watchlist.service/attendance.watchlist.service';
 
 export const fetchActiveCheckedInStudentsHandler = async (req: Request<{}, {}, {}, FetchActiveCheckedInStudentsSchema['query']>, res: Response, next: NextFunction) => {
     const { dateString } = req.query;
@@ -86,4 +87,10 @@ export const fetchUnviewedApplicantsHandler = async (req: Request, res: Response
     } catch (error) {
         next(error);
     }
+};
+
+/* Weekly absence list (Scope of Work item 24): the open automatic flags with each student's current numbers */
+export const fetchAbsenceWatchlistHandler = async (req: Request, res: Response) => {
+    const students = await listAbsenceWatchlist();
+    res.status(200).json(students);
 };
