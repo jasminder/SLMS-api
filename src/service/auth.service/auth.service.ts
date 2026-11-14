@@ -363,7 +363,8 @@ export const existingAuthUser = async (email: string, role: string) => {
         }
     });
     if (!existingUser) {
-        throw customError('Session expired login again', 'fail', 404, true);
+        // 401 (not 404): a valid token whose user no longer exists is a failed session. protectRoute already meant 401 for this.
+        throw customError('Session expired login again', 'fail', 401, true);
     }
     // Session restoration (protectRoute) and token refresh both come through here: a login that has not finished
     // password setup never gets a session, even if an old token for the same email exists.
@@ -391,7 +392,6 @@ export const hasProfileWithoutLogin = async (email: string) => {
     return Boolean(student || teacher || admin);
 };
 
-            isActive: true,
 export const existingUserForgotPassword = async (email: string, resetToken: string) => {
     const existingUser = await db.user.findUnique({
         where: { email: email.trim().toLowerCase() },
@@ -401,6 +401,7 @@ export const existingUserForgotPassword = async (email: string, resetToken: stri
             role: true,
             createdAt: true,
             updatedAt: true,
+            isActive: true,
             isEmailVerified: true,
             resetPasswordToken: true,
             resetPasswordTokenExpiresAt: true

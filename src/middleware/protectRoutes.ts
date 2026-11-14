@@ -56,14 +56,21 @@ export const protectRoute = asyncErrorHandler(async (req: Request, res: Response
             const error = customError(err.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token', 'fail', statusCode, true);
             return next(error);
         }
-        const decodedToken = decoded as DecodeToken;
-        const existingUser = await existingAuthUser(decodedToken.email, decodedToken.role);
+        // This callback is async and jwt.verify does not await it: an error thrown here would be an UNHANDLED promise
+        // rejection, and index.ts shuts the whole API down on those. Every failure (a deleted user, a login still
+        // pending password setup, a database error) must therefore go to Express's error handler through next().
+        try {
+            const decodedToken = decoded as DecodeToken;
+            const existingUser = await existingAuthUser(decodedToken.email, decodedToken.role);
 
-        if (!existingUser) {
-            const error = customError('No such user with this token exists @ksm', 'fail', 401, true);
-            return next(error);
+            if (!existingUser) {
+                const error = customError('No such user with this token exists @ksm', 'fail', 401, true);
+                return next(error);
+            }
+            req.user = existingUser;
+            next();
+        } catch (error) {
+            next(error);
         }
-        req.user = existingUser;
-        next();
     });
 });

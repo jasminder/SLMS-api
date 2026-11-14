@@ -183,9 +183,9 @@ export const refreshHandler = async (req: Request, res: Response, next: NextFunc
                             message: `${existingUser.email} given access token since refresh token is valid`
                         });
                     })
-                    .catch((userError) => {
-                        throw userError;
-                    });
+                    // Pass lookup/response errors (deleted user, login pending password setup, database error) to the Express
+                    // error handler. Rethrowing here was an unhandled promise rejection that shut the whole API down.
+                    .catch(next);
             } catch (callbackError) {
                 next(callbackError);
             }
