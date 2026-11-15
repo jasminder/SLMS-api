@@ -1482,3 +1482,45 @@ model AppRelease {
 
   @@unique([platform, build])
 }
+
+/// Scope of Work item 35 (email to a selected group of students). One row per send: who sent it, the subject and message as sent,
+/// where it went (the student's own email, the parent's second email, or both), the filters in use, and the counts.
+model BulkEmail {
+  id              Int                  @id @default(autoincrement())
+  sentByUserId    Int?
+  sentByEmail     String
+  subject         String
+  message         String
+  templateId      Int?
+  templateName    String?
+  recipientMode   String
+  filters         Json?
+  studentCount    Int
+  recipientCount  Int
+  sentCount       Int                  @default(0)
+  failedCount     Int                  @default(0)
+  skippedStudents Int                  @default(0)
+  /// SENDING | DONE | FAILED
+  status          String               @default("SENDING")
+  createdAt       DateTime             @default(now())
+  finishedAt      DateTime?
+  recipients      BulkEmailRecipient[]
+
+  @@index([createdAt])
+}
+
+/// One row per email address in a send. One email per address: a parent with three selected children has ONE row naming all three.
+model BulkEmailRecipient {
+  id           Int       @id @default(autoincrement())
+  bulkEmailId  Int
+  email        String
+  studentIds   Int[]
+  studentNames String
+  /// PENDING | SENT | FAILED
+  status       String    @default("PENDING")
+  error        String?
+  sentAt       DateTime?
+  bulkEmail    BulkEmail @relation(fields: [bulkEmailId], references: [id], onDelete: Cascade)
+
+  @@index([bulkEmailId, status])
+}

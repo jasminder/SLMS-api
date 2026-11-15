@@ -54,6 +54,7 @@ import skipReportRoute from './src/route/admin.skip.report.route/admin.skip.repo
 import adminDashboardRoute from './src/route/admin.route/admin.dashboard.route/admin.dashboard.route';
 import adminAppInstallRoute from './src/route/admin.route/admin.app.install.route/admin.app.install.route';
 import appActivityRoute from './src/route/app.activity.route/app.activity.route';
+import adminBulkEmailRoute from './src/route/admin.route/admin.bulk.email.route/admin.bulk.email.route';
 import adminAnalyticsRoute from './src/route/admin.route/admin.analytics.route/admin.analytics.route';
 import adminTeacherUpdateRoute from './src/route/admin.route/admin.teacher.route/admin.teacher.update.route/admin.teacher.update.route';
 import adminTeacherWeekdayCheckinRoute from './src/route/admin.route/admin.checkin.route/admin.weekday.checkin.route/admin.weekday.checkin.route';
@@ -189,6 +190,7 @@ app.use('/api/v1/admin/interactions', interactionRoute);
 app.use('/api/v1/admin/dashboard', adminDashboardRoute);
 app.use('/api/v1/admin/app-installs', adminAppInstallRoute);
 app.use('/api/v1/app-activity', appActivityRoute);
+app.use('/api/v1/admin/bulk-email', adminBulkEmailRoute);
 app.use('/api/v1/admin/analytics', adminAnalyticsRoute);
 app.use('/api/v1/admin/institution', adminInstitutionRoute);
 app.use('/api/v1/admin/communication', adminEmailTemplateRoute);
