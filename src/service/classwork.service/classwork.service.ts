@@ -1,4 +1,5 @@
 import { customError } from '../../utils/customError';
+import { recordClassRecordEdit } from '../class.record.edit.service/class.record.edit.service';
 import { db } from '../../utils/db.server';
 import { getHomeWorkDownloadPresignedUrl } from '../aws.service/aws.homework.fileDownload.service/aws.homework.fileDownload.service';
 
@@ -259,7 +260,8 @@ export async function editClasswork(
     uploadedUserRole: string,
     title: string,
     description: string,
-    attachments: string[]
+    attachments: string[],
+    editor?: { userId?: number; email?: string }
 ) {
     // Check for uploader role and existence
     let uploader;
@@ -298,12 +300,11 @@ export async function editClasswork(
             termSubjectLevelId: +termSubjectLevelId
         };
     } else if (uploadedUserRole === 'ADMIN') {
+        // An admin edit keeps the original teacher and the original "uploaded by" (it used to clear the teacher). The edit itself is
+        // recorded in ClassRecordEdit with the admin's name, so the history shows who changed what.
         data = {
             subjectId,
             sectionId: +sectionId,
-            teacherId: null,
-            adminId: +uploaderId,
-            uploadedUserRole,
             title,
             description,
             attachments,
@@ -316,6 +317,13 @@ export async function editClasswork(
 
     // Update the classwork in the database
     const updatedclasswork = await db.classwork.update({ where: { id: +classworkId }, data });
+    await recordClassRecordEdit(
+        'CLASSWORK',
+        +classworkId,
+        { title: existingClasswork.title, description: existingClasswork.description, attachments: existingClasswork.attachments },
+        { title, description, attachments },
+        { role: uploadedUserRole, userId: editor?.userId, email: editor?.email }
+    );
     if (!updatedclasswork) {
         throw customError('Failed to update classwork', 'fail', 400, true);
     }

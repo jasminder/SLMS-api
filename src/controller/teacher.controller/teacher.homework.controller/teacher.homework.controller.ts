@@ -9,6 +9,8 @@ export const createGroupHomeworkHandler = async (req: Request<{}, {}, CreateGrou
 };
 export const findAssignedHomeworksHandler = async (req: Request<FindAssignedHomeworksSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { teacherId, termSubjectLevelId, sectionId } = req.params;
-    const assignedHomeworks = await findAssignedHomeworks(teacherId, termSubjectLevelId, sectionId);
+    // A teacher is limited to their own groups, using the id from their login (never the one in the URL). Admin is not limited.
+    const onlyTeacherId = req.user?.role === 'TEACHER' ? (req.user.teacher?.id ?? -1) : undefined;
+    const assignedHomeworks = await findAssignedHomeworks(teacherId, termSubjectLevelId, sectionId, onlyTeacherId);
     res.status(200).json(assignedHomeworks);
 };

@@ -1,3 +1,4 @@
+import { listClassRecordEdits } from '../../../service/class.record.edit.service/class.record.edit.service';
 import { NextFunction, Request, Response } from 'express';
 
 import {
@@ -14,6 +15,7 @@ import {
     assignSubjectToApprovedTeacher,
     findAllSubjectsToAssignTeacher,
     findAllTeachers,
+    setTeachingStatus,
     findSubjectsAssignedToApprovedTeacher,
     findTeacherById,
     searchTeachers,
@@ -28,6 +30,21 @@ import {
 export const findAllTeachersHandler = async (req: Request, res: Response, next: NextFunction) => {
     const allTeachers = await findAllTeachers();
     res.status(200).json(allTeachers);
+};
+// switch a teacher between currently teaching and not currently teaching (ADMIN only, see route)
+export const setTeachingStatusHandler = async (req: Request<{ id: string }, {}, { isCurrentlyTeaching: boolean }, {}>, res: Response, next: NextFunction) => {
+    const result = await setTeachingStatus(parseInt(req.params.id), req.body.isCurrentlyTeaching);
+    res.status(200).json(result);
+};
+// edit history of one classwork or homework row (ADMIN only, see route)
+export const listClassRecordEditsHandler = async (req: Request<{ kind: string; recordId: string }>, res: Response, next: NextFunction) => {
+    const kind = req.params.kind.toUpperCase();
+    const recordId = parseInt(req.params.recordId);
+    if ((kind !== 'HOMEWORK' && kind !== 'CLASSWORK') || !Number.isInteger(recordId)) {
+        res.status(400).json({ status: 'fail', message: 'Invalid kind or record id' });
+        return;
+    }
+    res.status(200).json(await listClassRecordEdits(kind, recordId));
 };
 // search teachers
 export const searchTeachersHandler = async (req: Request<{}, {}, {}, SearchTeachersSchema['query']>, res: Response, next: NextFunction) => {

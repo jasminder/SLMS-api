@@ -459,6 +459,7 @@ model Teacher {
   role                             Role                              @default(APPLICANT)
   isActive                         Boolean                           @default(false)
   isAllowedLogin                   Boolean                           @default(false)
+  isCurrentlyTeaching              Boolean                           @default(true)
   createdAt                        DateTime                          @default(now())
   updatedAt                        DateTime                          @updatedAt
   AutomatedMailForParents          AutomatedMailForParents[]
@@ -1523,4 +1524,21 @@ model BulkEmailRecipient {
   bulkEmail    BulkEmail @relation(fields: [bulkEmailId], references: [id], onDelete: Cascade)
 
   @@index([bulkEmailId, status])
+}
+
+/// History of edits to classwork and homework (SOW item 32). One row per changed field. No foreign key on purpose:
+/// the history stays even if the classwork or homework row is later deleted.
+model ClassRecordEdit {
+  id           Int      @id @default(autoincrement())
+  kind         String
+  recordId     Int
+  field        String
+  oldValue     String?
+  newValue     String?
+  editorRole   String
+  editorUserId Int?
+  editorEmail  String?
+  createdAt    DateTime @default(now())
+
+  @@index([kind, recordId])
 }

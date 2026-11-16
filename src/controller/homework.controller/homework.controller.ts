@@ -48,7 +48,7 @@ export const editHomeworkHandler = async (req: Request<EditHomeworkSchema['param
     const { homeworkId, termSubjectLevelId, sectionId, uploaderId } = req.params;
     const { uploadedUserRole, title, description, attachments } = req.body;
 
-    const updatedHomework = await editHomework(homeworkId, termSubjectLevelId, sectionId, uploaderId, uploadedUserRole, title, description, attachments);
+    const updatedHomework = await editHomework(homeworkId, termSubjectLevelId, sectionId, uploaderId, uploadedUserRole, title, description, attachments, { userId: req.user?.id, email: req.user?.email });
     res.status(200).json(updatedHomework);
 };
 

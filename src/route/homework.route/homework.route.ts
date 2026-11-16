@@ -1,4 +1,5 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
+import { getSendStatus } from '../../service/class.record.edit.service/class.record.edit.service';
 
 import validate from '../../middleware/validateResource';
 import {
@@ -38,6 +39,16 @@ homeworkRoute
 homeworkRoute
     .route('/find-all-by-class-termSubjectLevel-section/:teacherId')
     .get(validate(findAssignedHomeworkByTermAndSectionSchema), protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(findAssignedHomeworkByTermAndSectionHandler));
+
+/* send status of one item, for the warning on the edit screen */
+homeworkRoute.route('/send-status/:homeworkId').get(protectRoute, restrict('ADMIN', 'TEACHER'), asyncErrorHandler(async (req: Request, res: Response) => {
+    const id = parseInt(String(req.params.homeworkId));
+    if (!Number.isInteger(id)) {
+        res.status(400).json({ status: 'fail', message: 'Invalid id' });
+        return;
+    }
+    res.status(200).json({ status: await getSendStatus('HOMEWORK', id) });
+}));
 
 /* edit homework*/
 homeworkRoute

@@ -30,7 +30,10 @@ export async function findAllTeachers() {
             id: true,
             role: true,
             isActive: true,
+            isCurrentlyTeaching: true,
             createdAt: true,
+            teacherSubject: { select: { subject: { select: { id: true, name: true } } } },
+            teacherSubjectAssignment: { where: { termSubjectLevel: { term: { currentTerm: true } } }, select: { id: true } },
             teacherPersonalDetails: {
                 select: {
                     id: true,
@@ -103,6 +106,28 @@ export async function findAllTeachers() {
 
     return approvedTeachers;
 }
+/**
+ * Mark a teacher as currently teaching or not (SOW item 28). This is a separate flag from `isActive`
+ * (which means "approved teacher") so the admin can switch the teacher back on and the teacher stays in the list.
+ * It does not touch the login flag, the timetable or any class record.
+ * Returns how many current-term classes the teacher is still allocated to, so the screen can tell the admin.
+ */
+export async function setTeachingStatus(teacherId: number, isCurrentlyTeaching: boolean) {
+    const teacher = await db.teacher.findUnique({ where: { id: teacherId }, select: { id: true, role: true, isActive: true } });
+    if (!teacher || teacher.role !== 'TEACHER' || !teacher.isActive) {
+        throw customError('Teacher not found', 'fail', 404, true);
+    }
+    const updated = await db.teacher.update({
+        where: { id: teacherId },
+        data: { isCurrentlyTeaching },
+        select: { id: true, isCurrentlyTeaching: true }
+    });
+    const classCount = await db.teacherClassAssignment.count({
+        where: { teacherId, termSubjectLevel: { term: { currentTerm: true } } }
+    });
+    return { ...updated, classCount };
+}
+
 export async function searchTeachers(search: string) {
     if (search.length == 0) {
         throw customError(`No Search query string available`, 'fail', 400, true);
@@ -129,7 +154,10 @@ export async function searchTeachers(search: string) {
             id: true,
             role: true,
             isActive: true,
+            isCurrentlyTeaching: true,
             createdAt: true,
+            teacherSubject: { select: { subject: { select: { id: true, name: true } } } },
+            teacherSubjectAssignment: { where: { termSubjectLevel: { term: { currentTerm: true } } }, select: { id: true } },
             teacherPersonalDetails: {
                 select: {
                     id: true,
@@ -214,7 +242,10 @@ export async function findTeacherById(id: string) {
             id: true,
             role: true,
             isActive: true,
+            isCurrentlyTeaching: true,
             createdAt: true,
+            teacherSubject: { select: { subject: { select: { id: true, name: true } } } },
+            teacherSubjectAssignment: { where: { termSubjectLevel: { term: { currentTerm: true } } }, select: { id: true } },
             teacherPersonalDetails: {
                 select: {
                     id: true,
@@ -364,6 +395,9 @@ export async function assignClassToTeacher(teacherId: string, termId: string, su
     const teacher = await db.teacher.findUnique({ where: { id: parseInt(teacherId) } });
     if (!teacher || !teacher.isActive) {
         throw customError('Teacher not found or is not active', 'fail', 400, true);
+    }
+    if (!teacher.isCurrentlyTeaching) {
+        throw customError('This teacher is marked as not currently teaching. Switch them back on before giving them a class.', 'fail', 400, true);
         //         throw customError(`Subject '${subjectName}' not found.`, 'fail', 400, true);
     }
 
@@ -622,7 +656,7 @@ export const getClassRecordsForAdmin = async (date?: string) => {
     const day = resolveDayOfWeek(date);
     const dayTimetable = await db.timetable.findFirst({
         where: { day, isActive: true },
-        include: { timetableSlots: { include: { timeSlot: true } } }
+        include: { timetableSlots: { include: { timeSlot: true, classroom: true } } }
     });
     const scheduledKey = (tslId: number | null, secId: number | null) => `${tslId}-${secId}`;
     const scheduledToday = new Set(
@@ -635,6 +669,13 @@ export const getClassRecordsForAdmin = async (date?: string) => {
         if (!timingMap.has(key)) {
             timingMap.set(key, slot.timeSlot.timeRange);
         }
+    }
+    // The room for each class on that day, so the admin "send to students" step has the room name it needs (D6 problem 1).
+    const roomMap = new Map<string, string>();
+    for (const slot of dayTimetable?.timetableSlots ?? []) {
+        if (!slot.termSubjectLevelId || !slot.sectionId || !slot.classroom?.name) continue;
+        const key = scheduledKey(slot.termSubjectLevelId, slot.sectionId);
+        if (!roomMap.has(key)) roomMap.set(key, slot.classroom.name);
     }
 
     // Fetch all current-term class assignments, then narrow to the ones
@@ -715,6 +756,7 @@ export const getClassRecordsForAdmin = async (date?: string) => {
                 : null;
 
             const timing = timingMap.get(classKey(cls.termSubjectLevelId, cls.sectionId)) ?? null;
+            const roomName = roomMap.get(classKey(cls.termSubjectLevelId, cls.sectionId)) ?? null;
 
             return {
                 classInfo: {
@@ -727,7 +769,8 @@ export const getClassRecordsForAdmin = async (date?: string) => {
                     sectionName: cls.section.name,
                     termId: cls.termSubjectLevel.term.id,
                     teacherName,
-                    timing
+                    timing,
+                    roomName
                 },
                 attendanceSummary,
                 classwork,

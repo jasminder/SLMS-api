@@ -41,7 +41,7 @@ export const editClassworkHandler = async (req: Request<EditClassworkSchema['par
     const { classworkId, termSubjectLevelId, sectionId, uploaderId } = req.params;
     const { uploadedUserRole, title, description, attachments } = req.body;
 
-    const updatedclasswork = await editClasswork(classworkId, termSubjectLevelId, sectionId, uploaderId, uploadedUserRole, title, description, attachments);
+    const updatedclasswork = await editClasswork(classworkId, termSubjectLevelId, sectionId, uploaderId, uploadedUserRole, title, description, attachments, { userId: req.user?.id, email: req.user?.email });
     res.status(200).json(updatedclasswork);
 };
 /*delete classwork*/

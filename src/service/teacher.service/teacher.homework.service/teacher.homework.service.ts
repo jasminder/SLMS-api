@@ -31,18 +31,22 @@ export async function createGroupHomework(
     let groupHomework;
 
     if (homeworkIds.length > 0) {
-        const transactions = studentIds.map((studentId) => {
-            return db.studentHomework.create({
-                data: {
-                    studentId: +studentId,
-                    homeworkId: +homeworkIds[0],
-                    sendDate,
-                    roomName,
-                    className,
-                    classTime
-                }
-            });
+        // One student-homework row for EVERY selected homework (D6 problem 4: only the first one used to get a row, so students
+        // missed the rest). Rows that already exist are skipped, so sending the same homework twice does not fail here and does not
+        // notify the student a second time; the friendly "already exists" check below still runs.
+        const numericHomeworkIds = [...new Set(homeworkIds.map(Number))];
+        const existingRows = await db.studentHomework.findMany({
+            where: { studentId: { in: numericStudentIds }, homeworkId: { in: numericHomeworkIds } },
+            select: { studentId: true, homeworkId: true }
         });
+        const existingKeys = new Set(existingRows.map((r) => `${r.studentId}-${r.homeworkId}`));
+        const newRows = numericStudentIds.flatMap((studentId) =>
+            numericHomeworkIds
+                .filter((homeworkId) => !existingKeys.has(`${studentId}-${homeworkId}`))
+                .map((homeworkId) => ({ studentId, homeworkId, sendDate, roomName, className, classTime }))
+        );
+        const transactions = [db.studentHomework.createMany({ data: newRows, skipDuplicates: true })];
+        const studentsToNotify = [...new Set(newRows.map((r) => r.studentId))];
         // Find subject here
         const termSubjectLevel = await db.termSubjectLevel.findUnique({
             where: { id: +termSubjectLevelId },
@@ -51,9 +55,9 @@ export async function createGroupHomework(
         const subject = termSubjectLevel?.subject;
 
         await db.$transaction([...transactions]);
-        const hwNames = await getStudentNamesMap(studentIds.map(Number));
+        const hwNames = await getStudentNamesMap(studentsToNotify);
         await createManyNotificationsAndPush(
-            studentIds.map((studentId) => ({
+            studentsToNotify.map((studentId) => ({
                 studentId: +studentId,
                 type: NotificationType.HOMEWORK,
                 content: `${hwNames.get(+studentId) ?? 'Student'}, a new homework has been posted for ${subject?.name || 'your subject'}.`,
@@ -156,10 +160,14 @@ export async function createGroupHomework(
     return groupHomework;
 }
 /*get assignedhomeworks*/
-export async function findAssignedHomeworks(teacherId: string, termSubjectLevelId: string, sectionId: string) {
+/**
+ * `onlyTeacherId` is set when the caller is a teacher (D6 problem 5): a teacher sees only the groups they made, not those of other
+ * teachers for the same class. Admin callers pass nothing and see every group, as before.
+ */
+export async function findAssignedHomeworks(teacherId: string, termSubjectLevelId: string, sectionId: string, onlyTeacherId?: number) {
     return await db.groupHomework.findMany({
         where: {
-            // teacherId: parseInt(teacherId),
+            ...(onlyTeacherId !== undefined ? { teacherId: onlyTeacherId } : {}),
             termSubjectLevelId: parseInt(termSubjectLevelId),
             sectionId: parseInt(sectionId)
             // createdAt: {

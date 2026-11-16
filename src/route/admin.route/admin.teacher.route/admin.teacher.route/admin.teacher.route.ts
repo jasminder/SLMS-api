@@ -12,6 +12,8 @@ import {
     getClassRecordsForAdminHandler,
     findAllSubjectsToAssignTeacherHandler,
     findAllTeachersHandler,
+    setTeachingStatusHandler,
+    listClassRecordEditsHandler,
     findCurrentTermToAssignClassHandler,
     findSubjectsAssignedToApprovedTeacherHandler,
     findTeacherByIdHandler,
@@ -24,7 +26,8 @@ import {
     deleteClassToTeacherSchema,
     deleteSubjectToApprovedTeacherSchema,
     findUniqueTeacherSchema,
-    searchTeachersSchema
+    searchTeachersSchema,
+    setTeachingStatusSchema
 } from '../../../../schema/admin.dto/admin.teacher.dto/admin.teacher.dto';
 import { createTeacherLoginHandler, getTeacherAccountStatusHandler, sendTeacherPasswordResetHandler } from '../../../../controller/admin.controller/admin.teacher.controller/admin.teacher.account.controller';
 import { restrict } from '../../../../middleware/restrict';
@@ -33,6 +36,8 @@ import { protectRoute } from '../../../../middleware/protectRoutes';
 const adminTeacherRoute = express.Router();
 //find all teachers
 adminTeacherRoute.route('/get-all-teachers').get(protectRoute, restrict('ADMIN'),asyncErrorHandler(findAllTeachersHandler));
+adminTeacherRoute.route('/teaching-status/:id').patch(validate(setTeachingStatusSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(setTeachingStatusHandler));
+adminTeacherRoute.route('/class-record-edits/:kind/:recordId').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(listClassRecordEditsHandler));
 adminTeacherRoute.route('/search-teachers').get(validate(searchTeachersSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(searchTeachersHandler));
 /* login-account status of a teacher (ADMIN only) and the password-reset email action (ADMIN only) */
 adminTeacherRoute.route('/account-status/:id').get(validate(findUniqueTeacherSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(getTeacherAccountStatusHandler));

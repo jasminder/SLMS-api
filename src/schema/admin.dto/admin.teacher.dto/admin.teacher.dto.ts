@@ -16,6 +16,17 @@ export const findUniqueTeacherSchema = z.object({
 
 export type FindUniqueTeacherSchema = z.infer<typeof findUniqueTeacherSchema>;
 
+/*admin switches a teacher between currently teaching and not currently teaching*/
+export const setTeachingStatusSchema = z.object({
+    params: z.object({
+        id: z.string().regex(/^\d+$/, { message: 'Teacher id must be a number' })
+    }),
+    body: z.object({
+        isCurrentlyTeaching: z.boolean({ required_error: 'isCurrentlyTeaching is required' })
+    })
+});
+export type SetTeachingStatusSchema = z.infer<typeof setTeachingStatusSchema>;
+
 /*admin creates a teacher login on a separate, school-confirmed email*/
 export const createTeacherLoginSchema = z.object({
     params: z.object({
