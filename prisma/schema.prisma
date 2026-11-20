@@ -54,6 +54,7 @@ model Student {
   StudentTermAttendanceHistory StudentTermAttendanceHistory[]
   studentTermFee               StudentTermFee[]
   studentProfileActivity      StudentProfileActivity[]
+  feeExemptions                FeeExemption[]
   DeviceToken                  DeviceToken[]
   user                         User?
 }
@@ -1541,4 +1542,24 @@ model ClassRecordEdit {
   createdAt    DateTime @default(now())
 
   @@index([kind, recordId])
+}
+
+/// Fee exemption between two dates (SOW item 20, B5). While an exemption is switched on and its dates cover the billing
+/// period (or today), no invoice is generated for the student. Switching it off keeps the row (history) and sets endedAt.
+model FeeExemption {
+  id               Int       @id @default(autoincrement())
+  studentId        Int
+  startDate        DateTime
+  endDate          DateTime
+  reason           String?
+  isActive         Boolean   @default(true)
+  createdByUserId  Int?
+  createdByEmail   String?
+  endedAt          DateTime?
+  endedByEmail     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  student          Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, isActive])
 }

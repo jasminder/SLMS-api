@@ -67,6 +67,15 @@ export const findCurrentTermToEnrollHandler = async (req: Request<{}, {}, {}, {}
 export const enrollApplicantHandler = async (req: Request<{}, {}, ApplicantEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const enrollData = req.body;
     const termToEnroll = await enrollApplicant(enrollData);
+    // SOW item 20 (B8): subject enrolment of an applicant was missing from the activity record (best effort: never blocks the enrolment).
+    await recordStudentProfileActivity({
+        studentId: enrollData.applicantId,
+        actionType: 'ENROLLMENT',
+        description: 'Enrolled in subject(s)',
+        metadata: { enrollData: enrollData.enrollData },
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System'
+    }).catch(() => {});
     res.status(200).json(termToEnroll);
 };
 
@@ -94,6 +103,14 @@ export const findApplicantEnrolledSubjectsHandler = async (req: Request<FindUniq
 export const enrollApplicantToStudentHandler = async (req: Request<FindUniqueApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const enrolledSubjects = await enrollApplicantToStudent(+id);
+    // SOW item 20 (B8): first enrolment (applicant becomes an enrolled student).
+    await recordStudentProfileActivity({
+        studentId: +id,
+        actionType: 'FIRST_ENROLLMENT',
+        description: 'Enrolled as a student (first enrolment)',
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System'
+    }).catch(() => {});
     res.status(200).json(enrolledSubjects);
 };
 export const markApplicantAsSeenHandler = async (req: Request<FindUnseenApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {

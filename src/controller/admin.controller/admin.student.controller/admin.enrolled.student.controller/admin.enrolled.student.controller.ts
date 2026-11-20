@@ -68,6 +68,15 @@ export const findEnrolledStudentEnrolledSubjectsHandler = async (req: Request<Fi
 export const enrollStudentEnrolledToSubjectsHandler = async (req: Request<{}, {}, EnrolledStudentEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const enrollData = req.body;
     const termToEnroll = await enrollStudentEnrolledToSubjects(enrollData);
+    // SOW item 20 (B8): subject enrolment was missing from the activity record (best effort: never blocks the enrolment).
+    await recordStudentProfileActivity({
+        studentId: enrollData.enrolledStudentId,
+        actionType: 'ENROLLMENT',
+        description: 'Enrolled in subject(s)',
+        metadata: { enrollData: enrollData.enrollData },
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System'
+    }).catch(() => {});
     res.status(200).json(termToEnroll);
 };
 /* de-enroll enrolled student to subjects */
@@ -90,6 +99,14 @@ export const deEnrollStudentEnrolledToSubjectsHandler = async (req: Request<{}, 
 export const enrollToCurrenTermHandler = async (req: Request<FindUniqueEnrolledStudentSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const message = await enrollToCurrenTerm(id);
+    // SOW item 20 (B8): activation (enrolled student becomes an active student).
+    await recordStudentProfileActivity({
+        studentId: +id,
+        actionType: 'ACTIVATION',
+        description: 'Made an active student for the current term',
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System'
+    }).catch(() => {});
 
     res.status(200).json(message);
 };

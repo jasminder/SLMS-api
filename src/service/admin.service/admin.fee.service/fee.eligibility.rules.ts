@@ -19,7 +19,7 @@ export type LiveEnrollment = { createdAt: Date | string };
 export type HistoryEntry = { enrolledAt: Date | string | null; endedAt: Date | string; subjectName?: string | null };
 export type BillingPeriod = { start: Date; end: Date; label: string };
 
-export type SkipCode = 'STUDENT_NOT_FOUND' | 'NO_FEE_RECORD' | 'NO_AKAAL_ID' | 'ALREADY_BILLED' | 'LEFT_FEE_GROUP' | 'NO_ENROLLMENT_NO_HISTORY' | 'NOT_ENROLLED_IN_BILLING_PERIOD';
+export type SkipCode = 'STUDENT_NOT_FOUND' | 'NO_FEE_RECORD' | 'NO_AKAAL_ID' | 'ALREADY_BILLED' | 'FEE_EXEMPT' | 'LEFT_FEE_GROUP' | 'NO_ENROLLMENT_NO_HISTORY' | 'NOT_ENROLLED_IN_BILLING_PERIOD';
 
 export type EligibilityDecision =
     | { eligible: true }
@@ -29,7 +29,28 @@ export const SKIP_REASON_TEXT: Record<Exclude<SkipCode, 'LEFT_FEE_GROUP' | 'NO_E
     STUDENT_NOT_FOUND: 'No student with this ID was found.',
     NO_FEE_RECORD: 'The student has no fee record for this term and fee group, so there is nothing to bill against.',
     NO_AKAAL_ID: 'The student has no Akaal ID, so a valid invoice number cannot be made.',
-    ALREADY_BILLED: 'An invoice for this fee template already exists for this student. No second invoice was created.'
+    ALREADY_BILLED: 'An invoice for this fee template already exists for this student. No second invoice was created.',
+    FEE_EXEMPT: 'The student has a fee exemption that covers this billing period, so no invoice was created.'
+};
+
+/**
+ * Fee exemption (SOW item 20, B5). An exemption is a pair of dates (both days included, Melbourne time) that an admin switches on.
+ * No invoice is made for the student while the exemption is on and either (a) its dates overlap the month being invoiced, or
+ * (b) it is live today. Rule (a) stops a late-run invoice for an exempt month, rule (b) is the scope wording ("while it is live").
+ * A switched-off exemption is never passed in here.
+ */
+export type ExemptionWindow = { startDate: Date | string; endDate: Date | string };
+export const findCoveringExemption = <T extends ExemptionWindow>(exemptions: T[], period: BillingPeriod, now: Date = new Date()): T | null => {
+    const nowTime = now.getTime();
+    return (
+        exemptions.find((e) => {
+            const start = toTime(e.startDate);
+            const end = toTime(e.endDate);
+            const overlapsPeriod = start <= period.end.getTime() && end >= period.start.getTime();
+            const liveNow = start <= nowTime && end >= nowTime;
+            return overlapsPeriod || liveNow;
+        }) ?? null
+    );
 };
 
 const toTime = (value: Date | string): number => (value instanceof Date ? value : new Date(value)).getTime();
@@ -41,6 +62,8 @@ const fmtDate = (value: Date | string): string => {
     const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
     return `${get('day')} ${MONTH_ABBR[get('month') - 1]} ${get('year')}`;
 };
+/** The skip message shown to the admin, with the exemption dates. */
+export const exemptionSkipReason = (e: ExemptionWindow): string => `The student has a fee exemption from ${fmtDate(e.startDate)} to ${fmtDate(e.endDate)} that covers this invoice, so no invoice was created.`;
 
 /* ------------------------------------------------------------------ */
 /* Billing period from the month/year the browser sends                */

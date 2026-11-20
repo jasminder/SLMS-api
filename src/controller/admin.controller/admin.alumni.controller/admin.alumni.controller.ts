@@ -42,6 +42,15 @@ export const findAlumniEnrolledSubjectsHandler = async (req: Request<FindAlumniS
 export const enrollAlumniToSubjectsHandler = async (req: Request<{}, {}, AlumniEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const enrollData = req.body;
     const termToEnroll = await enrollAlumniToSubjects(enrollData);
+    // SOW item 20 (B8): subject enrolment of an alumnus was missing from the activity record (best effort: never blocks the enrolment).
+    await recordStudentProfileActivity({
+        studentId: enrollData.alumniId,
+        actionType: 'ENROLLMENT',
+        description: 'Enrolled in subject(s)',
+        metadata: { enrollData: enrollData.enrollData },
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System'
+    }).catch(() => {});
     res.status(200).json(termToEnroll);
 };
 export const deEnrollAlumniEnrolledToSubjectsHandler = async (req: Request<{}, {}, AlumniEnrollDataSchema['body'], {}>, res: Response, next: NextFunction) => {
@@ -61,5 +70,13 @@ export const deEnrollAlumniEnrolledToSubjectsHandler = async (req: Request<{}, {
 export const makeAlumniToActiveByIdHandler = async (req: Request<MakeAlumniToActiveByIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { alumniId} = req.params;
     const updatedStudent = await makeAlumniToActiveById(alumniId);
+    // SOW item 20 (B8): activation (alumnus becomes an active student again).
+    await recordStudentProfileActivity({
+        studentId: +alumniId,
+        actionType: 'ACTIVATION',
+        description: 'Made an active student again (from alumni)',
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System'
+    }).catch(() => {});
     res.status(200).json(updatedStudent);
 };

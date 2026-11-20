@@ -53,6 +53,7 @@ import groupClassworkRoute from './src/route/teacher.route/teacher.classwork.rou
 import skipReportRoute from './src/route/admin.skip.report.route/admin.skip.report.route';
 import adminDashboardRoute from './src/route/admin.route/admin.dashboard.route/admin.dashboard.route';
 import adminAppInstallRoute from './src/route/admin.route/admin.app.install.route/admin.app.install.route';
+import adminFeeExemptionRoute from './src/route/admin.route/admin.fee.exemption.route/admin.fee.exemption.route';
 import appActivityRoute from './src/route/app.activity.route/app.activity.route';
 import adminBulkEmailRoute from './src/route/admin.route/admin.bulk.email.route/admin.bulk.email.route';
 import adminAnalyticsRoute from './src/route/admin.route/admin.analytics.route/admin.analytics.route';
@@ -189,6 +190,7 @@ app.use('/api/v1/admin/skip-report', skipReportRoute);
 app.use('/api/v1/admin/interactions', interactionRoute);
 app.use('/api/v1/admin/dashboard', adminDashboardRoute);
 app.use('/api/v1/admin/app-installs', adminAppInstallRoute);
+app.use('/api/v1/admin/fee-exemptions', adminFeeExemptionRoute);
 app.use('/api/v1/app-activity', appActivityRoute);
 app.use('/api/v1/admin/bulk-email', adminBulkEmailRoute);
 app.use('/api/v1/admin/analytics', adminAnalyticsRoute);

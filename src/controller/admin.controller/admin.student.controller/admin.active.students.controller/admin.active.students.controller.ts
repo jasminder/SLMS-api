@@ -429,6 +429,15 @@ export const alumniStudentByIdHandler = async (req: Request<AlumniStudentByIdSch
     const { studentId } = req.params;
     const { remarks } = req.body;
     const updatedStudent = await alumniStudentById(studentId, remarks);
+    // SOW item 20 (B8): deactivation (active student moved to alumni), with the remarks the admin typed.
+    await recordStudentProfileActivity({
+        studentId: +studentId,
+        actionType: 'DEACTIVATION',
+        description: 'Moved to alumni (no longer an active student)',
+        metadata: remarks ? { remarks } : undefined,
+        performedByUserId: req.user?.id,
+        performedByEmail: req.user?.email ?? 'System'
+    }).catch(() => {});
     res.status(200).json(updatedStudent);
 };
 

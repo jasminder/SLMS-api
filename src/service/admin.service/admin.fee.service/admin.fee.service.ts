@@ -5,7 +5,8 @@ import { NotificationType, PaymentType } from '@prisma/client';
 import { autoApplyCreditToFeePaymentInTransaction } from '../admin.student.service/admin.active.student.service/admin.active.student.service';
 import { createManyNotificationsAndPush, getStudentNamesMap } from '../../notification.service/notification.service';
 import { enrollmentHistoryTableExists } from '../admin.enrollment.history.service/enrollment.history.service';
-import { SKIP_REASON_TEXT, decideInvoiceEligibility, parseBillingPeriod, periodWarning } from './fee.eligibility.rules';
+import { SKIP_REASON_TEXT, decideInvoiceEligibility, exemptionSkipReason, findCoveringExemption, parseBillingPeriod, periodWarning } from './fee.eligibility.rules';
+import { loadActiveExemptions } from './fee.exemption.service';
 import type { SkipCode } from './fee.eligibility.rules';
 
 export type SkippedStudent = {
@@ -55,6 +56,9 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
     const amountNumber = Number(amount);
     if (!Number.isInteger(groupId) || !Number.isInteger(termIdNumber)) throw customError('The term and fee group must be whole numbers.', 'fail', 400, true);
     if (!Number.isInteger(amountNumber) || amountNumber < 0) throw customError('The invoice amount must be a whole number of dollars.', 'fail', 400, true);
+    // SOW item 21 (B6): a $0 invoice is an "empty invoice" (no fee configured). Refuse it, nothing is created. Students with no fee
+    // record at all are already skipped one by one (NO_FEE_RECORD below).
+    if (amountNumber === 0) throw customError('The invoice amount is $0, which means no fee is set for this group. No invoices were created. Enter an amount above $0.', 'fail', 400, true);
     const requestedIds = studentIds.map((id) => Number(id));
     if (requestedIds.length === 0 || !requestedIds.every((id) => Number.isInteger(id) && id > 0)) throw customError('Select at least one student (student ids must be whole numbers).', 'fail', 400, true);
     const uniqueIds = Array.from(new Set(requestedIds));
@@ -64,6 +68,8 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
     // De-enrolment history only exists once the Issue 10 migration has been applied. Without it the live-enrolment rule still protects billing.
     const historyAvailable = await enrollmentHistoryTableExists();
     if (!historyAvailable) console.warn('[admin.fee] EnrollmentHistory table not found: invoices are checked against live enrolments only');
+    // SOW item 20 (B5): switched-on fee exemptions. Read before the transaction so a missing table can never abort it.
+    const exemptionsByStudent = await loadActiveExemptions(uniqueIds);
 
     const outcome = await db.$transaction(
         async (prisma) => {
@@ -132,6 +138,11 @@ export async function createFeeTemplateAndPayments(feeTemplateData: FeeTemplateD
                 const studentTermFee = feeByStudent.get(studentId);
                 if (!studentTermFee) {
                     skip(studentId, 'NO_FEE_RECORD', SKIP_REASON_TEXT.NO_FEE_RECORD);
+                    continue;
+                }
+                const exemption = findCoveringExemption(exemptionsByStudent.get(studentId) ?? [], billingPeriod);
+                if (exemption) {
+                    skip(studentId, 'FEE_EXEMPT', exemptionSkipReason(exemption));
                     continue;
                 }
                 const decision = decideInvoiceEligibility({
