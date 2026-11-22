@@ -179,9 +179,10 @@ describe('the weekly job and the dashboard card', () => {
 
 describe('wiring', () => {
     const read = (rel) => fs.readFileSync(path.join(SRC, rel), 'utf8');
-    it('the job runs on Saturday evening, school time, and can be switched off', () => {
+    it('the job runs on Friday morning, school time, and can be switched off', () => {
         const job = read('cron/weeklyAbsenceWatchlist.ts');
-        assert.match(job, /'0 21 \* \* 6'/);
+        assert.doesNotMatch(job, /'0 21 \* \* [06]'/);
+        assert.match(job, /'0 6 \* \* 5'/);
         assert.match(job, /timezone: 'Australia\/Sydney'/);
         assert.match(job, /ABSENCE_WATCHLIST_DISABLED/);
         assert.match(fs.readFileSync(path.join(SRC, '../index.ts'), 'utf8'), /import '\.\/src\/cron\/weeklyAbsenceWatchlist'/);

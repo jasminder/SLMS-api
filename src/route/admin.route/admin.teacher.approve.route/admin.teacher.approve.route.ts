@@ -4,6 +4,9 @@ import validate from '../../../middleware/validateResource';
 import { asyncErrorHandler } from '../../../utils/asyncErrorHandler';
 import {
     approveTeacherApplicationHandler,
+    deleteTeacherApplicationHandler,
+    rejectTeacherApplicationHandler,
+    undoRejectTeacherApplicationHandler,
     reviewTeacherApplicationHandler,
     assignSubjectToTeacherHandler,
     findAllSubjectsToAssignApplicantHandler,
@@ -39,4 +42,9 @@ adminTeacherApproveRoute.route('/find-assigned-subjects-to-applicant/:id').get(v
 /*Approve teacherapplication*/
 adminTeacherApproveRoute.route('/review-application/:id').get(validate(findUniqueTeacherApplicantSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(reviewTeacherApplicationHandler));
 adminTeacherApproveRoute.route('/approve-application/:id').post(validate(findUniqueTeacherApplicantSchema),protectRoute, restrict('ADMIN'), asyncErrorHandler(approveTeacherApplicationHandler));
+/* Reject keeps the application (marked rejected); undo puts it back to pending */
+adminTeacherApproveRoute.route('/reject-application/:id').post(validate(findUniqueTeacherApplicantSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(rejectTeacherApplicationHandler));
+adminTeacherApproveRoute.route('/undo-reject-application/:id').post(validate(findUniqueTeacherApplicantSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(undoRejectTeacherApplicationHandler));
+/* Delete a pending or rejected application permanently */
+adminTeacherApproveRoute.route('/delete-application/:id').delete(validate(findUniqueTeacherApplicantSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(deleteTeacherApplicationHandler));
 export default adminTeacherApproveRoute;

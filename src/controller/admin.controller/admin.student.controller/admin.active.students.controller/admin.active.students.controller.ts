@@ -222,7 +222,7 @@ export const updateAmountPaidAtSchoolHandler = async (req: Request<{}, {}, Updat
     // const { id } = req.params;
     // const { amountPaid } = req.query;
     const { feePaymentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy } = req.body;
-    const result = await updateAmountPaidAtSchool(feePaymentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy);
+    const result = await updateAmountPaidAtSchool(feePaymentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy, { userId: req.user?.id, email: req.user?.email });
     res.status(200).json(result);
 };
 export const updateAmountFeeDueHandler = async (req: Request<{}, {}, UpdateAmountFeeDueSchema['body'], {}>, res: Response, next: NextFunction) => {
@@ -233,7 +233,7 @@ export const updateAmountFeeDueHandler = async (req: Request<{}, {}, UpdateAmoun
 
 export const applyCreditHandler = async (req: Request<{}, {}, ApplyCreditDataSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { feePaymentId, creditToApply, remarks } = req.body;
-    const result = await applyStudentCredit(feePaymentId, +creditToApply, remarks);
+    const result = await applyStudentCredit(feePaymentId, +creditToApply, remarks, { userId: req.user?.id, email: req.user?.email });
     res.status(200).json(result);
 };
 
@@ -251,7 +251,7 @@ export const getPaymentsByFeePaymentIdHandler = async (req: Request<GetPaymentsB
 
 export const updatePaymentInstallmentHandler = async (req: Request<{}, {}, UpdatePaymentInstallmentSchema['body'], {}>, res: Response, next: NextFunction) => {
     const { paymentInstallmentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy } = req.body;
-    const result = await updatePaymentInstallment(paymentInstallmentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy);
+    const result = await updatePaymentInstallment(paymentInstallmentId, paidAmount, paidDate, paymentMethod, remarks, receivedBy, { userId: req.user?.id, email: req.user?.email });
     res.status(200).json(result);
 };
 /* find enrolled subjects for active students*/
@@ -483,7 +483,7 @@ export const updateStudentCreditBalanceHandler = async (
 ) => {
     const { studentId } = req.params;
     const { amount } = req.body;
-    const updatedStudent = await updateStudentCreditBalance(studentId, amount);
+    const updatedStudent = await updateStudentCreditBalance(studentId, amount, { userId: req.user?.id, email: req.user?.email });
     res.status(200).json(updatedStudent);
 };
 

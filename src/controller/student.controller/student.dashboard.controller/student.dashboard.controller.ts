@@ -11,6 +11,7 @@ import {
     UpdateStudentProfileForAppSchema,
     TeacherAssignmentSchema,
     UpsertDeviceTokenSchema,
+    ReleaseDeviceTokenSchema,
     UpdateNotificationSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
@@ -27,6 +28,7 @@ import {
     markNotificationAsRead,
     resolveStudentIdFromUserId,
     upsertStudentDeviceToken,
+    releaseDeviceToken,
     updateStudentProfileForApp
 } from '../../../service/student.service/student.dashboard.service/student.dashboard.service';
 import { GetStudentportalNoticesSchema } from '../../../schema/admin.dto/admin.notice.dto/admin.notice.dto';
@@ -130,6 +132,9 @@ export const upsertDeviceTokenHandler = async (req: Request<{}, {}, UpsertDevice
     }
 
     if (!studentId) {
+        // A8: a non-student account (e.g. admin) signed in on this phone. Release the token so the previous
+        // parent's notifications stop arriving here, even if the sign-out release never reached us.
+        await releaseDeviceToken(token);
         return res.status(400).json({ message: 'Unable to resolve student for this token.' });
     }
 
@@ -139,6 +144,12 @@ export const upsertDeviceTokenHandler = async (req: Request<{}, {}, UpsertDevice
     const appContext = readAppContext(req.headers);
     await recordAppActivitySafely(authUser?.id, reported === 'ios' || reported === 'android' ? { ...appContext, platform: reported } : appContext, 'token');
     res.status(200).json({ message: 'Device token saved.', deviceTokenId: deviceToken.id });
+};
+
+// A8: the app calls this on sign-out so this phone stops getting the signed-out account's notifications.
+export const releaseDeviceTokenHandler = async (req: Request<{}, {}, ReleaseDeviceTokenSchema['body']>, res: Response) => {
+    const released = await releaseDeviceToken(req.body.token);
+    res.status(200).json({ message: 'Device token released.', released });
 };
 
 export const updateStudentProfileForAppHandler = async (

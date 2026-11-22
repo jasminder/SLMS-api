@@ -66,6 +66,7 @@ export async function findAllEnrolledStudents(page: number, termId: number) {
         },
         select: {
             id: true,
+            akaalId: true,
             role: true,
             isActive: true,
             updatedAt: true,

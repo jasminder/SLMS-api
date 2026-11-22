@@ -13,6 +13,7 @@ import {
     getStudentNotificationsSchema,
     teacherAssignmentSchema,
     upsertDeviceTokenSchema,
+    releaseDeviceTokenSchema,
     updateNotificationSchema
 } from '../../../schema/student.dto/student.dashboard.dto/student.dashboard.dto';
 import {
@@ -25,6 +26,7 @@ import {
     getStudentNoticePortalHandler,
     getTeacherAssignmentHandler,
     markNotificationAsReadHandler,
+    releaseDeviceTokenHandler,
     upsertDeviceTokenHandler
 } from '../../../controller/student.controller/student.dashboard.controller/student.dashboard.controller';
 
@@ -56,6 +58,7 @@ studentDashboardRoute
     .patch(validate(updateNotificationSchema), protectRoute, restrict('ADMIN', 'STUDENT'), asyncErrorHandler(markNotificationAsReadHandler));
 studentDashboardRoute
     .route('/notifications/device-token')
-    .post(validate(upsertDeviceTokenSchema), protectRoute, asyncErrorHandler(upsertDeviceTokenHandler));
+    .post(validate(upsertDeviceTokenSchema), protectRoute, asyncErrorHandler(upsertDeviceTokenHandler))
+    .delete(validate(releaseDeviceTokenSchema), protectRoute, asyncErrorHandler(releaseDeviceTokenHandler));
 
 export default studentDashboardRoute;

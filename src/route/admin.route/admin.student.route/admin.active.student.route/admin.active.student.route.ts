@@ -1,4 +1,6 @@
 import express from 'express';
+import { addStudentCreditSchema, correctStudentCreditSchema, studentCreditHistorySchema } from '../../../../schema/credit.dto/credit.dto';
+import { addStudentCreditHandler, correctStudentCreditHandler, getStudentCreditHistoryHandler } from '../../../../controller/credit.controller/credit.controller';
 
 import { asyncErrorHandler } from '../../../../utils/asyncErrorHandler';
 import validate from '../../../../middleware/validateResource';
@@ -244,6 +246,11 @@ adminActiveStudentRoute
 adminActiveStudentRoute
     .route('/update-student-credit-balance/:studentId')
     .patch(validate(updateStudentCreditBalanceSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(updateStudentCreditBalanceHandler));
+
+/* B4: credit history (add with payment details, correct with a reason, list every change) */
+adminActiveStudentRoute.route('/credit/:studentId/add').post(validate(addStudentCreditSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(addStudentCreditHandler));
+adminActiveStudentRoute.route('/credit/:studentId/correct').post(validate(correctStudentCreditSchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(correctStudentCreditHandler));
+adminActiveStudentRoute.route('/credit/:studentId/history').get(validate(studentCreditHistorySchema), protectRoute, restrict('ADMIN'), asyncErrorHandler(getStudentCreditHistoryHandler));
 
 adminActiveStudentRoute.route('/get-active-students-count-without-subject').get(protectRoute, restrict('ADMIN'), asyncErrorHandler(getActiveStudentsCountHandler));
 

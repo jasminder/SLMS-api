@@ -94,7 +94,12 @@ export async function getInstallReport() {
         entry.users++;
         versionCounts.set(k, entry);
     }
-    const latestBuild = (platform: string) => releases.filter((r) => r.platform === platform).reduce<number | null>((max, r) => (max === null || r.build > max ? r.build : max), null);
+    // Latest = the highest build any phone on that platform has reported (or a release row, if one was ever added).
+    const latestBuild = (platform: string) =>
+        [...releases.filter((r) => r.platform === platform).map((r) => r.build), ...appRows.filter((r) => r.platform === platform && r.appBuild !== null).map((r) => r.appBuild as number)].reduce<number | null>(
+            (max, b) => (max === null || b > max ? b : max),
+            null
+        );
     const versions = [...versionCounts.values()]
         .map((v) => ({ ...v, isLatest: v.appBuild !== null && v.appBuild === latestBuild(v.platform) }))
         .sort((a, b) => a.platform.localeCompare(b.platform) || (b.appBuild ?? -1) - (a.appBuild ?? -1));
@@ -134,14 +139,59 @@ export async function getNotInstalledAccounts() {
     }));
 }
 
+/** Every student account that has used the app, with the platform it is counted under on the report tiles (same rule). */
+export async function getInstalledAccounts() {
+    const users = await db.user.findMany({
+        where: { role: 'STUDENT', appInstalls: { some: { platform: { not: 'web' } } } },
+        select: {
+            email: true,
+            studentId: true,
+            student: { select: { akaalId: true, isActive: true, personalDetails: { select: { firstName: true, lastName: true } } } },
+            appInstalls: { where: { platform: { not: 'web' } }, select: { platform: true, appVersion: true, appBuild: true, lastSeenAt: true, lastLoginAt: true, lastOpenedAt: true } }
+        },
+        orderBy: { id: 'asc' }
+    });
+    const latest = (dates: (Date | null)[]) => dates.reduce<Date | null>((max, d) => (d && (!max || d > max) ? d : max), null);
+    return users.map((u) => {
+        const platform = bestAppPlatform(u.appInstalls.map((r) => r.platform)) ?? 'app';
+        const main = u.appInstalls.find((r) => r.platform === platform) ?? u.appInstalls[0];
+        return {
+            studentId: u.studentId,
+            akaalId: u.student?.akaalId ?? null,
+            name: `${u.student?.personalDetails?.firstName ?? ''} ${u.student?.personalDetails?.lastName ?? ''}`.trim(),
+            email: u.email,
+            isActive: u.student?.isActive ?? false,
+            platform,
+            platforms: [...new Set(u.appInstalls.map((r) => r.platform))].sort(),
+            appVersion: main?.appVersion ?? null,
+            appBuild: main?.appBuild ?? null,
+            lastSeenAt: latest(u.appInstalls.flatMap((r) => [r.lastSeenAt, r.lastLoginAt, r.lastOpenedAt]))
+        };
+    });
+}
+
 export async function getStudentAppRecord(studentId: number) {
-    const user = await db.user.findFirst({ where: { studentId }, select: { id: true, email: true } });
-    if (!user) return { hasLogin: false, email: null, installs: [], history: [] };
+    let user: { id: number; email: string; studentId: number | null } | null = await db.user.findFirst({ where: { studentId }, select: { id: true, email: true, studentId: true } });
+    // Siblings share one login: the app shows every student whose email matches the login email (getStudentsForApp), but the
+    // login is linked to only one of them. Fall back to the login on the same email, and say whose it is.
+    let sharedWithAkaalId: number | null = null;
+    if (!user) {
+        const details = await db.personalDetails.findUnique({ where: { studentId }, select: { email: true } });
+        const email = details?.email?.trim();
+        if (email) {
+            user = await db.user.findFirst({ where: { role: 'STUDENT', email: { equals: email, mode: 'insensitive' } }, select: { id: true, email: true, studentId: true } });
+            if (user?.studentId) {
+                const owner = await db.student.findUnique({ where: { id: user.studentId }, select: { akaalId: true } });
+                sharedWithAkaalId = owner?.akaalId ?? null;
+            }
+        }
+    }
+    if (!user) return { hasLogin: false, email: null, sharedWithAkaalId: null, installs: [], history: [] };
     const [installs, history] = await Promise.all([
         db.appInstall.findMany({ where: { userId: user.id }, orderBy: { platform: 'asc' } }),
         db.appVersionHistory.findMany({ where: { userId: user.id }, orderBy: { firstSeenAt: 'desc' } })
     ]);
-    return { hasLogin: true, email: user.email, installs, history };
+    return { hasLogin: true, email: user.email, sharedWithAkaalId, installs, history };
 }
 
 export async function listReleases() {

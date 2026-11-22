@@ -152,16 +152,16 @@ describe('REGISTRATION', () => {
         assert.doesNotMatch(logged, /example\.test|0411111111/);
     });
 
-    it('allows a family contact email shared with a student record, and does not create any login', async () => {
+    it('blocks an email shared with a student record (Scope of Work A5), and creates nothing', async () => {
         addStudent(db, { id: 5820, email: 'new.teacher@example.test' });
-        const created = await createTeacherApplicant(application());
-        assert.ok(created.id);
+        await rejectsWith(createTeacherApplicant(application({ personal: { email: 'NEW.Teacher@example.test' } })), EMAIL_MESSAGE);
+        assert.equal(db.state.details.length, 0);
         assert.equal(db.state.users.length, 0);
     });
 
-    it('allows an email that a STUDENT login uses, but blocks one a TEACHER or ADMIN login uses', async () => {
+    it('blocks an email that any login uses: STUDENT, TEACHER or ADMIN', async () => {
         addUser(db, { email: 'family@example.test', role: 'STUDENT', studentId: 5001 });
-        assert.ok((await createTeacherApplicant(application({ personal: { email: 'family@example.test' } }))).id);
+        await rejectsWith(createTeacherApplicant(application({ personal: { email: 'family@example.test' } })), EMAIL_MESSAGE);
         addUser(db, { email: 'staff@example.test', role: 'TEACHER', teacherId: 4321 });
         await rejectsWith(createTeacherApplicant(application({ personal: { email: 'staff@example.test', firstName: 'Another', lastName: 'Person' } })), EMAIL_MESSAGE);
         addUser(db, { email: 'admin@example.test', role: 'ADMIN', adminId: 1 });
@@ -243,13 +243,14 @@ describe('PUBLIC EMAIL PRE-CHECK', () => {
         assert.deepEqual(await checkEmailForApplication('TAKEN@example.test ', 'teacher'), { emailTaken: true });
         assert.deepEqual(await checkEmailForApplication('free@example.test', 'teacher'), { emailTaken: false });
     });
-    it('teacher form: a TEACHER/ADMIN login blocks, a STUDENT login or student record does not (family sharing)', async () => {
+    it('teacher form: any login (TEACHER, ADMIN or STUDENT) or a student record blocks the email (Scope of Work A5)', async () => {
         addUser(db, { email: 'staff@example.test', role: 'TEACHER', teacherId: 1 });
         addUser(db, { email: 'family@example.test', role: 'STUDENT', studentId: 2 });
         addStudent(db, { email: 'profileonly@example.test' });
-        assert.equal((await checkEmailForApplication('staff@example.test', 'teacher')).emailTaken, true);
-        assert.equal((await checkEmailForApplication('family@example.test', 'teacher')).emailTaken, false);
-        assert.equal((await checkEmailForApplication('profileonly@example.test', 'teacher')).emailTaken, false);
+        assert.deepEqual(await checkEmailForApplication('staff@example.test', 'teacher'), { emailTaken: true });
+        assert.deepEqual(await checkEmailForApplication('family@example.test', 'teacher'), { emailTaken: true });
+        assert.deepEqual(await checkEmailForApplication('ProfileOnly@example.test', 'teacher'), { emailTaken: true });
+        assert.deepEqual(await checkEmailForApplication('free@example.test', 'teacher'), { emailTaken: false });
     });
     it('student form behaviour is unchanged: blocked by a TEACHER login, allowed with a STUDENT login (siblings)', async () => {
         addUser(db, { email: 'staff@example.test', role: 'TEACHER', teacherId: 1 });

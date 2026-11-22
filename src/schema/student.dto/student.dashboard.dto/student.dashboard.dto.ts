@@ -100,3 +100,11 @@ export const updateStudentProfileForAppSchema = z.object({
 });
 
 export type UpdateStudentProfileForAppSchema = z.infer<typeof updateStudentProfileForAppSchema>;
+
+export const releaseDeviceTokenSchema = z.object({
+    body: z.object({
+        token: z.string().min(1, { message: 'Token is required' })
+    })
+});
+
+export type ReleaseDeviceTokenSchema = z.infer<typeof releaseDeviceTokenSchema>;

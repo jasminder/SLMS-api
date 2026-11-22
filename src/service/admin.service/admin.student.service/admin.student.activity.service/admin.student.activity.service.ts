@@ -1,3 +1,4 @@
+import { getStudentMoneyActivities } from './student.money.activity.service';
 import { Prisma } from '@prisma/client';
 import { db } from '../../../../utils/db.server';
 
@@ -131,8 +132,11 @@ export async function getStudentProfileActivities(studentId: string, limit = 100
         }
     }
 
-    return activities.map((activity) => ({
+    const profile = activities.map((activity) => ({
         ...activity,
         details: buildActivityDetails(activity.actionType, activity.metadata, classByAssignmentId)
     }));
+    // B7: invoices, payments, waivers and credit, merged in date order with the profile changes.
+    const money = await getStudentMoneyActivities(+studentId);
+    return [...profile, ...money].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, Math.min(limit, 200));
 }

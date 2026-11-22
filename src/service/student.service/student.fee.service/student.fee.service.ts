@@ -1,3 +1,4 @@
+import { withSettlement } from '../../finance.settlement.service/invoice.settlement.service';
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
@@ -24,7 +25,8 @@ function resolveStripeSecretKey(): string | null {
 }
 
 export async function fetchFeePaymentsForCurrentTermByStudentId(studentId: string) {
-    return db.feePayment.findMany({
+    // B1: each invoice also carries `settlement` (paid in full / part waived / waived in full / part paid).
+    return withSettlement(await db.feePayment.findMany({
         where: {
             studentTermFee: {
                 studentId: +studentId
@@ -51,7 +53,7 @@ export async function fetchFeePaymentsForCurrentTermByStudentId(studentId: strin
                 }
             }
         }
-    });
+    }));
 }
 export async function feePaymentByIdForStudentPortal(feePaymentId: string) {
     // AUTO-CREDIT DISABLED (2026-06): credit must no longer be auto-applied when a parent/student

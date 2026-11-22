@@ -15,6 +15,12 @@ export type CheckEmailApplicationType = 'teacher' | 'student';
  */
 export type CheckEmailResult = { emailTaken: boolean };
 
+/** True when a student record (any status) has this email as its contact email. Case-insensitive. */
+export async function isStudentEmail(email: string, client: { personalDetails: { findFirst: typeof db.personalDetails.findFirst } } = db): Promise<boolean> {
+    const found = await client.personalDetails.findFirst({ where: { email: { equals: email, mode: 'insensitive' } }, select: { id: true } });
+    return found !== null;
+}
+
 /**
  * Check if email is already registered (User table) or has an existing application
  * (TeacherPersonalDetails or PersonalDetails). Validates role type before allowing submission.
@@ -36,16 +42,18 @@ export async function checkEmailForApplication(
     // Siblings intentionally share one email: a student application on an email that already belongs
     // to a STUDENT account is the sibling flow, so allow it. A student application is blocked when the
     // email belongs to a TEACHER/ADMIN login (staff email can't become a student).
-    // A TEACHER application is blocked only by a TEACHER/ADMIN login or another teacher record. A STUDENT
-    // login or student record on the same email is a legitimate family contact email: it is allowed here
-    // and shown to admins as a warning at approval (the signup step never auto-assigns a role for it).
-    const isStaffLogin = existingUser?.role === 'TEACHER' || existingUser?.role === 'ADMIN';
-    const blockedByLogin = applicationType === 'student' ? existingUser !== null && existingUser.role !== 'STUDENT' : isStaffLogin;
+    // A TEACHER application is blocked by ANY login on the email (student, teacher or admin), by a student record
+    // with that email, or by another teacher record (Scope of Work A5: a student's email cannot be used for a
+    // teacher). One email can only hold one login, so a teacher on a family email could never get a teacher login.
+    const blockedByLogin = applicationType === 'student' ? existingUser !== null && existingUser.role !== 'STUDENT' : existingUser !== null;
     if (blockedByLogin) {
         return { emailTaken: true };
     }
 
     if (applicationType === 'teacher') {
+        if (await isStudentEmail(normalizedEmail)) {
+            return { emailTaken: true };
+        }
         // Case-insensitive, any status (active, inactive, pending). Name + DOB is checked when the form is submitted.
         const conflicts = await findTeacherConflicts({ email: normalizedEmail }, { checkIdentity: false });
         if (conflicts.some((conflict) => conflict.kind === 'EMAIL')) {

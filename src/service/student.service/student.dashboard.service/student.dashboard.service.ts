@@ -462,3 +462,12 @@ export async function updateStudentProfileForApp(studentId: string, user: any, d
         }
     });
 }
+
+/**
+ * Scope of Work A8: stop notifications reaching a phone once its account signs out. Deletes this token's row, whoever
+ * it belonged to. The token is only known to the phone that holds it. Returns how many rows were removed (0 or 1).
+ */
+export async function releaseDeviceToken(token: string) {
+    const { count } = await db.deviceToken.deleteMany({ where: { token } });
+    return count;
+}

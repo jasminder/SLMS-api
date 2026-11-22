@@ -47,7 +47,7 @@ async function currentTermStart(): Promise<Date | null> {
     return term?.startDate ?? null;
 }
 
-/** Runs once a week (Saturday evening). Creates a flag, with the reason recorded, for each student who now qualifies. */
+/** Runs once a week (Friday morning). Creates a flag, with the reason recorded, for each student who now qualifies. */
 export async function runWeeklyAbsenceFlagging(asOf: Date = new Date()) {
     const termStart = await currentTermStart();
     if (!termStart) return { created: 0, alreadyFlagged: 0, checked: 0 };

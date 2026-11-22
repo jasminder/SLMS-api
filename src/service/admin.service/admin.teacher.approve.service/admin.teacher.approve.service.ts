@@ -1,3 +1,4 @@
+import log from '../../../utils/logger';
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import type { DuplicateReader } from '../../teacher.duplicate.service/teacher.duplicate.service';
@@ -18,6 +19,7 @@ export async function findAllTeacherApplicants(page: number) {
         select: {
             id: true,
             role: true,
+            rejectedAt: true,
             createdAt: true,
             teacherPersonalDetails: {
                 select: {
@@ -128,6 +130,7 @@ export async function searchTeacherApplicants(search: string, page: number) {
         select: {
             id: true,
             role: true,
+            rejectedAt: true,
             createdAt: true,
             teacherPersonalDetails: {
                 select: {
@@ -232,6 +235,7 @@ export async function findTeacherApplicantById(id: string) {
         select: {
             id: true,
             role: true,
+            rejectedAt: true,
             createdAt: true,
             teacherPersonalDetails: {
                 select: {
@@ -404,6 +408,10 @@ export async function reviewTeacherApplication(id: string) {
 /*Approve teacherapplication*/
 export async function approveTeacherApplication(id: string) {
     const teacherId = +id;
+    const current = await db.teacher.findUnique({ where: { id: teacherId }, select: { rejectedAt: true } });
+    if (current?.rejectedAt) {
+        throw customError('This application was rejected. Undo the rejection before approving it.', 'fail', 409, true);
+    }
     // Check if the teacher has at least one subject assigned
     const assignedSubjects = await db.teacherSubject.count({
         where: {
@@ -449,4 +457,60 @@ export async function approveTeacherApplication(id: string) {
         },
         { timeout: 15000 }
     );
+}
+
+/**
+ * Reject a teacher application by deleting it permanently. Only a pending application can be deleted:
+ * role APPLICANT, not active, never allowed to log in, no login account and no class assignments. An approved
+ * teacher is never deleted here. The applicant's details, subjects chosen and assigned, WWC, bank and other
+ * application sections are removed with it (cascade).
+ */
+export async function deleteTeacherApplication(id: string) {
+    const teacherId = Number(id);
+    if (!Number.isInteger(teacherId)) throw customError('Application not found.', 'fail', 404, true);
+    return db.$transaction(async (tx) => {
+        const teacher = await tx.teacher.findUnique({
+            where: { id: teacherId },
+            select: { id: true, role: true, isActive: true, isAllowedLogin: true, teacherPersonalDetails: { select: { firstName: true, lastName: true } } }
+        });
+        if (!teacher) throw customError('Application not found. It may already have been deleted.', 'fail', 404, true);
+        if (teacher.role !== 'APPLICANT' || teacher.isActive || teacher.isAllowedLogin) {
+            throw customError('Only a pending application can be deleted. This person is already an approved teacher.', 'fail', 409, true);
+        }
+        const [login, classes] = await Promise.all([
+            tx.user.findFirst({ where: { teacherId }, select: { id: true } }),
+            tx.teacherClassAssignment.count({ where: { teacherId } })
+        ]);
+        if (login || classes > 0) {
+            throw customError('This application has a login or class assignments, so it cannot be deleted.', 'fail', 409, true);
+        }
+        await tx.teacher.delete({ where: { id: teacherId } });
+        const pd = teacher.teacherPersonalDetails;
+        return { deletedId: teacherId, name: pd ? `${pd.firstName} ${pd.lastName}` : null };
+    }, { maxWait: 10000, timeout: 30000 }) // the cascade removes rows from many application tables
+    .catch((e: unknown) => {
+        if ((e as { isOperational?: boolean } | null)?.isOperational) throw e; // our own clear messages pass through
+        // Keep the real cause in the server log; the admin sees a plain message (nothing was deleted: it rolled back).
+        log.error({ err: e instanceof Error ? { name: e.name, message: e.message, code: (e as { code?: string }).code } : e, teacherId }, 'Teacher application could not be deleted');
+        throw customError('The application could not be deleted. Nothing was changed. Please try again.', 'fail', 500, true);
+    });
+}
+
+/**
+ * Reject a pending teacher application, KEEPING it (rejectedAt is set). It stays in the applications list marked
+ * "Rejected", can be un-rejected, and can be deleted later. Undo with undo = true.
+ */
+export async function setTeacherApplicationRejected(id: string, undo = false) {
+    const teacherId = Number(id);
+    if (!Number.isInteger(teacherId)) throw customError('Application not found.', 'fail', 404, true);
+    const teacher = await db.teacher.findUnique({ where: { id: teacherId }, select: { role: true, isActive: true, rejectedAt: true } });
+    if (!teacher) throw customError('Application not found. It may have been deleted.', 'fail', 404, true);
+    if (teacher.role !== 'APPLICANT' || teacher.isActive) {
+        throw customError('Only a pending application can be rejected. This person is already an approved teacher.', 'fail', 409, true);
+    }
+    return db.teacher.update({
+        where: { id: teacherId },
+        data: { rejectedAt: undo ? null : teacher.rejectedAt ?? new Date() },
+        select: { id: true, rejectedAt: true }
+    });
 }

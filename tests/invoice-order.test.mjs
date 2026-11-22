@@ -55,6 +55,9 @@ globalThis.__TEST_DB__ = {
         }
     },
     paymentInstallment: {
+        async findMany() {
+            return []; // B1 settlement label: no payments in these ordering fixtures
+        },
         async aggregate() {
             return { _sum: { paidAmount: 0 } };
         }
@@ -165,7 +168,7 @@ describe('student fee page query can no longer return an unsorted list (static c
     it('has exactly one return, and it sorts the combined (this term + previous term unpaid) list', () => {
         const returns = body.match(/^\s*return\b.*$/gm) ?? [];
         assert.equal(returns.length, 1, `returns found: ${JSON.stringify(returns)}`);
-        assert.match(returns[0], /return sortInvoicesOldestFirst\(\[\.\.\.studentTermFees, \.\.\.previousTermUnpaid\]\);/);
+        assert.match(returns[0], /return withSettlement\(sortInvoicesOldestFirst\(\[\.\.\.studentTermFees, \.\.\.previousTermUnpaid\]\)\);/);
     });
     it('the old unsorted early returns are gone', () => {
         assert.doesNotMatch(body, /return studentTermFees;/);

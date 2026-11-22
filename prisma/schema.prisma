@@ -57,6 +57,7 @@ model Student {
   feeExemptions                FeeExemption[]
   DeviceToken                  DeviceToken[]
   user                         User?
+  creditEntries                StudentCreditEntry[]
 }
 
 model StudentProfileActivity {
@@ -461,6 +462,7 @@ model Teacher {
   isActive                         Boolean                           @default(false)
   isAllowedLogin                   Boolean                           @default(false)
   isCurrentlyTeaching              Boolean                           @default(true)
+  rejectedAt                       DateTime?
   createdAt                        DateTime                          @default(now())
   updatedAt                        DateTime                          @updatedAt
   AutomatedMailForParents          AutomatedMailForParents[]
@@ -1562,4 +1564,42 @@ model FeeExemption {
   student          Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId, isActive])
+}
+
+/// Scope of Work B4: every change to a student's credit balance, so the office can always see where credit came from
+/// and where it went. Student.creditBalance stays the live total; each row records the change and the balance after it.
+model StudentCreditEntry {
+  id                   Int             @id @default(autoincrement())
+  studentId            Int
+  /// positive = credit added, negative = credit used or reduced
+  amount               Int
+  balanceAfter         Int
+  kind                 CreditEntryKind
+  /// how the money came in (for ADDED / OVERPAYMENT)
+  paymentMethod        PaymentMethod?
+  /// the date the money was received or the change took effect
+  entryDate            DateTime        @default(now())
+  note                 String?
+  /// the invoice involved (OVERPAYMENT, APPLIED_TO_INVOICE)
+  feePaymentId         Int?
+  paymentInstallmentId Int?
+  createdByUserId      Int?
+  createdByEmail       String?
+  createdAt            DateTime        @default(now())
+  student              Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
+}
+
+enum CreditEntryKind {
+  /// the balance a student already had when the history started
+  OPENING_BALANCE
+  /// money received as credit (cash, online, ...)
+  ADDED
+  /// the part of a payment above what the invoice owed
+  OVERPAYMENT
+  /// credit used to pay an invoice
+  APPLIED_TO_INVOICE
+  /// a manual correction, with a reason
+  CORRECTION
 }

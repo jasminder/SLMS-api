@@ -2,6 +2,7 @@ import { TeacherApplicantSchema } from '../../schema/teacher.applicant.dto/teach
 import { customError } from '../../utils/customError';
 import { db } from '../../utils/db.server';
 import log from '../../utils/logger';
+import { isStudentEmail } from './new.applicant.service';
 import {
     PUBLIC_EMAIL_CONFLICT_MESSAGE,
     PUBLIC_IDENTITY_CONFLICT_MESSAGE,
@@ -56,6 +57,12 @@ export async function createTeacherApplicant(data: TeacherApplicantSchema['body'
                 // a staff login uses it, or another teacher has the same normalised name + DOB.
                 const conflicts = await findTeacherConflicts({ email: normalizedEmail, firstName, lastName, DOB: dateOfBirth }, {}, tx);
                 if (conflicts.some((conflict) => conflict.kind === 'EMAIL' || conflict.kind === 'LOGIN_EMAIL')) {
+                    throw customError(PUBLIC_EMAIL_CONFLICT_MESSAGE, 'fail', 409, true);
+                }
+                // BLOCKING (Scope of Work A5): a student's email, or the email of a student/family login, cannot be used for a
+                // teacher. Same generic message, so the form never reveals whose email it is.
+                const studentLogin = await tx.user.findFirst({ where: { email: { equals: normalizedEmail, mode: 'insensitive' } }, select: { id: true } });
+                if (studentLogin || (await isStudentEmail(normalizedEmail, tx))) {
                     throw customError(PUBLIC_EMAIL_CONFLICT_MESSAGE, 'fail', 409, true);
                 }
                 if (conflicts.some((conflict) => conflict.kind === 'NAME_DOB')) {
@@ -153,6 +160,8 @@ export async function createTeacherApplicant(data: TeacherApplicantSchema['body'
             if (kind === 'EMAIL') throw customError(PUBLIC_EMAIL_CONFLICT_MESSAGE, 'fail', 409, true);
             throw customError(PUBLIC_IDENTITY_CONFLICT_MESSAGE, 'fail', 409, true);
         }
+        // Keep the real cause in the server log; the applicant only sees the generic message.
+        log.error({ err: e instanceof Error ? { name: e.name, message: e.message, code: (e as { code?: string }).code, meta: (e as { meta?: unknown }).meta } : e }, 'Teacher application could not be saved');
         throw customError('Failed to create application with ', 'fail', 404, true); // Return an error message.
     }
 }

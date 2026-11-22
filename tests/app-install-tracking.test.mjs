@@ -57,7 +57,7 @@ describe('last seen is written at most once an hour', () => {
 
 /* ---------- a stand-in database ---------- */
 function makeDb() {
-    const state = { installs: [], history: [], releases: [], users: [], nextId: 1 };
+    const state = { installs: [], history: [], releases: [], users: [], details: {}, nextId: 1 };
     const matchWhere = (row, where = {}) =>
         Object.entries(where).every(([k, v]) => {
             if (v && typeof v === 'object' && 'not' in v) return row[k] !== v.not;
@@ -85,9 +85,14 @@ function makeDb() {
             findUnique: async ({ where }) => state.releases.find((r) => r.platform === where.platform_build.platform && r.build === where.platform_build.build) ?? null,
             create: async ({ data }) => (state.releases.push({ id: state.nextId++, ...data }), data)
         },
+        personalDetails: { findUnique: async ({ where }) => (state.details[where.studentId] ? { email: state.details[where.studentId] } : null) },
+        student: { findUnique: async ({ where }) => ({ akaalId: 5000 + where.id }) },
         user: {
             count: async ({ where }) => state.users.filter((u) => u.role === where.role).length,
-            findFirst: async ({ where }) => state.users.find((u) => u.studentId === where.studentId) ?? null,
+            findFirst: async ({ where }) =>
+                (where.email
+                    ? state.users.find((u) => u.role === where.role && u.email.toLowerCase() === where.email.equals.toLowerCase())
+                    : state.users.find((u) => u.studentId === where.studentId)) ?? null,
             findMany: async ({ where }) =>
                 state.users
                     .filter((u) => u.role === where.role && !where.id.notIn.includes(u.id) && u.studentId !== null)
@@ -215,7 +220,19 @@ describe('the report, the not-installed list, the profile record and the release
         assert.equal(rec.hasLogin, true);
         assert.equal(rec.installs[0].platform, 'ios');
         assert.equal(rec.history.length, 1);
+        assert.equal(rec.sharedWithAkaalId, null);
         assert.equal((await svc.getStudentAppRecord(999)).hasLogin, false);
+    });
+    it('a sibling with no login of their own shows the login on the same email, and says whose it is', async () => {
+        const { db, svc } = await setup();
+        db.state.details[201] = 'P1@Example.test'; // same email as user 1 (student 101), different case
+        const rec = await svc.getStudentAppRecord(201);
+        assert.equal(rec.hasLogin, true);
+        assert.equal(rec.email, 'p1@example.test');
+        assert.equal(rec.sharedWithAkaalId, 5101);
+        assert.equal(rec.installs[0].platform, 'ios');
+        db.state.details[202] = 'nobody@example.test';
+        assert.equal((await svc.getStudentAppRecord(202)).hasLogin, false);
     });
     it('a release needs a valid platform, version, build and date, and a build is listed once', async () => {
         const { svc } = await setup();
@@ -245,8 +262,8 @@ describe('wiring', () => {
     it('the app-open ping needs a signed-in account, and the admin reads are ADMIN only', () => {
         assert.match(read('route/app.activity.route/app.activity.route.ts'), /route\('\/ping'\)\.post\(\s*protectRoute/);
         const admin = read('route/admin.route/admin.app.install.route/admin.app.install.route.ts');
-        for (const p of ['/report', '/not-installed', '/student/:studentId', '/releases']) assert.ok(admin.includes(`route('${p}')`));
-        assert.equal((admin.match(/restrict\('ADMIN'\)/g) ?? []).length, 5);
+        for (const p of ['/report', '/installed', '/not-installed', '/student/:studentId', '/releases']) assert.ok(admin.includes(`route('${p}')`));
+        assert.equal((admin.match(/restrict\('ADMIN'\)/g) ?? []).length, 6);
         const index = fs.readFileSync(path.join(SRC, '../index.ts'), 'utf8');
         assert.match(index, /app\.use\('\/api\/v1\/admin\/app-installs', adminAppInstallRoute\)/);
         assert.match(index, /app\.use\('\/api\/v1\/app-activity', appActivityRoute\)/);

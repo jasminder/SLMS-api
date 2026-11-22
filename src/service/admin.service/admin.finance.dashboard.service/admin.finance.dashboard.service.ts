@@ -1,3 +1,4 @@
+import { withSettlement } from '../../finance.settlement.service/invoice.settlement.service';
 import { PaymentMethod, PaymentStatus } from '@prisma/client';
 import { db } from '../../../utils/db.server';
 
@@ -170,7 +171,7 @@ export async function getAllFeePayments(search = '', page: number, termId: numbe
         }
     });
 
-    return { feePayments, count };
+    return { feePayments: await withSettlement(feePayments), count };
 }
 export async function selectAllFeePayments(search = '', page: number, termId: number, paymentStatus = '', dueAmountSort = 'asc', invoiceName = '') {
     const feePayments = await db.feePayment.findMany({

@@ -1,3 +1,5 @@
+import { recordCreditChange, CreditActor } from '../../../credit.ledger.service/credit.ledger.service';
+import { withSettlement } from '../../../finance.settlement.service/invoice.settlement.service';
 import { endEnrollmentWithHistory } from '../../admin.enrollment.history.service/enrollment.history.service';
 import { sortInvoicesOldestFirst } from '../../admin.fee.service/invoice.order.rules';
 import type { DeEnrollActor } from '../../admin.enrollment.history.service/enrollment.history.service';
@@ -1924,7 +1926,7 @@ export async function findStudentFeeDetails(studentId: number, termId: number) {
 
     // Issue 11: the queries above have no ORDER BY, so the database returns rows in whatever order they are stored.
     // The fee page must list invoices oldest first (by creation date) and newest last, whichever term they came from.
-    return sortInvoicesOldestFirst([...studentTermFees, ...previousTermUnpaid]);
+    return withSettlement(sortInvoicesOldestFirst([...studentTermFees, ...previousTermUnpaid]));
 }
 
 export async function findTermSubjectGroupIdEnrolledSubjects(id: string, termSubjectGroupId: string) {
@@ -2077,7 +2079,18 @@ export async function findFeePaymentById(id: string, skipAutoApply?: boolean) {
 //     });
 // }
 
-export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount: string, paidDate: string, paymentMethod: string, remarks: string, receivedBy: string) {
+const METHOD_WORDS: Record<string, string> = { CASH: 'cash', ONLINE: 'online', CREDIT_CARD: 'card', SCHOOL: 'at school', OTHER: 'other' };
+
+/** B4: the credit-history description for an overpayment, readable on its own months later. */
+function overpaymentNote(o: { invoice: string; paid: number; owing: number; extra: number; method: string; receivedBy?: string; remarks?: string; editedFrom?: number }) {
+    const how = METHOD_WORDS[o.method] ?? o.method.toLowerCase();
+    const what = o.editedFrom !== undefined ? `Payment edited from $${o.editedFrom} to $${o.paid}` : `Paid $${o.paid}`;
+    const parts = [`Overpayment on invoice ${o.invoice}: ${what} (${how}${o.receivedBy ? `, received by ${o.receivedBy}` : ''}) when $${o.owing} was owing, so $${o.extra} moved to credit.`];
+    if (o.remarks && o.remarks.trim() && o.remarks !== 'No remarks') parts.push(`Payment remarks: ${o.remarks.trim()}`);
+    return parts.join(' ');
+}
+
+export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount: string, paidDate: string, paymentMethod: string, remarks: string, receivedBy: string, actor?: CreditActor) {
     return db.$transaction(async (transaction) => {
         const feePayment = await transaction.feePayment.findUnique({
             where: { id: +feePaymentId },
@@ -2132,15 +2145,32 @@ export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount:
         });
 
         const extraAmount = Math.max(-newDueAmount, 0);
-        if (extraAmount > 0) {
-            await transaction.student.update({
-                where: { id: feePayment.studentTermFee?.student.id },
-                data: {
-                    creditBalance: {
-                        increment: extraAmount
-                    },
-                    hasOverDue: overDue
-                }
+        if (extraAmount > 0 && feePayment.studentTermFee?.student) {
+            // B4: the part above what the invoice owed becomes credit straight away, with a history entry.
+            await recordCreditChange(transaction, {
+                studentId: feePayment.studentTermFee.student.id,
+                amount: extraAmount,
+                kind: 'OVERPAYMENT',
+                paymentMethod: paymentInstallment.paymentMethod,
+                entryDate: paymentDateToStore,
+                note: overpaymentNote({
+                    invoice: feePayment.invoiceId ?? String(feePayment.id),
+                    paid: +paidAmount,
+                    owing: feePayment.dueAmount,
+                    extra: extraAmount,
+                    method: paymentInstallment.paymentMethod,
+                    receivedBy,
+                    remarks
+                }),
+                feePaymentId: feePayment.id,
+                paymentInstallmentId: paymentInstallment.id,
+                actor: actor ?? { email: receivedBy }
+            });
+            await transaction.student.update({ where: { id: feePayment.studentTermFee.student.id }, data: { hasOverDue: overDue } });
+            // Say it on the payment record too, so the invoice's payment list explains where the extra went.
+            await transaction.paymentInstallment.update({
+                where: { id: paymentInstallment.id },
+                data: { remarks: `${remarks && remarks !== 'No remarks' ? `${remarks}. ` : ''}$${extraAmount} above what was owing moved to credit.` }
             });
         }
 
@@ -2254,7 +2284,8 @@ async function applyCreditToFeePaymentInternal(
     prisma: PrismaTransactionClient,
     feePaymentId: number,
     creditToApply: number,
-    remarks: string
+    remarks: string,
+    actor?: CreditActor
 ) {
     const feePayment = await prisma.feePayment.findUnique({
         where: { id: feePaymentId },
@@ -2279,9 +2310,9 @@ async function applyCreditToFeePaymentInternal(
     });
     await prisma.student.update({
         where: { id: student.id },
-        data: { creditBalance: remainingCredit, hasOverDue: overDue }
+        data: { hasOverDue: overDue }
     });
-    await prisma.paymentInstallment.create({
+    const creditPayment = await prisma.paymentInstallment.create({
         data: {
             feePaymentId,
             paidAmount: creditToApply,
@@ -2291,6 +2322,16 @@ async function applyCreditToFeePaymentInternal(
             remarks,
             receivedBy: 'ADMIN'
         }
+    });
+    // B4: credit leaves the balance only through the history, linked to the invoice and the payment row it created.
+    await recordCreditChange(prisma, {
+        studentId: student.id,
+        amount: -creditToApply,
+        kind: 'APPLIED_TO_INVOICE',
+        note: remarks && remarks !== 'No remarks' ? remarks : `Used to pay invoice ${feePayment.invoiceId ?? feePayment.id}`,
+        feePaymentId,
+        paymentInstallmentId: creditPayment.id,
+        actor
     });
     return { newDueAmount, remainingCredit };
 }
@@ -2333,7 +2374,7 @@ export async function autoApplyCreditToFeePaymentInTransaction(
 }
 
 /*apply credit balanc in student table*/
-export async function applyStudentCredit(feePaymentId: string, creditToApply: number, remarks: string) {
+export async function applyStudentCredit(feePaymentId: string, creditToApply: number, remarks: string, actor?: CreditActor) {
     if (creditToApply < 0) {
         throw customError('Invalid credit amount specified.', 'fail', 400, true);
     }
@@ -2366,7 +2407,7 @@ export async function applyStudentCredit(feePaymentId: string, creditToApply: nu
             throw customError('Cannot apply more credit than the due amount.', 'fail', 400, true);
         }
 
-        const result = await applyCreditToFeePaymentInternal(prisma, +feePaymentId, creditToApply, remarks);
+        const result = await applyCreditToFeePaymentInternal(prisma, +feePaymentId, creditToApply, remarks, actor);
         const updatedFeePayment = await prisma.feePayment.findUnique({ where: { id: +feePaymentId } });
         return {
             message: 'Credit applied successfully.',
@@ -2406,7 +2447,8 @@ export async function updatePaymentInstallment(
     paidDate: string,
     paymentMethod: string,
     remarks: string,
-    receivedBy: string
+    receivedBy: string,
+    actor?: CreditActor
 ) {
     return db.$transaction(async (transaction) => {
         const installment = await transaction.paymentInstallment.findUnique({
@@ -2476,12 +2518,31 @@ export async function updatePaymentInstallment(
 
         const extraAmount = Math.max(-newDueAmount, 0);
         if (extraAmount > 0 && feePayment.studentTermFee?.student) {
-            await transaction.student.update({
-                where: { id: feePayment.studentTermFee.student.id },
-                data: {
-                    creditBalance: { increment: extraAmount },
-                    hasOverDue: overDue
-                }
+            // B4: an edit that takes the invoice above what it owed moves the extra into credit, with a history entry.
+            await recordCreditChange(transaction, {
+                studentId: feePayment.studentTermFee.student.id,
+                amount: extraAmount,
+                kind: 'OVERPAYMENT',
+                paymentMethod: mapPaymentMethod(paymentMethod),
+                entryDate: paymentDateToStore,
+                note: overpaymentNote({
+                    invoice: feePayment.invoiceId ?? String(feePayment.id),
+                    paid: newPaidAmount,
+                    owing: feePayment.dueAmount + oldPaidAmount,
+                    extra: extraAmount,
+                    method: mapPaymentMethod(paymentMethod),
+                    receivedBy,
+                    remarks,
+                    editedFrom: oldPaidAmount
+                }),
+                feePaymentId: feePayment.id,
+                paymentInstallmentId: +paymentInstallmentId,
+                actor: actor ?? { email: receivedBy }
+            });
+            await transaction.student.update({ where: { id: feePayment.studentTermFee.student.id }, data: { hasOverDue: overDue } });
+            await transaction.paymentInstallment.update({
+                where: { id: +paymentInstallmentId },
+                data: { remarks: `${remarks && remarks !== 'No remarks' ? `${remarks}. ` : ''}$${extraAmount} above what was owing moved to credit.` }
             });
         }
 
@@ -3823,38 +3884,33 @@ export async function markAbsentByEditSchoolCheckInAttendanceForStudent(studentI
     };
 }
 
-export async function updateStudentCreditBalance(studentId: string, amount: string) {
-    try {
-        const updatedStudent = await db.student.update({
-            where: { id: +studentId },
-            data: {
-                creditBalance: +amount
-            },
-            select: {
-                id: true,
-                akaalId: true,
-                creditBalance: true,
-                personalDetails: {
-                    select: {
-                        firstName: true,
-                        lastName: true
-                    }
-                }
-            }
-        });
-
-        if (!updatedStudent) {
-            throw customError('Student not found', 'fail', 404, true);
-        }
-
-        return {
-            message: 'Credit balance updated successfully',
-            student: updatedStudent
-        };
-    } catch (error) {
-        console.error('Error updating student credit balance:', error);
-        throw customError('Failed to update credit balance', 'error', 500, true);
+/**
+ * The old "type a new credit figure" action. B4: it no longer overwrites the balance silently; the difference is
+ * recorded as a CORRECTION in the credit history (the web now uses Add credit / Correct credit with a reason instead).
+ */
+export async function updateStudentCreditBalance(studentId: string, amount: string, actor?: CreditActor, reason?: string) {
+    const target = Math.round(Number(amount));
+    if (!Number.isFinite(target) || target < 0) {
+        throw customError('Credit must be $0 or more.', 'fail', 400, true);
     }
+    return db.$transaction(async (tx) => {
+        const current = await tx.student.findUnique({ where: { id: +studentId }, select: { creditBalance: true } });
+        if (!current) throw customError('Student not found.', 'fail', 404, true);
+        const difference = target - current.creditBalance;
+        if (difference !== 0) {
+            await recordCreditChange(tx, {
+                studentId: +studentId,
+                amount: difference,
+                kind: 'CORRECTION',
+                note: reason?.trim() || `Credit set from $${current.creditBalance} to $${target}`,
+                actor
+            });
+        }
+        return tx.student.findUnique({
+            where: { id: +studentId },
+            select: { id: true, akaalId: true, creditBalance: true, personalDetails: { select: { firstName: true, lastName: true } } }
+        });
+    });
 }
 
 export async function getActiveStudentsCount() {

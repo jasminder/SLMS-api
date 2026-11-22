@@ -33,6 +33,7 @@ export async function findLateEnrolledStudents(page: number, termId: number) {
         },
         select: {
             id: true,
+            akaalId: true,
             role: true,
             isActive: true,
             updatedAt: true,

@@ -1,10 +1,14 @@
 import { Request, Response } from 'express';
-import { addRelease, getInstallReport, getNotInstalledAccounts, getStudentAppRecord, listReleases } from '../../../service/app.install.service/app.install.service';
+import { addRelease, getInstallReport, getInstalledAccounts, getNotInstalledAccounts, getStudentAppRecord, listReleases } from '../../../service/app.install.service/app.install.service';
 import { customError } from '../../../utils/customError';
 
 /* Scope of Work item 25: admin reads of who has the app, plus our own release list */
 export const getInstallReportHandler = async (_req: Request, res: Response) => {
     res.status(200).json(await getInstallReport());
+};
+
+export const getInstalledHandler = async (_req: Request, res: Response) => {
+    res.status(200).json(await getInstalledAccounts());
 };
 
 export const getNotInstalledHandler = async (_req: Request, res: Response) => {

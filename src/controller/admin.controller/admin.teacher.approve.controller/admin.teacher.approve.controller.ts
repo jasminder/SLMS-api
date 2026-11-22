@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import {
     approveTeacherApplication,
+    deleteTeacherApplication,
+    setTeacherApplicationRejected,
     reviewTeacherApplication,
     assignSubjectToTeacher,
     findAllSubjectsToAssignApplicant,
@@ -80,6 +82,32 @@ export const approveTeacherApplicationHandler = async (req: Request<FindUniqueTe
             // Backend-enforced block: 409 with the reason and the conflicting teacher ids (admin-only route).
             return res.status(409).json(err.toResponse());
         }
+        next(err);
+    }
+};
+
+// reject = permanently delete a pending teacher application
+export const deleteTeacherApplicationHandler = async (req: Request<FindUniqueTeacherApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    try {
+        const result = await deleteTeacherApplication(req.params.id);
+        res.status(200).json(result);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// reject a pending teacher application but keep it; undo-reject puts it back to pending
+export const rejectTeacherApplicationHandler = async (req: Request<FindUniqueTeacherApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    try {
+        res.status(200).json(await setTeacherApplicationRejected(req.params.id));
+    } catch (err) {
+        next(err);
+    }
+};
+export const undoRejectTeacherApplicationHandler = async (req: Request<FindUniqueTeacherApplicantSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    try {
+        res.status(200).json(await setTeacherApplicationRejected(req.params.id, true));
+    } catch (err) {
         next(err);
     }
 };
