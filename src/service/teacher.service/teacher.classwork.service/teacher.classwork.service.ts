@@ -4,6 +4,7 @@ import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
 import { createManyNotificationsAndPush, getStudentNamesMap } from '../../notification.service/notification.service';
 import { calculateSendDate } from '../../../utils/setSendDate';
+import { assertSendBelongsToClass } from '../../../utils/assertSendBelongsToClass';
 
 export async function createGroupClasswork(
     studentIds: string[],
@@ -17,6 +18,7 @@ export async function createGroupClasswork(
     classTime: string,
     classworkIds: string[]
 ) {
+    await assertSendBelongsToClass('classwork', classworkIds, studentIds, termSubjectLevelId, sectionId);
     const sendDate = await calculateSendDate(termSubjectLevelId);
 
     const numericStudentIds = studentIds.map(Number);

@@ -4,6 +4,7 @@ import { customError } from '../../../utils/customError';
 import { db } from '../../../utils/db.server';
 import { createManyNotificationsAndPush, getStudentNamesMap } from '../../notification.service/notification.service';
 import { calculateSendDate } from '../../../utils/setSendDate';
+import { assertSendBelongsToClass } from '../../../utils/assertSendBelongsToClass';
 
 function normalizeSendDate(date: Date): Date {
     const normalized = new Date(date);
@@ -24,6 +25,7 @@ export async function createGroupHomework(
     homeworkIds: string[],
     sendDateInput?: string
 ) {
+    await assertSendBelongsToClass('homework', homeworkIds, studentIds, termSubjectLevelId, sectionId);
     const sendDate = sendDateInput
         ? normalizeSendDate(new Date(sendDateInput))
         : await calculateSendDate(termSubjectLevelId);
