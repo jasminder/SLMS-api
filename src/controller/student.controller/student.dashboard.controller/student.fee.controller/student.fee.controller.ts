@@ -1,11 +1,16 @@
 import { NextFunction, Request, Response } from 'express';
 import { CreatePaymentIntentSchema, FeePaymentIdParamSchema, FetchFeePaymentsForCurrentTermByStudentIdSchema, GetPaymentsByFeePaymentIdStudentSchema } from '../../../../schema/student.dto/student.dashboard.dto/student.fee.dto/student.fee.dto';
-import { createStudentPortalPaymentIntent, feePaymentByIdForStudentPortal, fetchFeePaymentsForCurrentTermByStudentId, getPaymentsByFeePaymentIdStudentPortal } from '../../../../service/student.service/student.fee.service/student.fee.service';
+import { createStudentPortalPaymentIntent, feePaymentByIdForStudentPortal, fetchAllFeePaymentsByStudentId, fetchFeePaymentsForCurrentTermByStudentId, getPaymentsByFeePaymentIdStudentPortal } from '../../../../service/student.service/student.fee.service/student.fee.service';
 
 export const fetchCurrentTermFeePaymentsHandler = async (req: Request<FetchFeePaymentsForCurrentTermByStudentIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
     const { studentId } = req.params;
     const feePayments = await fetchFeePaymentsForCurrentTermByStudentId(studentId);
     res.json(feePayments);
+};
+
+export const fetchAllFeePaymentsHandler = async (req: Request<FetchFeePaymentsForCurrentTermByStudentIdSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {
+    const { studentId } = req.params;
+    res.json(await fetchAllFeePaymentsByStudentId(studentId));
 };
 
 export const feePaymentByIdForStudentPortaleHandler = async (req: Request<FeePaymentIdParamSchema['params'], {}, {}, {}>, res: Response, next: NextFunction) => {

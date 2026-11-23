@@ -13,6 +13,7 @@ import { restrict } from '../../../middleware/restrict';
 import {
     createPaymentIntentForStudentPortalHandler,
     fetchCurrentTermFeePaymentsHandler,
+    fetchAllFeePaymentsHandler,
     feePaymentByIdForStudentPortaleHandler,
     getPaymentsByFeePaymentIdStudentHandler
 } from '../../../controller/student.controller/student.dashboard.controller/student.fee.controller/student.fee.controller';
@@ -23,6 +24,11 @@ studentFeeRoute
     .route('/fetch-current-term-fee-payments-list/:studentId')
     .get(validate(fetchFeePaymentsForCurrentTermByStudentIdSchema), protectRoute, restrict('STUDENT', 'ADMIN'), asyncErrorHandler(fetchCurrentTermFeePaymentsHandler));
 
+
+// Every term's invoices (each with its term) for the parent fee screen's term filter.
+studentFeeRoute
+    .route('/fetch-fee-payments-list/:studentId')
+    .get(validate(fetchFeePaymentsForCurrentTermByStudentIdSchema), protectRoute, restrict('STUDENT', 'ADMIN'), asyncErrorHandler(fetchAllFeePaymentsHandler));
 
 studentFeeRoute
     .route('/fetch-fee-payment-details/:feePaymentId')

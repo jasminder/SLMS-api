@@ -1855,78 +1855,25 @@ export async function findActiveStudentByIdWithoutSubjects(id: string) {
     return { activeStudent: await withLiveOverdue(activeStudent), siblings };
 }
 
-export async function findStudentFeeDetails(studentId: number, termId: number) {
-    const actualCurrentTerm = await db.term.findFirst({
-        where: { currentTerm: true },
-        select: { id: true }
-    });
-
-    const studentTermFees = await db.feePayment.findMany({
-        where: {
-            studentTermFee: {
-                studentId,
-                termId
-            }
-        },
+/**
+ * Every invoice the student has, in every term, oldest first. Each row carries `studentTermFee.term` (id, name,
+ * currentTerm, startDate) so the fee page can offer a term filter (All / 2026 / 2025 term2 ...), default All.
+ * Unpaid invoices are never copied into a new term, so this is the one place that shows all of a student's debt.
+ */
+export async function findStudentFeeDetails(studentId: number) {
+    const invoices = await db.feePayment.findMany({
+        where: { studentTermFee: { studentId } },
         include: {
             feeTemplate: true,
             studentTermFee: {
                 select: {
-                    student: {
-                        select: {
-                            creditBalance: true
-                        }
-                    }
+                    term: { select: { id: true, name: true, currentTerm: true, startDate: true } },
+                    student: { select: { creditBalance: true } }
                 }
             }
         }
     });
-
-    // When viewing the current term, always include unpaid/overdue fees from the previous term
-    // so pending and overdue amounts are visible after a term change
-    const isViewingCurrentTerm = actualCurrentTerm?.id === termId;
-    let previousTermUnpaid: typeof studentTermFees = [];
-
-    if (isViewingCurrentTerm) {
-        // Previous term = the term we're not viewing with the latest endDate (the one we just left)
-        const previousTerm = await db.term.findFirst({
-            where: { id: { not: termId } },
-            orderBy: { endDate: 'desc' },
-            select: { id: true }
-        });
-
-        if (previousTerm) {
-            previousTermUnpaid = await db.feePayment.findMany({
-                where: {
-                    studentTermFee: {
-                        studentId,
-                        termId: previousTerm.id
-                    },
-                    dueAmount: { gt: 0 },
-                    OR: [
-                        { status: 'PENDING' },
-                        { status: 'OVERDUE' }
-                    ]
-                },
-                include: {
-                    feeTemplate: true,
-                    studentTermFee: {
-                        select: {
-                            student: {
-                                select: {
-                                    creditBalance: true
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    // Issue 11: the queries above have no ORDER BY, so the database returns rows in whatever order they are stored.
-    // The fee page must list invoices oldest first (by creation date) and newest last, whichever term they came from.
-    return withSettlement(sortInvoicesOldestFirst([...studentTermFees, ...previousTermUnpaid]));
+    return withSettlement(sortInvoicesOldestFirst(invoices));
 }
 
 export async function findTermSubjectGroupIdEnrolledSubjects(id: string, termSubjectGroupId: string) {

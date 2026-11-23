@@ -193,8 +193,8 @@ export const findStudentFeeDetailsHandler = async (
     next: NextFunction
 ) => {
     const { studentId } = req.params;
-    const { termId } = req.query;
-    const student = await findStudentFeeDetails(+studentId, +termId);
+    // termId is still accepted from older web builds but ignored: the list now covers every term.
+    const student = await findStudentFeeDetails(+studentId);
     res.status(200).json(student);
 };
 export const findTermSubjectGroupIdEnrolledSubjectsHandler = async (

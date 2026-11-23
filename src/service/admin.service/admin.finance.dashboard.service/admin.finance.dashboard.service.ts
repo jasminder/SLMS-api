@@ -561,6 +561,17 @@ export async function feeDashboardQuery() {
             hasOverDue: true
         }
     });
+    // Part of each overdue total owed by students who have left (inactive), shown separately on the dashboard.
+    const [overdueLeftAggregation, overduePastTermsLeftAggregation] = await Promise.all([
+        db.feePayment.aggregate({
+            _sum: { dueAmount: true },
+            where: { feeTemplate: { termId: currentTerm?.id }, hasOverDue: true, status: 'OVERDUE', studentTermFee: { student: { isActive: false } } }
+        }),
+        db.feePayment.aggregate({
+            _sum: { dueAmount: true },
+            where: { feeTemplate: { termId: { not: currentTerm?.id } }, hasOverDue: true, studentTermFee: { student: { isActive: false } } }
+        })
+    ]);
 
     return {
         totalInvoiced: aggregation._sum.feeAmount || 0,
@@ -568,6 +579,8 @@ export async function feeDashboardQuery() {
         totalDiscount: aggregation._sum.discountAmount || 0,
         totalOverdue: overdueAggregation._sum.dueAmount || 0,
         totalOverduePastTerms: overduePastTermsAggregation._sum.dueAmount || 0,
+        totalOverdueLeftStudents: overdueLeftAggregation._sum.dueAmount || 0,
+        totalOverduePastTermsLeftStudents: overduePastTermsLeftAggregation._sum.dueAmount || 0,
         totalPaidCurrentTerm: paidAmountCurrentTerm._sum.paidAmount || 0,
         totalPaidPastTerms: paidAmountPastTerms._sum.paidAmount || 0
     };

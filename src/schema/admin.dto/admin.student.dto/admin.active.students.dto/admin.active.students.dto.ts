@@ -39,7 +39,7 @@ export const findStudentFeeDetailsSchema = z.object({
         studentId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
     }),
     query: z.object({
-        termId: z.string().min(1, { message: 'Atleast one param string value required @ksm' })
+        termId: z.string().optional()
     })
 });
 export type FindStudentFeeDetailsSchemaSchema = z.infer<typeof findStudentFeeDetailsSchema>;

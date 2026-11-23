@@ -1,4 +1,5 @@
 import { withSettlement } from '../../finance.settlement.service/invoice.settlement.service';
+import { sortInvoicesOldestFirst } from '../../admin.service/admin.fee.service/invoice.order.rules';
 import { db } from '../../../utils/db.server';
 import { customError } from '../../../utils/customError';
 import { FeeTemplateDataSchema } from '../../../schema/admin.dto/admin.fee.dto/admin.fee.dto';
@@ -54,6 +55,26 @@ export async function fetchFeePaymentsForCurrentTermByStudentId(studentId: strin
             }
         }
     }));
+}
+/**
+ * Parent fee list for every term (web portal + app from build 1.0.0+64). Same rows as the admin fee page: each invoice
+ * carries `studentTermFee.term` so the screen can filter by term (All / 2026 / 2025 term2 ...), default All.
+ * The older current-term-only endpoint above is kept unchanged for app builds already installed on phones.
+ */
+export async function fetchAllFeePaymentsByStudentId(studentId: string) {
+    const invoices = await db.feePayment.findMany({
+        where: { studentTermFee: { studentId: +studentId } },
+        include: {
+            studentTermFee: {
+                select: {
+                    term: { select: { id: true, name: true, currentTerm: true, startDate: true } },
+                    student: { select: { creditBalance: true } }
+                }
+            },
+            feeTemplate: { select: { invoiceName: true } }
+        }
+    });
+    return withSettlement(sortInvoicesOldestFirst(invoices));
 }
 export async function feePaymentByIdForStudentPortal(feePaymentId: string) {
     // AUTO-CREDIT DISABLED (2026-06): credit must no longer be auto-applied when a parent/student
