@@ -3,7 +3,7 @@ import { customError } from '../../../utils/customError';
 import { getIo } from '../../../sockets/socket';
 import { Day, NotificationType } from '@prisma/client';
 import { createManyNotificationsAndPush, createNotificationAndPush, getStudentFirstName, getStudentNamesMap } from '../../notification.service/notification.service';
-import { calculateOverdueAmount, calculateOverdueAmounts } from '../../fee.service/fee.overdue.service';
+import { calculateOverdueAmounts, calculateOverdueByTerm } from '../../fee.service/fee.overdue.service';
 
 /** DB type: works with both global db and transaction client (Omit<PrismaClient, ...>) */
 type DbClient = Parameters<Parameters<typeof db.$transaction>[0]>[0];
@@ -631,7 +631,9 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
             .join(' ')
             .trim() || null;
 
-    const overDueAmount = await calculateOverdueAmount(+studentId);
+    // Per-term split for the scan pop-up (e.g. 2026 $300, 2025 term2 $150); the total is their sum.
+    const overdueByTerm = await calculateOverdueByTerm(+studentId);
+    const overDueAmount = overdueByTerm.reduce((sum, t) => sum + t.amount, 0);
     const hasOverDue = overDueAmount > 0;
 
     const io = getIo();
@@ -643,7 +645,8 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
     if (hasOverDue) {
         io.emit('feeOverdueAlert', {
             studentId: studentId,
-            overDueAmount
+            overDueAmount,
+            overdueByTerm
         });
     }
     await createNotificationAndPush({
@@ -652,7 +655,7 @@ export async function markSchoolCheckInAttendanceForStudent(studentId: string, r
         content: `${name}, your school attendance has been marked as present.`,
         actionUrl: `/student/dashboard?studentId=${studentId}`
     });
-    return { attendanceRecord: updatedAttendanceRecord, hasOverDue, overDueAmount, akaalId: student?.akaalId ?? null, studentName };
+    return { attendanceRecord: updatedAttendanceRecord, hasOverDue, overDueAmount, overdueByTerm, akaalId: student?.akaalId ?? null, studentName };
 }
 
 /*undo checkin for a student*/

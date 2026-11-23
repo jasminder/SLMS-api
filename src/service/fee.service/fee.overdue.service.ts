@@ -32,3 +32,25 @@ export async function calculateOverdueAmount(studentId: number, client: typeof d
     const amounts = await calculateOverdueAmounts([studentId], client);
     return amounts.get(studentId) ?? 0;
 }
+
+/** One student's overdue amount split by term, newest term first (only terms with something overdue). */
+export async function calculateOverdueByTerm(
+    studentId: number,
+    client: typeof db = db
+): Promise<{ termId: number; termName: string; amount: number }[]> {
+    const overdueInvoices = await client.feePayment.findMany({
+        where: { status: 'OVERDUE', dueAmount: { gt: 0 }, studentTermFee: { studentId } },
+        select: { dueAmount: true, studentTermFee: { select: { term: { select: { id: true, name: true, startDate: true } } } } }
+    });
+    const byTerm = new Map<number, { termId: number; termName: string; amount: number; startDate: Date }>();
+    for (const invoice of overdueInvoices) {
+        const term = invoice.studentTermFee?.term;
+        if (!term) continue;
+        const row = byTerm.get(term.id) ?? { termId: term.id, termName: term.name, amount: 0, startDate: term.startDate };
+        row.amount += invoice.dueAmount;
+        byTerm.set(term.id, row);
+    }
+    return [...byTerm.values()]
+        .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+        .map(({ termId, termName, amount }) => ({ termId, termName, amount }));
+}

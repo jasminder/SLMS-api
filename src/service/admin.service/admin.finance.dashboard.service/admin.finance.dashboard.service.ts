@@ -595,7 +595,7 @@ export async function feeDashboardQuery() {
  * unrelated totals.
  *
  *   totalInvoiced  – feeAmount  for ALL records in scope  (no status filter)
- *   totalPaid      – paidAmount from installments on PAID records only
+ *   totalPaid      – paidAmount of every non-discount installment on records in scope (any status)
  *   totalDue       – dueAmount  for ALL records in scope  (PAID rows carry 0)
  *   totalOverdue   – dueAmount  for OVERDUE records only
  *   totalDiscount  – discountAmount for ALL records in scope
@@ -622,17 +622,16 @@ export async function filteredFeeDashboardQuery(termId: number, invoiceId?: numb
         where: baseWhere
     });
 
-    // 2. totalPaid — sum of installment payments on PAID fee-payments only
+    // 2. totalPaid — every installment payment on fee-payments in scope (part-payments included)
     //    Exclude DISCOUNT-method entries so credits aren't double-counted.
     const paidAggregation = await db.paymentInstallment.aggregate({
         _sum: {
             paidAmount: true
         },
         where: {
-            feePayment: {
-                ...baseWhere,
-                status: PaymentStatus.PAID
-            },
+            // Every payment on invoices in scope, including part-payments on invoices not yet settled,
+            // so this matches "Payments received" on the current-term panel.
+            feePayment: baseWhere,
             NOT: {
                 paymentMethod: PaymentMethod.DISCOUNT
             }
@@ -651,11 +650,23 @@ export async function filteredFeeDashboardQuery(termId: number, invoiceId?: numb
         }
     });
 
+    // Part of totalOverdue owed by students who have left (inactive), shown separately.
+    const overdueLeftAggregation = await db.feePayment.aggregate({
+        _sum: { dueAmount: true },
+        where: {
+            ...baseWhere,
+            hasOverDue: true,
+            status: PaymentStatus.OVERDUE,
+            studentTermFee: { student: { isActive: false } }
+        }
+    });
+
     return {
         totalInvoiced: aggregation._sum.feeAmount || 0,
         totalDue: aggregation._sum.dueAmount || 0,
         totalDiscount: aggregation._sum.discountAmount || 0,
         totalOverdue: overdueAggregation._sum.dueAmount || 0,
+        totalOverdueLeftStudents: overdueLeftAggregation._sum.dueAmount || 0,
         totalPaid: paidAggregation._sum.paidAmount || 0
     };
 }
