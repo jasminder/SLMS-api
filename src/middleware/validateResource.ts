@@ -16,7 +16,9 @@ const validate = (schema: AnyZodObject) => async (req: Request, res: Response, n
     } catch (e: any) {
         if (process.env.NODE_ENV === 'development') {
             const error = customError(`Validation error : ${e}`, 'fail', 400, false);
-            console.log(e);
+            // Log the issues only: printing the whole ZodError throws inside Node 24's util.inspect,
+            // which became an unhandled rejection and shut the dev API down (e.g. on ?termId=5.).
+            console.log('Validation error:', JSON.stringify(e?.issues ?? e?.message ?? String(e)));
             return next(error);
         } else {
             const error = customError(`Something went wrong:Validation`, 'fail', 500, false);
