@@ -512,7 +512,19 @@ export async function searchActiveStudents(
         where: whereCondition
     });
 
-    return { activeStudents, count };
+    // Today's check-in record (null when the student has no class today), using the same "today" window as the
+    // check-in endpoint. schoolCheckInAttendance is the last 3 records of any date, so the admin app must not read
+    // its newest record as today's status.
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    const withToday = activeStudents.map((student) => ({
+        ...student,
+        checkInToday: student.schoolCheckInAttendance.find((record) => record.date >= todayStart && record.date <= todayEnd) ?? null
+    }));
+
+    return { activeStudents: withToday, count };
 }
 
 export async function searchActiveStudentsWithNoSubjects(
