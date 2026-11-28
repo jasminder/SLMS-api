@@ -1,3 +1,4 @@
+import { assertNoDirectDebitInFlight } from '../../../directDebit.service/directDebit.service';
 import { recordCreditChange, CreditActor } from '../../../credit.ledger.service/credit.ledger.service';
 import { withSettlement } from '../../../finance.settlement.service/invoice.settlement.service';
 import { endEnrollmentWithHistory } from '../../admin.enrollment.history.service/enrollment.history.service';
@@ -2047,6 +2048,7 @@ export async function updateAmountPaidAtSchool(feePaymentId: string, paidAmount:
         if (!feePayment) {
             throw customError('Fee payment record not found', 'fail', 400, true);
         }
+        assertNoDirectDebitInFlight(feePayment);
 
         const newDueAmount = feePayment.dueAmount - parseInt(paidAmount);
         const currentDate = new Date();
@@ -2334,6 +2336,7 @@ export async function applyStudentCredit(feePaymentId: string, creditToApply: nu
         if (!feePayment) {
             throw customError('FeePayment not found.', 'fail', 400, true);
         }
+        assertNoDirectDebitInFlight(feePayment);
 
         if (feePayment.status === 'PAID' && feePayment.dueAmount === 0) {
             throw customError('This FeePayment is already settled and cannot be modified.', 'fail', 400, true);

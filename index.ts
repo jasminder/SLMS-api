@@ -43,6 +43,7 @@ import './src/cron/calculateTermAttendance';
 import './src/cron/checkAndMarkOverduePayments';
 import './src/cron/createAutomatedSchoolCheckInAttendance';
 import './src/cron/weeklyAbsenceWatchlist';
+import './src/cron/directDebit';
 import commentRoute from './src/route/admin.route/admin.comment.route/admin.comment.route';
 import interactionRoute from './src/route/admin.route/admin.interactions.route/admin.interactions.route';
 import adminInstitutionRoute from './src/route/admin.route/admin.institution.route/admin.institution.route';
@@ -73,6 +74,8 @@ import adminFinanceDashboardRoute from './src/route/admin.route/admin.finance.da
 
 import stripeRoute from './src/route/stripe.route/stripe.route';
 import stripeWebhookRoute from './src/route/stripe.webhook.route/stripe.webhook.route';
+import { constructDirectDebitWebhookEvent, handleDirectDebitEvent } from './src/service/directDebit.service/directDebit.service';
+import { adminDirectDebitRoute, studentDirectDebitRoute } from './src/route/directDebit.route/directDebit.route';
 import { handlePaymentFailure, handlePaymentSuccess } from './src/service/stripe.service/stripe.service';
 import Stripe from 'stripe';
 import studentCommunicationRoute from './src/route/student.route/student.communication.route/student.communication.route';
@@ -136,6 +139,15 @@ app.post('/api/v1/webhook', express.raw({ type: 'application/json' }), async (re
         }
     }
 
+    // BECS direct debit events first (setup, debit result, mandate, dispute). A processing error answers 500 so Stripe retries;
+    // the handlers are idempotent. Card payments keep the original handling below.
+    try {
+        if (event && (await handleDirectDebitEvent(event))) return res.json({ received: true });
+    } catch (err: any) {
+        console.error('[direct-debit] webhook handling failed:', event?.type, err?.message ?? err);
+        return res.sendStatus(500);
+    }
+
     switch (event?.type) {
         case 'payment_intent.succeeded':
             const paymentIntent = event?.data.object;
@@ -149,6 +161,27 @@ app.post('/api/v1/webhook', express.raw({ type: 'application/json' }), async (re
             console.log(`Unhandled event type ${event?.type}`);
     }
     res.json({ received: true });
+});
+// Direct-debit-only webhook endpoint, for when direct debit runs on its own Stripe key (STRIPE_BECS_SECRET_KEY, e.g. test
+// mode) while cards stay on the live key. Only direct debit events are acted on; card events sent here are ignored.
+app.post('/api/v1/webhook/direct-debit', express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
+    const signature = req.headers['stripe-signature'];
+    if (!signature || Array.isArray(signature)) return res.sendStatus(400);
+    let event: Stripe.Event;
+    try {
+        event = constructDirectDebitWebhookEvent(req.body, signature);
+    } catch (err: any) {
+        console.log('[direct-debit] webhook signature verification failed.', err?.message);
+        return res.sendStatus(400);
+    }
+    try {
+        const handled = await handleDirectDebitEvent(event);
+        if (!handled) console.log('[direct-debit] webhook ignored (not a direct debit event):', event.type);
+        return res.json({ received: true });
+    } catch (err: any) {
+        console.error('[direct-debit] webhook handling failed:', event?.type, err);
+        return res.sendStatus(500);
+    }
 });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -243,6 +276,8 @@ app.use('/api/v1/student-portal-feedback', studentFeedbackRoute);
 
 //stripe route
 app.use('/api/v1/stripe', stripeRoute);
+app.use('/api/v1/student-portal-direct-debit', studentDirectDebitRoute);
+app.use('/api/v1/admin/direct-debit', adminDirectDebitRoute);
 //message route
 app.use('/api/v1/admin-student', messageAdminStudentRoute);
 

@@ -26,7 +26,8 @@ export const checkAndMarkOverduePayments = async () => {
     const updates = templates
         .filter((template) => !template.lastCronJobRun || template.lastCronJobRun <= template.dueDate)
         .map(async (template) => {
-            const overduePayments = template.feePayments.filter((payment) => payment.dueAmount > 0 && new Date(payment.dueDate).getTime() <= currentDate.getTime());
+            // Skip invoices whose direct debit is still clearing; a failed debit marks the invoice overdue itself.
+            const overduePayments = template.feePayments.filter((payment) => payment.dueAmount > 0 && !payment.directDebitInFlight && new Date(payment.dueDate).getTime() <= currentDate.getTime());
 
             if (overduePayments.length > 0) {
                 return db.$transaction(async (prisma) => {

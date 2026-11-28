@@ -1,3 +1,4 @@
+import { assertNoDirectDebitInFlight } from '../../directDebit.service/directDebit.service';
 import { withSettlement } from '../../finance.settlement.service/invoice.settlement.service';
 import { sortInvoicesOldestFirst } from '../../admin.service/admin.fee.service/invoice.order.rules';
 import { db } from '../../../utils/db.server';
@@ -139,6 +140,7 @@ export async function createStudentPortalPaymentIntent(
     if (!feePayment) {
         throw customError('Fee payment record not found', 'fail', 404, true);
     }
+    assertNoDirectDebitInFlight(feePayment);
 
     const dueAmount = Number(feePayment.dueAmount ?? 0);
     if (dueAmount <= 0) {

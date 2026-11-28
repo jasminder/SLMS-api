@@ -53,7 +53,7 @@ model Student {
   StudentNoticeAcknowledgement StudentNoticeAcknowledgement[]
   StudentTermAttendanceHistory StudentTermAttendanceHistory[]
   studentTermFee               StudentTermFee[]
-  studentProfileActivity      StudentProfileActivity[]
+  studentProfileActivity       StudentProfileActivity[]
   feeExemptions                FeeExemption[]
   DeviceToken                  DeviceToken[]
   user                         User?
@@ -61,16 +61,16 @@ model Student {
 }
 
 model StudentProfileActivity {
-  id                 Int       @id @default(autoincrement())
-  studentId          Int
-  actionType         String
-  description        String
-  metadata           Json?
-  performedByUserId  Int?
-  performedByEmail   String
-  createdAt          DateTime  @default(now())
-  student            Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  performedBy        User?     @relation(fields: [performedByUserId], references: [id], onDelete: SetNull)
+  id                Int      @id @default(autoincrement())
+  studentId         Int
+  actionType        String
+  description       String
+  metadata          Json?
+  performedByUserId Int?
+  performedByEmail  String
+  createdAt         DateTime @default(now())
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  performedBy       User?    @relation(fields: [performedByUserId], references: [id], onDelete: SetNull)
 }
 
 model StudentTermAttendanceHistory {
@@ -359,35 +359,39 @@ model PaymentInstallment {
 }
 
 model FeePayment {
-  id                 Int                  @id @default(autoincrement())
-  feeId              Int?
-  dueDate            DateTime
-  paidDate           DateTime?
-  dueAmount          Int
-  studentTermFeeId   Int?
-  status             PaymentStatus?
-  method             PaymentMethod?
-  amountPaid         Int?
+  id                        Int                  @id @default(autoincrement())
+  feeId                     Int?
+  dueDate                   DateTime
+  paidDate                  DateTime?
+  dueAmount                 Int
+  studentTermFeeId          Int?
+  status                    PaymentStatus?
+  method                    PaymentMethod?
+  amountPaid                Int?
   /// /moved to  PaymentInstallment
-  remarks            String?
+  remarks                   String?
   /// not required- moved to student model
-  creditAmount       Int                  @default(0)
-  feeAmount          Int?
-  createdAt          DateTime?            @default(now())
-  adjustedFeeAmount  Int?
-  discountAmount     Int?                 @default(0)
-  discountReason     String?
-  hasDiscount        Boolean?             @default(false)
-  hasDue             Boolean?             @default(true)
-  hasOverDue         Boolean?             @default(false)
-  invoiceId          String?              @default("0000_0_0")
-  isActive           Boolean?             @default(true)
-  updatedAt          DateTime?            @updatedAt
-  feeTemplateId      Int?
-  fee                Fee?                 @relation(fields: [feeId], references: [id])
-  feeTemplate        FeeTemplate?         @relation(fields: [feeTemplateId], references: [id], onDelete: Cascade)
-  studentTermFee     StudentTermFee?      @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
-  paymentInstallment PaymentInstallment[]
+  creditAmount              Int                  @default(0)
+  feeAmount                 Int?
+  createdAt                 DateTime?            @default(now())
+  adjustedFeeAmount         Int?
+  discountAmount            Int?                 @default(0)
+  discountReason            String?
+  hasDiscount               Boolean?             @default(false)
+  hasDue                    Boolean?             @default(true)
+  hasOverDue                Boolean?             @default(false)
+  invoiceId                 String?              @default("0000_0_0")
+  isActive                  Boolean?             @default(true)
+  updatedAt                 DateTime?            @updatedAt
+  feeTemplateId             Int?
+  fee                       Fee?                 @relation(fields: [feeId], references: [id])
+  feeTemplate               FeeTemplate?         @relation(fields: [feeTemplateId], references: [id], onDelete: Cascade)
+  studentTermFee            StudentTermFee?      @relation(fields: [studentTermFeeId], references: [id], onDelete: Cascade)
+  paymentInstallment        PaymentInstallment[]
+  /// BECS direct debit: true while a debit for this invoice is clearing (2-4 business days). Blocks card / office payment and the overdue job.
+  directDebitInFlight       Boolean              @default(false)
+  /// BECS direct debit: when the "we will debit this soon" email went out (sent once).
+  directDebitReminderSentAt DateTime?
 }
 
 model FeeTemplate {
@@ -673,25 +677,26 @@ model AdminOtherInformation {
 }
 
 model User {
-  id                          Int      @id @default(autoincrement())
-  email                       String   @unique
+  id                          Int                      @id @default(autoincrement())
+  email                       String                   @unique
   password                    String
   role                        Role
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
-  isActive                    Boolean  @default(true)
-  isEmailVerified             Boolean  @default(false)
-  adminId                     Int?     @unique
-  studentId                   Int?     @unique
-  teacherId                   Int?     @unique
+  createdAt                   DateTime                 @default(now())
+  updatedAt                   DateTime                 @updatedAt
+  isActive                    Boolean                  @default(true)
+  isEmailVerified             Boolean                  @default(false)
+  adminId                     Int?                     @unique
+  studentId                   Int?                     @unique
+  teacherId                   Int?                     @unique
   resetPasswordToken          String?
   resetPasswordTokenExpiresAt Int?
-  admin                       Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  student                     Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher                     Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  admin                       Admin?                   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  student                     Student?                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher                     Teacher?                 @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   studentProfileActivity      StudentProfileActivity[]
   appInstalls                 AppInstall[]
   appVersionHistory           AppVersionHistory[]
+  directDebitMandate          DirectDebitMandate?
 }
 
 model SchoolCheckInAttendance {
@@ -1549,19 +1554,19 @@ model ClassRecordEdit {
 /// Fee exemption between two dates (SOW item 20, B5). While an exemption is switched on and its dates cover the billing
 /// period (or today), no invoice is generated for the student. Switching it off keeps the row (history) and sets endedAt.
 model FeeExemption {
-  id               Int       @id @default(autoincrement())
-  studentId        Int
-  startDate        DateTime
-  endDate          DateTime
-  reason           String?
-  isActive         Boolean   @default(true)
-  createdByUserId  Int?
-  createdByEmail   String?
-  endedAt          DateTime?
-  endedByEmail     String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  student          Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id              Int       @id @default(autoincrement())
+  studentId       Int
+  startDate       DateTime
+  endDate         DateTime
+  reason          String?
+  isActive        Boolean   @default(true)
+  createdByUserId Int?
+  createdByEmail  String?
+  endedAt         DateTime?
+  endedByEmail    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId, isActive])
 }
@@ -1602,4 +1607,132 @@ enum CreditEntryKind {
   APPLIED_TO_INVOICE
   /// a manual correction, with a reason
   CORRECTION
+}
+
+/// BECS Direct Debit authority for one family login (siblings share the login email, so they share the mandate).
+/// Bank details live in Stripe; only the BSB and last 4 digits are kept here for display.
+model DirectDebitMandate {
+  id                    Int                      @id @default(autoincrement())
+  userId                Int                      @unique
+  email                 String
+  stripeCustomerId      String
+  stripePaymentMethodId String?
+  stripeMandateId       String?                  @unique
+  status                DirectDebitMandateStatus @default(PENDING)
+  bsbNumber             String?
+  bankLast4             String?
+  mandateUrl            String?
+  activatedAt           DateTime?
+  cancelledAt           DateTime?
+  statusChangedBy       String?
+  statusReason          String?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  user                  User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  charges               DirectDebitCharge[]
+}
+
+/// One debit attempt for one invoice. Never retried automatically: a failed invoice is paid by card or at the office.
+model DirectDebitCharge {
+  id                    Int                     @id @default(autoincrement())
+  mandateId             Int
+  feePaymentId          Int
+  studentId             Int
+  amount                Int
+  reason                DirectDebitChargeReason
+  status                DirectDebitChargeStatus @default(PROCESSING)
+  stripePaymentIntentId String?                 @unique
+  failureMessage        String?
+  disputed              Boolean                 @default(false)
+  officeAcknowledgedAt  DateTime?
+  officeAcknowledgedBy  String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  mandate               DirectDebitMandate      @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+
+  @@index([feePaymentId])
+  @@index([status])
+}
+
+enum DirectDebitMandateStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+enum DirectDebitChargeStatus {
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+enum DirectDebitChargeReason {
+  SCHEDULED
+  SETUP_BALANCE
+}
+
+/// BECS direct debit: who may set it up. ALL_FAMILIES = every parent login; SELECTED_FAMILIES = only logins in DirectDebitFamilyAccess.
+enum DirectDebitAccess {
+  ALL_FAMILIES
+  SELECTED_FAMILIES
+}
+
+/// BECS direct debit: which days the debit run happens. BECS is not processed at weekends, so WEEKDAYS collects weekend due dates on Monday.
+enum DirectDebitRunFrequency {
+  DAILY
+  WEEKDAYS
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+/// BECS direct debit settings (Administration > Direct Debit). One row, id = 1.
+model DirectDebitSettings {
+  id                      Int                     @id @default(1)
+  /// Master switch. Off = the parent panel is hidden and no debits or reminders run. Existing mandates are kept.
+  enabled                 Boolean                 @default(false)
+  access                  DirectDebitAccess       @default(SELECTED_FAMILIES)
+  /// "HH:MM", school time (Australia/Sydney).
+  runTime                 String                  @default("07:00")
+  frequency               DirectDebitRunFrequency @default(DAILY)
+  /// WEEKLY: day of the week, 0 = Sunday ... 6 = Saturday.
+  runWeekday              Int                     @default(1)
+  /// MONTHLY / QUARTERLY: day of the month 1-28, or 31 = last day of the month.
+  runMonthDay             Int                     @default(1)
+  /// QUARTERLY: 1 = Jan/Apr/Jul/Oct, 2 = Feb/May/Aug/Nov, 3 = Mar/Jun/Sep/Dec.
+  runQuarterMonth         Int                     @default(1)
+  /// Reminder email this many days before the due date; 0 = no reminders.
+  reminderDaysBefore      Int                     @default(3)
+  /// Show the "Also pay what is already due now" option at setup.
+  allowPayExistingBalance Boolean                 @default(true)
+  /// Failed / disputed debit alerts. Empty = OFFICE_EMAIL / EMAIL_FROM from the server env.
+  officeEmail             String?
+  lastRunAt               DateTime?
+  /// Reminder emails run every day (whatever the debit frequency), once per day.
+  lastReminderRunAt       DateTime?
+  lastRunSummary          String?
+  updatedAt               DateTime                @updatedAt
+  updatedBy               String?
+}
+
+/// BECS direct debit: family logins allowed to set it up when access = SELECTED_FAMILIES.
+model DirectDebitFamilyAccess {
+  id        Int      @id @default(autoincrement())
+  /// Family login email, stored lower-case.
+  email     String   @unique
+  addedBy   String?
+  createdAt DateTime @default(now())
+}
+
+/// Direct debit email wording edited in Administration > Direct Debit > Emails. No row = the built-in default.
+model DirectDebitEmailTemplate {
+  /// e.g. SETUP_CONFIRMED, REMINDER, DEBIT_FAILED (see directDebitEmails.service.ts)
+  key       String   @id
+  subject   String
+  body      String
+  /// false = this email is not sent.
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+  updatedBy String?
 }

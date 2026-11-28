@@ -1,3 +1,4 @@
+import { assertNoDirectDebitInFlight } from '../directDebit.service/directDebit.service';
 import Stripe from 'stripe';
 import { customError } from '../../utils/customError';
 import { db } from '../../utils/db.server';
@@ -10,6 +11,7 @@ export const getStripPublishableKey = async () => {
 };
 
 export const createCheckoutSession = async (feePaymentId: string, amount: number, invoiceName: string, invoiceId: string, firstName: string, lastName: string, email: string) => {
+    assertNoDirectDebitInFlight(await db.feePayment.findUnique({ where: { id: +feePaymentId }, select: { directDebitInFlight: true } }));
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
     const session = await stripe.checkout.sessions.create({
